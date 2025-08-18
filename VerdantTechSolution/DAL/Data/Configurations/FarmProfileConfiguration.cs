@@ -1,0 +1,130 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Text.Json;
+using DAL.Data.Models;
+
+namespace DAL.Data.Configurations;
+
+public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
+{
+    public void Configure(EntityTypeBuilder<FarmProfile> builder)
+    {
+        builder.ToTable("farm_profiles");
+        
+        // Primary Key
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id)
+            .HasColumnType("bigint unsigned")
+            .ValueGeneratedOnAdd();
+        
+        // Foreign Key (unique)
+        builder.Property(e => e.UserId)
+            .HasColumnType("bigint unsigned")
+            .IsRequired()
+            .HasColumnName("user_id");
+        
+        // Required fields
+        builder.Property(e => e.FarmName)
+            .HasMaxLength(255)
+            .IsRequired()
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("farm_name");
+        
+        // Optional fields
+        builder.Property(e => e.FarmSizeHectares)
+            .HasPrecision(10, 2)
+            .HasColumnName("farm_size_hectares");
+            
+        builder.Property(e => e.LocationAddress)
+            .HasColumnType("text")
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("location_address");
+            
+        builder.Property(e => e.Province)
+            .HasMaxLength(100)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci");
+            
+        builder.Property(e => e.District)
+            .HasMaxLength(100)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci");
+            
+        builder.Property(e => e.Commune)
+            .HasMaxLength(100)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci");
+        
+        // Geographic coordinates with precise decimals
+        builder.Property(e => e.Latitude)
+            .HasPrecision(10, 8);
+            
+        builder.Property(e => e.Longitude)
+            .HasPrecision(11, 8);
+        
+        // JSON fields with conversions
+        builder.Property(e => e.PrimaryCrops)
+            .HasConversion(
+                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
+            .HasColumnType("json")
+            .HasDefaultValueSql("'[]'")
+            .HasColumnName("primary_crops");
+            
+        builder.Property(e => e.CertificationTypes)
+            .HasConversion(
+                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
+            .HasColumnType("json")
+            .HasDefaultValueSql("'[]'")
+            .HasColumnName("certification_types");
+        
+        // Integer fields
+        builder.Property(e => e.FarmingExperienceYears)
+            .HasColumnName("farming_experience_years");
+        
+        // String fields
+        builder.Property(e => e.SoilType)
+            .HasMaxLength(100)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("soil_type");
+            
+        builder.Property(e => e.IrrigationType)
+            .HasMaxLength(100)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("irrigation_type");
+        
+        // DateTime fields
+        builder.Property(e => e.CreatedAt)
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            .HasColumnName("created_at");
+        
+        builder.Property(e => e.UpdatedAt)
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+            .HasColumnName("updated_at");
+        
+        // Foreign Key Relationship
+        builder.HasOne(d => d.User)
+            .WithOne(p => p.FarmProfile)
+            .HasForeignKey<FarmProfile>(d => d.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        // Unique constraint on UserId
+        builder.HasIndex(e => e.UserId)
+            .IsUnique()
+            .HasDatabaseName("unique_user_id");
+            
+        // Indexes
+        builder.HasIndex(e => new { e.Province, e.District })
+            .HasDatabaseName("idx_location");
+            
+        builder.HasIndex(e => e.FarmSizeHectares)
+            .HasDatabaseName("idx_farm_size");
+    }
+}

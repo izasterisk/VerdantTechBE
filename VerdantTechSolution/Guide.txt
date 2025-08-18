@@ -1,0 +1,552 @@
+# VerdantTech Solutions - Migration Guide
+
+## Tổng quan dự án
+- **Database**: MySQL 8.0 với InnoDB engine
+- **Character Set**: utf8mb4_unicode_ci
+- **ORM**: Entity Framework Core với MySQL Provider
+- **Migration Strategy**: Code First Migration thay vì Database First Scaffold
+
+## Cấu trúc thư mục Migration
+
+```
+DAL/
+├── Data/
+│   ├── VerdantTechDbContext.cs        # DbContext cho migration
+│   ├── Enums.cs                       # Tất cả enum definitions
+│   ├── Configurations/                # Entity configurations
+│   │   ├── UserConfiguration.cs
+│   │   ├── ProductConfiguration.cs
+│   │   ├── FarmProfileConfiguration.cs
+│   │   ├── OrderConfiguration.cs
+│   │   └── ... (configuration cho từng entity)
+│   └── Models/                        # Lưu tất cả các models (table trong DB)
+│       ├── User.cs
+│       ├── Product.cs
+│       ├── FarmProfile.cs
+│       ├── Order.cs
+│       └── ... (tất cả entity models)
+└── Migrations/                        # Sẽ được tạo tự động
+```
+
+## 1. Tạo file Enums.cs
+
+Tạo file `DAL/Data/Enums.cs` với tất cả enum từ schema:
+
+```csharp
+namespace DAL.Data;
+
+public enum UserRole
+{
+    Customer,
+    Farmer,
+    Seller,
+    Vendor,
+    Admin,
+    Expert,
+    ContentManager
+}
+
+public enum UserStatus
+{
+    Active,
+    Inactive,
+    Suspended,
+    Pending
+}
+
+public enum OrderStatus
+{
+    Pending,
+    Confirmed,
+    Processing,
+    Shipped,
+    Delivered,
+    Cancelled,
+    Refunded
+}
+
+public enum PaymentStatus
+{
+    Pending,
+    Completed,
+    Failed,
+    Refunded,
+    Cancelled
+}
+
+public enum PaymentMethod
+{
+    CreditCard,
+    DebitCard,
+    BankTransfer,
+    Paypal,
+    Cash,
+    Other
+}
+
+// ... thêm các enum khác từ schema
+```
+
+## 2. Cấu hình JSON Properties
+
+**Pattern cho JSON fields:**
+
+```csharp
+public List<string> PrimaryCrops { get; set; } = new();
+
+// Trong Configuration:
+modelBuilder.Entity<FarmProfile>()
+    .Property(e => e.PrimaryCrops)
+    .HasConversion(
+        v => v == null ? "[]" : JsonSerializer.Serialize(v),
+        v => string.IsNullOrEmpty(v) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v)!)
+    .HasColumnType("json")
+    .HasDefaultValue("[]");
+```
+
+## 3. Template Configuration Class
+
+**Ví dụ: UserConfiguration.cs**
+
+```csharp
+public class UserConfiguration : IEntityTypeConfiguration<User>
+{
+    public void Configure(EntityTypeBuilder<User> builder)
+    {
+        builder.ToTable("users");
+        
+        // Primary Key
+        builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id)
+            .HasColumnType("bigint unsigned")
+            .ValueGeneratedOnAdd();
+        
+        // Required fields
+        builder.Property(e => e.Email)
+            .HasMaxLength(255)
+            .IsRequired()
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci");
+        
+        // Enum conversion
+        builder.Property(e => e.Role)
+            .HasConversion<string>()
+            .HasColumnType("enum('customer','farmer','seller','vendor','admin','expert','content_manager')")
+            .HasDefaultValue("customer");
+        
+        builder.Property(e => e.Status)
+            .HasConversion<string>()
+            .HasColumnType("enum('active','inactive','suspended','pending')")
+            .HasDefaultValue("active");
+        
+        // DateTime fields
+        builder.Property(e => e.CreatedAt)
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        
+        builder.Property(e => e.UpdatedAt)
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+        
+        // Boolean defaults
+        builder.Property(e => e.IsVerified)
+            .HasDefaultValue(false);
+        
+        // Indexes
+        builder.HasIndex(e => e.Email)
+            .IsUnique()
+            .HasDatabaseName("unique_email");
+        
+        builder.HasIndex(e => e.CreatedAt)
+            .HasDatabaseName("idx_created_at");
+    }
+}
+```
+
+## 4. Các vấn đề quan trọng cần lưu ý
+
+### A. Decimal Precision
+```csharp
+// Price fields
+modelBuilder.Entity<Product>()
+    .Property(e => e.Price)
+    .HasPrecision(12, 2);
+
+// Geographic coordinates
+modelBuilder.Entity<FarmProfile>()
+    .Property(e => e.Latitude)
+    .HasPrecision(10, 8);
+
+modelBuilder.Entity<FarmProfile>()
+    .Property(e => e.Longitude)
+    .HasPrecision(11, 8);
+```
+
+### B. Foreign Key DeleteBehavior
+```csharp
+// CASCADE delete
+entity.HasOne(d => d.User)
+    .WithMany(p => p.FarmProfiles)
+    .HasForeignKey(d => d.UserId)
+    .OnDelete(DeleteBehavior.Cascade);
+
+// SET NULL delete
+entity.HasOne(d => d.VerifiedByNavigation)
+    .WithMany()
+    .HasForeignKey(d => d.VerifiedBy)
+    .OnDelete(DeleteBehavior.SetNull);
+```
+
+### C. Unique Constraints phức tạp
+```csharp
+// Composite unique constraint
+modelBuilder.Entity<UserInteraction>()
+    .HasIndex(e => new { e.UserId, e.TargetType, e.TargetId, e.InteractionType })
+    .IsUnique()
+    .HasDatabaseName("unique_user_target_interaction");
+```
+
+### D. FULLTEXT Index
+```csharp
+// Cho search functionality
+modelBuilder.Entity<KnowledgeBase>()
+    .HasIndex(e => new { e.Question, e.Answer })
+    .HasAnnotation("MySql:FullTextIndex", true);
+
+modelBuilder.Entity<Product>()
+    .HasIndex(e => new { e.Name, e.NameEn, e.Description, e.DescriptionEn })
+    .HasAnnotation("MySql:FullTextIndex", true);
+```
+
+## 5. VerdantTechDbContext Setup
+
+```csharp
+public class VerdantTechDbContext : DbContext
+{
+    public VerdantTechDbContext(DbContextOptions<VerdantTechDbContext> options) : base(options) { }
+    
+    // DbSets
+    public DbSet<User> Users { get; set; }
+    public DbSet<Product> Products { get; set; }
+    // ... thêm các DbSet khác
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Apply all configurations
+        modelBuilder.ApplyConfiguration(new UserConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductConfiguration());
+        // ... apply tất cả configurations
+        
+        base.OnModelCreating(modelBuilder);
+    }
+}
+```
+
+## 6. Quy trình Migration
+
+### Bước 1: Cài đặt packages
+```bash
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package Pomelo.EntityFrameworkCore.MySql
+dotnet add package DotNetEnv
+```
+
+### Bước 2: Cấu hình DI trong Controller/Program.cs
+
+#### A. Cài đặt packages cần thiết
+
+```bash
+# Cài EF Core Tools trong DAL project
+dotnet add DAL package Microsoft.EntityFrameworkCore.Tools
+dotnet add DAL package Pomelo.EntityFrameworkCore.MySql
+
+# Cài DotNetEnv trong Controller project
+dotnet add Controller package DotNetEnv
+```
+
+#### B. Tạo file .env trong Controller folder
+
+Tạo file `.env` tại đường dẫn: `Controller/.env`
+
+```plaintext
+# Database Configuration
+DATABASE_CONNECTION_STRING=Server=localhost;Port=3306;Database=verdanttech;Uid=root;Pwd=12345;
+
+# Application Environment
+ASPNETCORE_ENVIRONMENT=Development
+
+# Other configurations
+DATABASE_TIMEOUT=30
+```
+
+**Lưu ý quan trọng:**
+- File .env phải nằm cùng thư mục với Program.cs
+- Không có khoảng trắng xung quanh dấu `=`
+- Không có quotes bao quanh values
+- Thêm .env vào .gitignore để bảo mật
+
+#### C. Cấu hình Program.cs chi tiết
+
+```csharp
+using DotNetEnv;
+using DAL.Data;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Load .env file từ Controller folder
+Env.Load();
+
+// Get connection string from .env
+var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING");
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("DATABASE_CONNECTION_STRING not found in .env file.");
+}
+
+// Configure DbContext
+builder.Services.AddDbContext<VerdantTechDbContext>(options =>
+    options.UseMySql(connectionString, ServerVersion.Parse("8.0.43-mysql")));
+
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    app.UseDeveloperExceptionPage();
+}
+
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+
+app.Run();
+```
+
+#### D. Cấu hình .gitignore
+
+Thêm vào file `.gitignore` ở solution root:
+
+```gitignore
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Database
+*.db
+*.sqlite
+```
+
+### Bước 3: Tạo migration
+
+#### A. Cấu trúc project references
+
+Đảm bảo Controller project reference DAL project. Kiểm tra file `Controller.csproj`:
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DAL\DAL.csproj" />
+  </ItemGroup>
+</Project>
+```
+
+#### B. Commands để chạy migration
+
+Mở terminal ở solution root và chạy các lệnh sau:
+
+```bash
+# Kiểm tra connection
+dotnet ef dbcontext info --project DAL --startup-project Controller
+
+# Tạo migration đầu tiên
+dotnet ef migrations add InitialCreate --project DAL --startup-project Controller
+
+# Xem SQL sẽ được generate (optional)
+dotnet ef migrations script --project DAL --startup-project Controller
+
+# Apply migration lên database
+dotnet ef database update --project DAL --startup-project Controller
+```
+
+#### C. Troubleshooting migration
+
+**Nếu gặp lỗi "Unable to create an object of type 'VerdantTechDbContext'":**
+- Kiểm tra file .env có tồn tại trong Controller folder
+- Kiểm tra CONNECTION_STRING có đúng format
+- Kiểm tra MySQL server có đang chạy
+
+**Nếu gặp lỗi "The name 'VerdantTechDbContext' does not exist":**
+- Kiểm tra namespace trong VerdantTechDbContext.cs
+- Kiểm tra using statement trong Program.cs
+
+**Nếu gặp lỗi connection timeout:**
+- Kiểm tra MySQL server status
+- Kiểm tra username/password trong .env file
+- Kiểm tra database name có tồn tại
+
+## 7. Checklist trước khi chạy migration
+
+### A. Project Setup
+- [ ] Cài đặt packages cần thiết (EF Tools, Pomelo.MySql, DotNetEnv)
+- [ ] Tạo project reference từ Controller đến DAL
+- [ ] Tạo file .env trong Controller folder với đúng format
+- [ ] Thêm .env vào .gitignore để bảo mật
+
+### B. Database Configuration
+- [ ] MySQL server đang chạy và accessible
+- [ ] Database 'verdanttech' đã được tạo (hoặc sẽ được tạo tự động)
+- [ ] Username/password trong .env file có quyền CREATE/ALTER tables
+- [ ] Connection string có đúng format MySQL
+
+### C. Code Configuration
+- [ ] Tạo file Enums.cs với tất cả enum definitions
+- [ ] Tạo tất cả Configuration classes cho entities
+- [ ] Cấu hình JSON conversions cho các fields cần thiết
+- [ ] Cấu hình decimal precisions đúng schema
+- [ ] Cấu hình foreign key behaviors (CASCADE/SET NULL)
+- [ ] Cấu hình indexes (bao gồm FULLTEXT)
+- [ ] Cấu hình unique constraints
+- [ ] Cấu hình DateTime default values (CURRENT_TIMESTAMP)
+- [ ] Cấu hình Boolean default values
+- [ ] Cấu hình string lengths (VARCHAR)
+- [ ] Cấu hình character sets và collations
+- [ ] Setup DbContext trong DI container
+
+### D. Verification Steps
+- [ ] Test connection string bằng: `dotnet ef dbcontext info --project DAL --startup-project Controller`
+- [ ] Kiểm tra .env file được load thành công (thêm debug log nếu cần)
+- [ ] Verify database permissions và accessibility
+
+## 8. Các lỗi thường gặp và cách khắc phục
+
+### A. Lỗi liên quan đến .env file
+
+#### Lỗi: "DATABASE_CONNECTION_STRING not found"
+```
+Nguyên nhân: File .env không tồn tại hoặc không được load đúng
+Giải pháp:
+1. Kiểm tra file .env có tồn tại trong Controller folder
+2. Kiểm tra format file .env (không có quotes, không có spaces)
+3. Test .env loading bằng cách thêm Console.WriteLine tạm thời
+```
+
+#### Lỗi: "Error loading .env file"
+```
+Nguyên nhân: File .env có lỗi format hoặc permission
+Giải pháp:
+1. Kiểm tra file .env không có ký tự đặc biệt
+2. Đảm bảo format: KEY=VALUE (không có spaces)
+3. Kiểm tra file permissions
+```
+
+### B. Lỗi EF Migration
+
+#### Lỗi: "Unable to create an object of type 'VerdantTechDbContext'"
+```
+Nguyên nhân: DI container không thể resolve DbContext
+Giải pháp:
+1. Kiểm tra Program.cs có đăng ký DbContext trong DI
+2. Kiểm tra using statements đầy đủ
+3. Kiểm tra connection string có hợp lệ
+```
+
+#### Lỗi: "No DbContext was found"
+```
+Nguyên nhân: EF Tools không tìm thấy DbContext
+Giải pháp:
+1. Kiểm tra namespace của VerdantTechDbContext
+2. Đảm bảo DAL project có reference đến EF packages
+3. Build solution trước khi chạy migration
+```
+
+### C. Lỗi Database Connection
+
+#### Lỗi: "Unable to connect to MySQL server"
+```
+Nguyên nhân: MySQL server không chạy hoặc connection string sai
+Giải pháp:
+1. Kiểm tra MySQL service đang chạy
+2. Test connection string với MySQL Workbench
+3. Kiểm tra firewall và port 3306
+```
+
+#### Lỗi: "Access denied for user"
+```
+Nguyên nhân: Username/password sai hoặc không có permissions
+Giải pháp:
+1. Kiểm tra credentials trong .env file
+2. Grant permissions: GRANT ALL PRIVILEGES ON verdanttech.* TO 'username'@'localhost';
+3. Flush privileges: FLUSH PRIVILEGES;
+```
+
+### D. Lỗi ENUM conversion
+```csharp
+// Lỗi: Invalid enum value
+// Giải pháp: Đảm bảo enum values match với database enum values
+builder.Property(e => e.Status)
+    .HasConversion<string>()
+    .HasColumnType("enum('active','inactive','suspended','pending')")
+    .HasDefaultValue("active");
+```
+
+### E. Lỗi JSON deserialization
+```csharp
+// Lỗi: Cannot deserialize empty string
+// Giải pháp: Thêm null check trong conversion
+.HasConversion(
+    v => v == null ? "[]" : JsonSerializer.Serialize(v),
+    v => string.IsNullOrEmpty(v) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v)!)
+```
+
+### F. Lỗi Foreign Key constraint
+```
+// Lỗi: Foreign key constraint fails
+// Giải pháp: Kiểm tra DeleteBehavior và đảm bảo data consistency
+entity.HasOne(d => d.User)
+    .WithMany(p => p.FarmProfiles)
+    .HasForeignKey(d => d.UserId)
+    .OnDelete(DeleteBehavior.Cascade); // Hoặc SetNull tùy theo business logic
+```
+
+## 9. Notes quan trọng
+
+- **Connection String**: Đọc từ file Controller/.env thông qua DotNetEnv package
+- **Database Name**: verdanttech (từ .env file)
+- **MySQL Version**: Sử dụng version 8.0.43
+- **Character Set**: Tất cả text fields sử dụng utf8mb4_unicode_ci
+- **Auto Increment**: Sử dụng BIGINT UNSIGNED cho primary keys
+- **Transaction Support**: InnoDB engine hỗ trợ transactions
+- **JSON Support**: MySQL 8.0 có native JSON support
+
+## 10. Testing Migration
+
+Sau khi chạy migration, kiểm tra:
+1. Database schema match với original SQL
+2. Indexes được tạo đúng
+3. Foreign key constraints hoạt động
+4. Enum values được insert đúng
+5. JSON fields serialize/deserialize đúng
+6. Default values được set đúng
