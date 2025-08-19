@@ -1,6 +1,13 @@
 using DotNetEnv;
 using DAL.Data;
+using DAL.IRepository;
+using DAL.Repository;
+using BLL.Interfaces;
+using BLL.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +26,45 @@ if (string.IsNullOrEmpty(connectionString))
 builder.Services.AddDbContext<VerdantTechDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.Parse("8.0.43-mysql"), 
         b => b.MigrationsAssembly("DAL")));
+
+// Add Repository DI
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+
+// Add Service DI
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// JWT Configuration
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+
+if (string.IsNullOrEmpty(jwtSecret) || string.IsNullOrEmpty(jwtIssuer) || string.IsNullOrEmpty(jwtAudience))
+{
+    throw new InvalidOperationException("JWT configuration variables not found in .env file.");
+}
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -40,7 +86,6 @@ if (app.Environment.IsDevelopment())
         // Create new database with current schema
         await context.Database.EnsureCreatedAsync();
         
-        // Optionally seed initial data here if needed
         Console.WriteLine("Database recreated successfully!");
     }
 }
@@ -58,6 +103,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
