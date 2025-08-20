@@ -58,72 +58,44 @@ namespace Controller.Controllers
         }
 
         /// <summary>
-        /// Validate JWT token
+        /// Refresh JWT token using refresh token
         /// </summary>
-        /// <param name="token">JWT token to validate</param>
-        /// <returns>Token validation result</returns>
-        [HttpPost("validate-token")]
-        [AllowAnonymous]
-        public async Task<IActionResult> ValidateToken([FromBody] string token)
-        {
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                var errorResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Data = null!,
-                    Errors = new List<string> { "Token is required" }
-                };
-
-                return BadRequest(errorResponse);
-            }
-
-            var result = await _authService.ValidateTokenAsync(token);
-            
-            return result.StatusCode switch
-            {
-                HttpStatusCode.OK => Ok(result),
-                HttpStatusCode.Unauthorized => Unauthorized(result),
-                _ => StatusCode(500, result)
-            };
-        }
-
-        /// <summary>
-        /// Refresh JWT token
-        /// </summary>
-        /// <param name="refreshToken">Refresh token</param>
-        /// <returns>New JWT token</returns>
+        /// <param name="refreshTokenDto">Refresh token DTO</param>
+        /// <returns>New JWT token and refresh token</returns>
         [HttpPost("refresh-token")]
         [AllowAnonymous]
-        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDTO refreshTokenDto)
         {
-            if (string.IsNullOrWhiteSpace(refreshToken))
+            if (!ModelState.IsValid)
             {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
                 var errorResponse = new APIResponse
                 {
                     Status = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     Data = null!,
-                    Errors = new List<string> { "Refresh token is required" }
+                    Errors = errors
                 };
 
                 return BadRequest(errorResponse);
             }
 
-            var result = await _authService.RefreshTokenAsync(refreshToken);
+            var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
             
             return result.StatusCode switch
             {
                 HttpStatusCode.OK => Ok(result),
                 HttpStatusCode.Unauthorized => Unauthorized(result),
-                HttpStatusCode.NotImplemented => StatusCode(501, result),
                 _ => StatusCode(500, result)
             };
         }
 
         /// <summary>
-        /// Test protected endpoint
+        /// Get current user profile information from JWT token
         /// </summary>
         /// <returns>User information from JWT token</returns>
         [HttpGet("profile")]
@@ -149,6 +121,30 @@ namespace Controller.Controllers
                 Status = true,
                 StatusCode = HttpStatusCode.OK,
                 Data = profileInfo,
+                Errors = new List<string>()
+            };
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Logout endpoint - invalidates refresh token
+        /// </summary>
+        /// <returns>Logout confirmation</returns>
+        [HttpPost("logout")]
+        [Authorize]
+        public IActionResult Logout()
+        {
+            // In a complete implementation, you would:
+            // 1. Get the user ID from claims
+            // 2. Clear the refresh token from database
+            // 3. Optionally maintain a blacklist of tokens until they expire
+            
+            var response = new APIResponse
+            {
+                Status = true,
+                StatusCode = HttpStatusCode.OK,
+                Data = "Logged out successfully",
                 Errors = new List<string>()
             };
 

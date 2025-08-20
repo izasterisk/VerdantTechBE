@@ -75,7 +75,61 @@ public static class AuthUtils
     /// <returns>Refresh token string</returns>
     public static string GenerateRefreshToken()
     {
-        // Generate a simple refresh token - in production, this should be more secure
-        return Guid.NewGuid().ToString();
+        // Generate a secure refresh token
+        var randomBytes = new byte[32];
+        using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(randomBytes);
+        }
+        return Convert.ToBase64String(randomBytes);
+    }
+
+    /// <summary>
+    /// Get refresh token expiry time
+    /// </summary>
+    /// <returns>DateTime for refresh token expiry</returns>
+    public static DateTime GetRefreshTokenExpiryTime()
+    {
+        var refreshTokenExpireDays = Environment.GetEnvironmentVariable("REFRESH_TOKEN_EXPIRE_DAYS") ?? "30";
+        return DateTime.UtcNow.AddDays(Convert.ToDouble(refreshTokenExpireDays));
+    }
+
+    /// <summary>
+    /// Validate and decode JWT token without throwing exceptions
+    /// </summary>
+    /// <param name="token">JWT token to validate</param>
+    /// <returns>ClaimsPrincipal if valid, null if invalid</returns>
+    public static ClaimsPrincipal? ValidateTokenSilently(string token)
+    {
+        try
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+            
+            if (string.IsNullOrEmpty(jwtSecret))
+                return null;
+
+            var key = Encoding.ASCII.GetBytes(jwtSecret);
+            var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+            var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+
+            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = !string.IsNullOrEmpty(jwtIssuer),
+                ValidIssuer = jwtIssuer,
+                ValidateAudience = !string.IsNullOrEmpty(jwtAudience),
+                ValidAudience = jwtAudience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            }, out SecurityToken validatedToken);
+
+            return principal;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
