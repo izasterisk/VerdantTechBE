@@ -1,5 +1,6 @@
 using BLL.Interfaces;
 using AutoMapper;
+using BLL.DTO;
 using BLL.DTO.Customer;
 using BLL.Utils;
 using DAL.Data;
@@ -48,10 +49,23 @@ public class CustomerService : ICustomerService
         return customer == null ? null : _mapper.Map<CustomerReadOnlyDTO>(customer);
     }
 
-    public async Task<List<CustomerReadOnlyDTO>> GetAllCustomersAsync()
+    public async Task<PagedResponse<CustomerReadOnlyDTO>> GetAllCustomersAsync(int page, int pageSize)
     {
-        var customers = await _customerRepository.GetAllCustomersAsync();
-        return _mapper.Map<List<CustomerReadOnlyDTO>>(customers);
+        var (customers, totalCount) = await _customerRepository.GetAllCustomersAsync(page, pageSize);
+        var customerDtos = _mapper.Map<List<CustomerReadOnlyDTO>>(customers);
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        
+        return new PagedResponse<CustomerReadOnlyDTO>
+        {
+            Data = customerDtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
     }
 
     public async Task<CustomerReadOnlyDTO> UpdateCustomerAsync(ulong customerId, CustomerDTO dto)
@@ -64,27 +78,7 @@ public class CustomerService : ICustomerService
             throw new Exception($"Customer with ID {customerId} not found.");
         }
 
-        // Check if email is being changed and if new email already exists
-        if (!existingCustomer.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase))
-        {
-            var emailExists = await _customerRepository.CheckEmailExistsAsync(dto.Email);
-            if (emailExists)
-            {
-                throw new Exception($"Email {dto.Email} already exists.");
-            }
-        }
-
-        // Update customer properties
-        existingCustomer.Email = dto.Email;
-        existingCustomer.FullName = dto.FullName;
-        existingCustomer.PhoneNumber = dto.PhoneNumber;
-        existingCustomer.AvatarUrl = dto.AvatarUrl;
-        
-        // Only update password if it's provided and different
-        if (!string.IsNullOrEmpty(dto.PasswordHash) && !existingCustomer.PasswordHash.Equals(dto.PasswordHash))
-        {
-            existingCustomer.PasswordHash = AuthUtils.HashPassword(dto.PasswordHash);
-        }
+        User customer = _mapper.Map<User>(dto);
 
         var updatedCustomer = await _customerRepository.UpdateCustomerWithTransactionAsync(existingCustomer);
         return _mapper.Map<CustomerReadOnlyDTO>(updatedCustomer);

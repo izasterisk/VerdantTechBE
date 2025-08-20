@@ -19,7 +19,8 @@ public class AutoMapperConfig : Profile
         //.ForMember(n => n.Address, opt => opt.MapFrom(n => string.IsNullOrEmpty(n.Address) ? "No value found" : n.Address));
         
         CreateMap<CustomerCreateDTO, User>().ReverseMap();
-        CreateMap<CustomerDTO, User>().ReverseMap();
         CreateMap<CustomerReadOnlyDTO, User>().ReverseMap();
+        CreateMap<CustomerUpdateDTO, User>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     }
 }

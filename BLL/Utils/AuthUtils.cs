@@ -35,12 +35,13 @@ public static class AuthUtils
     /// Generate JWT token for user
     /// </summary>
     /// <param name="user">User object</param>
-    /// <param name="configuration">Configuration for JWT settings</param>
+    /// <param name="configuration">Configuration for JWT settings (not used, kept for compatibility)</param>
     /// <returns>JWT token string</returns>
     public static string GenerateJwtToken(User user, IConfiguration configuration)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(configuration["JWT_SECRET"] ?? throw new InvalidOperationException("JWT_SECRET not configured"));
+        var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+        var key = Encoding.ASCII.GetBytes(jwtSecret ?? throw new InvalidOperationException("JWT_SECRET not configured"));
 
         var claims = new List<Claim>
         {
@@ -51,12 +52,16 @@ public static class AuthUtils
             new Claim("verified", user.IsVerified.ToString().ToLower())
         };
 
+        var jwtExpireHours = Environment.GetEnvironmentVariable("JWT_EXPIRE_HOURS") ?? "24";
+        var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+        var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(configuration["JWT_EXPIRE_HOURS"] ?? "24")),
-            Issuer = configuration["JWT_ISSUER"],
-            Audience = configuration["JWT_AUDIENCE"],
+            Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(jwtExpireHours)),
+            Issuer = jwtIssuer,
+            Audience = jwtAudience,
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 

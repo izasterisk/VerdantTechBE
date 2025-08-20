@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BLL.Utils;
 using DAL.Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,6 +37,9 @@ builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+
+// Configure AutoMapper
+builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
 
 // JWT Configuration
 var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");

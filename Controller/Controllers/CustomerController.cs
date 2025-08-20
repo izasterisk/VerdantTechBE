@@ -95,17 +95,36 @@ public class CustomerController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách tất cả khách hàng
+    /// Lấy danh sách tất cả khách hàng với phân trang
     /// </summary>
-    /// <returns>Danh sách khách hàng</returns>
+    /// <param name="page">Số trang (mặc định: 1)</param>
+    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
+    /// <returns>Danh sách khách hàng có phân trang</returns>
     [HttpGet]
-    public async Task<ActionResult<APIResponse>> GetAllCustomers()
+    public async Task<ActionResult<APIResponse>> GetAllCustomers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var response = new APIResponse();
         
         try
         {
-            var customers = await _customerService.GetAllCustomersAsync();
+            // Validate pagination parameters
+            if (page < 1)
+            {
+                response.Status = false;
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Errors.Add("Page number must be greater than 0");
+                return BadRequest(response);
+            }
+
+            if (pageSize < 1 || pageSize > 100)
+            {
+                response.Status = false;
+                response.StatusCode = HttpStatusCode.BadRequest;
+                response.Errors.Add("Page size must be between 1 and 100");
+                return BadRequest(response);
+            }
+
+            var customers = await _customerService.GetAllCustomersAsync(page, pageSize);
             
             response.Status = true;
             response.StatusCode = HttpStatusCode.OK;

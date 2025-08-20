@@ -37,20 +37,8 @@ public class AuthService : IAuthService
                 {
                     Status = false,
                     StatusCode = HttpStatusCode.Unauthorized,
-                    Data = null,
+                    Data = null!,
                     Errors = new List<string> { "Invalid email or password" }
-                };
-            }
-
-            // Check if user is active
-            if (user.Status != DAL.Data.UserStatus.Active)
-            {
-                return new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.Forbidden,
-                    Data = null,
-                    Errors = new List<string> { "Account is not active" }
                 };
             }
 
@@ -62,11 +50,12 @@ public class AuthService : IAuthService
             var token = AuthUtils.GenerateJwtToken(user, _configuration);
             var refreshToken = AuthUtils.GenerateRefreshToken();
 
+            var jwtExpireHours = Environment.GetEnvironmentVariable("JWT_EXPIRE_HOURS") ?? "24";
             var loginResponse = new LoginResponseDTO
             {
                 Token = token,
                 RefreshToken = refreshToken,
-                ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(_configuration["JWT_EXPIRE_HOURS"] ?? "24")),
+                ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(jwtExpireHours)),
                 User = new UserInfoDTO
                 {
                     Id = user.Id,
@@ -92,7 +81,7 @@ public class AuthService : IAuthService
             {
                 Status = false,
                 StatusCode = HttpStatusCode.InternalServerError,
-                Data = null,
+                Data = null!,
                 Errors = new List<string> { "An error occurred during login", ex.Message }
             };
         }
@@ -103,19 +92,25 @@ public class AuthService : IAuthService
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["JWT_SECRET"] ?? throw new InvalidOperationException("JWT_SECRET not configured"));
+            var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+            var key = Encoding.ASCII.GetBytes(jwtSecret ?? throw new InvalidOperationException("JWT_SECRET not configured"));
+
+            var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+            var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
 
             tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = _configuration["JWT_ISSUER"],
+                ValidIssuer = jwtIssuer,
                 ValidateAudience = true,
-                ValidAudience = _configuration["JWT_AUDIENCE"],
+                ValidAudience = jwtAudience,
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out SecurityToken validatedToken);
+
+            await Task.CompletedTask; // To make it truly async
 
             return new APIResponse
             {
@@ -131,7 +126,7 @@ public class AuthService : IAuthService
             {
                 Status = false,
                 StatusCode = HttpStatusCode.Unauthorized,
-                Data = null,
+                Data = null!,
                 Errors = new List<string> { "Invalid token", ex.Message }
             };
         }
@@ -147,7 +142,7 @@ public class AuthService : IAuthService
         {
             Status = false,
             StatusCode = HttpStatusCode.NotImplemented,
-            Data = null,
+            Data = null!,
             Errors = new List<string> { "Refresh token functionality not implemented yet" }
         };
     }

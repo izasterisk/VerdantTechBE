@@ -1,6 +1,7 @@
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repository;
 
@@ -39,7 +40,6 @@ public class CustomerRepository : ICustomerRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
-            customer.UpdatedAt = DateTime.Now;
             var updatedCustomer = await _userRepository.UpdateAsync(customer);
             await transaction.CommitAsync();
             return updatedCustomer;
@@ -56,9 +56,20 @@ public class CustomerRepository : ICustomerRepository
         return await _userRepository.GetAsync(u =>u.Id == userId && u.Role == UserRole.Customer && u.Status == UserStatus.Active, useNoTracking: true);
     }
     
-    public async Task<List<User>> GetAllCustomersAsync()
+    public async Task<(List<User> users, int totalCount)> GetAllCustomersAsync(int page, int pageSize)
     {
-        return await _userRepository.GetAllByFilterAsync(u => u.Role == UserRole.Customer && u.Status == UserStatus.Active, useNoTracking: true);
+        var query = _dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.Role == UserRole.Customer && u.Status == UserStatus.Active)
+            .OrderByDescending(u => u.UpdatedAt);
+
+        var totalCount = await query.CountAsync();
+        var users = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (users, totalCount);
     }
     
     public async Task<bool> CheckEmailExistsAsync(string username)
