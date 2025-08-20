@@ -46,10 +46,12 @@ public class FertilizerConfiguration : IEntityTypeConfiguration<Fertilizer>
             
         builder.Property(f => f.CreatedAt)
             .HasColumnName("created_at")
+            .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
             
         builder.Property(f => f.UpdatedAt)
             .HasColumnName("updated_at")
+            .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
         
         // Foreign Key constraints

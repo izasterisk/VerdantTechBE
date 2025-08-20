@@ -63,7 +63,7 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
                 v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, jsonOptions),
                 v => string.IsNullOrEmpty(v) || v == "[]" ? new List<ContentBlock>() : JsonSerializer.Deserialize<List<ContentBlock>>(v, jsonOptions)!)
             .HasColumnType("json")
-            .HasDefaultValue("[]")
+            .HasDefaultValueSql("'[]'")
             .IsRequired();
 
         // JSON field for tags array
@@ -72,7 +72,7 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
                 v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, jsonOptions),
                 v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, jsonOptions)!)
             .HasColumnType("json")
-            .HasDefaultValue("[]");
+            .HasDefaultValueSql("'[]'");
 
         // Optional text field
         builder.Property(e => e.ModeratedReason)

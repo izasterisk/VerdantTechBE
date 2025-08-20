@@ -8,4 +8,5 @@ public interface ICustomerRepository
     Task<User> UpdateCustomerWithTransactionAsync(User customer);
     Task<User?> GetCustomerByIdAsync(ulong userId);
     Task<List<User>> GetAllCustomersAsync();
+    Task<bool> CheckEmailExistsAsync(string username);
 }

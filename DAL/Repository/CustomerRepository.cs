@@ -60,4 +60,9 @@ public class CustomerRepository : ICustomerRepository
     {
         return await _userRepository.GetAllByFilterAsync(u => u.Role == UserRole.Customer && u.Status == UserStatus.Active, useNoTracking: true);
     }
+    
+    public async Task<bool> CheckEmailExistsAsync(string username)
+    {
+        return await _userRepository.AnyAsync(u => u.Email.Equals(username));
+    }
 }

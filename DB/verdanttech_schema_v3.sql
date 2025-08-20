@@ -1,6 +1,6 @@
 -- VerdantTech Solutions Database Schema
 -- AI-Integrated Green Agricultural Equipment Platform for Sustainable Vegetable Farming
--- Version: 2.0
+-- Version: 3.0
 -- Engine: InnoDB (for transaction support)
 -- Character Set: utf8mb4 (for multilingual support)
 

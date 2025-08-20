@@ -31,10 +31,12 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
             
         builder.Property(c => c.CreatedAt)
             .HasColumnName("created_at")
+            .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
             
         builder.Property(c => c.UpdatedAt)
             .HasColumnName("updated_at")
+            .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
         
         // Foreign Key constraints
