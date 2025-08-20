@@ -29,11 +29,12 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("category_id");
         
         // Required fields
-        builder.Property(e => e.Sku)
+        builder.Property(e => e.ProductCode)
             .HasMaxLength(100)
             .IsRequired()
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("product_code");
             
         builder.Property(e => e.Name)
             .HasMaxLength(255)
@@ -134,10 +135,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(0)
             .HasColumnName("stock_quantity");
             
-        builder.Property(e => e.MinOrderQuantity)
-            .HasDefaultValue(1)
-            .HasColumnName("min_order_quantity");
-            
         builder.Property(e => e.TotalReviews)
             .HasDefaultValue(0)
             .HasColumnName("total_reviews");
@@ -189,9 +186,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(e => e.CategoryId)
             .HasDatabaseName("idx_category");
             
-        builder.HasIndex(e => e.Sku)
+        builder.HasIndex(e => e.ProductCode)
             .IsUnique()
-            .HasDatabaseName("idx_sku");
+            .HasDatabaseName("idx_product_code");
             
         builder.HasIndex(e => e.Name)
             .HasDatabaseName("idx_name");

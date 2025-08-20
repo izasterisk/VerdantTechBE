@@ -14,6 +14,13 @@ namespace DAL.Repository
     {
         private readonly VerdantTechDbContext _dbContext;
         private DbSet<T> _dbSet;
+
+        public Repository(VerdantTechDbContext dbContext)
+        {
+            _dbContext = dbContext;
+            _dbSet = _dbContext.Set<T>();
+        }
+
         public async Task<T> CreateAsync(T dbRecord)
         {
             _dbSet.Add(dbRecord);
@@ -120,5 +127,4 @@ namespace DAL.Repository
             return await _dbSet.AnyAsync(filter);
         }
     }
-}
 }

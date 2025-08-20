@@ -72,31 +72,6 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .HasColumnType("json")
             .HasDefaultValueSql("'[]'")
             .HasColumnName("primary_crops");
-            
-        builder.Property(e => e.CertificationTypes)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
-            .HasColumnName("certification_types");
-        
-        // Integer fields
-        builder.Property(e => e.FarmingExperienceYears)
-            .HasColumnName("farming_experience_years");
-        
-        // String fields
-        builder.Property(e => e.SoilType)
-            .HasMaxLength(100)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("soil_type");
-            
-        builder.Property(e => e.IrrigationType)
-            .HasMaxLength(100)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("irrigation_type");
         
         // DateTime fields
         builder.Property(e => e.CreatedAt)

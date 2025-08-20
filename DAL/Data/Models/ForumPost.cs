@@ -17,8 +17,11 @@ public partial class ForumPost
     [StringLength(255)]
     public string Title { get; set; } = null!;
 
+    /// <summary>
+    /// Mixed content blocks: text, images, videos, etc.
+    /// </summary>
     [Required]
-    public string Content { get; set; } = null!;
+    public List<ContentBlock> Content { get; set; } = new();
 
     /// <summary>
     /// Array of tags (JSON)

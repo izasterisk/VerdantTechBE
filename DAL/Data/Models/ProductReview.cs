@@ -28,23 +28,9 @@ public partial class ProductReview
     /// </summary>
     public List<string> Images { get; set; } = new();
 
-    public bool IsVerifiedPurchase { get; set; } = true;
-
     public int HelpfulCount { get; set; } = 0;
 
     public int UnhelpfulCount { get; set; } = 0;
-
-    public string? VendorReply { get; set; }
-
-    public DateTime? VendorRepliedAt { get; set; }
-
-    public bool IsFeatured { get; set; } = false;
-
-    public ReviewStatus Status { get; set; } = ReviewStatus.Pending;
-
-    public ulong? ModeratedBy { get; set; }
-
-    public DateTime? ModeratedAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
@@ -54,5 +40,4 @@ public partial class ProductReview
     public virtual Product Product { get; set; } = null!;
     public virtual Order Order { get; set; } = null!;
     public virtual User Customer { get; set; } = null!;
-    public virtual User? ModeratedByNavigation { get; set; }
 }

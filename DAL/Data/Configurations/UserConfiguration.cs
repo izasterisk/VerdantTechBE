@@ -41,19 +41,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         // Enum conversions
         builder.Property(e => e.Role)
             .HasConversion<string>()
-            .HasColumnType("enum('customer','farmer','seller','vendor','admin','expert','content_manager')")
+            .HasColumnType("enum('customer','seller','admin','manager')")
             .HasDefaultValue(UserRole.Customer);
         
         builder.Property(e => e.Status)
             .HasConversion<string>()
             .HasColumnType("enum('active','inactive','suspended','deleted')")
             .HasDefaultValue(UserStatus.Active);
-            
-        builder.Property(e => e.LanguagePreference)
-            .HasConversion<string>()
-            .HasColumnType("enum('vi','en')")
-            .HasDefaultValue(Language.Vi)
-            .HasColumnName("language_preference");
         
         // Optional fields
         builder.Property(e => e.PhoneNumber)

@@ -1,15 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Text.Json;
 using DAL.Data.Models;
 
 namespace DAL.Data.Configurations;
 
-public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
+public class OrderDetailConfiguration : IEntityTypeConfiguration<OrderDetail>
 {
-    public void Configure(EntityTypeBuilder<OrderItem> builder)
+    public void Configure(EntityTypeBuilder<OrderDetail> builder)
     {
-        builder.ToTable("order_items");
+        builder.ToTable("order_details");
         
         // Primary Key
         builder.HasKey(e => e.Id);
@@ -27,21 +26,6 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
             .HasColumnType("bigint unsigned")
             .IsRequired()
             .HasColumnName("product_id");
-        
-        // Snapshot fields - required
-        builder.Property(e => e.ProductName)
-            .HasMaxLength(255)
-            .IsRequired()
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("product_name");
-            
-        builder.Property(e => e.ProductSku)
-            .HasMaxLength(100)
-            .IsRequired()
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("product_sku");
         
         // Quantity and pricing
         builder.Property(e => e.Quantity)
@@ -61,14 +45,6 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
             .HasPrecision(12, 2)
             .IsRequired();
         
-        // JSON field for specifications snapshot
-        builder.Property(e => e.Specifications)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'{}'");
-        
         // DateTime field
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
@@ -77,12 +53,12 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         
         // Foreign Key Relationships
         builder.HasOne(d => d.Order)
-            .WithMany(p => p.OrderItems)
+            .WithMany(p => p.OrderDetails)
             .HasForeignKey(d => d.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
             
         builder.HasOne(d => d.Product)
-            .WithMany(p => p.OrderItems)
+            .WithMany(p => p.OrderDetails)
             .HasForeignKey(d => d.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
         

@@ -38,31 +38,6 @@ public class ChatbotMessageConfiguration : IEntityTypeConfiguration<ChatbotMessa
             .HasColumnType("text")
             .IsRequired();
 
-        builder.Property(e => e.Intent)
-            .HasColumnName("intent")
-            .HasMaxLength(100);
-
-        // Configure JSON properties following Guide.txt pattern
-        builder.Property(e => e.Entities)
-            .HasColumnName("entities")
-            .HasColumnType("json")
-            .HasConversion(
-                v => v == null ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                v => string.IsNullOrEmpty(v) ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null!)!
-            );
-
-        builder.Property(e => e.ConfidenceScore)
-            .HasColumnName("confidence_score")
-            .HasColumnType("decimal(3,2)");
-
-        builder.Property(e => e.SuggestedActions)
-            .HasColumnName("suggested_actions")
-            .HasColumnType("json")
-            .HasConversion(
-                v => v == null ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                v => string.IsNullOrEmpty(v) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!
-            );
-
         builder.Property(e => e.Attachments)
             .HasColumnName("attachments")
             .HasColumnType("json")

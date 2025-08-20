@@ -3,12 +3,9 @@ namespace DAL.Data;
 public enum UserRole
 {
     Customer,
-    Farmer,
     Seller,
-    Vendor,
     Admin,
-    Expert,
-    ContentManager
+    Manager
 }
 
 public enum UserStatus
@@ -19,10 +16,14 @@ public enum UserStatus
     Deleted
 }
 
-public enum Language
+public enum SoilType
 {
-    Vi,
-    En
+    DatPhuSa,       // Đất phù sa
+    DatDoBazan,     // Đất đỏ Bazan
+    DatFeralit,     // Đất Feralit
+    DatThit,        // Đất thịt
+    DatSet,         // Đất sét
+    DatCat          // Đất cát
 }
 
 public enum OrderStatus
@@ -65,36 +66,7 @@ public enum PaymentGateway
     Manual
 }
 
-public enum ReviewStatus
-{
-    Pending,
-    Approved,
-    Rejected
-}
 
-public enum MaterialType
-{
-    Guide,
-    Tutorial,
-    Research,
-    CaseStudy,
-    Infographic,
-    Video
-}
-
-public enum DifficultyLevel
-{
-    Beginner,
-    Intermediate,
-    Advanced
-}
-
-public enum ContentStatus
-{
-    Draft,
-    Published,
-    Archived
-}
 
 public enum ForumPostStatus
 {
@@ -111,38 +83,7 @@ public enum ForumCommentStatus
     Deleted
 }
 
-public enum BlogStatus
-{
-    Draft,
-    Published,
-    Scheduled,
-    Archived
-}
 
-public enum BlogCommentStatus
-{
-    Approved,
-    Pending,
-    Spam,
-    Deleted
-}
-
-public enum InteractionType
-{
-    Like,
-    Dislike,
-    Helpful,
-    Unhelpful
-}
-
-public enum TargetType
-{
-    ForumPost,
-    ForumComment,
-    BlogPost,
-    BlogComment,
-    ProductReview
-}
 
 public enum InventoryType
 {
@@ -164,17 +105,4 @@ public enum WeatherApiSource
     Accuweather
 }
 
-public enum SettingType
-{
-    String,
-    Number,
-    Boolean,
-    Json
-}
 
-public enum UserFeedback
-{
-    Helpful,
-    NotHelpful,
-    PartiallyHelpful
-}

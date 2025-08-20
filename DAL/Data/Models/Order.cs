@@ -9,10 +9,6 @@ public partial class Order
 {
     public ulong Id { get; set; }
 
-    [Required]
-    [StringLength(50)]
-    public string OrderNumber { get; set; } = null!;
-
     public ulong CustomerId { get; set; }
 
     public ulong VendorId { get; set; }
@@ -29,18 +25,10 @@ public partial class Order
 
     public decimal TotalAmount { get; set; }
 
-    [StringLength(3)]
-    public string CurrencyCode { get; set; } = "VND";
-
     /// <summary>
     /// Shipping address (JSON)
     /// </summary>
     public Dictionary<string, object> ShippingAddress { get; set; } = new();
-
-    /// <summary>
-    /// Billing address (JSON)
-    /// </summary>
-    public Dictionary<string, object>? BillingAddress { get; set; }
 
     [StringLength(100)]
     public string? ShippingMethod { get; set; }
@@ -67,7 +55,7 @@ public partial class Order
     // Navigation Properties
     public virtual User Customer { get; set; } = null!;
     public virtual User Vendor { get; set; } = null!;
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
 }

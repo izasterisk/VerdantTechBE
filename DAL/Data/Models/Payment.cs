@@ -20,9 +20,6 @@ public partial class Payment
 
     public decimal Amount { get; set; }
 
-    [StringLength(3)]
-    public string CurrencyCode { get; set; } = "VND";
-
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
     /// <summary>
