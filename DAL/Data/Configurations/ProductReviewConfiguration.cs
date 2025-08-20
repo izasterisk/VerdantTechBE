@@ -33,10 +33,6 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             .HasColumnType("bigint unsigned")
             .IsRequired()
             .HasColumnName("customer_id");
-            
-        builder.Property(e => e.ModeratedBy)
-            .HasColumnType("bigint unsigned")
-            .HasColumnName("moderated_by");
         
         // Rating with check constraint equivalent
         builder.Property(e => e.Rating)
@@ -52,12 +48,6 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
-            
-        builder.Property(e => e.VendorReply)
-            .HasColumnType("text")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("vendor_reply");
         
         // JSON field for images array
         builder.Property(e => e.Images)
@@ -65,15 +55,6 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
                 v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                 v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
             .HasColumnType("json");
-        
-        // Boolean defaults
-        builder.Property(e => e.IsVerifiedPurchase)
-            .HasDefaultValue(true)
-            .HasColumnName("is_verified_purchase");
-            
-        builder.Property(e => e.IsFeatured)
-            .HasDefaultValue(false)
-            .HasColumnName("is_featured");
         
         // Count fields with defaults
         builder.Property(e => e.HelpfulCount)
@@ -84,21 +65,7 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             .HasDefaultValue(0)
             .HasColumnName("unhelpful_count");
         
-        // Enum conversion for status
-        builder.Property(e => e.Status)
-            .HasConversion<string>()
-            .HasColumnType("enum('pending','approved','rejected')")
-            .HasDefaultValue(ReviewStatus.Pending);
-        
         // DateTime fields
-        builder.Property(e => e.VendorRepliedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("vendor_replied_at");
-            
-        builder.Property(e => e.ModeratedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("moderated_at");
-            
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -129,12 +96,6 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             .HasForeignKey(d => d.CustomerId)
             .OnDelete(DeleteBehavior.Cascade);
         
-        // Relationship with User (moderator)
-        builder.HasOne(d => d.ModeratedByNavigation)
-            .WithMany(p => p.ModeratedProductReviews)
-            .HasForeignKey(d => d.ModeratedBy)
-            .OnDelete(DeleteBehavior.SetNull);
-        
         // Unique constraint - one review per product per order per customer
         builder.HasIndex(e => new { e.ProductId, e.OrderId, e.CustomerId })
             .IsUnique()
@@ -146,9 +107,6 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             
         builder.HasIndex(e => e.CustomerId)
             .HasDatabaseName("idx_customer");
-            
-        builder.HasIndex(e => e.Status)
-            .HasDatabaseName("idx_status");
             
         builder.HasIndex(e => e.CreatedAt)
             .HasDatabaseName("idx_created_at");

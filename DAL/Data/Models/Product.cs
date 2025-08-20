@@ -15,7 +15,7 @@ public partial class Product
 
     [Required]
     [StringLength(100)]
-    public string Sku { get; set; } = null!;
+    public string ProductCode { get; set; } = null!;
 
     [Required]
     [StringLength(255)]
@@ -59,8 +59,6 @@ public partial class Product
 
     public int StockQuantity { get; set; } = 0;
 
-    public int MinOrderQuantity { get; set; } = 1;
-
     public decimal? WeightKg { get; set; }
 
     /// <summary>
@@ -88,6 +86,7 @@ public partial class Product
     public virtual User Vendor { get; set; } = null!;
     public virtual ProductCategory Category { get; set; } = null!;
     public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
+    public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 }

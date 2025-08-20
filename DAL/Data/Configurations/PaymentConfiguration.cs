@@ -59,14 +59,6 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasDefaultValue(0.00m)
             .HasColumnName("refund_amount");
         
-        // Currency field
-        builder.Property(e => e.CurrencyCode)
-            .HasMaxLength(3)
-            .HasDefaultValue("VND")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("currency_code");
-        
         // JSON field for gateway response
         builder.Property(e => e.GatewayResponse)
             .HasConversion(

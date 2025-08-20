@@ -37,19 +37,6 @@ public partial class FarmProfile
     /// </summary>
     public List<string> PrimaryCrops { get; set; } = new();
 
-    public int? FarmingExperienceYears { get; set; }
-
-    /// <summary>
-    /// Array of certifications like organic, VietGAP, GlobalGAP (JSON)
-    /// </summary>
-    public List<string> CertificationTypes { get; set; } = new();
-
-    [StringLength(100)]
-    public string? SoilType { get; set; }
-
-    [StringLength(100)]
-    public string? IrrigationType { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
@@ -58,5 +45,4 @@ public partial class FarmProfile
     public virtual User User { get; set; } = null!;
     public virtual ICollection<EnvironmentalDatum> EnvironmentalData { get; set; } = new List<EnvironmentalDatum>();
     public virtual ICollection<WeatherDataCache> WeatherDataCache { get; set; } = new List<WeatherDataCache>();
-    public virtual ICollection<PlantDiseaseDetection> PlantDiseaseDetections { get; set; } = new List<PlantDiseaseDetection>();
 }

@@ -1,0 +1,267 @@
+# VerdantTech Database Changes: Version 1.0 to Version 2.0
+
+## 📊 Tổng quan thay đổi
+- **Tổng số bảng V1**: 31 bảng
+- **Tổng số bảng V2**: 22 bảng
+- **Bảng bị xóa**: 11 bảng
+- **Bảng mới thêm**: 2 bảng
+- **Bảng được chỉnh sửa**: 12 bảng
+
+---
+
+## 🗑️ CÁC BẢNG ĐÃ XÓA (11 bảng)
+
+### 1. `knowledge_base`
+- **Lý do**: Theo yêu cầu xóa bảng
+
+### 2. `plant_disease_detections`
+- **Lý do**: Theo yêu cầu xóa bảng
+
+### 3. `blog_posts`
+- **Lý do**: Xóa toàn bộ hệ thống blog
+
+### 4. `blog_comments`
+- **Lý do**: Xóa toàn bộ hệ thống blog
+
+### 5. `user_interactions`
+- **Lý do**: Theo yêu cầu xóa bảng
+
+### 6. `educational_materials`
+- **Lý do**: Theo yêu cầu xóa bảng
+
+### 7. `user_activity_logs`
+- **Lý do**: Theo yêu cầu xóa bảng
+
+### 8. `sales_analytics_daily`
+- **Lý do**: Theo yêu cầu xóa bảng
+
+### 9. `system_settings`
+- **Lý do**: Theo yêu cầu xóa bảng
+
+### 10. `audit_logs`
+- **Lý do**: Theo yêu cầu xóa bảng
+
+### 11. Sample data inserts
+- **Lý do**: Bỏ phần thêm dữ liệu mẫu
+
+---
+
+## ➕ CÁC BẢNG MỚI THÊM (2 bảng)
+
+### 1. `cart` - Giỏ hàng
+```sql
+CREATE TABLE cart (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_product (user_id, product_id)
+);
+```
+
+### 2. `fertilizers` - Theo dõi sử dụng phân bón
+```sql
+CREATE TABLE fertilizers (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    environmental_data_id BIGINT UNSIGNED NOT NULL,
+    organic_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân hữu cơ (kg)',
+    npk_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân NPK tổng hợp (kg)',
+    urea_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân urê (kg)', 
+    phosphate_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân lân (kg)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (environmental_data_id) REFERENCES environmental_data(id) ON DELETE CASCADE
+);
+```
+
+### 3. `energy_usage` - Theo dõi sử dụng năng lượng
+```sql
+CREATE TABLE energy_usage (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    environmental_data_id BIGINT UNSIGNED NOT NULL,
+    electricity_kwh DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Điện tiêu thụ (kWh)',
+    gasoline_liters DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Xăng sử dụng (lít)',
+    diesel_liters DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Dầu diesel sử dụng (lít)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (environmental_data_id) REFERENCES environmental_data(id) ON DELETE CASCADE
+);
+```
+
+---
+
+## ✏️ CÁC BẢNG ĐÃ CHỈNH SỬA
+
+### 1. `users` - Bảng người dùng
+
+#### **Thay đổi ENUM role:**
+- **Trước (V1)**: `ENUM('customer', 'farmer', 'seller', 'vendor', 'admin', 'expert', 'content_manager')`
+- **Sau (V2)**: `ENUM('customer', 'seller', 'admin', 'manager')`
+- **Lý do**: Gộp customer + farmer thành customer, đơn giản hóa roles
+
+#### **Xóa field:**
+- **Field bị xóa**: `language_preference ENUM('vi', 'en') DEFAULT 'vi'`
+- **Lý do**: Theo yêu cầu bỏ field này
+
+### 2. `products` - Bảng sản phẩm
+
+#### **Đổi tên field:**
+- **Trước**: `sku VARCHAR(100) UNIQUE NOT NULL`
+- **Sau**: `product_code VARCHAR(100) UNIQUE NOT NULL`
+- **Index cũ**: `INDEX idx_sku (sku)`
+- **Index mới**: `INDEX idx_product_code (product_code)`
+
+#### **Xóa field:**
+- **Field bị xóa**: `min_order_quantity INT DEFAULT 1`
+- **Lý do**: Theo yêu cầu bỏ field này
+
+### 3. `orders` - Bảng đơn hàng
+
+#### **Xóa các field:**
+- **Fields bị xóa**:
+  - `currency_code VARCHAR(3) DEFAULT 'VND'`
+  - `billing_address JSON`
+  - `order_number VARCHAR(50) UNIQUE NOT NULL`
+- **Index bị xóa**: `INDEX idx_order_number (order_number)`
+- **Lý do**: Hệ thống thuần Việt Nam, không cần currency và billing address
+
+### 4. `order_items` → `order_details` - Đổi tên bảng
+
+#### **Đổi tên bảng:**
+- **Trước**: `order_items`
+- **Sau**: `order_details`
+
+#### **Xóa các field:**
+- **Fields bị xóa**:
+  - `product_name VARCHAR(255) NOT NULL COMMENT 'Snapshot of product name'`
+  - `product_sku VARCHAR(100) NOT NULL COMMENT 'Snapshot of SKU'`
+  - `specifications JSON COMMENT 'Snapshot of product specs'`
+- **Lý do**: Đơn giản hóa cấu trúc, lấy thông tin từ product_id
+
+### 5. `payments` - Bảng thanh toán
+
+#### **Xóa field:**
+- **Field bị xóa**: `currency_code VARCHAR(3) DEFAULT 'VND'`
+- **Lý do**: Hệ thống thuần Việt Nam
+
+### 6. `product_reviews` - Bảng đánh giá sản phẩm
+
+#### **Xóa các field:**
+- **Fields bị xóa**:
+  - `is_verified_purchase BOOLEAN DEFAULT TRUE`
+  - `vendor_reply TEXT`
+  - `vendor_replied_at TIMESTAMP NULL`
+  - `is_featured BOOLEAN DEFAULT FALSE`
+  - `status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending'`
+  - `moderated_by BIGINT UNSIGNED NULL`
+  - `moderated_at TIMESTAMP NULL`
+- **Foreign key bị xóa**: `FOREIGN KEY (moderated_by) REFERENCES users(id)`
+- **Index bị xóa**: `INDEX idx_status (status)`
+
+### 7. `farm_profiles` - Hồ sơ nông trại
+
+#### **Xóa các field:**
+- **Fields bị xóa**:
+  - `farming_experience_years INT`
+  - `certification_types JSON COMMENT 'Array of certifications like organic, VietGAP, GlobalGAP'`
+  - `soil_type VARCHAR(100)` (chuyển sang environmental_data)
+  - `irrigation_type VARCHAR(100)`
+
+#### **Thay đổi vị trí:**
+- **Di chuyển**: Từ vị trí sau `users` xuống cạnh `environmental_data` trong file schema
+
+### 8. `environmental_data` - Dữ liệu môi trường
+
+#### **Thêm field mới:**
+- **Field mới**: `soil_type ENUM('Đất phù sa', 'Đất đỏ Bazan', 'Đất Feralit', 'Đất thịt', 'Đất sét', 'Đất cát') NOT NULL`
+- **Index mới**: `INDEX idx_soil_type (soil_type)`
+
+#### **Xóa các field:**
+- **Fields bị xóa**:
+  - `nitrogen_level DECIMAL(10,2) COMMENT 'N content in mg/kg'`
+  - `phosphorus_level DECIMAL(10,2) COMMENT 'P content in mg/kg'`
+  - `potassium_level DECIMAL(10,2) COMMENT 'K content in mg/kg'`
+  - `organic_matter_percentage DECIMAL(5,2)`
+
+### 9. `chatbot_messages` - Tin nhắn chatbot
+
+#### **Xóa các field:**
+- **Fields bị xóa**:
+  - `intent VARCHAR(100) COMMENT 'Detected user intent'`
+  - `entities JSON COMMENT 'Extracted entities from message'`
+  - `confidence_score DECIMAL(3,2) COMMENT 'AI confidence score'`
+  - `suggested_actions JSON COMMENT 'Quick reply suggestions'`
+
+### 10. `forum_categories` - Danh mục diễn đàn
+
+#### **Xóa các field:**
+- **Fields bị xóa**:
+  - `name_en VARCHAR(255)`
+  - `slug VARCHAR(255) UNIQUE NOT NULL`
+  - `icon_url VARCHAR(500)`
+  - `sort_order INT DEFAULT 0`
+- **Indexes bị xóa**:
+  - `INDEX idx_slug (slug)`
+  - `INDEX idx_active_sort (is_active, sort_order)`
+- **Index còn lại**: `INDEX idx_active (is_active)`
+
+### 11. `forum_posts` - Bài viết diễn đàn
+
+#### **Thêm field mới:**
+- **Field mới**: `image_link VARCHAR(500)`
+
+### 12. `forum_comments` - Bình luận diễn đàn
+
+#### **Xóa field:**
+- **Field bị xóa**: `is_solution BOOLEAN DEFAULT FALSE`
+
+---
+
+## 🔧 CÁC TRIGGER ĐÃ CHỈNH SỬA
+
+### Trigger `update_product_rating_on_update`
+- **Thay đổi**: Bỏ điều kiện `AND status = 'approved'` vì đã xóa field `status` trong `product_reviews`
+- **Trước**: 
+  ```sql
+  WHERE product_id = NEW.product_id AND status = 'approved'
+  ```
+- **Sau**: 
+  ```sql
+  WHERE product_id = NEW.product_id
+  ```
+
+---
+
+## 📈 TỔNG KẾT THỐNG KÊ
+
+### Theo loại thay đổi:
+- **Fields bị xóa**: 24 fields
+- **Fields được thêm**: 8 fields  
+- **Fields đổi tên**: 1 field
+- **Bảng đổi tên**: 1 bảng
+- **Enum được sửa**: 1 enum
+- **Indexes bị xóa**: 6 indexes
+- **Indexes được thêm**: 2 indexes
+- **Foreign keys bị xóa**: 1 foreign key
+- **Triggers được sửa**: 2 triggers
+
+### Mục đích chính của các thay đổi:
+1. **Đơn giản hóa**: Giảm complexity bằng cách xóa các features không cần thiết
+2. **Tối ưu cho thị trường VN**: Bỏ multi-currency, multi-language
+3. **Tập trung core features**: Giữ lại ecommerce, environmental tracking, forum
+4. **Cải thiện UX**: Thêm shopping cart, đơn giản hóa product management
+
+### Các bảng quan trọng được giữ lại và tối ưu:
+- ✅ User management (simplified roles)
+- ✅ Product & inventory management  
+- ✅ Order & payment processing
+- ✅ Environmental data tracking (enhanced)
+- ✅ AI Chatbot functionality
+- ✅ Community forum features

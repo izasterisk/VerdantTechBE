@@ -46,22 +46,13 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
         builder.Property(e => e.SoilMoisturePercentage)
             .HasPrecision(5, 2)
             .HasColumnName("soil_moisture_percentage");
-            
-        builder.Property(e => e.NitrogenLevel)
-            .HasPrecision(10, 2)
-            .HasColumnName("nitrogen_level");
-            
-        builder.Property(e => e.PhosphorusLevel)
-            .HasPrecision(10, 2)
-            .HasColumnName("phosphorus_level");
-            
-        builder.Property(e => e.PotassiumLevel)
-            .HasPrecision(10, 2)
-            .HasColumnName("potassium_level");
-            
-        builder.Property(e => e.OrganicMatterPercentage)
-            .HasPrecision(5, 2)
-            .HasColumnName("organic_matter_percentage");
+
+        // Soil type enum
+        builder.Property(e => e.SoilType)
+            .HasConversion<string>()
+            .HasColumnType("enum('DatPhuSa','DatDoBazan','DatFeralit','DatThit','DatSet','DatCat')")
+            .IsRequired()
+            .HasColumnName("soil_type");
         
         // Text field
         builder.Property(e => e.Notes)
@@ -100,5 +91,8 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
             
         builder.HasIndex(e => e.MeasurementDate)
             .HasDatabaseName("idx_date");
+            
+        builder.HasIndex(e => e.SoilType)
+            .HasDatabaseName("idx_soil_type");
     }
 }

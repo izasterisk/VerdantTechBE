@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using DAL.Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,12 +28,14 @@ builder.Services.AddDbContext<VerdantTechDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.Parse("8.0.43-mysql"), 
         b => b.MigrationsAssembly("DAL")));
 
-// Add Repository DI
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+//Dependency Injection
+builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 
-// Add Service DI
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 
 // JWT Configuration
 var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
@@ -76,17 +79,25 @@ var app = builder.Build();
 // Database recreation setup - for development/migration
 if (app.Environment.IsDevelopment())
 {
-    using (var scope = app.Services.CreateScope())
+    var autoCreateDb = Environment.GetEnvironmentVariable("AUTO_CREATE_DB");
+    if (string.Equals(autoCreateDb, "True", StringComparison.OrdinalIgnoreCase))
     {
-        var context = scope.ServiceProvider.GetRequiredService<VerdantTechDbContext>();
-        
-        // Delete existing database if it exists
-        await context.Database.EnsureDeletedAsync();
-        
-        // Create new database with current schema
-        await context.Database.EnsureCreatedAsync();
-        
-        Console.WriteLine("Database recreated successfully!");
+        using (var scope = app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<VerdantTechDbContext>();
+            
+            // Delete existing database if it exists
+            await context.Database.EnsureDeletedAsync();
+            
+            // Create new database with current schema
+            await context.Database.EnsureCreatedAsync();
+            
+            Console.WriteLine("Database recreated successfully!");
+        }
+    }
+    else
+    {
+        Console.WriteLine("AUTO_CREATE_DB is disabled. Skipping database recreation.");
     }
 }
 

@@ -59,11 +59,6 @@ public class ForumCommentConfiguration : IEntityTypeConfiguration<ForumComment>
             .HasDefaultValue(0)
             .HasColumnName("dislike_count");
         
-        // Boolean defaults
-        builder.Property(e => e.IsSolution)
-            .HasDefaultValue(false)
-            .HasColumnName("is_solution");
-        
         // Enum conversion for status
         builder.Property(e => e.Status)
             .HasConversion<string>()

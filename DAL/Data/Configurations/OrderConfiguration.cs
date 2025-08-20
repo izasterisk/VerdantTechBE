@@ -29,14 +29,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasColumnName("vendor_id");
         
-        // Required unique field
-        builder.Property(e => e.OrderNumber)
-            .HasMaxLength(50)
-            .IsRequired()
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("order_number");
-        
         // Enum conversion for status
         builder.Property(e => e.Status)
             .HasConversion<string>()
@@ -68,14 +60,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasColumnName("total_amount");
         
-        // Currency field
-        builder.Property(e => e.CurrencyCode)
-            .HasMaxLength(3)
-            .HasDefaultValue("VND")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("currency_code");
-        
         // JSON fields for addresses
         builder.Property(e => e.ShippingAddress)
             .HasConversion(
@@ -85,13 +69,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasColumnName("shipping_address");
             
-        builder.Property(e => e.BillingAddress)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasColumnName("billing_address");
-        
         // Optional string fields
         builder.Property(e => e.ShippingMethod)
             .HasMaxLength(100)
@@ -153,11 +130,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .WithMany(p => p.VendorOrders)
             .HasForeignKey(d => d.VendorId)
             .OnDelete(DeleteBehavior.Restrict);
-        
-        // Unique constraint
-        builder.HasIndex(e => e.OrderNumber)
-            .IsUnique()
-            .HasDatabaseName("idx_order_number");
         
         // Indexes
         builder.HasIndex(e => e.CustomerId)

@@ -17,27 +17,6 @@ public partial class ChatbotMessage
     public string MessageText { get; set; } = null!;
 
     /// <summary>
-    /// Detected user intent
-    /// </summary>
-    [StringLength(100)]
-    public string? Intent { get; set; }
-
-    /// <summary>
-    /// Extracted entities from message (JSON)
-    /// </summary>
-    public Dictionary<string, object> Entities { get; set; } = new();
-
-    /// <summary>
-    /// AI confidence score
-    /// </summary>
-    public decimal? ConfidenceScore { get; set; }
-
-    /// <summary>
-    /// Quick reply suggestions (JSON)
-    /// </summary>
-    public List<string> SuggestedActions { get; set; } = new();
-
-    /// <summary>
     /// Image or file attachments (JSON)
     /// </summary>
     public List<string> Attachments { get; set; } = new();

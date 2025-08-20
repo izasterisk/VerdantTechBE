@@ -25,8 +25,6 @@ public partial class ForumComment
 
     public int DislikeCount { get; set; } = 0;
 
-    public bool IsSolution { get; set; } = false;
-
     public ForumCommentStatus Status { get; set; } = ForumCommentStatus.Visible;
 
     public string? ModeratedReason { get; set; }

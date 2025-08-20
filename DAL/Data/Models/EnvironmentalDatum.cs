@@ -27,22 +27,7 @@ public partial class EnvironmentalDatum
 
     public decimal? SoilMoisturePercentage { get; set; }
 
-    /// <summary>
-    /// N content in mg/kg
-    /// </summary>
-    public decimal? NitrogenLevel { get; set; }
-
-    /// <summary>
-    /// P content in mg/kg
-    /// </summary>
-    public decimal? PhosphorusLevel { get; set; }
-
-    /// <summary>
-    /// K content in mg/kg
-    /// </summary>
-    public decimal? PotassiumLevel { get; set; }
-
-    public decimal? OrganicMatterPercentage { get; set; }
+    public SoilType SoilType { get; set; }
 
     public string? Notes { get; set; }
 
@@ -53,4 +38,6 @@ public partial class EnvironmentalDatum
     // Navigation Properties
     public virtual FarmProfile FarmProfile { get; set; } = null!;
     public virtual User User { get; set; } = null!;
+    public virtual ICollection<Fertilizer> Fertilizers { get; set; } = new List<Fertilizer>();
+    public virtual ICollection<EnergyUsage> EnergyUsages { get; set; } = new List<EnergyUsage>();
 }

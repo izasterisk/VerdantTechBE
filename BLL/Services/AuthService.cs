@@ -1,6 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
-using System.Security.Claims;
 using System.Text;
 using BLL.DTO;
 using BLL.DTO.Auth;
@@ -16,11 +15,13 @@ public class AuthService : IAuthService
 {
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
+    private readonly ICustomerRepository _customerRepository;
 
-    public AuthService(IAuthRepository authRepository, IConfiguration configuration)
+    public AuthService(IAuthRepository authRepository, IConfiguration configuration, ICustomerRepository customerRepository)
     {
         _authRepository = authRepository;
         _configuration = configuration;
+        _customerRepository = customerRepository;
     }
 
     public async Task<APIResponse> LoginAsync(LoginDTO loginDto)
@@ -55,11 +56,11 @@ public class AuthService : IAuthService
 
             // Update last login
             user.LastLoginAt = DateTime.UtcNow;
-            await _authRepository.UpdateUserAsync(user);
+            await _customerRepository.UpdateCustomerWithTransactionAsync(user);
 
             // Generate JWT token
-            var token = GenerateJwtToken(user);
-            var refreshToken = GenerateRefreshToken();
+            var token = AuthUtils.GenerateJwtToken(user, _configuration);
+            var refreshToken = AuthUtils.GenerateRefreshToken();
 
             var loginResponse = new LoginResponseDTO
             {
@@ -149,38 +150,5 @@ public class AuthService : IAuthService
             Data = null,
             Errors = new List<string> { "Refresh token functionality not implemented yet" }
         };
-    }
-
-    private string GenerateJwtToken(DAL.Data.Models.User user)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration["JWT_SECRET"] ?? throw new InvalidOperationException("JWT_SECRET not configured"));
-
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.FullName),
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
-            new Claim("verified", user.IsVerified.ToString().ToLower())
-        };
-
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(_configuration["JWT_EXPIRE_HOURS"] ?? "24")),
-            Issuer = _configuration["JWT_ISSUER"],
-            Audience = _configuration["JWT_AUDIENCE"],
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-        };
-
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        return tokenHandler.WriteToken(token);
-    }
-
-    private string GenerateRefreshToken()
-    {
-        // Generate a simple refresh token - in production, this should be more secure
-        return Guid.NewGuid().ToString();
     }
 }
