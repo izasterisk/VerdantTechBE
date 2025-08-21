@@ -29,6 +29,8 @@ CREATE TABLE users (
     avatar_url VARCHAR(500),
     status ENUM('active', 'inactive', 'suspended', 'deleted') DEFAULT 'active',
     last_login_at TIMESTAMP NULL,
+    RefreshToken VARCHAR(500),
+    RefreshTokenExpiresAt TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL,
