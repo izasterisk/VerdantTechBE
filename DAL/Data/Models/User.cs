@@ -40,6 +40,11 @@ public partial class User
 
     public DateTime? LastLoginAt { get; set; }
 
+    [StringLength(500)]
+    public string? RefreshToken { get; set; }
+
+    public DateTime? RefreshTokenExpiresAt { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

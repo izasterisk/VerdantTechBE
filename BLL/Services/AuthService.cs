@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using BLL.DTO;
 using BLL.DTO.Auth;
@@ -16,7 +17,7 @@ public class AuthService : IAuthService
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
     private readonly ICustomerRepository _customerRepository;
-
+    
     public AuthService(IAuthRepository authRepository, IConfiguration configuration, ICustomerRepository customerRepository)
     {
         _authRepository = authRepository;
@@ -42,20 +43,25 @@ public class AuthService : IAuthService
                 };
             }
 
-            // Update last login
-            user.LastLoginAt = DateTime.UtcNow;
-            await _customerRepository.UpdateCustomerWithTransactionAsync(user);
-
-            // Generate JWT token
+            // Generate tokens
             var token = AuthUtils.GenerateJwtToken(user, _configuration);
             var refreshToken = AuthUtils.GenerateRefreshToken();
+
+            // Update user with refresh token and last login
+            DateTime refTokenExpiry = AuthUtils.GetRefreshTokenExpiryTime();
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiresAt = refTokenExpiry;
+            user.LastLoginAt = DateTime.UtcNow;
+            
+            await _authRepository.UpdateUserAsync(user);
 
             var jwtExpireHours = Environment.GetEnvironmentVariable("JWT_EXPIRE_HOURS") ?? "24";
             var loginResponse = new LoginResponseDTO
             {
                 Token = token,
+                TokenExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(jwtExpireHours)),
                 RefreshToken = refreshToken,
-                ExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(jwtExpireHours)),
+                RefreshTokenExpiresAt = refTokenExpiry,
                 User = new UserInfoDTO
                 {
                     Id = user.Id,
@@ -87,36 +93,49 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<APIResponse> ValidateTokenAsync(string token)
+    public async Task<APIResponse> RefreshTokenAsync(string refreshToken)
     {
         try
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
-            var key = Encoding.ASCII.GetBytes(jwtSecret ?? throw new InvalidOperationException("JWT_SECRET not configured"));
-
-            var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
-            var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
-
-            tokenHandler.ValidateToken(token, new TokenValidationParameters
+            // Find user by refresh token
+            var user = await _authRepository.GetUserByRefreshTokenAsync(refreshToken);
+            
+            if (user == null)
             {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
-                ValidateIssuer = true,
-                ValidIssuer = jwtIssuer,
-                ValidateAudience = true,
-                ValidAudience = jwtAudience,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            }, out SecurityToken validatedToken);
+                return new APIResponse
+                {
+                    Status = false,
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    Data = null!,
+                    Errors = new List<string> { "Invalid or expired refresh token" }
+                };
+            }
 
-            await Task.CompletedTask; // To make it truly async
+            // Generate new tokens
+            var newToken = AuthUtils.GenerateJwtToken(user, _configuration);
+            var newRefreshToken = AuthUtils.GenerateRefreshToken();
+
+            // Update user with new refresh token
+            DateTime refTokenExpiry = AuthUtils.GetRefreshTokenExpiryTime();
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiresAt = refTokenExpiry;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _customerRepository.UpdateCustomerWithTransactionAsync(user);
+
+            var jwtExpireHours = Environment.GetEnvironmentVariable("JWT_EXPIRE_HOURS") ?? "24";
+            var refreshResponse = new RefreshTokenResponseDTO
+            {
+                Token = newToken,
+                TokenExpiresAt = DateTime.UtcNow.AddHours(Convert.ToDouble(jwtExpireHours)),
+                RefreshToken = newRefreshToken,
+                RefreshTokenExpiresAt = refTokenExpiry
+            };
 
             return new APIResponse
             {
                 Status = true,
                 StatusCode = HttpStatusCode.OK,
-                Data = "Token is valid",
+                Data = refreshResponse,
                 Errors = new List<string>()
             };
         }
@@ -125,25 +144,63 @@ public class AuthService : IAuthService
             return new APIResponse
             {
                 Status = false,
-                StatusCode = HttpStatusCode.Unauthorized,
+                StatusCode = HttpStatusCode.InternalServerError,
                 Data = null!,
-                Errors = new List<string> { "Invalid token", ex.Message }
+                Errors = new List<string> { "An error occurred during token refresh", ex.Message }
             };
         }
     }
-
-    public async Task<APIResponse> RefreshTokenAsync(string refreshToken)
+    
+    public async Task<APIResponse> LogoutAsync(ulong userId)
     {
-        // Implementation for refresh token logic
-        // This is a placeholder - you would need to implement refresh token storage and validation
-        await Task.CompletedTask;
-        
-        return new APIResponse
+        try
         {
-            Status = false,
-            StatusCode = HttpStatusCode.NotImplemented,
-            Data = null!,
-            Errors = new List<string> { "Refresh token functionality not implemented yet" }
-        };
+            // Find user by ID
+            var user = await _customerRepository.GetCustomerByIdAsync(userId);
+            
+            if (user == null)
+            {
+                return new APIResponse
+                {
+                    Status = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    Data = null!,
+                    Errors = new List<string> { "User not found" }
+                };
+            }
+
+            // Check if user is already logged out (no refresh token)
+            if (string.IsNullOrEmpty(user.RefreshToken))
+            {
+                return new APIResponse
+                {
+                    Status = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Data = "User already logged out",
+                    Errors = new List<string>()
+                };
+            }
+
+            // Logout user by clearing refresh token
+            await _authRepository.LogoutUserAsync(user);
+
+            return new APIResponse
+            {
+                Status = true,
+                StatusCode = HttpStatusCode.OK,
+                Data = "Logged out successfully",
+                Errors = new List<string>()
+            };
+        }
+        catch (Exception ex)
+        {
+            return new APIResponse
+            {
+                Status = false,
+                StatusCode = HttpStatusCode.InternalServerError,
+                Data = null!,
+                Errors = new List<string> { "An error occurred during logout", ex.Message }
+            };
+        }
     }
 }

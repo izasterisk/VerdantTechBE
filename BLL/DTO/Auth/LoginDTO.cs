@@ -16,8 +16,9 @@ public class LoginDTO
 public class LoginResponseDTO
 {
     public string Token { get; set; } = null!;
+    public DateTime TokenExpiresAt { get; set; }
     public string RefreshToken { get; set; } = null!;
-    public DateTime ExpiresAt { get; set; }
+    public DateTime RefreshTokenExpiresAt { get; set; }
     public UserInfoDTO User { get; set; } = null!;
 }
 

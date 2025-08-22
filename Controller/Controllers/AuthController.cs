@@ -58,72 +58,44 @@ namespace Controller.Controllers
         }
 
         /// <summary>
-        /// Validate JWT token
+        /// Refresh JWT token using refresh token
         /// </summary>
-        /// <param name="token">JWT token to validate</param>
-        /// <returns>Token validation result</returns>
-        [HttpPost("validate-token")]
-        [AllowAnonymous]
-        public async Task<IActionResult> ValidateToken([FromBody] string token)
-        {
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                var errorResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Data = null!,
-                    Errors = new List<string> { "Token is required" }
-                };
-
-                return BadRequest(errorResponse);
-            }
-
-            var result = await _authService.ValidateTokenAsync(token);
-            
-            return result.StatusCode switch
-            {
-                HttpStatusCode.OK => Ok(result),
-                HttpStatusCode.Unauthorized => Unauthorized(result),
-                _ => StatusCode(500, result)
-            };
-        }
-
-        /// <summary>
-        /// Refresh JWT token
-        /// </summary>
-        /// <param name="refreshToken">Refresh token</param>
-        /// <returns>New JWT token</returns>
+        /// <param name="refreshTokenDto">Refresh token DTO</param>
+        /// <returns>New JWT token and refresh token</returns>
         [HttpPost("refresh-token")]
         [AllowAnonymous]
-        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDTO refreshTokenDto)
         {
-            if (string.IsNullOrWhiteSpace(refreshToken))
+            if (!ModelState.IsValid)
             {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
                 var errorResponse = new APIResponse
                 {
                     Status = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     Data = null!,
-                    Errors = new List<string> { "Refresh token is required" }
+                    Errors = errors
                 };
 
                 return BadRequest(errorResponse);
             }
 
-            var result = await _authService.RefreshTokenAsync(refreshToken);
+            var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
             
             return result.StatusCode switch
             {
                 HttpStatusCode.OK => Ok(result),
                 HttpStatusCode.Unauthorized => Unauthorized(result),
-                HttpStatusCode.NotImplemented => StatusCode(501, result),
                 _ => StatusCode(500, result)
             };
         }
 
         /// <summary>
-        /// Test protected endpoint
+        /// Get current user profile information from JWT token
         /// </summary>
         /// <returns>User information from JWT token</returns>
         [HttpGet("profile")]
@@ -153,6 +125,51 @@ namespace Controller.Controllers
             };
 
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Logout endpoint - invalidates refresh token
+        /// </summary>
+        /// <returns>Logout confirmation</returns>
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                var unauthorizedResponse = new APIResponse
+                {
+                    Status = false,
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    Data = null!,
+                    Errors = new List<string> { "User not authenticated" }
+                };
+                return Unauthorized(unauthorizedResponse);
+            }
+
+            // Convert string to ulong
+            if (!ulong.TryParse(userIdClaim, out ulong userId))
+            {
+                var badRequestResponse = new APIResponse
+                {
+                    Status = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Data = null!,
+                    Errors = new List<string> { "Invalid user ID format" }
+                };
+                return BadRequest(badRequestResponse);
+            }
+
+            var result = await _authService.LogoutAsync(userId);
+            
+            return result.StatusCode switch
+            {
+                HttpStatusCode.OK => Ok(result),
+                HttpStatusCode.Unauthorized => Unauthorized(result),
+                HttpStatusCode.NotFound => NotFound(result),
+                _ => StatusCode(500, result)
+            };
         }
     }
 }
