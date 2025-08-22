@@ -14,8 +14,18 @@ using DAL.Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load .env file từ Controller folder
-Env.Load();
+// Load .env file
+try 
+{
+    var envPath = File.Exists("Controller/.env") ? "Controller/.env" : 
+        File.Exists(".env") ? ".env" : 
+        throw new FileNotFoundException(".env file not found");
+    Env.Load(envPath);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Warning: Could not load .env file: {ex.Message}. Using environment variables.");
+}
 
 // Get connection string from .env
 var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING");
