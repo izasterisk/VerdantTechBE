@@ -7,4 +7,5 @@ public interface IAuthService
 {
     Task<APIResponse> LoginAsync(LoginDTO loginDto);
     Task<APIResponse> RefreshTokenAsync(string refreshToken);
+    Task<APIResponse> LogoutAsync(ulong userId);
 }

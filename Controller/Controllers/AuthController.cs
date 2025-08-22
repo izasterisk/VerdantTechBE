@@ -133,22 +133,43 @@ namespace Controller.Controllers
         /// <returns>Logout confirmation</returns>
         [HttpPost("logout")]
         [Authorize]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            // In a complete implementation, you would:
-            // 1. Get the user ID from claims
-            // 2. Clear the refresh token from database
-            // 3. Optionally maintain a blacklist of tokens until they expire
-            
-            var response = new APIResponse
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
             {
-                Status = true,
-                StatusCode = HttpStatusCode.OK,
-                Data = "Logged out successfully",
-                Errors = new List<string>()
-            };
+                var unauthorizedResponse = new APIResponse
+                {
+                    Status = false,
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    Data = null!,
+                    Errors = new List<string> { "User not authenticated" }
+                };
+                return Unauthorized(unauthorizedResponse);
+            }
 
-            return Ok(response);
+            // Convert string to ulong
+            if (!ulong.TryParse(userIdClaim, out ulong userId))
+            {
+                var badRequestResponse = new APIResponse
+                {
+                    Status = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Data = null!,
+                    Errors = new List<string> { "Invalid user ID format" }
+                };
+                return BadRequest(badRequestResponse);
+            }
+
+            var result = await _authService.LogoutAsync(userId);
+            
+            return result.StatusCode switch
+            {
+                HttpStatusCode.OK => Ok(result),
+                HttpStatusCode.Unauthorized => Unauthorized(result),
+                HttpStatusCode.NotFound => NotFound(result),
+                _ => StatusCode(500, result)
+            };
         }
     }
 }

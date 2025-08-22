@@ -3,6 +3,7 @@ using BLL.Interfaces;
 using BLL.DTO;
 using BLL.DTO.Customer;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Controller.Controllers;
 
@@ -63,6 +64,7 @@ public class CustomerController : ControllerBase
     /// <param name="id">ID của khách hàng</param>
     /// <returns>Thông tin khách hàng</returns>
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<ActionResult<APIResponse>> GetCustomerById(ulong id)
     {
         var response = new APIResponse();
@@ -101,6 +103,7 @@ public class CustomerController : ControllerBase
     /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
     /// <returns>Danh sách khách hàng có phân trang</returns>
     [HttpGet]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<ActionResult<APIResponse>> GetAllCustomers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var response = new APIResponse();
@@ -148,6 +151,7 @@ public class CustomerController : ControllerBase
     /// <param name="dto">Thông tin khách hàng cần cập nhật</param>
     /// <returns>Thông tin khách hàng đã cập nhật</returns>
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<ActionResult<APIResponse>> UpdateCustomer(ulong id, [FromBody] CustomerDTO dto)
     {
         var response = new APIResponse();

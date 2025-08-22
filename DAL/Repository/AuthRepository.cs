@@ -22,12 +22,6 @@ public class AuthRepository : IAuthRepository
                                                    && u.DeletedAt == null && u.Status != UserStatus.Deleted);
     }
 
-    public async Task<User?> GetUserByIdAsync(ulong id)
-    {
-        return await _userRepository.GetAsync(u => u.Id == id 
-                                                   && u.DeletedAt == null && u.Status != UserStatus.Deleted);
-    }
-
     public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
     {
         return await _userRepository.GetAsync(u => u.RefreshToken == refreshToken 
@@ -38,6 +32,19 @@ public class AuthRepository : IAuthRepository
     public async Task UpdateUserAsync(User user)
     {
         user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(user);
+        await _context.SaveChangesAsync();
+    }
+    
+    public async Task LogoutUserAsync(User user)
+    {
+        if (user == null)
+            throw new ArgumentNullException(nameof(user));
+            
+        user.RefreshToken = null;
+        user.RefreshTokenExpiresAt = null;
+        user.UpdatedAt = DateTime.UtcNow;
+        
         await _userRepository.UpdateAsync(user);
         await _context.SaveChangesAsync();
     }
