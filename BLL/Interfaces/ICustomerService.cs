@@ -8,5 +8,5 @@ public interface ICustomerService
     Task<CustomerReadOnlyDTO> CreateCustomerAsync(CustomerCreateDTO dto);
     Task<CustomerReadOnlyDTO?> GetCustomerByIdAsync(ulong customerId);
     Task<PagedResponse<CustomerReadOnlyDTO>> GetAllCustomersAsync(int page, int pageSize);
-    Task<CustomerReadOnlyDTO> UpdateCustomerAsync(ulong customerId, CustomerDTO dto);
+    Task<CustomerReadOnlyDTO> UpdateCustomerAsync(ulong customerId, CustomerUpdateDTO dto);
 }

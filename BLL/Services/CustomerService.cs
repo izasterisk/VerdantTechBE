@@ -68,7 +68,7 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task<CustomerReadOnlyDTO> UpdateCustomerAsync(ulong customerId, CustomerDTO dto)
+    public async Task<CustomerReadOnlyDTO> UpdateCustomerAsync(ulong customerId, CustomerUpdateDTO dto)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         
@@ -78,8 +78,7 @@ public class CustomerService : ICustomerService
             throw new Exception($"Customer with ID {customerId} not found.");
         }
 
-        User customer = _mapper.Map<User>(dto);
-
+        _mapper.Map(dto, existingCustomer);
         var updatedCustomer = await _customerRepository.UpdateCustomerWithTransactionAsync(existingCustomer);
         return _mapper.Map<CustomerReadOnlyDTO>(updatedCustomer);
     }

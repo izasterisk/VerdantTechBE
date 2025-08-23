@@ -40,6 +40,7 @@ public class CustomerRepository : ICustomerRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
+            customer.UpdatedAt = DateTime.Now;
             var updatedCustomer = await _userRepository.UpdateAsync(customer);
             await transaction.CommitAsync();
             return updatedCustomer;

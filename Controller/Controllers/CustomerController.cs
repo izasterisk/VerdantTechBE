@@ -152,7 +152,7 @@ public class CustomerController : ControllerBase
     /// <returns>Thông tin khách hàng đã cập nhật</returns>
     [HttpPut("{id}")]
     [Authorize]
-    public async Task<ActionResult<APIResponse>> UpdateCustomer(ulong id, [FromBody] CustomerDTO dto)
+    public async Task<ActionResult<APIResponse>> UpdateCustomer(ulong id, [FromBody] CustomerUpdateDTO dto)
     {
         var response = new APIResponse();
         
