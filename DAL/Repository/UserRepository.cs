@@ -57,12 +57,27 @@ public class UserRepository : IUserRepository
         return await _userRepository.GetAsync(u =>u.Id == userId && u.Role == UserRole.Customer && u.Status == UserStatus.Active, useNoTracking: true);
     }
     
-    public async Task<(List<User> users, int totalCount)> GetAllUsersAsync(int page, int pageSize)
+    public async Task<(List<User> users, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null)
     {
         var query = _dbContext.Users
             .AsNoTracking()
-            .Where(u => u.Role == UserRole.Customer && u.Status == UserStatus.Active)
-            .OrderByDescending(u => u.UpdatedAt);
+            .Where(u => u.Status == UserStatus.Active);
+
+        // Filter by role if provided
+        if (!string.IsNullOrEmpty(role))
+        {
+            if (Enum.TryParse<UserRole>(role, true, out var userRole))
+            {
+                query = query.Where(u => u.Role == userRole);
+            }
+        }
+        else
+        {
+            // Default filter: only customers if no role specified
+            query = query.Where(u => u.Role == UserRole.Customer);
+        }
+
+        query = query.OrderByDescending(u => u.UpdatedAt);
 
         var totalCount = await query.CountAsync();
         var users = await query

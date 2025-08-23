@@ -24,7 +24,7 @@ public class UserController : ControllerBase
     /// <param name="dto">Thông tin người dùng cần tạo</param>
     /// <returns>Thông tin người dùng đã tạo</returns>
     [HttpPost]
-    [EndpointSummary("Create New User")]
+    [EndpointSummary("Create New User (note.)")]
     [EndpointDescription("Nếu truyền Role = null thì mặc định sẽ là customer, muốn tạo role khác thì truyền Role tương ứng.")]
     public async Task<ActionResult<APIResponse>> CreateUser([FromBody] UserCreateDTO dto)
     {
@@ -68,7 +68,6 @@ public class UserController : ControllerBase
     [HttpGet("{id}")]
     [Authorize]
     [EndpointSummary("Get User By ID")]
-    [EndpointDescription("Retrieves user information by their unique identifier")]
     public async Task<ActionResult<APIResponse>> GetUserById(ulong id)
     {
         var response = new APIResponse();
@@ -101,16 +100,17 @@ public class UserController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách tất cả người dùng với phân trang
+    /// Lấy danh sách tất cả người dùng với phân trang và filter theo role
     /// </summary>
     /// <param name="page">Số trang (mặc định: 1)</param>
     /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
+    /// <param name="role">Role để filter (Customer, Seller, Admin, Manager). Mặc định: Customer</param>
     /// <returns>Danh sách người dùng có phân trang</returns>
     [HttpGet]
     [Authorize(Roles = "Admin,Manager")]
-    [EndpointSummary("Get All Users")]
-    [EndpointDescription("Retrieves a paginated list of all users (Admin/Manager access required)")]
-    public async Task<ActionResult<APIResponse>> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    [EndpointSummary("Get All Users (note.)")]
+    [EndpointDescription("Lọc người dùng theo role. Nếu không ghi ra, chỉ trả về Customer. Mẫu: /api/User?page=2&pageSize=20&role=admin")]
+    public async Task<ActionResult<APIResponse>> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? role = null)
     {
         var response = new APIResponse();
         
@@ -133,7 +133,7 @@ public class UserController : ControllerBase
                 return BadRequest(response);
             }
 
-            var users = await _userService.GetAllUsersAsync(page, pageSize);
+            var users = await _userService.GetAllUsersAsync(page, pageSize, role);
             
             response.Status = true;
             response.StatusCode = HttpStatusCode.OK;
@@ -159,7 +159,6 @@ public class UserController : ControllerBase
     [HttpPut("{id}")]
     [Authorize]
     [EndpointSummary("Update User")]
-    [EndpointDescription("Updates user information with the provided data")]
     public async Task<ActionResult<APIResponse>> UpdateUser(ulong id, [FromBody] UserUpdateDTO dto)
     {
         var response = new APIResponse();

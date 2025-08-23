@@ -48,9 +48,9 @@ public class UserService : IUserService
         return user == null ? null : _mapper.Map<UserReadOnlyDTO>(user);
     }
 
-    public async Task<PagedResponse<UserReadOnlyDTO>> GetAllUsersAsync(int page, int pageSize)
+    public async Task<PagedResponse<UserReadOnlyDTO>> GetAllUsersAsync(int page, int pageSize, String? role = null)
     {
-        var (users, totalCount) = await _userRepository.GetAllUsersAsync(page, pageSize);
+        var (users, totalCount) = await _userRepository.GetAllUsersAsync(page, pageSize, role);
         var userDtos = _mapper.Map<List<UserReadOnlyDTO>>(users);
         
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
