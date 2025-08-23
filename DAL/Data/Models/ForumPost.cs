@@ -17,6 +17,10 @@ public partial class ForumPost
     [StringLength(255)]
     public string Title { get; set; } = null!;
 
+    [Required]
+    [StringLength(255)]
+    public string Slug { get; set; } = null!;
+
     /// <summary>
     /// Mixed content blocks: text, images, videos, etc.
     /// </summary>

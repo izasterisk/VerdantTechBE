@@ -50,6 +50,12 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .IsRequired()
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
+            
+        builder.Property(e => e.Slug)
+            .HasMaxLength(255)
+            .IsRequired()
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci");
 
         // JSON field for mixed content blocks
         var jsonOptions = new JsonSerializerOptions
@@ -155,6 +161,10 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
 
         builder.HasIndex(e => e.UserId)
             .HasDatabaseName("idx_user");
+            
+        builder.HasIndex(e => e.Slug)
+            .IsUnique()
+            .HasDatabaseName("idx_slug");
 
         builder.HasIndex(e => new { e.Status, e.IsPinned })
             .HasDatabaseName("idx_status_pinned");

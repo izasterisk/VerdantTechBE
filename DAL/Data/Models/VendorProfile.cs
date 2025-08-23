@@ -15,6 +15,10 @@ public partial class VendorProfile
     [StringLength(255)]
     public string CompanyName { get; set; } = null!;
 
+    [Required]
+    [StringLength(255)]
+    public string Slug { get; set; } = null!;
+
     [StringLength(100)]
     public string? BusinessRegistrationNumber { get; set; }
 

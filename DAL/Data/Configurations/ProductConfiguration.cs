@@ -49,6 +49,12 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("name_en");
             
+        builder.Property(e => e.Slug)
+            .HasMaxLength(255)
+            .IsRequired()
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci");
+            
         builder.Property(e => e.Description)
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
@@ -189,6 +195,10 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(e => e.ProductCode)
             .IsUnique()
             .HasDatabaseName("idx_product_code");
+            
+        builder.HasIndex(e => e.Slug)
+            .IsUnique()
+            .HasDatabaseName("idx_slug");
             
         builder.HasIndex(e => e.Name)
             .HasDatabaseName("idx_name");

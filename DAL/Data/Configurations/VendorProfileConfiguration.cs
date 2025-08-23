@@ -34,6 +34,12 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("company_name");
+            
+        builder.Property(e => e.Slug)
+            .HasMaxLength(255)
+            .IsRequired()
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci");
         
         // Optional unique fields
         builder.Property(e => e.BusinessRegistrationNumber)
@@ -126,6 +132,10 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
         // Indexes
         builder.HasIndex(e => e.CompanyName)
             .HasDatabaseName("idx_company_name");
+            
+        builder.HasIndex(e => e.Slug)
+            .IsUnique()
+            .HasDatabaseName("idx_slug");
             
         builder.HasIndex(e => e.VerifiedAt)
             .HasDatabaseName("idx_verified");

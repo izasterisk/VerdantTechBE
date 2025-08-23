@@ -24,6 +24,10 @@ public partial class Product
     [StringLength(255)]
     public string? NameEn { get; set; }
 
+    [Required]
+    [StringLength(255)]
+    public string Slug { get; set; } = null!;
+
     public string? Description { get; set; }
 
     public string? DescriptionEn { get; set; }

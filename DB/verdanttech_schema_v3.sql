@@ -46,6 +46,7 @@ CREATE TABLE vendor_profiles (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL UNIQUE,
     company_name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
     business_registration_number VARCHAR(100) UNIQUE,
     tax_code VARCHAR(50),
     company_address TEXT,
@@ -62,6 +63,7 @@ CREATE TABLE vendor_profiles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_company_name (company_name),
+    INDEX idx_slug (slug),
     INDEX idx_verified (verified_at),
     INDEX idx_rating (rating_average)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor/seller profile and verification details';
@@ -98,6 +100,7 @@ CREATE TABLE products (
     product_code VARCHAR(100) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     name_en VARCHAR(255),
+    slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     description_en TEXT,
     price DECIMAL(12,2) NOT NULL,
@@ -125,6 +128,7 @@ CREATE TABLE products (
     INDEX idx_vendor (vendor_id),
     INDEX idx_category (category_id),
     INDEX idx_product_code (product_code),
+    INDEX idx_slug (slug),
     INDEX idx_name (name),
     INDEX idx_price (price),
     INDEX idx_active_featured (is_active, is_featured),
@@ -429,6 +433,7 @@ CREATE TABLE forum_posts (
     category_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
     title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
     content JSON NOT NULL COMMENT 'Mixed content blocks: [{"order": 1, "type": "text", "content": "Hello world"}, {"order": 2, "type": "image", "content": "https://example.com/image.jpg"}]',
     tags JSON COMMENT 'Array of tags',
     view_count BIGINT DEFAULT 0,
@@ -449,6 +454,7 @@ CREATE TABLE forum_posts (
     FOREIGN KEY (moderated_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_category (category_id),
     INDEX idx_user (user_id),
+    INDEX idx_slug (slug),
     INDEX idx_status_pinned (status, is_pinned),
     INDEX idx_last_activity (last_activity_at),
     FULLTEXT idx_search (title)
