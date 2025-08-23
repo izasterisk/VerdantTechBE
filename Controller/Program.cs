@@ -44,10 +44,10 @@ builder.Services.AddDbContext<VerdantTechDbContext>(options =>
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));

@@ -16,13 +16,13 @@ public class AuthService : IAuthService
 {
     private readonly IAuthRepository _authRepository;
     private readonly IConfiguration _configuration;
-    private readonly ICustomerRepository _customerRepository;
+    private readonly IUserRepository _userRepository;
     
-    public AuthService(IAuthRepository authRepository, IConfiguration configuration, ICustomerRepository customerRepository)
+    public AuthService(IAuthRepository authRepository, IConfiguration configuration, IUserRepository userRepository)
     {
         _authRepository = authRepository;
         _configuration = configuration;
-        _customerRepository = customerRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<APIResponse> LoginAsync(LoginDTO loginDto)
@@ -120,7 +120,7 @@ public class AuthService : IAuthService
             user.RefreshToken = newRefreshToken;
             user.RefreshTokenExpiresAt = refTokenExpiry;
             user.UpdatedAt = DateTime.UtcNow;
-            await _customerRepository.UpdateCustomerWithTransactionAsync(user);
+            await _userRepository.UpdateUserWithTransactionAsync(user);
 
             var jwtExpireHours = Environment.GetEnvironmentVariable("JWT_EXPIRE_HOURS") ?? "24";
             var refreshResponse = new RefreshTokenResponseDTO
@@ -156,7 +156,7 @@ public class AuthService : IAuthService
         try
         {
             // Find user by ID
-            var user = await _customerRepository.GetCustomerByIdAsync(userId);
+            var user = await _userRepository.GetUserByIdAsync(userId);
             
             if (user == null)
             {

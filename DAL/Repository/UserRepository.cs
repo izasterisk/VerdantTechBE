@@ -5,28 +5,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repository;
 
-public class CustomerRepository : ICustomerRepository
+public class UserRepository : IUserRepository
 {
     private readonly IRepository<User> _userRepository;
     private readonly VerdantTechDbContext _dbContext;
     
-    public CustomerRepository(VerdantTechDbContext context)
+    public UserRepository(VerdantTechDbContext context)
     {
         _userRepository = new Repository<User>(context);
         _dbContext = context;
     }
     
-    public async Task<User> CreateCustomerWithTransactionAsync(User customer)
+    public async Task<User> CreateUserWithTransactionAsync(User user)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
-            customer.LastLoginAt = DateTime.Now;
-            customer.CreatedAt = DateTime.Now;
-            customer.UpdatedAt = DateTime.Now;
-            var createdCustomer = await _userRepository.CreateAsync(customer);
+            user.LastLoginAt = DateTime.Now;
+            user.CreatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.Now;
+            var createdUser = await _userRepository.CreateAsync(user);
             await transaction.CommitAsync();
-            return createdCustomer;
+            return createdUser;
         }
         catch (Exception)
         {
@@ -35,15 +35,15 @@ public class CustomerRepository : ICustomerRepository
         }
     }
 
-    public async Task<User> UpdateCustomerWithTransactionAsync(User customer)
+    public async Task<User> UpdateUserWithTransactionAsync(User user)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
-            customer.UpdatedAt = DateTime.Now;
-            var updatedCustomer = await _userRepository.UpdateAsync(customer);
+            user.UpdatedAt = DateTime.Now;
+            var updatedUser = await _userRepository.UpdateAsync(user);
             await transaction.CommitAsync();
-            return updatedCustomer;
+            return updatedUser;
         }
         catch (Exception)
         {
@@ -52,12 +52,12 @@ public class CustomerRepository : ICustomerRepository
         }
     }
     
-    public async Task<User?> GetCustomerByIdAsync(ulong userId)
+    public async Task<User?> GetUserByIdAsync(ulong userId)
     {
         return await _userRepository.GetAsync(u =>u.Id == userId && u.Role == UserRole.Customer && u.Status == UserStatus.Active, useNoTracking: true);
     }
     
-    public async Task<(List<User> users, int totalCount)> GetAllCustomersAsync(int page, int pageSize)
+    public async Task<(List<User> users, int totalCount)> GetAllUsersAsync(int page, int pageSize)
     {
         var query = _dbContext.Users
             .AsNoTracking()

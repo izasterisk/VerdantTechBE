@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BLL.DTO.Customer;
+namespace BLL.DTO.User;
 
-public class CustomerUpdateDTO
+public class UserUpdateDTO
 {
     // public ulong Id { get; set; }
 

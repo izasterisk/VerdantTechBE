@@ -26,6 +26,8 @@ namespace Controller.Controllers
         /// <returns>JWT token and user information</returns>
         [HttpPost("login")]
         [AllowAnonymous]
+        [EndpointSummary("User Login")]
+        [EndpointDescription("Authenticates user credentials and returns JWT token along with user information")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
             if (!ModelState.IsValid)
@@ -64,6 +66,8 @@ namespace Controller.Controllers
         /// <returns>New JWT token and refresh token</returns>
         [HttpPost("refresh-token")]
         [AllowAnonymous]
+        [EndpointSummary("Refresh Token")]
+        [EndpointDescription("Refreshes an expired JWT token using a valid refresh token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDTO refreshTokenDto)
         {
             if (!ModelState.IsValid)
@@ -100,6 +104,8 @@ namespace Controller.Controllers
         /// <returns>User information from JWT token</returns>
         [HttpGet("profile")]
         [Authorize]
+        [EndpointSummary("Get User Profile")]
+        [EndpointDescription("Retrieves the current authenticated user's profile information from JWT token claims")]
         public IActionResult GetProfile()
         {
             var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -133,6 +139,8 @@ namespace Controller.Controllers
         /// <returns>Logout confirmation</returns>
         [HttpPost("logout")]
         [Authorize]
+        [EndpointSummary("User Logout")]
+        [EndpointDescription("Logs out the current user by invalidating their refresh token")]
         public async Task<IActionResult> Logout()
         {
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BLL.Interfaces;
 using BLL.DTO;
-using BLL.DTO.Customer;
+using BLL.DTO.User;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 
@@ -9,22 +9,24 @@ namespace Controller.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CustomerController : ControllerBase
+public class UserController : ControllerBase
 {
-    private readonly ICustomerService _customerService;
+    private readonly IUserService _userService;
     
-    public CustomerController(ICustomerService customerService)
+    public UserController(IUserService userService)
     {
-        _customerService = customerService;
+        _userService = userService;
     }
 
     /// <summary>
-    /// Tạo khách hàng mới
+    /// Tạo người dùng mới
     /// </summary>
-    /// <param name="dto">Thông tin khách hàng cần tạo</param>
-    /// <returns>Thông tin khách hàng đã tạo</returns>
+    /// <param name="dto">Thông tin người dùng cần tạo</param>
+    /// <returns>Thông tin người dùng đã tạo</returns>
     [HttpPost]
-    public async Task<ActionResult<APIResponse>> CreateCustomer([FromBody] CustomerCreateDTO dto)
+    [EndpointSummary("Create New User")]
+    [EndpointDescription("Nếu truyền Role = null thì mặc định sẽ là customer, muốn tạo role khác thì truyền Role tương ứng.")]
+    public async Task<ActionResult<APIResponse>> CreateUser([FromBody] UserCreateDTO dto)
     {
         var response = new APIResponse();
         
@@ -41,13 +43,13 @@ public class CustomerController : ControllerBase
                 return BadRequest(response);
             }
 
-            var customer = await _customerService.CreateCustomerAsync(dto);
+            var user = await _userService.CreateUserAsync(dto);
             
             response.Status = true;
             response.StatusCode = HttpStatusCode.Created;
-            response.Data = customer;
+            response.Data = user;
             
-            return CreatedAtAction(nameof(GetCustomerById), new { id = customer.Id }, response);
+            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, response);
         }
         catch (Exception ex)
         {
@@ -59,31 +61,33 @@ public class CustomerController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy thông tin khách hàng theo ID
+    /// Lấy thông tin người dùng theo ID
     /// </summary>
-    /// <param name="id">ID của khách hàng</param>
-    /// <returns>Thông tin khách hàng</returns>
+    /// <param name="id">ID của người dùng</param>
+    /// <returns>Thông tin người dùng</returns>
     [HttpGet("{id}")]
     [Authorize]
-    public async Task<ActionResult<APIResponse>> GetCustomerById(ulong id)
+    [EndpointSummary("Get User By ID")]
+    [EndpointDescription("Retrieves user information by their unique identifier")]
+    public async Task<ActionResult<APIResponse>> GetUserById(ulong id)
     {
         var response = new APIResponse();
         
         try
         {
-            var customer = await _customerService.GetCustomerByIdAsync(id);
+            var user = await _userService.GetUserByIdAsync(id);
             
-            if (customer == null)
+            if (user == null)
             {
                 response.Status = false;
                 response.StatusCode = HttpStatusCode.NotFound;
-                response.Errors.Add($"Không tìm thấy khách hàng với ID {id}");
+                response.Errors.Add($"Không tìm thấy người dùng với ID {id}");
                 return NotFound(response);
             }
 
             response.Status = true;
             response.StatusCode = HttpStatusCode.OK;
-            response.Data = customer;
+            response.Data = user;
             
             return Ok(response);
         }
@@ -97,14 +101,16 @@ public class CustomerController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách tất cả khách hàng với phân trang
+    /// Lấy danh sách tất cả người dùng với phân trang
     /// </summary>
     /// <param name="page">Số trang (mặc định: 1)</param>
     /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
-    /// <returns>Danh sách khách hàng có phân trang</returns>
+    /// <returns>Danh sách người dùng có phân trang</returns>
     [HttpGet]
     [Authorize(Roles = "Admin,Manager")]
-    public async Task<ActionResult<APIResponse>> GetAllCustomers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    [EndpointSummary("Get All Users")]
+    [EndpointDescription("Retrieves a paginated list of all users (Admin/Manager access required)")]
+    public async Task<ActionResult<APIResponse>> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var response = new APIResponse();
         
@@ -127,11 +133,11 @@ public class CustomerController : ControllerBase
                 return BadRequest(response);
             }
 
-            var customers = await _customerService.GetAllCustomersAsync(page, pageSize);
+            var users = await _userService.GetAllUsersAsync(page, pageSize);
             
             response.Status = true;
             response.StatusCode = HttpStatusCode.OK;
-            response.Data = customers;
+            response.Data = users;
             
             return Ok(response);
         }
@@ -145,14 +151,16 @@ public class CustomerController : ControllerBase
     }
 
     /// <summary>
-    /// Cập nhật thông tin khách hàng
+    /// Cập nhật thông tin người dùng
     /// </summary>
-    /// <param name="id">ID của khách hàng</param>
-    /// <param name="dto">Thông tin khách hàng cần cập nhật</param>
-    /// <returns>Thông tin khách hàng đã cập nhật</returns>
+    /// <param name="id">ID của người dùng</param>
+    /// <param name="dto">Thông tin người dùng cần cập nhật</param>
+    /// <returns>Thông tin người dùng đã cập nhật</returns>
     [HttpPut("{id}")]
     [Authorize]
-    public async Task<ActionResult<APIResponse>> UpdateCustomer(ulong id, [FromBody] CustomerUpdateDTO dto)
+    [EndpointSummary("Update User")]
+    [EndpointDescription("Updates user information with the provided data")]
+    public async Task<ActionResult<APIResponse>> UpdateUser(ulong id, [FromBody] UserUpdateDTO dto)
     {
         var response = new APIResponse();
         
@@ -169,11 +177,11 @@ public class CustomerController : ControllerBase
                 return BadRequest(response);
             }
 
-            var customer = await _customerService.UpdateCustomerAsync(id, dto);
+            var user = await _userService.UpdateUserAsync(id, dto);
             
             response.Status = true;
             response.StatusCode = HttpStatusCode.OK;
-            response.Data = customer;
+            response.Data = user;
             
             return Ok(response);
         }

@@ -1,5 +1,5 @@
 using AutoMapper;
-using BLL.DTO.Customer;
+using BLL.DTO.User;
 using DAL.Data.Models;
 
 namespace BLL.Utils;
@@ -18,9 +18,9 @@ public class AutoMapperConfig : Profile
         //CreateMap<StudentDTO, Student>().ReverseMap()
         //.ForMember(n => n.Address, opt => opt.MapFrom(n => string.IsNullOrEmpty(n.Address) ? "No value found" : n.Address));
         
-        CreateMap<CustomerCreateDTO, User>().ReverseMap();
-        CreateMap<CustomerReadOnlyDTO, User>().ReverseMap();
-        CreateMap<CustomerUpdateDTO, User>()
+        CreateMap<UserCreateDTO, User>().ReverseMap();
+        CreateMap<UserReadOnlyDTO, User>().ReverseMap();
+        CreateMap<UserUpdateDTO, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     }
 }
