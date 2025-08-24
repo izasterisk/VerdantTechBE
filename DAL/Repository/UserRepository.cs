@@ -54,7 +54,7 @@ public class UserRepository : IUserRepository
     
     public async Task<User?> GetUserByIdAsync(ulong userId)
     {
-        return await _userRepository.GetAsync(u =>u.Id == userId && u.Role == UserRole.Customer && u.Status == UserStatus.Active, useNoTracking: true);
+        return await _userRepository.GetAsync(u =>u.Id == userId && u.Status == UserStatus.Active, useNoTracking: true);
     }
     
     public async Task<(List<User> users, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null)
