@@ -41,6 +41,23 @@ CREATE TABLE users (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Base user authentication and profile table';
 
+-- Sustainability certifications reference table
+CREATE TABLE sustainability_certifications (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(100) NOT NULL UNIQUE COMMENT 'Certification code (e.g., GLOBALGAP, USDA_ORGANIC)',
+    name VARCHAR(255) NOT NULL COMMENT 'Full certification name',
+    category ENUM('organic', 'environmental', 'fair_trade', 'food_safety', 'social', 'energy') NOT NULL,
+    issuing_body VARCHAR(255) NULL COMMENT 'Organization that issues the certification',
+    description TEXT COMMENT 'Detailed description of the certification',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_code (code),
+    INDEX idx_category (category),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Master list of sustainability certifications';
+
 -- Vendor profiles for sellers
 CREATE TABLE vendor_profiles (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -50,7 +67,6 @@ CREATE TABLE vendor_profiles (
     business_registration_number VARCHAR(100) UNIQUE,
     tax_code VARCHAR(50),
     company_address TEXT,
-    sustainability_credentials JSON COMMENT 'JSON array of sustainability certifications',
     verified_at TIMESTAMP NULL,
     verified_by BIGINT UNSIGNED NULL,
     bank_account_info JSON COMMENT 'Encrypted bank details for payments',
@@ -67,6 +83,31 @@ CREATE TABLE vendor_profiles (
     INDEX idx_verified (verified_at),
     INDEX idx_rating (rating_average)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor/seller profile and verification details';
+
+-- Vendor sustainability credentials (uploaded certificates)
+CREATE TABLE vendor_sustainability_credentials (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    certification_id BIGINT UNSIGNED NOT NULL,
+    certificate_url VARCHAR(500) NOT NULL COMMENT 'URL to uploaded certificate image/file',
+    status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
+    rejection_reason TEXT NULL COMMENT 'Reason for rejection if status is rejected',
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    verified_at TIMESTAMP NULL,
+    verified_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (certification_id) REFERENCES sustainability_certifications(id) ON DELETE RESTRICT,
+    FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_vendor_certification (vendor_id, certification_id),
+    INDEX idx_vendor (vendor_id),
+    INDEX idx_certification (certification_id),
+    INDEX idx_status (status),
+    INDEX idx_uploaded (uploaded_at),
+    INDEX idx_verified (verified_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor uploaded sustainability certificates for verification';
 
 -- =====================================================
 -- PRODUCT AND INVENTORY TABLES

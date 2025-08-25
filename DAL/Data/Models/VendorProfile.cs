@@ -27,11 +27,6 @@ public partial class VendorProfile
 
     public string? CompanyAddress { get; set; }
 
-    /// <summary>
-    /// JSON array of sustainability certifications
-    /// </summary>
-    public List<string> SustainabilityCredentials { get; set; } = new();
-
     public DateTime? VerifiedAt { get; set; }
 
     public ulong? VerifiedBy { get; set; }
@@ -57,4 +52,5 @@ public partial class VendorProfile
     // Navigation Properties
     public virtual User User { get; set; } = null!;
     public virtual User? VerifiedByNavigation { get; set; }
+    public virtual ICollection<VendorSustainabilityCredential> VendorSustainabilityCredentials { get; set; } = new List<VendorSustainabilityCredential>();
 }

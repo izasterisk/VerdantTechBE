@@ -105,4 +105,21 @@ public enum WeatherApiSource
     Accuweather
 }
 
+public enum SustainabilityCertificationCategory
+{
+    Organic,
+    Environmental,
+    FairTrade,
+    FoodSafety,
+    Social,
+    Energy
+}
+
+public enum VendorSustainabilityCredentialStatus
+{
+    Pending,
+    Verified,
+    Rejected
+}
+
 

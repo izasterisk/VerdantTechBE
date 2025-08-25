@@ -13,6 +13,10 @@ public class VerdantTechDbContext : DbContext
     public DbSet<FarmProfile> FarmProfiles { get; set; }
     public DbSet<VendorProfile> VendorProfiles { get; set; }
     
+    // Sustainability DbSets
+    public DbSet<SustainabilityCertification> SustainabilityCertifications { get; set; }
+    public DbSet<VendorSustainabilityCredential> VendorSustainabilityCredentials { get; set; }
+    
     // Product and Inventory DbSets
     public DbSet<ProductCategory> ProductCategories { get; set; }
     public DbSet<Product> Products { get; set; }
@@ -46,6 +50,8 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new FarmProfileConfiguration());
         modelBuilder.ApplyConfiguration(new VendorProfileConfiguration());
+        modelBuilder.ApplyConfiguration(new SustainabilityCertificationConfiguration());
+        modelBuilder.ApplyConfiguration(new VendorSustainabilityCredentialConfiguration());
         modelBuilder.ApplyConfiguration(new ProductCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new CartConfiguration());

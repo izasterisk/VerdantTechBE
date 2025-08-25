@@ -19,10 +19,59 @@ INSERT INTO `farm_profiles` (`Id`, `user_id`, `farm_name`, `farm_size_hectares`,
 (1, 7, 'Trang trại Xanh Sạch Đồng Nai', 5.50, 'Số 123 Đường Nông Nghiệp, Tân Phong', 'Đồng Nai', 'Biên Hòa', 'Tân Phong', 10.9545, 106.8441, '["Lúa", "Rau xanh", "Cà chua"]', '2025-08-20 10:00:00', '2025-08-21 06:00:00'),
 (2, 8, 'Trang trại Hữu Cơ Long An', 8.25, 'Số 456 Đường Nông Thôn, Đức Hòa Thượng', 'Long An', 'Đức Hòa', 'Đức Hòa Thượng', 10.8838, 106.4226, '["Rau củ", "Trái cây", "Thảo dược"]', '2025-08-20 10:30:00', '2025-08-21 05:30:00');
 
+-- Insert Sustainability Certifications
+INSERT INTO `sustainability_certifications` (`Id`, `code`, `name`, `category`, `issuing_body`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
+-- 🌱 Các chứng chỉ nông nghiệp bền vững
+(1, 'GLOBALGAP', 'GlobalG.A.P. – Good Agricultural Practices', 'organic', 'GlobalG.A.P. c/o FoodPLUS GmbH', 'Thực hành nông nghiệp tốt toàn cầu', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(2, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'organic', 'Bộ Nông nghiệp và Phát triển nông thôn Việt Nam', 'Thực hành nông nghiệp tốt tại Việt Nam', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(3, 'ASEANGAP', 'ASEAN GAP – ASEAN Good Agricultural Practice', 'organic', 'ASEAN Secretariat', 'Chuẩn GAP trong khu vực ASEAN', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(4, 'USDA_ORGANIC', 'USDA Organic Certification', 'organic', 'United States Department of Agriculture', 'Tiêu chuẩn hữu cơ Hoa Kỳ', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(5, 'EU_ORGANIC', 'EU Organic Farming Certification', 'organic', 'European Commission', 'Tiêu chuẩn hữu cơ châu Âu', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(6, 'IFOAM_ORGANIC', 'IFOAM Organic International', 'organic', 'IFOAM - Organics International', 'Liên đoàn quốc tế các phong trào nông nghiệp hữu cơ', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(7, 'JAS_ORGANIC', 'JAS Organic (Japan Agricultural Standard)', 'organic', 'Ministry of Agriculture, Forestry and Fisheries of Japan', 'Tiêu chuẩn hữu cơ Nhật Bản', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(8, 'CANADA_ORGANIC', 'Canada Organic Certification', 'organic', 'Canadian Food Inspection Agency', 'Tiêu chuẩn hữu cơ Canada', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(9, 'RAINFOREST_ALLIANCE', 'Rainforest Alliance Certified', 'environmental', 'Rainforest Alliance', 'Nông nghiệp bền vững gắn với bảo vệ rừng', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(10, 'UTZ_CERTIFIED', 'UTZ Certified (merged with Rainforest Alliance)', 'environmental', 'UTZ Certified (now Rainforest Alliance)', 'Thực hành nông nghiệp bền vững', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(11, 'DEMETER_BIODYNAMIC', 'Demeter Biodynamic Certification', 'organic', 'Demeter International', 'Nông nghiệp sinh học – động lực', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+
+-- 🌿 Các chứng chỉ môi trường & carbon
+(12, 'ISO_14001', 'ISO 14001 Environmental Management', 'environmental', 'International Organization for Standardization', 'Quản lý môi trường', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(13, 'ISO_50001', 'ISO 50001 Energy Management', 'energy', 'International Organization for Standardization', 'Quản lý năng lượng', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(14, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'environmental', 'Various organizations (Carbon Trust, Climate Active, etc.)', 'Chứng nhận trung tính carbon', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(15, 'SBTI', 'Science Based Targets initiative (SBTi)', 'environmental', 'Science Based Targets initiative', 'Cam kết giảm phát thải theo khoa học', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(16, 'FAIR_CARBON', 'Fair Carbon Standard', 'environmental', 'Fair Carbon Foundation', 'Tiêu chuẩn tín chỉ carbon', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+
+-- 🤝 Các chứng chỉ thương mại công bằng & xã hội
+(17, 'FAIRTRADE', 'Fairtrade International Certification', 'fair_trade', 'Fairtrade International', 'Thương mại công bằng', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(18, 'SA8000', 'SA8000 Social Accountability', 'social', 'Social Accountability International', 'Trách nhiệm xã hội', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(19, 'SEDEX_SMETA', 'Sedex / SMETA Audit', 'social', 'Sedex', 'Đạo đức trong chuỗi cung ứng', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(20, 'BCORP', 'B Corp Certification', 'social', 'B Lab', 'Doanh nghiệp vì cộng đồng và môi trường', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+
+-- 🍃 Các chứng chỉ ngành thực phẩm & an toàn
+(21, 'HACCP', 'HACCP - Hazard Analysis Critical Control Points', 'food_safety', 'Various certification bodies', 'Phân tích mối nguy và kiểm soát điểm tới hạn', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(22, 'ISO_22000', 'ISO 22000 / FSSC 22000 Food Safety Management', 'food_safety', 'International Organization for Standardization', 'Quản lý an toàn thực phẩm', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(23, 'HALAL', 'Halal Certification', 'food_safety', 'Various Halal certification bodies', 'Chứng nhận Halal', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(24, 'KOSHER', 'Kosher Certification', 'food_safety', 'Various Kosher certification agencies', 'Chứng nhận Kosher', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(25, 'NON_GMO', 'Non-GMO Project Verified', 'food_safety', 'Non-GMO Project', 'Không biến đổi gen', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00');
+
 -- Insert Vendor Profiles
-INSERT INTO `vendor_profiles` (`Id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `tax_code`, `company_address`, `sustainability_credentials`, `verified_at`, `verified_by`, `bank_account_info`, `commission_rate`, `rating_average`, `total_reviews`, `created_at`, `updated_at`) VALUES
-(1, 3, 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'cong-ty-thiet-bi-nong-nghiep-xanh', 'BRN123456789', 'TC001234567', 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', '["EcoLabel", "EnergyStar", "CarbonNeutral"]', '2025-08-21 07:00:00', 1, '{"bank_name": "VCB", "account_number": "1234567890", "account_name": "Công Ty Thiết Bị Nông Nghiệp Xanh"}', 10.00, 4.5, 25, '2025-08-20 08:00:00', '2025-08-21 07:00:00'),
-(2, 4, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', 'TC009876543', 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', '["OrganicCert", "GreenTech"]', '2025-08-21 06:30:00', 1, '{"bank_name": "ACB", "account_number": "0987654321", "account_name": "Cửa Hàng Nông Sản Sạch VerdantTech"}', 8.00, 4.7, 42, '2025-08-20 08:30:00', '2025-08-21 06:30:00');
+INSERT INTO `vendor_profiles` (`Id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `tax_code`, `company_address`, `verified_at`, `verified_by`, `bank_account_info`, `commission_rate`, `rating_average`, `total_reviews`, `created_at`, `updated_at`) VALUES
+(1, 3, 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'cong-ty-thiet-bi-nong-nghiep-xanh', 'BRN123456789', 'TC001234567', 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', '2025-08-21 07:00:00', 1, '{"bank_name": "VCB", "account_number": "1234567890", "account_name": "Công Ty Thiết Bị Nông Nghiệp Xanh"}', 10.00, 4.5, 25, '2025-08-20 08:00:00', '2025-08-21 07:00:00'),
+(2, 4, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', 'TC009876543', 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', '2025-08-21 06:30:00', 1, '{"bank_name": "ACB", "account_number": "0987654321", "account_name": "Cửa Hàng Nông Sản Sạch VerdantTech"}', 8.00, 4.7, 42, '2025-08-20 08:30:00', '2025-08-21 06:30:00');
+
+-- Insert Vendor Sustainability Credentials
+INSERT INTO `vendor_sustainability_credentials` (`Id`, `vendor_id`, `certification_id`, `certificate_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
+-- Vendor 1 (Công Ty Thiết Bị Nông Nghiệp Xanh) credentials
+(1, 1, 12, 'https://example.com/certificates/vendor1_iso14001.pdf', 'verified', NULL, '2025-08-20 09:00:00', '2025-08-21 07:00:00', 1, '2025-08-20 09:00:00', '2025-08-21 07:00:00'),
+(2, 1, 13, 'https://example.com/certificates/vendor1_iso50001.pdf', 'verified', NULL, '2025-08-20 09:15:00', '2025-08-21 07:00:00', 1, '2025-08-20 09:15:00', '2025-08-21 07:00:00'),
+(3, 1, 14, 'https://example.com/certificates/vendor1_carbon_neutral.pdf', 'verified', NULL, '2025-08-20 09:30:00', '2025-08-21 07:00:00', 1, '2025-08-20 09:30:00', '2025-08-21 07:00:00'),
+(4, 1, 21, 'https://example.com/certificates/vendor1_haccp.pdf', 'pending', NULL, '2025-08-21 08:00:00', NULL, NULL, '2025-08-21 08:00:00', '2025-08-21 08:00:00'),
+
+-- Vendor 2 (Cửa Hàng Nông Sản Sạch VerdantTech) credentials  
+(5, 2, 4, 'https://example.com/certificates/vendor2_usda_organic.pdf', 'verified', NULL, '2025-08-20 10:00:00', '2025-08-21 06:30:00', 1, '2025-08-20 10:00:00', '2025-08-21 06:30:00'),
+(6, 2, 2, 'https://example.com/certificates/vendor2_vietgap.pdf', 'verified', NULL, '2025-08-20 10:15:00', '2025-08-21 06:30:00', 1, '2025-08-20 10:15:00', '2025-08-21 06:30:00'),
+(7, 2, 17, 'https://example.com/certificates/vendor2_fairtrade.pdf', 'verified', NULL, '2025-08-20 10:30:00', '2025-08-21 06:30:00', 1, '2025-08-20 10:30:00', '2025-08-21 06:30:00'),
+(8, 2, 25, 'https://example.com/certificates/vendor2_non_gmo.pdf', 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-08-21 09:00:00', '2025-08-21 10:00:00', 1, '2025-08-21 09:00:00', '2025-08-21 10:00:00');
 
 -- Insert Product Categories
 INSERT INTO `product_categories` (`Id`, `parent_id`, `Name`, `name_en`, `Slug`, `Description`, `icon_url`, `sort_order`, `is_active`, `created_at`, `updated_at`) VALUES

@@ -62,14 +62,6 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
             .HasColumnName("company_address");
         
         // JSON fields
-        builder.Property(e => e.SustainabilityCredentials)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
-            .HasColumnName("sustainability_credentials");
-            
         builder.Property(e => e.BankAccountInfo)
             .HasConversion(
                 v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
