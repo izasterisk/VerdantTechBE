@@ -76,7 +76,6 @@ public class UserRepository : IUserRepository
             // Default filter: only customers if no role specified
             query = query.Where(u => u.Role == UserRole.Customer);
         }
-
         query = query.OrderByDescending(u => u.UpdatedAt);
 
         var totalCount = await query.CountAsync();
@@ -88,8 +87,9 @@ public class UserRepository : IUserRepository
         return (users, totalCount);
     }
     
+    
     public async Task<bool> CheckEmailExistsAsync(string username)
     {
-        return await _userRepository.AnyAsync(u => u.Email.Equals(username));
+        return await _userRepository.AnyAsync(u => u.Email.ToUpper() == username.ToUpper());
     }
 }

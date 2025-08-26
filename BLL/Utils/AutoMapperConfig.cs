@@ -1,4 +1,5 @@
 using AutoMapper;
+using BLL.DTO.SustainabilityCertifications;
 using BLL.DTO.User;
 using DAL.Data.Models;
 
@@ -21,6 +22,11 @@ public class AutoMapperConfig : Profile
         CreateMap<UserCreateDTO, User>().ReverseMap();
         CreateMap<UserReadOnlyDTO, User>().ReverseMap();
         CreateMap<UserUpdateDTO, User>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        
+        CreateMap<SustainabilityCertificationsCreateDTO, SustainabilityCertification>().ReverseMap();
+        CreateMap<SustainabilityCertificationsReadOnlyDTO, SustainabilityCertification>().ReverseMap();
+        CreateMap<SustainabilityCertificationsUpdateDTO, SustainabilityCertification>().ReverseMap()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
     }
 }
