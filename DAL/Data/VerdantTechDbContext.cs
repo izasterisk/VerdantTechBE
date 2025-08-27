@@ -12,6 +12,11 @@ public class VerdantTechDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<FarmProfile> FarmProfiles { get; set; }
     public DbSet<VendorProfile> VendorProfiles { get; set; }
+    public DbSet<SupportedBank> SupportedBanks { get; set; }
+    public DbSet<VendorBankAccount> VendorBankAccounts { get; set; }
+    public DbSet<Wallet> Wallets { get; set; }
+    public DbSet<WalletTransaction> WalletTransactions { get; set; }
+    public DbSet<Payout> Payouts { get; set; }
     
     // Sustainability DbSets
     public DbSet<SustainabilityCertification> SustainabilityCertifications { get; set; }
@@ -50,6 +55,11 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new FarmProfileConfiguration());
         modelBuilder.ApplyConfiguration(new VendorProfileConfiguration());
+        modelBuilder.ApplyConfiguration(new SupportedBankConfiguration());
+        modelBuilder.ApplyConfiguration(new VendorBankAccountConfiguration());
+        modelBuilder.ApplyConfiguration(new WalletConfiguration());
+        modelBuilder.ApplyConfiguration(new WalletTransactionConfiguration());
+        modelBuilder.ApplyConfiguration(new PayoutConfiguration());
         modelBuilder.ApplyConfiguration(new SustainabilityCertificationConfiguration());
         modelBuilder.ApplyConfiguration(new VendorSustainabilityCredentialConfiguration());
         modelBuilder.ApplyConfiguration(new ProductCategoryConfiguration());

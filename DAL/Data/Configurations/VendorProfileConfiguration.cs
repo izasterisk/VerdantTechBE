@@ -61,14 +61,7 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("company_address");
         
-        // JSON fields
-        builder.Property(e => e.BankAccountInfo)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'{}'")
-            .HasColumnName("bank_account_info");
+        // Removed bank_account_info JSON column in new schema
         
         // Decimal fields with precision
         builder.Property(e => e.CommissionRate)

@@ -32,11 +32,6 @@ public partial class VendorProfile
     public ulong? VerifiedBy { get; set; }
 
     /// <summary>
-    /// Encrypted bank details for payments (JSON)
-    /// </summary>
-    public Dictionary<string, object> BankAccountInfo { get; set; } = new();
-
-    /// <summary>
     /// Platform commission percentage
     /// </summary>
     public decimal CommissionRate { get; set; } = 10.00m;
@@ -53,4 +48,7 @@ public partial class VendorProfile
     public virtual User User { get; set; } = null!;
     public virtual User? VerifiedByNavigation { get; set; }
     public virtual ICollection<VendorSustainabilityCredential> VendorSustainabilityCredentials { get; set; } = new List<VendorSustainabilityCredential>();
+    public virtual ICollection<VendorBankAccount> VendorBankAccounts { get; set; } = new List<VendorBankAccount>();
+    public virtual Wallet? Wallet { get; set; }
+    public virtual ICollection<Payout> Payouts { get; set; } = new List<Payout>();
 }

@@ -26,6 +26,7 @@ public class SustainabilityCertificationsController : ControllerBase
     [HttpPost]
     [Authorize(Roles = "Admin,Manager")]
     [EndpointSummary("Create New Sustainability Certification")]
+    [EndpointDescription("Description và IssuingBody không bắt buộc.")]
     public async Task<ActionResult<APIResponse>> CreateSustainabilityCertification([FromBody] SustainabilityCertificationsCreateDTO dto)
     {
         var response = new APIResponse();

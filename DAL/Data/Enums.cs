@@ -3,7 +3,8 @@ namespace DAL.Data;
 public enum UserRole
 {
     Customer,
-    Seller,
+    SellerCompany,
+    SellerIndividual,
     Admin,
     Manager
 }
@@ -14,6 +15,27 @@ public enum UserStatus
     Inactive,
     Suspended,
     Deleted
+}
+
+public enum WalletTransactionType
+{
+    Credit,
+    Debit
+}
+
+public enum WalletTransactionStatus
+{
+    Pending,
+    Completed,
+    Failed
+}
+
+public enum PayoutStatus
+{
+    Pending,
+    Processing,
+    Succeeded,
+    Failed
 }
 
 public enum SoilType

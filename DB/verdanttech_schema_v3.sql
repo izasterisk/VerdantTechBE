@@ -20,7 +20,7 @@ CREATE TABLE users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('customer', 'seller', 'admin', 'manager') NOT NULL DEFAULT 'customer',
+    role ENUM('customer', 'seller_company', 'seller_individual', 'admin', 'manager') NOT NULL DEFAULT 'customer',
     full_name VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20),
     is_verified BOOLEAN DEFAULT FALSE,
@@ -69,7 +69,6 @@ CREATE TABLE vendor_profiles (
     company_address TEXT,
     verified_at TIMESTAMP NULL,
     verified_by BIGINT UNSIGNED NULL,
-    bank_account_info JSON COMMENT 'Encrypted bank details for payments',
     commission_rate DECIMAL(5,2) DEFAULT 10.00 COMMENT 'Platform commission percentage',
     rating_average DECIMAL(3,2) DEFAULT 0.00,
     total_reviews INT DEFAULT 0,
@@ -526,14 +525,99 @@ CREATE TABLE forum_comments (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Forum post comments';
 
+-- =====================================================
+-- WALLET AND BANKING TABLES
+-- =====================================================
 
--- Create indexes for performance optimization
+-- Supported banks master list
+CREATE TABLE supported_banks (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    bank_code VARCHAR(20) NOT NULL UNIQUE COMMENT 'Short bank code, e.g., VCB, TCB',
+    bank_name VARCHAR(255) NOT NULL COMMENT 'Full bank name, e.g., Vietcombank',
+    image_url VARCHAR(500) NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='List of supported banks';
+
+-- Vendor bank accounts (one vendor may have multiple bank accounts)
+CREATE TABLE vendor_bank_accounts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    bank_id BIGINT UNSIGNED NOT NULL,
+    account_number VARCHAR(50) NOT NULL,
+    account_holder VARCHAR(255) NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (bank_id) REFERENCES supported_banks(id) ON DELETE RESTRICT,
+    UNIQUE KEY unique_vendor_bank_account (vendor_id, bank_id, account_number),
+    INDEX idx_vendor (vendor_id),
+    INDEX idx_bank (bank_id),
+    INDEX idx_vendor_default (vendor_id, is_default)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bank accounts of vendor profiles';
+
+-- Wallets for vendors (one wallet per vendor)
+CREATE TABLE wallets (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    balance DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Available balance',
+    pending_withdraw DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Amount requested to withdraw, pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor wallets tracking balances';
+
+-- Wallet transactions (credit/debit)
+CREATE TABLE wallet_transactions (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    wallet_id BIGINT UNSIGNED NOT NULL,
+    type ENUM('credit','debit') NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    reference_type VARCHAR(50) NULL COMMENT 'E.g., order, payout',
+    reference_id BIGINT UNSIGNED NULL COMMENT 'ID of the reference entity',
+    status ENUM('pending','completed','failed') NOT NULL DEFAULT 'pending',
+    description VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
+    INDEX idx_wallet (wallet_id),
+    INDEX idx_wallet_created (wallet_id, created_at),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Transactions affecting wallet balances';
+
+-- Payout requests for vendors
+CREATE TABLE payouts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    bank_code VARCHAR(20) NOT NULL,
+    bank_account_number VARCHAR(50) NOT NULL,
+    bank_account_holder VARCHAR(255) NOT NULL,
+    status ENUM('pending','processing','succeeded','failed') NOT NULL DEFAULT 'pending',
+    transaction_id VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE RESTRICT,
+    FOREIGN KEY (bank_code) REFERENCES supported_banks(bank_code) ON DELETE RESTRICT,
+    UNIQUE KEY idx_unique_transaction (transaction_id),
+    INDEX idx_vendor (vendor_id),
+    INDEX idx_status (status),
+    INDEX idx_requested (requested_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor payout requests to bank accounts';
+
+-- =====================================================
+-- ADDITIONAL INDEXES FOR PERFORMANCE OPTIMIZATION
+-- =====================================================
 CREATE INDEX idx_products_search ON products(is_active, category_id, price);
 CREATE INDEX idx_orders_date_range ON orders(created_at, status);
 CREATE INDEX idx_env_data_analysis ON environmental_data(farm_profile_id, measurement_date, soil_ph);
 CREATE INDEX idx_weather_lookup ON weather_data_cache(farm_profile_id, weather_date, api_source);
 
 -- Database schema completed
--- Version 2.0 - Updated according to requirements
--- Total tables: 22 (reduced from 31)
+-- Version 3.0 - Updated with wallet and banking tables
+-- Total tables: 27
 -- Ready for deployment
