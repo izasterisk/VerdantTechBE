@@ -4,7 +4,6 @@ using DAL.IRepository;
 using DAL.Repository;
 using BLL.Interfaces;
 using BLL.Services;
-using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -181,9 +180,6 @@ app.UseHttpsRedirection();
 
 // Enable CORS
 app.UseCors();
-
-// Use custom JWT middleware from Infrastructure layer
-app.UseJwtMiddleware();
 
 app.UseAuthentication();
 app.UseAuthorization();

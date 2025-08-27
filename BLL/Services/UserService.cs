@@ -34,8 +34,6 @@ public class UserService : IUserService
             dto.Role = "customer";
         }
         User user = _mapper.Map<User>(dto);
-        user.IsVerified = false;
-        user.Status = UserStatus.Active;
         user.PasswordHash = AuthUtils.HashPassword(dto.Password);
         
         var createdUser = await _userRepository.CreateUserWithTransactionAsync(user);

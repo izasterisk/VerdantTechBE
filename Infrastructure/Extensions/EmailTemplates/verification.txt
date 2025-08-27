@@ -1,0 +1,11 @@
+Xin chào {{FULL_NAME}}!
+
+Cảm ơn bạn đã đăng ký tài khoản VerdantTech.
+
+Để xác thực tài khoản, vui lòng truy cập: {{VERIFICATION_URL}}?token={{VERIFICATION_TOKEN}}
+
+Link này sẽ hết hạn sau 24 giờ.
+
+Nếu bạn không đăng ký tài khoản này, vui lòng bỏ qua email này.
+
+VerdantTech Team
