@@ -2,6 +2,7 @@ using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace DAL.Repository;
 
@@ -57,34 +58,31 @@ public class UserRepository : IUserRepository
         return await _userRepository.GetAsync(u =>u.Id == userId && u.Status == UserStatus.Active, useNoTracking: true);
     }
     
-    public async Task<(List<User> users, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null)
+    public async Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null)
     {
-        var query = _dbContext.Users
-            .AsNoTracking()
-            .Where(u => u.Status == UserStatus.Active);
-
-        // Filter by role if provided
+        Expression<Func<User, bool>> filter = u => u.Status == UserStatus.Active;
+        
+        // Apply role filter
         if (!string.IsNullOrEmpty(role))
         {
             if (Enum.TryParse<UserRole>(role, true, out var userRole))
             {
-                query = query.Where(u => u.Role == userRole);
+                filter = u => u.Status == UserStatus.Active && u.Role == userRole;
             }
         }
         else
         {
             // Default filter: only customers if no role specified
-            query = query.Where(u => u.Role == UserRole.Customer);
+            filter = u => u.Status == UserStatus.Active && u.Role == UserRole.Customer;
         }
-        query = query.OrderByDescending(u => u.UpdatedAt);
 
-        var totalCount = await query.CountAsync();
-        var users = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        return (users, totalCount);
+        return await _userRepository.GetPaginatedAsync(
+            page, 
+            pageSize, 
+            filter, 
+            useNoTracking: true, 
+            orderBy: query => query.OrderByDescending(u => u.UpdatedAt)
+        );
     }
     
     

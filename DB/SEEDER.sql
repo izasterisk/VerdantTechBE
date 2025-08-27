@@ -2,11 +2,11 @@
 -- All passwords are: $2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS
 
 -- Insert Users (with gmail.com emails and consistent password)
-INSERT INTO `users` (`Id`, `Email`, `password_hash`, `Role`, `full_name`, `phone_number`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `Status`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 'admin@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'admin', 'Quản trị viên hệ thống', '0901234567', 1, NULL, NULL, NULL, 'active', '2025-08-21 08:00:00', '2025-08-20 07:00:00', '2025-08-21 08:00:00', NULL),
 (2, 'manager@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'manager', 'Nguyễn Văn Quản Lý', '0901234568', 1, NULL, NULL, NULL, 'active', '2025-08-21 07:30:00', '2025-08-20 07:00:00', '2025-08-21 07:30:00', NULL),
-(3, 'seller1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'seller', 'Trần Thị Bán Hàng', '0901234569', 1, NULL, NULL, NULL, 'active', '2025-08-21 07:00:00', '2025-08-20 08:00:00', '2025-08-21 07:00:00', NULL),
-(4, 'seller2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'seller', 'Lê Văn Nông Sản', '0901234570', 1, NULL, NULL, NULL, 'active', '2025-08-21 06:30:00', '2025-08-20 08:30:00', '2025-08-21 06:30:00', NULL),
+(3, 'seller1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'seller_company', 'Trần Thị Bán Hàng', '0901234569', 1, NULL, NULL, NULL, 'active', '2025-08-21 07:00:00', '2025-08-20 08:00:00', '2025-08-21 07:00:00', NULL),
+(4, 'seller2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'seller_individual', 'Lê Văn Nông Sản', '0901234570', 1, NULL, NULL, NULL, 'active', '2025-08-21 06:30:00', '2025-08-20 08:30:00', '2025-08-21 06:30:00', NULL),
 (5, 'customer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Phạm Văn Khách Hàng 1', '0901234571', 1, NULL, NULL, NULL, 'active', '2025-08-21 08:15:00', '2025-08-20 09:00:00', '2025-08-21 08:15:00', NULL),
 (6, 'customer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Hoàng Thị Khách Hàng 2', '0901234572', 1, NULL, NULL, NULL, 'active', '2025-08-21 08:10:00', '2025-08-20 09:30:00', '2025-08-21 08:10:00', NULL),
 (7, 'farmer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Nguyễn Văn Nông Dân 1', '0901234573', 1, NULL, NULL, NULL, 'active', '2025-08-21 06:00:00', '2025-08-20 10:00:00', '2025-08-21 06:00:00', NULL),
@@ -55,9 +55,35 @@ INSERT INTO `sustainability_certifications` (`Id`, `code`, `name`, `category`, `
 (25, 'NON_GMO', 'Non-GMO Project Verified', 'food_safety', 'Non-GMO Project', 'Không biến đổi gen', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00');
 
 -- Insert Vendor Profiles
-INSERT INTO `vendor_profiles` (`Id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `tax_code`, `company_address`, `verified_at`, `verified_by`, `bank_account_info`, `commission_rate`, `rating_average`, `total_reviews`, `created_at`, `updated_at`) VALUES
-(1, 3, 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'cong-ty-thiet-bi-nong-nghiep-xanh', 'BRN123456789', 'TC001234567', 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', '2025-08-21 07:00:00', 1, '{"bank_name": "VCB", "account_number": "1234567890", "account_name": "Công Ty Thiết Bị Nông Nghiệp Xanh"}', 10.00, 4.5, 25, '2025-08-20 08:00:00', '2025-08-21 07:00:00'),
-(2, 4, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', 'TC009876543', 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', '2025-08-21 06:30:00', 1, '{"bank_name": "ACB", "account_number": "0987654321", "account_name": "Cửa Hàng Nông Sản Sạch VerdantTech"}', 8.00, 4.7, 42, '2025-08-20 08:30:00', '2025-08-21 06:30:00');
+INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `tax_code`, `company_address`, `verified_at`, `verified_by`, `commission_rate`, `rating_average`, `total_reviews`, `created_at`, `updated_at`) VALUES
+(1, 3, 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'cong-ty-thiet-bi-nong-nghiep-xanh', 'BRN123456789', 'TC001234567', 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', '2025-08-21 07:00:00', 1, 10.00, 4.5, 25, '2025-08-20 08:00:00', '2025-08-21 07:00:00'),
+(2, 4, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', 'TC009876543', 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', '2025-08-21 06:30:00', 1, 8.00, 4.7, 42, '2025-08-20 08:30:00', '2025-08-21 06:30:00');
+
+-- Insert Supported Banks
+INSERT INTO `supported_banks` (`id`, `bank_code`, `bank_name`, `image_url`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'VCB', 'Vietcombank', 'https://example.com/banks/vcb.png', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(2, 'TCB', 'Techcombank', 'https://example.com/banks/tcb.png', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00'),
+(3, 'ACB', 'Asia Commercial Bank', 'https://example.com/banks/acb.png', 1, '2025-08-20 07:00:00', '2025-08-20 07:00:00');
+
+-- Insert Vendor Bank Accounts
+INSERT INTO `vendor_bank_accounts` (`id`, `vendor_id`, `bank_id`, `account_number`, `account_holder`, `is_default`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, '1234567890', 'Công Ty Thiết Bị Nông Nghiệp Xanh', 1, '2025-08-21 07:05:00', '2025-08-21 07:05:00'),
+(2, 2, 3, '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', 1, '2025-08-21 06:35:00', '2025-08-21 06:35:00');
+
+-- Insert Wallets
+INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `pending_withdraw`, `created_at`, `updated_at`) VALUES
+(1, 1, 10000000.00, 0.00, '2025-08-21 08:00:00', '2025-08-21 08:00:00'),
+(2, 2, 2500000.00, 0.00, '2025-08-21 08:00:00', '2025-08-21 08:00:00');
+
+-- Insert Wallet Transactions
+INSERT INTO `wallet_transactions` (`id`, `wallet_id`, `type`, `amount`, `reference_type`, `reference_id`, `status`, `description`, `created_at`, `updated_at`) VALUES
+(1, 1, 'credit', 23000000.00, 'order', 1, 'completed', 'Payment for order #1', '2025-08-20 11:30:00', '2025-08-20 11:30:00'),
+(2, 1, 'debit', 5000000.00, 'payout', 1, 'pending', 'Payout request #1', '2025-08-21 09:00:00', '2025-08-21 09:00:00'),
+(3, 2, 'credit', 1483500.00, 'order', 2, 'completed', 'Payment for order #2', '2025-08-21 09:15:00', '2025-08-21 09:15:00');
+
+-- Insert Payouts
+INSERT INTO `payouts` (`id`, `vendor_id`, `amount`, `bank_code`, `bank_account_number`, `bank_account_holder`, `status`, `transaction_id`, `created_at`, `requested_at`, `updated_at`) VALUES
+(1, 1, 5000000.00, 'VCB', '1234567890', 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'pending', 'XENDIT_TX_20250821001', '2025-08-21 09:00:00', '2025-08-21 09:00:00', '2025-08-21 09:00:00');
 
 -- Insert Vendor Sustainability Credentials
 INSERT INTO `vendor_sustainability_credentials` (`Id`, `vendor_id`, `certification_id`, `certificate_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES

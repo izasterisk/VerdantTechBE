@@ -1,6 +1,6 @@
 -- VerdantTech Solutions Database Schema
 -- AI-Integrated Green Agricultural Equipment Platform for Sustainable Vegetable Farming
--- Version: 3.0
+-- Version: 4.0
 -- Engine: InnoDB (for transaction support)
 -- Character Set: utf8mb4 (for multilingual support)
 
@@ -82,6 +82,36 @@ CREATE TABLE vendor_profiles (
     INDEX idx_verified (verified_at),
     INDEX idx_rating (rating_average)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor/seller profile and verification details';
+
+-- Supported banks master list
+CREATE TABLE supported_banks (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    bank_code VARCHAR(20) NOT NULL UNIQUE COMMENT 'Short bank code, e.g., VCB, TCB',
+    bank_name VARCHAR(255) NOT NULL COMMENT 'Full bank name, e.g., Vietcombank',
+    image_url VARCHAR(500) NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='List of supported banks';
+
+-- Vendor bank accounts (one vendor may have multiple bank accounts)
+CREATE TABLE vendor_bank_accounts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    bank_id BIGINT UNSIGNED NOT NULL,
+    account_number VARCHAR(50) NOT NULL,
+    account_holder VARCHAR(255) NOT NULL,
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (bank_id) REFERENCES supported_banks(id) ON DELETE RESTRICT,
+    UNIQUE KEY unique_vendor_bank_account (vendor_id, bank_id, account_number),
+    INDEX idx_vendor (vendor_id),
+    INDEX idx_bank (bank_id),
+    INDEX idx_vendor_default (vendor_id, is_default)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bank accounts of vendor profiles';
 
 -- Vendor sustainability credentials (uploaded certificates)
 CREATE TABLE vendor_sustainability_credentials (
@@ -529,36 +559,6 @@ CREATE TABLE forum_comments (
 -- WALLET AND BANKING TABLES
 -- =====================================================
 
--- Supported banks master list
-CREATE TABLE supported_banks (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    bank_code VARCHAR(20) NOT NULL UNIQUE COMMENT 'Short bank code, e.g., VCB, TCB',
-    bank_name VARCHAR(255) NOT NULL COMMENT 'Full bank name, e.g., Vietcombank',
-    image_url VARCHAR(500) NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='List of supported banks';
-
--- Vendor bank accounts (one vendor may have multiple bank accounts)
-CREATE TABLE vendor_bank_accounts (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vendor_id BIGINT UNSIGNED NOT NULL,
-    bank_id BIGINT UNSIGNED NOT NULL,
-    account_number VARCHAR(50) NOT NULL,
-    account_holder VARCHAR(255) NOT NULL,
-    is_default BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE CASCADE,
-    FOREIGN KEY (bank_id) REFERENCES supported_banks(id) ON DELETE RESTRICT,
-    UNIQUE KEY unique_vendor_bank_account (vendor_id, bank_id, account_number),
-    INDEX idx_vendor (vendor_id),
-    INDEX idx_bank (bank_id),
-    INDEX idx_vendor_default (vendor_id, is_default)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bank accounts of vendor profiles';
-
 -- Wallets for vendors (one wallet per vendor)
 CREATE TABLE wallets (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -618,6 +618,6 @@ CREATE INDEX idx_env_data_analysis ON environmental_data(farm_profile_id, measur
 CREATE INDEX idx_weather_lookup ON weather_data_cache(farm_profile_id, weather_date, api_source);
 
 -- Database schema completed
--- Version 3.0 - Updated with wallet and banking tables
+-- Version 4.0 - Updated with wallet and banking tables
 -- Total tables: 27
 -- Ready for deployment

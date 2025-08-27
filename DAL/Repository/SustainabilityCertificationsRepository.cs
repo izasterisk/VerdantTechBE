@@ -2,6 +2,7 @@ using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace DAL.Repository;
 
@@ -57,28 +58,26 @@ public class SustainabilityCertificationsRepository : ISustainabilityCertificati
         return await _sustainabilityCertificationRepository.GetAsync(sc => sc.Id == id && sc.IsActive == true);
     }
     
-    public async Task<(List<SustainabilityCertification> sustainabilityCertifications, int totalCount)> GetAllSustainabilityCertificationsAsync(int page, int pageSize, String? category = null)
+    public async Task<(List<SustainabilityCertification>, int totalCount)> GetAllSustainabilityCertificationsAsync(int page, int pageSize, String? category = null)
     {
-        var query = _dbContext.SustainabilityCertifications
-            .AsNoTracking()
-            .Where(u => u.IsActive == true);
-        // Filter by category if provided
+        Expression<Func<SustainabilityCertification, bool>> filter = u => u.IsActive == true;
+        
+        // Apply category filter if provided
         if (!string.IsNullOrEmpty(category))
         {
-            if (Enum.TryParse<SustainabilityCertificationCategory>(category, true, out var Ctegry))
+            if (Enum.TryParse<SustainabilityCertificationCategory>(category, true, out var categoryEnum))
             {
-                query = query.Where(u => u.Category == Ctegry);
+                filter = u => u.IsActive == true && u.Category == categoryEnum;
             }
         }
-        query = query.OrderByDescending(u => u.UpdatedAt);
 
-        var totalCount = await query.CountAsync();
-        var sustainabilityCertifications = await query
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        return (sustainabilityCertifications, totalCount);
+        return await _sustainabilityCertificationRepository.GetPaginatedAsync(
+            page, 
+            pageSize, 
+            filter, 
+            useNoTracking: true, 
+            orderBy: query => query.OrderByDescending(u => u.UpdatedAt)
+        );
     }
 
     public Task<List<SustainabilityCertificationCategory>> GetAllCategoriesAsync()

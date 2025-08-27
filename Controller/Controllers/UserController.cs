@@ -26,7 +26,7 @@ public class UserController : ControllerBase
     [HttpPost]
     [AllowAnonymous]
     [EndpointSummary("Create New User (note.)")]
-    [EndpointDescription("Nếu truyền Role = null thì mặc định sẽ là customer, muốn tạo role khác thì truyền Role tương ứng.")]
+    [EndpointDescription("Nếu không truyền role thì mặc định sẽ là customer, muốn tạo role khác thì truyền Role tương ứng.")]
     public async Task<ActionResult<APIResponse>> CreateUser([FromBody] UserCreateDTO dto)
     {
         var response = new APIResponse();

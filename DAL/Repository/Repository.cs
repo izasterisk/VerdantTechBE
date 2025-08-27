@@ -40,7 +40,7 @@ namespace DAL.Repository
             return await _dbSet.ToListAsync();
         }
 
-        public async Task<List<T>> GetAllWithRelationsAsync(Func<IQueryable<T>, IQueryable<T>> includeFunc = null)
+        public async Task<List<T>> GetAllWithRelationsAsync(Func<IQueryable<T>, IQueryable<T>>? includeFunc = null)
         {
             IQueryable<T> query = _dbSet;
             if (includeFunc != null)
@@ -50,7 +50,7 @@ namespace DAL.Repository
             return await query.ToListAsync();
         }
 
-        public async Task<T?> GetWithRelationsAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>> includeFunc = null)
+        public async Task<T?> GetWithRelationsAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null)
         {
             IQueryable<T> query = _dbSet;
             if (useNoTracking)
@@ -64,7 +64,7 @@ namespace DAL.Repository
             return await query.Where(filter).FirstOrDefaultAsync();
         }
 
-        public async Task<T> GetAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false)
+        public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false)
         {
             if (useNoTracking)
             {
@@ -99,7 +99,7 @@ namespace DAL.Repository
             return dbRecord;
         }
 
-        public async Task<List<T>> GetAllWithRelationsByFilterAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>> includeFunc = null)
+        public async Task<List<T>> GetAllWithRelationsByFilterAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null)
         {
             IQueryable<T> query = _dbSet;
             if (useNoTracking)
@@ -113,7 +113,7 @@ namespace DAL.Repository
             return await query.Where(filter).ToListAsync();
         }
 
-        public async Task<int> CountAsync(Expression<Func<T, bool>> filter = null)
+        public async Task<int> CountAsync(Expression<Func<T, bool>>? filter = null)
         {
             if (filter != null)
             {
@@ -125,6 +125,34 @@ namespace DAL.Repository
         public async Task<bool> AnyAsync(Expression<Func<T, bool>> filter)
         {
             return await _dbSet.AnyAsync(filter);
+        }
+
+        public async Task<(List<T> items, int totalCount)> GetPaginatedAsync(int page, int pageSize, Expression<Func<T, bool>>? filter = null, bool useNoTracking = false, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null)
+        {
+            IQueryable<T> query = _dbSet;
+            
+            if (useNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+            
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+            
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+            
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
         }
     }
 }
