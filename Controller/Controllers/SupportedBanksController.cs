@@ -7,9 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Controller.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public class SupportedBanksController : ControllerBase
+public class SupportedBanksController : BaseController
 {
     private readonly ISupportedBanksService _supportedBanksService;
     
@@ -29,35 +28,17 @@ public class SupportedBanksController : ControllerBase
     [EndpointDescription("Không bắt buộc ImageUrl.")]
     public async Task<ActionResult<APIResponse>> CreateSupportedBank([FromBody] SupportedBanksCreateDTO dto)
     {
-        var response = new APIResponse();
-        
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(response);
-            }
-
             var supportedBank = await _supportedBanksService.CreateSupportedBankAsync(dto);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.Created;
-            response.Data = supportedBank;
-            
-            return CreatedAtAction(nameof(GetSupportedBankById), new { id = supportedBank.Id }, response);
+            return SuccessResponse(supportedBank, HttpStatusCode.Created);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.BadRequest;
-            response.Errors.Add(ex.Message);
-            return BadRequest(response);
+            return HandleException(ex);
         }
     }
 
@@ -71,32 +52,18 @@ public class SupportedBanksController : ControllerBase
     [EndpointSummary("Get Supported Bank By ID")]
     public async Task<ActionResult<APIResponse>> GetSupportedBankById(ulong id)
     {
-        var response = new APIResponse();
-        
         try
         {
             var supportedBank = await _supportedBanksService.GetSupportedBankByIdAsync(id);
             
             if (supportedBank == null)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.NotFound;
-                response.Errors.Add($"Không tìm thấy ngân hàng với ID {id}");
-                return NotFound(response);
-            }
+                return ErrorResponse($"Không tìm thấy ngân hàng với ID {id}", HttpStatusCode.NotFound);
 
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = supportedBank;
-            
-            return Ok(response);
+            return SuccessResponse(supportedBank);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            response.Errors.Add(ex.Message);
-            return StatusCode(500, response);
+            return HandleException(ex);
         }
     }
 
@@ -110,32 +77,18 @@ public class SupportedBanksController : ControllerBase
     [EndpointSummary("Get Supported Bank By Bank Code")]
     public async Task<ActionResult<APIResponse>> GetSupportedBankByBankCode(string code)
     {
-        var response = new APIResponse();
-        
         try
         {
             var supportedBank = await _supportedBanksService.GetSupportedBankByBankCodeAsync(code);
             
             if (supportedBank == null)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.NotFound;
-                response.Errors.Add($"Không tìm thấy ngân hàng với mã {code}");
-                return NotFound(response);
-            }
+                return ErrorResponse($"Không tìm thấy ngân hàng với mã {code}", HttpStatusCode.NotFound);
 
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = supportedBank;
-            
-            return Ok(response);
+            return SuccessResponse(supportedBank);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            response.Errors.Add(ex.Message);
-            return StatusCode(500, response);
+            return HandleException(ex);
         }
     }
 
@@ -151,41 +104,21 @@ public class SupportedBanksController : ControllerBase
     [EndpointDescription("Lấy danh sách tất cả ngân hàng hỗ trợ với phân trang. Mẫu: /api/SupportedBanks?page=2&pageSize=20")]
     public async Task<ActionResult<APIResponse>> GetAllSupportedBanks([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        var response = new APIResponse();
-        
         try
         {
             // Validate pagination parameters
             if (page < 1)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors.Add("Page number must be greater than 0");
-                return BadRequest(response);
-            }
+                return ErrorResponse("Page number must be greater than 0");
 
             if (pageSize < 1 || pageSize > 100)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors.Add("Page size must be between 1 and 100");
-                return BadRequest(response);
-            }
+                return ErrorResponse("Page size must be between 1 and 100");
 
             var supportedBanks = await _supportedBanksService.GetAllSupportedBanksAsync(page, pageSize);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = supportedBanks;
-            
-            return Ok(response);
+            return SuccessResponse(supportedBanks);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            response.Errors.Add(ex.Message);
-            return StatusCode(500, response);
+            return HandleException(ex);
         }
     }
 
@@ -200,35 +133,17 @@ public class SupportedBanksController : ControllerBase
     [EndpointSummary("Update Supported Bank")]
     public async Task<ActionResult<APIResponse>> UpdateSupportedBank(ulong id, [FromBody] SupportedBanksUpdateDTO dto)
     {
-        var response = new APIResponse();
-        
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(response);
-            }
-
             var supportedBank = await _supportedBanksService.UpdateSupportedBankAsync(id, dto);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = supportedBank;
-            
-            return Ok(response);
+            return SuccessResponse(supportedBank);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.BadRequest;
-            response.Errors.Add(ex.Message);
-            return BadRequest(response);
+            return HandleException(ex);
         }
     }
 }

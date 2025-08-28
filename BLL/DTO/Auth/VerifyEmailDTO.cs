@@ -2,12 +2,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BLL.DTO.Auth;
 
-public class SendVerificationDTO
+public class VerifyEmailDTO
 {
-    [Required(ErrorMessage = "Email is required")]
+    [Required]
     [EmailAddress]
     [StringLength(255)]
     public string Email { get; set; } = null!;
+
+    [Required]
+    [StringLength(8)]
+    public string Code { get; set; } = null!;
 }
 
 

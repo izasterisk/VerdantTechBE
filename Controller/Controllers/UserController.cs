@@ -7,9 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Controller.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public class UserController : ControllerBase
+public class UserController : BaseController
 {
     private readonly IUserService _userService;
     
@@ -31,35 +30,17 @@ public class UserController : ControllerBase
                          "không gửi Verification Email nhưng thay vào đó sẽ gửi email tài khoản được cấp.")]
     public async Task<ActionResult<APIResponse>> CreateUser([FromBody] UserCreateDTO dto)
     {
-        var response = new APIResponse();
-        
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(response);
-            }
-
             var user = await _userService.CreateUserAsync(dto);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.Created;
-            response.Data = user;
-            
-            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, response);
+            return SuccessResponse(user, HttpStatusCode.Created);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.BadRequest;
-            response.Errors.Add(ex.Message);
-            return BadRequest(response);
+            return HandleException(ex);
         }
     }
 
@@ -73,32 +54,18 @@ public class UserController : ControllerBase
     [EndpointSummary("Get User By ID")]
     public async Task<ActionResult<APIResponse>> GetUserById(ulong id)
     {
-        var response = new APIResponse();
-        
         try
         {
             var user = await _userService.GetUserByIdAsync(id);
             
             if (user == null)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.NotFound;
-                response.Errors.Add($"Không tìm thấy người dùng với ID {id}");
-                return NotFound(response);
-            }
+                return ErrorResponse($"Không tìm thấy người dùng với ID {id}", HttpStatusCode.NotFound);
 
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = user;
-            
-            return Ok(response);
+            return SuccessResponse(user);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            response.Errors.Add(ex.Message);
-            return StatusCode(500, response);
+            return HandleException(ex);
         }
     }
 
@@ -115,41 +82,21 @@ public class UserController : ControllerBase
     [EndpointDescription("Lọc người dùng theo role. Nếu không ghi ra, chỉ trả về Customer. Mẫu: /api/User?page=2&pageSize=20&role=admin")]
     public async Task<ActionResult<APIResponse>> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? role = null)
     {
-        var response = new APIResponse();
-        
         try
         {
             // Validate pagination parameters
             if (page < 1)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors.Add("Page number must be greater than 0");
-                return BadRequest(response);
-            }
+                return ErrorResponse("Page number must be greater than 0");
 
             if (pageSize < 1 || pageSize > 100)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors.Add("Page size must be between 1 and 100");
-                return BadRequest(response);
-            }
+                return ErrorResponse("Page size must be between 1 and 100");
 
             var users = await _userService.GetAllUsersAsync(page, pageSize, role);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = users;
-            
-            return Ok(response);
+            return SuccessResponse(users);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            response.Errors.Add(ex.Message);
-            return StatusCode(500, response);
+            return HandleException(ex);
         }
     }
 
@@ -164,35 +111,17 @@ public class UserController : ControllerBase
     [EndpointSummary("Update User")]
     public async Task<ActionResult<APIResponse>> UpdateUser(ulong id, [FromBody] UserUpdateDTO dto)
     {
-        var response = new APIResponse();
-        
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(response);
-            }
-
             var user = await _userService.UpdateUserAsync(id, dto);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = user;
-            
-            return Ok(response);
+            return SuccessResponse(user);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.BadRequest;
-            response.Errors.Add(ex.Message);
-            return BadRequest(response);
+            return HandleException(ex);
         }
     }
 }
