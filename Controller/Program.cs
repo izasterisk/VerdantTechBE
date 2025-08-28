@@ -4,13 +4,13 @@ using DAL.IRepository;
 using DAL.Repository;
 using BLL.Interfaces;
 using BLL.Services;
-using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BLL.Utils;
 using DAL.Data.Models;
+using Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +57,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IVendorProfilesService, VendorProfilesService>();
 builder.Services.AddScoped<ISustainabilityCertificationsService, SustainabilityCertificationsService>();
 builder.Services.AddScoped<ISupportedBanksService, SupportedBanksService>();
+
+// Infrastructure registrations
+builder.Services.AddInfrastructure();
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
@@ -181,9 +184,6 @@ app.UseHttpsRedirection();
 
 // Enable CORS
 app.UseCors();
-
-// Use custom JWT middleware from Infrastructure layer
-app.UseJwtMiddleware();
 
 app.UseAuthentication();
 app.UseAuthorization();

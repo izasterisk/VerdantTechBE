@@ -7,9 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Controller.Controllers;
 
-[ApiController]
 [Route("api/[controller]")]
-public class SustainabilityCertificationsController : ControllerBase
+public class SustainabilityCertificationsController : BaseController
 {
     private readonly ISustainabilityCertificationsService _sustainabilityCertificationsService;
     
@@ -29,35 +28,17 @@ public class SustainabilityCertificationsController : ControllerBase
     [EndpointDescription("Description và IssuingBody không bắt buộc.")]
     public async Task<ActionResult<APIResponse>> CreateSustainabilityCertification([FromBody] SustainabilityCertificationsCreateDTO dto)
     {
-        var response = new APIResponse();
-        
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(response);
-            }
-
             var certification = await _sustainabilityCertificationsService.CreateSustainabilityCertificationAsync(dto);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.Created;
-            response.Data = certification;
-            
-            return CreatedAtAction(nameof(GetSustainabilityCertificationById), new { id = certification.Id }, response);
+            return SuccessResponse(certification, HttpStatusCode.Created);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.BadRequest;
-            response.Errors.Add(ex.Message);
-            return BadRequest(response);
+            return HandleException(ex);
         }
     }
 
@@ -71,32 +52,18 @@ public class SustainabilityCertificationsController : ControllerBase
     [EndpointSummary("Get Sustainability Certification By ID")]
     public async Task<ActionResult<APIResponse>> GetSustainabilityCertificationById(ulong id)
     {
-        var response = new APIResponse();
-        
         try
         {
             var certification = await _sustainabilityCertificationsService.GetSustainabilityCertificationByIdAsync(id);
             
             if (certification == null)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.NotFound;
-                response.Errors.Add($"Không tìm thấy sustainability certification với ID {id}");
-                return NotFound(response);
-            }
+                return ErrorResponse($"Không tìm thấy sustainability certification với ID {id}", HttpStatusCode.NotFound);
 
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = certification;
-            
-            return Ok(response);
+            return SuccessResponse(certification);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            response.Errors.Add(ex.Message);
-            return StatusCode(500, response);
+            return HandleException(ex);
         }
     }
 
@@ -113,41 +80,21 @@ public class SustainabilityCertificationsController : ControllerBase
     [EndpointDescription("GET toàn bộ certifications, có thể lọc certifications theo category nếu muốn. Mẫu: /api/SustainabilityCertifications?page=2&pageSize=20&category=Organic")]
     public async Task<ActionResult<APIResponse>> GetAllSustainabilityCertifications([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? category = null)
     {
-        var response = new APIResponse();
-        
         try
         {
             // Validate pagination parameters
             if (page < 1)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors.Add("Page number must be greater than 0");
-                return BadRequest(response);
-            }
+                return ErrorResponse("Page number must be greater than 0");
 
             if (pageSize < 1 || pageSize > 100)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors.Add("Page size must be between 1 and 100");
-                return BadRequest(response);
-            }
+                return ErrorResponse("Page size must be between 1 and 100");
 
             var certifications = await _sustainabilityCertificationsService.GetAllSustainabilityCertificationsAsync(page, pageSize, category);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = certifications;
-            
-            return Ok(response);
+            return SuccessResponse(certifications);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            response.Errors.Add(ex.Message);
-            return StatusCode(500, response);
+            return HandleException(ex);
         }
     }
 
@@ -162,35 +109,17 @@ public class SustainabilityCertificationsController : ControllerBase
     [EndpointSummary("Update Sustainability Certification")]
     public async Task<ActionResult<APIResponse>> UpdateSustainabilityCertification(ulong id, [FromBody] SustainabilityCertificationsUpdateDTO dto)
     {
-        var response = new APIResponse();
-        
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                response.Status = false;
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(response);
-            }
-
             var certification = await _sustainabilityCertificationsService.UpdateSustainabilityCertificationAsync(id, dto);
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = certification;
-            
-            return Ok(response);
+            return SuccessResponse(certification);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.BadRequest;
-            response.Errors.Add(ex.Message);
-            return BadRequest(response);
+            return HandleException(ex);
         }
     }
 
@@ -204,24 +133,14 @@ public class SustainabilityCertificationsController : ControllerBase
     [EndpointDescription("Lấy danh sách tất cả sustainability certification categories")]
     public async Task<ActionResult<APIResponse>> GetAllCategories()
     {
-        var response = new APIResponse();
-        
         try
         {
             var categories = await _sustainabilityCertificationsService.GetAllCategoriesAsync();
-            
-            response.Status = true;
-            response.StatusCode = HttpStatusCode.OK;
-            response.Data = categories;
-            
-            return Ok(response);
+            return SuccessResponse(categories);
         }
         catch (Exception ex)
         {
-            response.Status = false;
-            response.StatusCode = HttpStatusCode.InternalServerError;
-            response.Errors.Add(ex.Message);
-            return StatusCode(500, response);
+            return HandleException(ex);
         }
     }
 }

@@ -1,180 +1,237 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BLL.Interfaces;
 using BLL.DTO.Auth;
 using BLL.DTO;
 using System.Net;
 
-namespace Controller.Controllers
+namespace Controller.Controllers;
+
+[Route("api/[controller]")]
+public class AuthController : BaseController
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
     {
-        private readonly IAuthService _authService;
+        _authService = authService;
+    }
 
-        public AuthController(IAuthService authService)
+    /// <summary>
+    /// Login endpoint
+    /// </summary>
+    /// <param name="loginDto">Login credentials</param>
+    /// <returns>JWT token and user information</returns>
+    [HttpPost("login")]
+    [AllowAnonymous]
+    [EndpointSummary("User Login")]
+    public async Task<ActionResult<APIResponse>> Login([FromBody] LoginDTO loginDto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
         {
-            _authService = authService;
-        }
-
-        /// <summary>
-        /// Login endpoint
-        /// </summary>
-        /// <param name="loginDto">Login credentials</param>
-        /// <returns>JWT token and user information</returns>
-        [HttpPost("login")]
-        [AllowAnonymous]
-        [EndpointSummary("User Login")]
-        public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                var errorResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Data = null!,
-                    Errors = errors
-                };
-
-                return BadRequest(errorResponse);
-            }
-
             var result = await _authService.LoginAsync(loginDto);
-            
-            return result.StatusCode switch
-            {
-                HttpStatusCode.OK => Ok(result),
-                HttpStatusCode.Unauthorized => Unauthorized(result),
-                HttpStatusCode.Forbidden => StatusCode(403, result),
-                _ => StatusCode(500, result)
-            };
+            return SuccessResponse(result);
         }
-
-        /// <summary>
-        /// Refresh JWT token using refresh token
-        /// </summary>
-        /// <param name="refreshTokenDto">Refresh token DTO</param>
-        /// <returns>New JWT token and refresh token</returns>
-        [HttpPost("refresh-token")]
-        [AllowAnonymous]
-        [EndpointSummary("Refresh Token")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDTO refreshTokenDto)
+        catch (Exception ex)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
+            return HandleException(ex);
+        }
+    }
 
-                var errorResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Data = null!,
-                    Errors = errors
-                };
+    /// <summary>
+    /// Send verification email with 8-digit code
+    /// </summary>
+    /// <param name="dto">Email to send verification to</param>
+    /// <returns>Confirmation</returns>
+    [HttpPost("send-verification")]
+    [AllowAnonymous]
+    [EndpointSummary("Send Verification Email")]
+    public async Task<ActionResult<APIResponse>> SendVerification([FromBody] SendEmailDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
 
-                return BadRequest(errorResponse);
-            }
+        try
+        {
+            await _authService.SendVerificationEmailAsync(dto.Email);
+            return SuccessResponse("Verification email sent");
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 
+    /// <summary>
+    /// Verify email using 8-digit code
+    /// </summary>
+    /// <param name="dto">Email and verification code</param>
+    /// <returns>Verification confirmation</returns>
+    [HttpPost("verify-email")]
+    [AllowAnonymous]
+    [EndpointSummary("Verify Email")]
+    public async Task<ActionResult<APIResponse>> VerifyEmail([FromBody] VerifyEmailDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            await _authService.VerifyEmailAsync(dto.Email, dto.Code);
+            return SuccessResponse("Email verified successfully");
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Refresh JWT token using refresh token
+    /// </summary>
+    /// <param name="refreshTokenDto">Refresh token DTO</param>
+    /// <returns>New JWT token and refresh token</returns>
+    [HttpPost("refresh-token")]
+    [AllowAnonymous]
+    [EndpointSummary("Refresh Token")]
+    public async Task<ActionResult<APIResponse>> RefreshToken([FromBody] RefreshTokenDTO refreshTokenDto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
             var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
-            
-            return result.StatusCode switch
-            {
-                HttpStatusCode.OK => Ok(result),
-                HttpStatusCode.Unauthorized => Unauthorized(result),
-                _ => StatusCode(500, result)
-            };
+            return SuccessResponse(result);
         }
-
-        /// <summary>
-        /// Get current user profile information from JWT token
-        /// </summary>
-        /// <returns>User information from JWT token</returns>
-        [HttpGet("profile")]
-        [Authorize]
-        [EndpointSummary("Get User Profile")]
-        public IActionResult GetProfile()
+        catch (Exception ex)
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-            var name = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
-
-            var profileInfo = new
-            {
-                UserId = userId,
-                Email = email,
-                Name = name,
-                Role = role,
-                Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
-            };
-
-            var response = new APIResponse
-            {
-                Status = true,
-                StatusCode = HttpStatusCode.OK,
-                Data = profileInfo,
-                Errors = new List<string>()
-            };
-
-            return Ok(response);
+            return HandleException(ex);
         }
+    }
 
-        /// <summary>
-        /// Logout endpoint - invalidates refresh token
-        /// </summary>
-        /// <returns>Logout confirmation</returns>
-        [HttpPost("logout")]
-        [Authorize]
-        [EndpointSummary("User Logout (note.)")]
-        [EndpointDescription("Gọi đến endpoint này để logout trước, sau đó mới xóa token trong localStorage")]
-        public async Task<IActionResult> Logout()
+    /// <summary>
+    /// Get current user profile information from JWT token
+    /// </summary>
+    /// <returns>User information from JWT token</returns>
+    [HttpGet("profile")]
+    [Authorize]
+    [EndpointSummary("Get User Profile")]
+    public ActionResult<APIResponse> GetProfile()
+    {
+        var profileInfo = new
+        {
+            UserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            Email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
+            Name = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value,
+            Role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
+            Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
+        };
+
+        return SuccessResponse(profileInfo);
+    }
+
+    /// <summary>
+    /// Send forgot password email with 8-character code
+    /// </summary>
+    /// <param name="dto">Email to send forgot password code to</param>
+    /// <returns>Confirmation</returns>
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [EndpointSummary("Send Forgot Password Email")]
+    public async Task<ActionResult<APIResponse>> ForgotPassword([FromBody] SendEmailDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            await _authService.SendForgotPasswordEmailAsync(dto.Email);
+            return SuccessResponse("Forgot password email sent successfully");
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Reset password using email, code, and new password
+    /// </summary>
+    /// <param name="dto">Email, code, and new password</param>
+    /// <returns>Password reset confirmation</returns>
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [EndpointSummary("Reset Forgot Password")]
+    public async Task<ActionResult<APIResponse>> ResetPassword([FromBody] ResetForgotPasswordDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            await _authService.UpdateForgotPasswordAsync(dto.Email, dto.NewPassword, dto.Code);
+            return SuccessResponse("Password reset successfully");
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Change user password
+    /// </summary>
+    /// <param name="dto">Current password and new password</param>
+    /// <returns>Password change confirmation</returns>
+    [HttpPost("change-password")]
+    [Authorize]
+    [EndpointSummary("Change Password")]
+    public async Task<ActionResult<APIResponse>> ChangePassword([FromBody] ChangePasswordDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            await _authService.ChangePassword(dto.Email, dto.OldPassword, dto.NewPassword);
+            return SuccessResponse("Password changed successfully");
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Logout endpoint - invalidates refresh token
+    /// </summary>
+    /// <returns>Logout confirmation</returns>
+    [HttpPost("logout")]
+    [Authorize]
+    [EndpointSummary("User Logout (note.)")]
+    [EndpointDescription("Gọi đến endpoint này để logout trước, sau đó mới xóa token trong localStorage")]
+    public async Task<ActionResult<APIResponse>> Logout()
+    {
+        try
         {
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                var unauthorizedResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.Unauthorized,
-                    Data = null!,
-                    Errors = new List<string> { "User not authenticated" }
-                };
-                return Unauthorized(unauthorizedResponse);
-            }
-
-            // Convert string to ulong
-            if (!ulong.TryParse(userIdClaim, out ulong userId))
-            {
-                var badRequestResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Data = null!,
-                    Errors = new List<string> { "Invalid user ID format" }
-                };
-                return BadRequest(badRequestResponse);
-            }
-
-            var result = await _authService.LogoutAsync(userId);
             
-            return result.StatusCode switch
-            {
-                HttpStatusCode.OK => Ok(result),
-                HttpStatusCode.Unauthorized => Unauthorized(result),
-                HttpStatusCode.NotFound => NotFound(result),
-                _ => StatusCode(500, result)
-            };
+            if (string.IsNullOrEmpty(userIdClaim))
+                return ErrorResponse("User not authenticated", HttpStatusCode.Unauthorized);
+
+            if (!ulong.TryParse(userIdClaim, out ulong userId))
+                return ErrorResponse("Invalid user ID format", HttpStatusCode.BadRequest);
+
+            await _authService.LogoutAsync(userId);
+            return SuccessResponse("Logged out successfully");
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
         }
     }
 }

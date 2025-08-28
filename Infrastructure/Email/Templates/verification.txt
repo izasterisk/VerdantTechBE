@@ -1,0 +1,12 @@
+Xin chào {{FULL_NAME}}!
+
+Cảm ơn bạn đã đăng ký tài khoản VerdantTech.
+
+Để xác thực tài khoản, vui lòng nhập mã 8 chữ số sau:
+Mã: {{VERIFICATION_TOKEN}}
+
+Mã này sẽ hết hạn sau 10 phút.
+
+Nếu bạn không đăng ký tài khoản này, vui lòng bỏ qua email này.
+
+VerdantTech Team
