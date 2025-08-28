@@ -14,4 +14,9 @@
     <ProjectReference Include="..\BLL\BLL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Email\Templates\verification.html" />
+    <EmbeddedResource Include="Email\Templates\verification.txt" />
+  </ItemGroup>
+
 </Project>

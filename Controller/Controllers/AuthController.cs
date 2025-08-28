@@ -5,6 +5,7 @@ using BLL.Interfaces;
 using BLL.DTO.Auth;
 using BLL.DTO;
 using System.Net;
+using Microsoft.AspNetCore.Routing;
 
 namespace Controller.Controllers
 {
@@ -29,33 +30,106 @@ namespace Controller.Controllers
         [EndpointSummary("User Login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                var errorResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Data = null!,
-                    Errors = errors
-                };
-
-                return BadRequest(errorResponse);
-            }
-
-            var result = await _authService.LoginAsync(loginDto);
+            var response = new APIResponse();
             
-            return result.StatusCode switch
+            try
             {
-                HttpStatusCode.OK => Ok(result),
-                HttpStatusCode.Unauthorized => Unauthorized(result),
-                HttpStatusCode.Forbidden => StatusCode(403, result),
-                _ => StatusCode(500, result)
-            };
+                if (!ModelState.IsValid)
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(response);
+                }
+
+                var result = await _authService.LoginAsync(loginDto);
+                
+                response.Status = true;
+                response.StatusCode = HttpStatusCode.OK;
+                response.Data = result;
+                
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                // Handle specific exception types for different status codes
+                if (ex.Message.Contains("Invalid email or password"))
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.Unauthorized;
+                    response.Errors.Add(ex.Message);
+                    return Unauthorized(response);
+                }
+                else if (ex.Message.Contains("Email not verified"))
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.Forbidden;
+                    response.Errors.Add(ex.Message);
+                    return StatusCode(403, response);
+                }
+                else
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.InternalServerError;
+                    response.Errors.Add(ex.Message);
+                    return StatusCode(500, response);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Send verification email with 8-digit code
+        /// </summary>
+        /// <param name="dto">Email to send verification to</param>
+        /// <returns>Confirmation</returns>
+        [HttpPost("send-verification")]
+        [AllowAnonymous]
+        [EndpointSummary("Send Verification Email")]
+        public async Task<IActionResult> SendVerification([FromBody] SendVerificationDTO dto)
+        {
+            var response = new APIResponse();
+            
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(response);
+                }
+
+                await _authService.SendVerificationEmailAsync(dto.Email);
+                
+                response.Status = true;
+                response.StatusCode = HttpStatusCode.OK;
+                response.Data = "Verification email sent";
+                
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("User not found"))
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    response.Errors.Add(ex.Message);
+                    return NotFound(response);
+                }
+                else
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.InternalServerError;
+                    response.Errors.Add(ex.Message);
+                    return StatusCode(500, response);
+                }
+            }
         }
 
         /// <summary>
@@ -68,32 +142,46 @@ namespace Controller.Controllers
         [EndpointSummary("Refresh Token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDTO refreshTokenDto)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                var errorResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Data = null!,
-                    Errors = errors
-                };
-
-                return BadRequest(errorResponse);
-            }
-
-            var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
+            var response = new APIResponse();
             
-            return result.StatusCode switch
+            try
             {
-                HttpStatusCode.OK => Ok(result),
-                HttpStatusCode.Unauthorized => Unauthorized(result),
-                _ => StatusCode(500, result)
-            };
+                if (!ModelState.IsValid)
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Errors = ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+                    return BadRequest(response);
+                }
+
+                var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
+                
+                response.Status = true;
+                response.StatusCode = HttpStatusCode.OK;
+                response.Data = result;
+                
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Invalid or expired refresh token"))
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.Unauthorized;
+                    response.Errors.Add(ex.Message);
+                    return Unauthorized(response);
+                }
+                else
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.InternalServerError;
+                    response.Errors.Add(ex.Message);
+                    return StatusCode(500, response);
+                }
+            }
         }
 
         /// <summary>
@@ -140,41 +228,53 @@ namespace Controller.Controllers
         [EndpointDescription("Gọi đến endpoint này để logout trước, sau đó mới xóa token trong localStorage")]
         public async Task<IActionResult> Logout()
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                var unauthorizedResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.Unauthorized,
-                    Data = null!,
-                    Errors = new List<string> { "User not authenticated" }
-                };
-                return Unauthorized(unauthorizedResponse);
-            }
-
-            // Convert string to ulong
-            if (!ulong.TryParse(userIdClaim, out ulong userId))
-            {
-                var badRequestResponse = new APIResponse
-                {
-                    Status = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Data = null!,
-                    Errors = new List<string> { "Invalid user ID format" }
-                };
-                return BadRequest(badRequestResponse);
-            }
-
-            var result = await _authService.LogoutAsync(userId);
+            var response = new APIResponse();
             
-            return result.StatusCode switch
+            try
             {
-                HttpStatusCode.OK => Ok(result),
-                HttpStatusCode.Unauthorized => Unauthorized(result),
-                HttpStatusCode.NotFound => NotFound(result),
-                _ => StatusCode(500, result)
-            };
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.Unauthorized;
+                    response.Errors.Add("User not authenticated");
+                    return Unauthorized(response);
+                }
+
+                // Convert string to ulong
+                if (!ulong.TryParse(userIdClaim, out ulong userId))
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Errors.Add("Invalid user ID format");
+                    return BadRequest(response);
+                }
+
+                await _authService.LogoutAsync(userId);
+                
+                response.Status = true;
+                response.StatusCode = HttpStatusCode.OK;
+                response.Data = "Logged out successfully";
+                
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("User not found"))
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.NotFound;
+                    response.Errors.Add(ex.Message);
+                    return NotFound(response);
+                }
+                else
+                {
+                    response.Status = false;
+                    response.StatusCode = HttpStatusCode.InternalServerError;
+                    response.Errors.Add(ex.Message);
+                    return StatusCode(500, response);
+                }
+            }
         }
     }
 }

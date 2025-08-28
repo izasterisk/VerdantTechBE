@@ -25,8 +25,17 @@ public class UserRepository : IUserRepository
             user.LastLoginAt = DateTime.Now;
             user.CreatedAt = DateTime.Now;
             user.UpdatedAt = DateTime.Now;
-            user.IsVerified = false;
             user.Status = UserStatus.Active;
+            
+            if(user.Role == UserRole.Customer)
+            {
+                user.IsVerified = false;
+            }
+            else if(user.Role == UserRole.Admin || user.Role == UserRole.Manager)
+            {
+                user.IsVerified = true;
+            }
+            
             var createdUser = await _userRepository.CreateAsync(user);
             await transaction.CommitAsync();
             return createdUser;

@@ -35,7 +35,6 @@ public class UserService : IUserService
         }
         User user = _mapper.Map<User>(dto);
         user.PasswordHash = AuthUtils.HashPassword(dto.Password);
-        
         var createdUser = await _userRepository.CreateUserWithTransactionAsync(user);
         return _mapper.Map<UserReadOnlyDTO>(createdUser);
     }

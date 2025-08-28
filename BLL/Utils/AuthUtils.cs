@@ -11,6 +11,30 @@ namespace BLL.Utils;
 public static class AuthUtils
 {
     /// <summary>
+    /// Generate numeric verification code with cryptographic RNG
+    /// </summary>
+    /// <param name="length">Desired length, default 8</param>
+    /// <returns>Numeric string</returns>
+    public static string GenerateNumericCode(int length = 8)
+    {
+        if (length <= 0)
+            throw new ArgumentOutOfRangeException(nameof(length));
+
+        const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        var result = new char[length];
+
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        Span<byte> buffer = stackalloc byte[length];
+        rng.GetBytes(buffer);
+
+        for (int i = 0; i < length; i++)
+        {
+            result[i] = chars[buffer[i] % chars.Length];
+        }
+
+        return new string(result);
+    }
+    /// <summary>
     /// Hash password using BCrypt
     /// </summary>
     /// <param name="password">Plain text password</param>
