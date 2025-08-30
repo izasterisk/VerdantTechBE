@@ -124,4 +124,34 @@ public class UserController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Thay đổi trạng thái người dùng
+    /// </summary>
+    /// <param name="id">ID của người dùng</param>
+    /// <param name="status">Trạng thái mới (Active, Inactive, Suspended, Deleted)</param>
+    /// <returns>Thông tin người dùng đã cập nhật trạng thái</returns>
+    [HttpPatch("{id}/status")]
+    [Authorize]
+    [EndpointSummary("Change User Status (note.)")]
+    [EndpointDescription("Thay đổi trạng thái của người dùng thành 1 trong: Active, Inactive, Suspended, Deleted. " +
+                         "Active = bình thường, Inactive = tạm dừng (người dùng có thể tự đặt), " +
+                         "Suspended = đình chỉ (bị admin/manager chém), Deleted = xóa.")]
+    public async Task<ActionResult<APIResponse>> ChangeUserStatus(ulong id, [FromQuery] string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return ErrorResponse("Status parameter is required");
+        }
+
+        try
+        {
+            var user = await _userService.ChangeUserStatusAsync(id, status);
+            return SuccessResponse(user);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

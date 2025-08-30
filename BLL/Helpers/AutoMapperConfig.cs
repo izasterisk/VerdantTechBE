@@ -4,7 +4,7 @@ using BLL.DTO.SustainabilityCertifications;
 using BLL.DTO.User;
 using DAL.Data.Models;
 
-namespace BLL.Utils;
+namespace BLL.Helpers;
 
 public class AutoMapperConfig : Profile
 {

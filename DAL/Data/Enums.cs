@@ -3,8 +3,7 @@ namespace DAL.Data;
 public enum UserRole
 {
     Customer,
-    SellerCompany,
-    SellerIndividual,
+    Seller,
     Admin,
     Manager
 }

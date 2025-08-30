@@ -2,7 +2,7 @@ using BLL.Interfaces;
 using AutoMapper;
 using BLL.DTO;
 using BLL.DTO.User;
-using BLL.Utils;
+using BLL.Helpers.Auth;
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
@@ -35,6 +35,7 @@ public class UserService : IUserService
         }
         User user = _mapper.Map<User>(dto);
         user.PasswordHash = AuthUtils.HashPassword(dto.Password);
+        user.IsVerified = false;
         var createdUser = await _userRepository.CreateUserWithTransactionAsync(user);
         return _mapper.Map<UserReadOnlyDTO>(createdUser);
     }
@@ -76,6 +77,28 @@ public class UserService : IUserService
 
         _mapper.Map(dto, existingUser);
         var updatedUser = await _userRepository.UpdateUserWithTransactionAsync(existingUser);
+        return _mapper.Map<UserReadOnlyDTO>(updatedUser);
+    }
+    
+    public async Task<UserReadOnlyDTO> ChangeUserStatusAsync(ulong userId, string status)
+    {
+        if (!Enum.TryParse<UserStatus>(status, true, out var newStatus))
+            throw new ArgumentException($"Invalid status '{status}'. Valid statuses are: {string.Join(", ", Enum.GetNames<UserStatus>())}");
+
+        var user = await _userRepository.GetUserByIdAsync(userId) 
+                   ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
+
+        if (user.Status == UserStatus.Deleted)
+            throw new InvalidOperationException("This account has already been deleted.");
+
+        if (user.Status == newStatus)
+            throw new InvalidOperationException($"User already has status '{newStatus}'");
+
+        user.Status = newStatus;
+        if (newStatus == UserStatus.Deleted)
+            user.DeletedAt = DateTime.UtcNow;
+
+        var updatedUser = await _userRepository.UpdateUserWithTransactionAsync(user);
         return _mapper.Map<UserReadOnlyDTO>(updatedUser);
     }
 }

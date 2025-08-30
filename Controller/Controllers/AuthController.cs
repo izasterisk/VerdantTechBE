@@ -42,6 +42,30 @@ public class AuthController : BaseController
     }
 
     /// <summary>
+    /// Google login endpoint
+    /// </summary>
+    /// <param name="googleLoginDto">Google ID token</param>
+    /// <returns>JWT token and user information</returns>
+    [HttpPost("google-login")]
+    [AllowAnonymous]
+    [EndpointSummary("Google Login")]
+    public async Task<ActionResult<APIResponse>> GoogleLogin([FromBody] GoogleLoginDTO googleLoginDto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var result = await _authService.GoogleLoginAsync(googleLoginDto);
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Send verification email with 8-digit code
     /// </summary>
     /// <param name="dto">Email to send verification to</param>

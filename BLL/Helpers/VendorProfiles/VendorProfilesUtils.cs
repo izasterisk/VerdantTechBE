@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace BLL.Utils;
+namespace BLL.Helpers.VendorProfiles;
 
 public class VendorProfilesUtils
 {
