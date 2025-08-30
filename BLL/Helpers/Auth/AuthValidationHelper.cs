@@ -1,3 +1,4 @@
+using DAL.Data;
 using DAL.Data.Models;
 
 namespace BLL.Helpers.Auth;
@@ -21,6 +22,24 @@ public static class AuthValidationHelper
 
         if (!user.IsVerified)
             throw new InvalidOperationException(AuthConstants.EMAIL_NOT_VERIFIED);
+    }
+    
+    /// <summary>
+    /// Validate user existence and status
+    /// </summary>
+    /// <param name="user">User from database</param>
+    /// <exception cref="Exception">Thrown when user is not found</exception>
+    /// <exception cref="UnauthorizedAccessException">Thrown when user is deleted or suspended</exception>
+    public static void ValidateUserStatus(User? user)
+    {
+        if (user == null)
+            throw new Exception(AuthConstants.USER_NOT_FOUND);
+        
+        if (user.Status == UserStatus.Deleted)
+            throw new UnauthorizedAccessException(AuthConstants.USER_DELETED);
+    
+        if (user.Status == UserStatus.Suspended)
+            throw new UnauthorizedAccessException(AuthConstants.USER_SUSPENDED);
     }
 
     /// <summary>

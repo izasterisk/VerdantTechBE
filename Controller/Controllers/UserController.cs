@@ -136,7 +136,7 @@ public class UserController : BaseController
     [EndpointSummary("Change User Status (note.)")]
     [EndpointDescription("Thay đổi trạng thái của người dùng thành 1 trong: Active, Inactive, Suspended, Deleted. " +
                          "Active = bình thường, Inactive = tạm dừng (người dùng có thể tự đặt), " +
-                         "Suspended = đình chỉ (bị admin/manager chém), Deleted = xóa.")]
+                         "Suspended = đình chỉ (bị admin/manager chém), Deleted = xóa (chỉ là bị soft delete, không xóa hoàn toàn.")]
     public async Task<ActionResult<APIResponse>> ChangeUserStatus(ulong id, [FromQuery] string status)
     {
         if (string.IsNullOrWhiteSpace(status))

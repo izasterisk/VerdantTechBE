@@ -36,24 +36,24 @@ public abstract class BaseController : ControllerBase
     {
         return ex switch
         {
-            UnauthorizedAccessException => Unauthorized(APIResponse.Error(ex.Message, HttpStatusCode.Unauthorized)),
-            ArgumentException => BadRequest(APIResponse.Error(ex.Message, HttpStatusCode.BadRequest)),
-            InvalidOperationException when ex.Message.Contains("Email not verified") => 
-                StatusCode(403, APIResponse.Error(ex.Message, HttpStatusCode.Forbidden)),
+            UnauthorizedAccessException => Unauthorized(APIResponse.Error("Truy cập bị từ chối", HttpStatusCode.Unauthorized)),
+            ArgumentException => BadRequest(APIResponse.Error("Yêu cầu không hợp lệ", HttpStatusCode.BadRequest)),
+            InvalidOperationException when ex.Message.Contains("Email chưa được xác minh") => 
+                StatusCode(403, APIResponse.Error("Email chưa được xác minh", HttpStatusCode.Forbidden)),
             InvalidOperationException => 
-                ex.Message.Contains("User not found") 
-                    ? NotFound(APIResponse.Error(ex.Message, HttpStatusCode.NotFound))
-                    : BadRequest(APIResponse.Error(ex.Message, HttpStatusCode.BadRequest)),
-            _ => StatusCode(500, APIResponse.Error(ex.Message, HttpStatusCode.InternalServerError))
+                ex.Message.Contains("Không tìm thấy người dùng") 
+                    ? NotFound(APIResponse.Error("Không tìm thấy người dùng", HttpStatusCode.NotFound))
+                    : BadRequest(APIResponse.Error("Yêu cầu không hợp lệ", HttpStatusCode.BadRequest)),
+            _ => StatusCode(500, APIResponse.Error("Lỗi máy chủ nội bộ", HttpStatusCode.InternalServerError))
         };
     }
 
     /// <summary>
     /// Create success response với data
     /// </summary>
-    protected ActionResult<APIResponse> SuccessResponse(object data = null, HttpStatusCode statusCode = HttpStatusCode.OK)
+    protected ActionResult<APIResponse> SuccessResponse(object? data = null, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
-        var response = APIResponse.Success(data, statusCode);
+        var response = APIResponse.Success(data ?? new object(), statusCode);
         return statusCode switch
         {
             HttpStatusCode.Created => Created("", response),

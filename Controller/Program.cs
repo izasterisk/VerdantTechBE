@@ -11,6 +11,9 @@ using System.Text;
 using BLL.Helpers;
 using DAL.Data.Models;
 using Infrastructure.Extensions;
+using BLL.DTO;
+using System.Net;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +27,7 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Warning: Could not load .env file: {ex.Message}. Using environment variables.");
+    Console.WriteLine($"Cảnh báo: Không thể tải tệp .env: {ex.Message}. Sử dụng biến môi trường.");
 }
 
 // Get connection string from .env
@@ -91,6 +94,32 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtAudience,
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
+    };
+
+    // Cấu hình events để trả về message tùy chỉnh
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = context =>
+        {
+            // Ngăn không cho default challenge response
+            context.HandleResponse();
+            // Tạo custom response cho 401 Unauthorized
+            var response = APIResponse.Error("Bạn cần đăng nhập để truy cập chức năng này.", HttpStatusCode.Unauthorized);
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+            context.Response.ContentType = "application/json";
+            var jsonResponse = JsonConvert.SerializeObject(response);
+            return context.Response.WriteAsync(jsonResponse);
+        },
+        
+        OnForbidden = context =>
+        {
+            // Tạo custom response cho 403 Forbidden
+            var response = APIResponse.Error("Bạn không có quyền truy cập chức năng này.", HttpStatusCode.Forbidden);
+            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            context.Response.ContentType = "application/json";
+            var jsonResponse = JsonConvert.SerializeObject(response);
+            return context.Response.WriteAsync(jsonResponse);
+        }
     };
 });
 

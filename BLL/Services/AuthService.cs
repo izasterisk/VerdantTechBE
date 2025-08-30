@@ -33,6 +33,7 @@ public class AuthService : IAuthService
         ArgumentNullException.ThrowIfNull(loginDto);
         
         var user = await _authRepository.GetUserByEmailAsync(loginDto.Email);
+        AuthValidationHelper.ValidateUserStatus(user);
         AuthValidationHelper.ValidateLoginCredentials(user, loginDto.Password);
 
         var (token, refreshToken, refreshTokenExpiry) = await GenerateTokensAndUpdateUserAsync(user!);
@@ -69,6 +70,10 @@ public class AuthService : IAuthService
             // Create new user with Google information
             user = GoogleAuthHelper.CreateUserFromGoogleAuth(googleUser);
             await _userRepository.CreateUserWithTransactionAsync(user);
+        }
+        else
+        {
+            AuthValidationHelper.ValidateUserStatus(user);
         }
         
         // Generate tokens and update user
@@ -125,7 +130,7 @@ public class AuthService : IAuthService
         
         var user = await _authRepository.GetUserByEmailAsync(email) 
             ?? throw new InvalidOperationException(AuthConstants.USER_NOT_FOUND);
-        
+        AuthValidationHelper.ValidateUserStatus(user);
         if (user.IsVerified)
             throw new InvalidOperationException(AuthConstants.USER_ALREADY_VERIFIED);
 
@@ -143,7 +148,7 @@ public class AuthService : IAuthService
         
         var user = await _authRepository.GetUserByEmailAsync(email) 
             ?? throw new InvalidOperationException(AuthConstants.USER_NOT_FOUND);
-
+        AuthValidationHelper.ValidateUserStatus(user);
         var code = AuthUtils.GenerateNumericCode(AuthConstants.VERIFICATION_CODE_LENGTH);
         await _emailSender.SendForgotPasswordEmailAsync(user.Email, user.FullName, code);
 
@@ -158,7 +163,7 @@ public class AuthService : IAuthService
         
         var user = await _authRepository.GetUserByEmailAsync(email);
         AuthValidationHelper.ValidateVerificationCode(user, code);
-        
+        AuthValidationHelper.ValidateUserStatus(user);
         user!.IsVerified = true;
         await _authRepository.UpdateUserAsync(user);
     }
@@ -169,7 +174,7 @@ public class AuthService : IAuthService
         
         var user = await _authRepository.GetUserByEmailAsync(email);
         AuthValidationHelper.ValidateResetPasswordCode(user, code);
-        
+        AuthValidationHelper.ValidateUserStatus(user);
         user!.PasswordHash = AuthUtils.HashPassword(newPassword);
         await _authRepository.UpdateUserAsync(user);
     }
@@ -178,7 +183,7 @@ public class AuthService : IAuthService
     {
         var user = await _authRepository.GetUserByEmailAsync(email);
         AuthValidationHelper.ValidateOldPassword(user, oldPassword);
-        
+        AuthValidationHelper.ValidateUserStatus(user);
         user!.PasswordHash = AuthUtils.HashPassword(newPassword);
         await _authRepository.UpdateUserAsync(user);
     }

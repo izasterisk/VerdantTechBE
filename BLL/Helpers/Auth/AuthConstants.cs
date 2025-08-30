@@ -19,16 +19,19 @@ public static class AuthConstants
     public const string GOOGLE_CLIENT_ID_KEY = "GOOGLE_CLIENT_ID";
     
     // Error Messages
-    public const string INVALID_EMAIL_OR_PASSWORD = "Invalid email or password";
-    public const string EMAIL_NOT_VERIFIED = "Email not verified. Please enter your 8-digit verification code.";
-    public const string USER_NOT_FOUND = "User not found";
-    public const string USER_ALREADY_VERIFIED = "User already verified";
-    public const string INVALID_VERIFICATION_CODE = "Invalid verification code";
-    public const string VERIFICATION_CODE_EXPIRED = "Verification code expired";
-    public const string INVALID_RESET_PASSWORD_CODE = "Invalid reset password code";
-    public const string RESET_PASSWORD_CODE_EXPIRED = "Reset password code expired";
-    public const string INVALID_OLD_PASSWORD = "Invalid old password";
-    public const string INVALID_OR_EXPIRED_REFRESH_TOKEN = "Invalid or expired refresh token";
-    public const string GOOGLE_CLIENT_ID_NOT_CONFIGURED = "Google Client ID not configured";
-    public const string INVALID_GOOGLE_TOKEN = "Invalid Google token";
+    public const string INVALID_EMAIL_OR_PASSWORD = "Email hoặc mật khẩu không hợp lệ";
+    public const string EMAIL_NOT_VERIFIED = "Email chưa được xác minh. Vui lòng nhập mã xác minh 8 chữ số.";
+    public const string USER_NOT_FOUND = "Không tìm thấy người dùng";
+    public const string USER_ALREADY_VERIFIED = "Người dùng đã được xác minh";
+    public const string INVALID_VERIFICATION_CODE = "Mã xác minh không hợp lệ";
+    public const string VERIFICATION_CODE_EXPIRED = "Mã xác minh đã hết hạn";
+    public const string INVALID_RESET_PASSWORD_CODE = "Mã đặt lại mật khẩu không hợp lệ";
+    public const string RESET_PASSWORD_CODE_EXPIRED = "Mã đặt lại mật khẩu đã hết hạn";
+    public const string INVALID_OLD_PASSWORD = "Mật khẩu cũ không hợp lệ";
+    public const string INVALID_OR_EXPIRED_REFRESH_TOKEN = "Mã thông báo làm mới không hợp lệ hoặc đã hết hạn";
+    public const string GOOGLE_CLIENT_ID_NOT_CONFIGURED = "Chưa cấu hình Google Client ID";
+    public const string INVALID_GOOGLE_TOKEN = "Mã thông báo Google không hợp lệ";
+    public const string USER_DELETED = "Người dùng đã bị xóa";
+    public const string USER_INACTIVE = "Người dùng không hoạt động";
+    public const string USER_SUSPENDED = "Người dùng bị đình chỉ";
 }

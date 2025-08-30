@@ -37,7 +37,7 @@ public static class GoogleAuthHelper
         }
         catch (Exception ex)
         {
-            throw new UnauthorizedAccessException($"{AuthConstants.INVALID_GOOGLE_TOKEN}: {ex.Message}");
+            throw new UnauthorizedAccessException($"Token Google không hợp lệ: {ex.Message}");
         }
     }
 

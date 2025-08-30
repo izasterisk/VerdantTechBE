@@ -18,8 +18,7 @@ public class AuthRepository : IAuthRepository
     
     public async Task<User?> GetUserByEmailAsync(string email)
     {
-        return await _userRepository.GetAsync(u => u.Email.ToLower() == email.ToLower() 
-                                                   && u.DeletedAt == null && u.Status != UserStatus.Deleted);
+        return await _userRepository.GetAsync(u => u.Email.ToLower() == email.ToLower());
     }
 
     public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
