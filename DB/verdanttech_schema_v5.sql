@@ -463,56 +463,6 @@ CREATE TABLE purchase_inventory (
     INDEX idx_batch (batch_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Purchase inventory tracking - stock coming in';
 
--- Sales inventory tracking (stock out)
-CREATE TABLE sales_inventory (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    product_id BIGINT UNSIGNED NOT NULL,
-    order_id BIGINT UNSIGNED NULL COMMENT 'Order that caused this stock movement',
-    quantity INT NOT NULL COMMENT 'Quantity sold (negative for returns)',
-    unit_sale_price DECIMAL(12,2) NOT NULL COMMENT 'Sale price per unit',
-    total_revenue DECIMAL(12,2) NOT NULL COMMENT 'Total revenue from this sale',
-    commission_amount DECIMAL(12,2) DEFAULT 0.00 COMMENT 'Commission amount to be paid to vendor',
-    balance_after INT NOT NULL COMMENT 'Stock balance after this sale',
-    movement_type ENUM('sale', 'return', 'damage', 'loss', 'adjustment') DEFAULT 'sale',
-    notes TEXT NULL,
-    created_by BIGINT UNSIGNED NOT NULL COMMENT 'User who recorded this movement',
-    sold_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_product (product_id),
-    INDEX idx_order (order_id),
-    INDEX idx_movement_type (movement_type),
-    INDEX idx_sold_date (sold_at),
-    INDEX idx_created_by (created_by)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sales inventory tracking - stock going out';
-
--- Reviews and ratings
-CREATE TABLE product_reviews (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    product_id BIGINT UNSIGNED NOT NULL,
-    order_id BIGINT UNSIGNED NOT NULL,
-    customer_id BIGINT UNSIGNED NOT NULL,
-    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    title VARCHAR(255),
-    comment TEXT,
-    images JSON COMMENT 'Array of review image URLs',
-    helpful_count INT DEFAULT 0,
-    unhelpful_count INT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_product_order_customer (product_id, order_id, customer_id),
-    INDEX idx_product_rating (product_id, rating),
-    INDEX idx_customer (customer_id),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Product reviews and ratings';
-
 -- =====================================================
 -- REQUEST MANAGEMENT TABLES
 -- =====================================================
@@ -598,34 +548,6 @@ CREATE TABLE order_details (
     INDEX idx_product (product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Order line items';
 
--- Payments table
-CREATE TABLE payments (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    order_id BIGINT UNSIGNED NOT NULL,
-    transaction_id BIGINT UNSIGNED NULL COMMENT 'Reference to transactions table for consistency',
-    payment_method ENUM('credit_card', 'debit_card', 'paypal', 'stripe', 'bank_transfer', 'cod') NOT NULL,
-    payment_gateway ENUM('stripe', 'paypal', 'vnpay', 'momo', 'manual') NOT NULL,
-    gateway_transaction_id VARCHAR(255) UNIQUE COMMENT 'Transaction ID from payment gateway',
-    amount DECIMAL(12,2) NOT NULL,
-    status ENUM('pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded') DEFAULT 'pending',
-    gateway_response JSON COMMENT 'Raw response from payment gateway',
-    refund_amount DECIMAL(12,2) DEFAULT 0.00,
-    refund_reason TEXT,
-    refunded_at TIMESTAMP NULL,
-    paid_at TIMESTAMP NULL,
-    failed_at TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
-    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
-    INDEX idx_order (order_id),
-    INDEX idx_transaction (transaction_id),
-    INDEX idx_gateway_transaction (gateway_transaction_id),
-    INDEX idx_status (status),
-    INDEX idx_payment_method (payment_method)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Payment transactions with gateway details';
-
 -- =====================================================
 -- FINANCIAL SYSTEM TABLES
 -- =====================================================
@@ -640,39 +562,6 @@ CREATE TABLE wallets (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor wallets tracking balances';
-
--- Cashouts table (money going out - vendor payouts, expenses)
-CREATE TABLE cashouts (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vendor_id BIGINT UNSIGNED NOT NULL,
-    transaction_id BIGINT UNSIGNED NULL COMMENT 'Reference to transactions table for consistency',
-    amount DECIMAL(12,2) NOT NULL,
-    bank_code VARCHAR(20) NOT NULL,
-    bank_account_number VARCHAR(50) NOT NULL,
-    bank_account_holder VARCHAR(255) NOT NULL,
-    status ENUM('pending','processing','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
-    cashout_type ENUM('commission_payout', 'vendor_payment', 'expense', 'refund') DEFAULT 'commission_payout',
-    gateway_transaction_id VARCHAR(255) NULL COMMENT 'External payment gateway transaction ID',
-    reference_type VARCHAR(50) NULL COMMENT 'Type of reference (order, request, etc.)',
-    reference_id BIGINT UNSIGNED NULL COMMENT 'ID of reference entity',
-    notes TEXT NULL,
-    processed_by BIGINT UNSIGNED NULL COMMENT 'Admin who processed this cashout',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    processed_at TIMESTAMP NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE RESTRICT,
-    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
-    FOREIGN KEY (bank_code) REFERENCES supported_banks(bank_code) ON DELETE RESTRICT,
-    FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE SET NULL,
-    UNIQUE KEY idx_unique_gateway_transaction (gateway_transaction_id),
-    INDEX idx_vendor (vendor_id),
-    INDEX idx_transaction (transaction_id),
-    INDEX idx_status (status),
-    INDEX idx_type (cashout_type),
-    INDEX idx_processed (processed_at),
-    INDEX idx_reference (reference_type, reference_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Money going out - vendor payouts and expenses with banking details';
 
 -- Transactions table (central ledger - single source of truth for all financial movements)
 CREATE TABLE transactions (
@@ -725,6 +614,117 @@ CREATE TABLE transactions (
     INDEX idx_amount (amount),
     INDEX idx_created_by (created_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Central financial ledger - single source of truth for all money movements';
+
+-- Payments table
+CREATE TABLE payments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT UNSIGNED NOT NULL,
+    transaction_id BIGINT UNSIGNED NULL COMMENT 'Reference to transactions table for consistency',
+    payment_method ENUM('credit_card', 'debit_card', 'paypal', 'stripe', 'bank_transfer', 'cod') NOT NULL,
+    payment_gateway ENUM('stripe', 'paypal', 'vnpay', 'momo', 'manual') NOT NULL,
+    gateway_transaction_id VARCHAR(255) UNIQUE COMMENT 'Transaction ID from payment gateway',
+    amount DECIMAL(12,2) NOT NULL,
+    status ENUM('pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded') DEFAULT 'pending',
+    gateway_response JSON COMMENT 'Raw response from payment gateway',
+    refund_amount DECIMAL(12,2) DEFAULT 0.00,
+    refund_reason TEXT,
+    refunded_at TIMESTAMP NULL,
+    paid_at TIMESTAMP NULL,
+    failed_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
+    INDEX idx_order (order_id),
+    INDEX idx_transaction (transaction_id),
+    INDEX idx_gateway_transaction (gateway_transaction_id),
+    INDEX idx_status (status),
+    INDEX idx_payment_method (payment_method)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Payment transactions with gateway details';
+
+-- Cashouts table (money going out - vendor payouts, expenses)
+CREATE TABLE cashouts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    transaction_id BIGINT UNSIGNED NULL COMMENT 'Reference to transactions table for consistency',
+    amount DECIMAL(12,2) NOT NULL,
+    bank_code VARCHAR(20) NOT NULL,
+    bank_account_number VARCHAR(50) NOT NULL,
+    bank_account_holder VARCHAR(255) NOT NULL,
+    status ENUM('pending','processing','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
+    cashout_type ENUM('commission_payout', 'vendor_payment', 'expense', 'refund') DEFAULT 'commission_payout',
+    gateway_transaction_id VARCHAR(255) NULL COMMENT 'External payment gateway transaction ID',
+    reference_type VARCHAR(50) NULL COMMENT 'Type of reference (order, request, etc.)',
+    reference_id BIGINT UNSIGNED NULL COMMENT 'ID of reference entity',
+    notes TEXT NULL,
+    processed_by BIGINT UNSIGNED NULL COMMENT 'Admin who processed this cashout',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE RESTRICT,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
+    FOREIGN KEY (bank_code) REFERENCES supported_banks(bank_code) ON DELETE RESTRICT,
+    FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY idx_unique_gateway_transaction (gateway_transaction_id),
+    INDEX idx_vendor (vendor_id),
+    INDEX idx_transaction (transaction_id),
+    INDEX idx_status (status),
+    INDEX idx_type (cashout_type),
+    INDEX idx_processed (processed_at),
+    INDEX idx_reference (reference_type, reference_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Money going out - vendor payouts and expenses with banking details';
+
+-- Sales inventory tracking (stock out)
+CREATE TABLE sales_inventory (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT UNSIGNED NOT NULL,
+    order_id BIGINT UNSIGNED NULL COMMENT 'Order that caused this stock movement',
+    quantity INT NOT NULL COMMENT 'Quantity sold (negative for returns)',
+    unit_sale_price DECIMAL(12,2) NOT NULL COMMENT 'Sale price per unit',
+    total_revenue DECIMAL(12,2) NOT NULL COMMENT 'Total revenue from this sale',
+    commission_amount DECIMAL(12,2) DEFAULT 0.00 COMMENT 'Commission amount to be paid to vendor',
+    balance_after INT NOT NULL COMMENT 'Stock balance after this sale',
+    movement_type ENUM('sale', 'return', 'damage', 'loss', 'adjustment') DEFAULT 'sale',
+    notes TEXT NULL,
+    created_by BIGINT UNSIGNED NOT NULL COMMENT 'User who recorded this movement',
+    sold_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_product (product_id),
+    INDEX idx_order (order_id),
+    INDEX idx_movement_type (movement_type),
+    INDEX idx_sold_date (sold_at),
+    INDEX idx_created_by (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sales inventory tracking - stock going out';
+
+-- Reviews and ratings
+CREATE TABLE product_reviews (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT UNSIGNED NOT NULL,
+    order_id BIGINT UNSIGNED NOT NULL,
+    customer_id BIGINT UNSIGNED NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    title VARCHAR(255),
+    comment TEXT,
+    images JSON COMMENT 'Array of review image URLs',
+    helpful_count INT DEFAULT 0,
+    unhelpful_count INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_product_order_customer (product_id, order_id, customer_id),
+    INDEX idx_product_rating (product_id, rating),
+    INDEX idx_customer (customer_id),
+    INDEX idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Product reviews and ratings';
 
 -- =====================================================
 -- ADDITIONAL INDEXES FOR PERFORMANCE OPTIMIZATION
