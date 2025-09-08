@@ -25,6 +25,7 @@ public partial class SalesInventory
 
     public MovementType MovementType { get; set; } = MovementType.Sale;
 
+    [StringLength(500)]
     public string? Notes { get; set; }
 
     public ulong CreatedBy { get; set; }

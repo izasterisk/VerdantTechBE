@@ -9,6 +9,8 @@ public partial class Payment
 {
     public ulong Id { get; set; }
 
+    public ulong OrderId { get; set; }
+
     public ulong? TransactionId { get; set; }
 
     public PaymentMethod PaymentMethod { get; set; }
@@ -27,19 +29,22 @@ public partial class Payment
     /// </summary>
     public Dictionary<string, object> GatewayResponse { get; set; } = new();
 
-    [StringLength(50)]
-    public string? ReferenceType { get; set; }
+    public decimal RefundAmount { get; set; } = 0.00m;
 
-    public ulong? ReferenceId { get; set; }
+    [StringLength(500)]
+    public string? RefundReason { get; set; }
 
-    public string? Notes { get; set; }
+    public DateTime? RefundedAt { get; set; }
 
-    public DateTime? ProcessedAt { get; set; }
+    public DateTime? PaidAt { get; set; }
+
+    public DateTime? FailedAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
+    public virtual Order Order { get; set; } = null!;
     public virtual Transaction? Transaction { get; set; }
 }

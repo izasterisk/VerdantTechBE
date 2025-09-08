@@ -29,6 +29,7 @@ public partial class EnvironmentalDatum
 
     public SoilType SoilType { get; set; }
 
+    [StringLength(500)]
     public string? Notes { get; set; }
 
     public DateTime CreatedAt { get; set; }

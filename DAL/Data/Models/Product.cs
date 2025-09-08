@@ -39,9 +39,10 @@ public partial class Product
     public decimal DiscountPercentage { get; set; } = 0.00m;
 
     /// <summary>
-    /// Array of eco certifications (JSON)
+    /// Eco certification codes, comma-separated
     /// </summary>
-    public List<string> GreenCertifications { get; set; } = new();
+    [StringLength(500)]
+    public string? GreenCertifications { get; set; }
 
     [StringLength(10)]
     public string? EnergyEfficiencyRating { get; set; }
@@ -52,14 +53,16 @@ public partial class Product
     public Dictionary<string, object> Specifications { get; set; } = new();
 
     /// <summary>
-    /// Array of manual/guide URLs (JSON)
+    /// Manual/guide URLs, comma-separated
     /// </summary>
-    public List<string> ManualUrls { get; set; } = new();
+    [StringLength(1000)]
+    public string? ManualUrls { get; set; }
 
     /// <summary>
-    /// Array of image URLs (JSON)
+    /// Image URLs, comma-separated
     /// </summary>
-    public List<string> Images { get; set; } = new();
+    [StringLength(1000)]
+    public string? Images { get; set; }
 
     public int WarrantyMonths { get; set; } = 12;
 

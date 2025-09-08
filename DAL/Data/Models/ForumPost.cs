@@ -28,9 +28,10 @@ public partial class ForumPost
     public List<ContentBlock> Content { get; set; } = new();
 
     /// <summary>
-    /// Array of tags (JSON)
+    /// Tags, comma-separated list
     /// </summary>
-    public List<string> Tags { get; set; } = new();
+    [StringLength(500)]
+    public string? Tags { get; set; }
 
     public long ViewCount { get; set; } = 0L;
 
@@ -46,6 +47,7 @@ public partial class ForumPost
 
     public ForumPostStatus Status { get; set; } = ForumPostStatus.Published;
 
+    [StringLength(500)]
     public string? ModeratedReason { get; set; }
 
     public ulong? ModeratedBy { get; set; }

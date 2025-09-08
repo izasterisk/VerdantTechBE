@@ -72,8 +72,8 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasColumnName("admin_notes")
             .HasColumnType("text");
 
-        builder.Property(e => e.CompletedAt)
-            .HasColumnName("completed_at")
+        builder.Property(e => e.ProcessedAt)
+            .HasColumnName("processed_at")
             .HasColumnType("timestamp");
 
         builder.Property(e => e.CreatedAt)

@@ -1,5 +1,9 @@
 namespace DAL.Data;
 
+// =====================================================
+// USER MANAGEMENT ENUMS
+// =====================================================
+
 public enum UserRole
 {
     Customer,
@@ -17,26 +21,30 @@ public enum UserStatus
     Deleted
 }
 
-public enum WalletTransactionType
+// =====================================================
+// SUSTAINABILITY ENUMS
+// =====================================================
+
+public enum SustainabilityCertificationCategory
 {
-    Credit,
-    Debit
+    Organic,
+    Environmental,
+    FairTrade,
+    FoodSafety,
+    Social,
+    Energy
 }
 
-public enum WalletTransactionStatus
+public enum VendorSustainabilityCredentialStatus
 {
     Pending,
-    Completed,
-    Failed
+    Verified,
+    Rejected
 }
 
-public enum PayoutStatus
-{
-    Pending,
-    Processing,
-    Succeeded,
-    Failed
-}
+// =====================================================
+// ENVIRONMENTAL DATA ENUMS
+// =====================================================
 
 public enum SoilType
 {
@@ -48,47 +56,26 @@ public enum SoilType
     DatCat          // Đất cát
 }
 
-public enum OrderStatus
+public enum WeatherApiSource
 {
-    Pending,
-    Confirmed,
-    Processing,
-    Shipped,
-    Delivered,
-    Cancelled,
-    Refunded
+    Openweathermap,
+    Accuweather
 }
 
-public enum PaymentStatus
+// =====================================================
+// AI CHATBOT ENUMS
+// =====================================================
+
+public enum MessageType
 {
-    Pending,
-    Processing,
-    Completed,
-    Failed,
-    Refunded,
-    PartiallyRefunded
+    User,
+    Bot,
+    System
 }
 
-public enum PaymentMethod
-{
-    CreditCard,
-    DebitCard,
-    Paypal,
-    Stripe,
-    BankTransfer,
-    Cod
-}
-
-public enum PaymentGateway
-{
-    Stripe,
-    Paypal,
-    Vnpay,
-    Momo,
-    Manual
-}
-
-
+// =====================================================
+// COMMUNITY ENUMS
+// =====================================================
 
 public enum ForumPostStatus
 {
@@ -105,14 +92,9 @@ public enum ForumCommentStatus
     Deleted
 }
 
-
-
-public enum InventoryType
-{
-    In,
-    Out,
-    Adjustment
-}
+// =====================================================
+// REQUEST MANAGEMENT ENUMS
+// =====================================================
 
 public enum RequestType
 {
@@ -139,6 +121,94 @@ public enum RequestPriority
     Urgent
 }
 
+// =====================================================
+// ORDER AND PAYMENT ENUMS
+// =====================================================
+
+public enum OrderStatus
+{
+    Pending,
+    Confirmed,
+    Processing,
+    Shipped,
+    Delivered,
+    Cancelled,
+    Refunded
+}
+
+public enum PaymentMethod
+{
+    CreditCard,
+    DebitCard,
+    Paypal,
+    Stripe,
+    BankTransfer,
+    Cod
+}
+
+public enum PaymentGateway
+{
+    Stripe,
+    Paypal,
+    Vnpay,
+    Momo,
+    Manual
+}
+
+public enum PaymentStatus
+{
+    Pending,
+    Processing,
+    Completed,
+    Failed,
+    Refunded,
+    PartiallyRefunded
+}
+
+// =====================================================
+// FINANCIAL SYSTEM ENUMS
+// =====================================================
+
+public enum TransactionType
+{
+    PaymentIn,
+    Cashout,
+    WalletCredit,
+    WalletDebit,
+    Commission,
+    Refund,
+    Adjustment
+}
+
+public enum TransactionStatus
+{
+    Pending,
+    Completed,
+    Failed,
+    Cancelled
+}
+
+public enum CashoutStatus
+{
+    Pending,
+    Processing,
+    Completed,
+    Failed,
+    Cancelled
+}
+
+public enum CashoutType
+{
+    CommissionPayout,
+    VendorPayment,
+    Expense,
+    Refund
+}
+
+// =====================================================
+// INVENTORY ENUMS
+// =====================================================
+
 public enum MovementType
 {
     Sale,
@@ -146,46 +216,6 @@ public enum MovementType
     Damage,
     Loss,
     Adjustment
-}
-
-public enum TransactionType
-{
-    CustomerPayment,
-    VendorCommission,
-    Refund,
-    Payout,
-    SystemFee,
-    Adjustment
-}
-
-public enum MessageType
-{
-    User,
-    Bot,
-    System
-}
-
-public enum WeatherApiSource
-{
-    Openweathermap,
-    Accuweather
-}
-
-public enum SustainabilityCertificationCategory
-{
-    Organic,
-    Environmental,
-    FairTrade,
-    FoodSafety,
-    Social,
-    Energy
-}
-
-public enum VendorSustainabilityCredentialStatus
-{
-    Pending,
-    Verified,
-    Rejected
 }
 
 

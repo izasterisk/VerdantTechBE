@@ -35,7 +35,14 @@ public partial class Request
 
     public string? AdminNotes { get; set; }
 
-    public DateTime? CompletedAt { get; set; }
+    [StringLength(500)]
+    public string? RejectionReason { get; set; }
+
+    public ulong? AssignedTo { get; set; }
+
+    public ulong? ProcessedBy { get; set; }
+
+    public DateTime? ProcessedAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

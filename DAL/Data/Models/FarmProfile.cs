@@ -33,9 +33,10 @@ public partial class FarmProfile
     public decimal? Longitude { get; set; }
 
     /// <summary>
-    /// Array of main crops grown (JSON)
+    /// Main crops grown, comma-separated list
     /// </summary>
-    public List<string> PrimaryCrops { get; set; } = new();
+    [StringLength(500)]
+    public string? PrimaryCrops { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

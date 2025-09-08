@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using DAL.Data.Models;
-using System.Text.Json;
 
 namespace DAL.Data.Configurations;
 
@@ -40,11 +39,8 @@ public class ChatbotMessageConfiguration : IEntityTypeConfiguration<ChatbotMessa
 
         builder.Property(e => e.Attachments)
             .HasColumnName("attachments")
-            .HasColumnType("json")
-            .HasConversion(
-                v => v == null ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                v => string.IsNullOrEmpty(v) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions)null!)!
-            );
+            .HasMaxLength(1000)
+            .IsRequired(false);
 
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")

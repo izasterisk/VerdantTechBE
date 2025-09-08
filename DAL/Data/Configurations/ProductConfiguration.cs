@@ -96,29 +96,20 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(0.00)
             .HasColumnName("rating_average");
         
-        // JSON fields - List<string> conversions
+        // VARCHAR fields - Simple string properties
         builder.Property(e => e.GreenCertifications)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
-            .HasColumnName("green_certifications");
+            .HasMaxLength(1000)
+            .HasColumnName("green_certifications")
+            .IsRequired(false);
             
         builder.Property(e => e.ManualUrls)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
-            .HasColumnName("manual_urls");
+            .HasMaxLength(2000)
+            .HasColumnName("manual_urls")
+            .IsRequired(false);
             
         builder.Property(e => e.Images)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'");
+            .HasMaxLength(3000)
+            .IsRequired(false);
         
         // JSON fields - Dictionary conversions
         builder.Property(e => e.Specifications)

@@ -27,6 +27,7 @@ public partial class PurchaseInventory
     [StringLength(255)]
     public string? SupplierInvoice { get; set; }
 
+    [StringLength(500)]
     public string? Notes { get; set; }
 
     public int BalanceAfter { get; set; }

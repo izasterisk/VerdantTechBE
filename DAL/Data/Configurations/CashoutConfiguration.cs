@@ -17,12 +17,13 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
 
+        builder.Property(e => e.VendorId)
+            .HasColumnName("vendor_id")
+            .HasColumnType("bigint unsigned")
+            .IsRequired();
+
         builder.Property(e => e.TransactionId)
             .HasColumnName("transaction_id")
-            .HasColumnType("bigint unsigned");
-
-        builder.Property(e => e.RecipientWalletId)
-            .HasColumnName("recipient_wallet_id")
             .HasColumnType("bigint unsigned");
 
         builder.Property(e => e.Amount)
@@ -30,20 +31,40 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasColumnType("decimal(12,2)")
             .IsRequired();
 
+        builder.Property(e => e.BankCode)
+            .HasColumnName("bank_code")
+            .HasColumnType("varchar(20)")
+            .HasMaxLength(20)
+            .IsRequired();
+
+        builder.Property(e => e.BankAccountNumber)
+            .HasColumnName("bank_account_number")
+            .HasColumnType("varchar(50)")
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(e => e.BankAccountHolder)
+            .HasColumnName("bank_account_holder")
+            .HasColumnType("varchar(255)")
+            .HasMaxLength(255)
+            .IsRequired();
+
         builder.Property(e => e.Status)
             .HasConversion<string>()
             .HasColumnName("status")
-            .HasColumnType("enum('pending','processing','succeeded','failed')")
-            .HasDefaultValue(PayoutStatus.Pending);
+            .HasColumnType("enum('pending','processing','completed','failed','cancelled')")
+            .HasDefaultValue(CashoutStatus.Pending);
 
-        builder.Property(e => e.BankTransactionId)
-            .HasColumnName("bank_transaction_id")
+        builder.Property(e => e.CashoutType)
+            .HasConversion<string>()
+            .HasColumnName("cashout_type")
+            .HasColumnType("enum('commission_payout','vendor_payment','expense','refund')")
+            .HasDefaultValue(CashoutType.CommissionPayout);
+
+        builder.Property(e => e.GatewayTransactionId)
+            .HasColumnName("gateway_transaction_id")
             .HasColumnType("varchar(255)")
             .HasMaxLength(255);
-
-        builder.Property(e => e.BankingDetails)
-            .HasColumnName("banking_details")
-            .HasColumnType("json");
 
         builder.Property(e => e.ReferenceType)
             .HasColumnName("reference_type")
@@ -56,16 +77,21 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
 
         builder.Property(e => e.Notes)
             .HasColumnName("notes")
-            .HasColumnType("text");
+            .HasColumnType("varchar(500)")
+            .HasMaxLength(500);
 
-        builder.Property(e => e.ProcessedAt)
-            .HasColumnName("processed_at")
-            .HasColumnType("timestamp");
+        builder.Property(e => e.ProcessedBy)
+            .HasColumnName("processed_by")
+            .HasColumnType("bigint unsigned");
 
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        builder.Property(e => e.ProcessedAt)
+            .HasColumnName("processed_at")
+            .HasColumnType("timestamp");
 
         builder.Property(e => e.UpdatedAt)
             .HasColumnName("updated_at")
@@ -73,21 +99,37 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
         // Foreign keys
+        builder.HasOne(e => e.Vendor)
+            .WithMany(v => v.Cashouts)
+            .HasForeignKey(e => e.VendorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(e => e.Transaction)
             .WithMany(t => t.Cashouts)
             .HasForeignKey(e => e.TransactionId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasOne(e => e.RecipientWallet)
+        builder.HasOne(e => e.Bank)
             .WithMany()
-            .HasForeignKey(e => e.RecipientWalletId)
+            .HasForeignKey(e => e.BankCode)
+            .HasPrincipalKey(b => b.BankCode)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.ProcessedByNavigation)
+            .WithMany(u => u.CashoutsProcessed)
+            .HasForeignKey(e => e.ProcessedBy)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Indexes
+        builder.HasIndex(e => e.GatewayTransactionId)
+            .IsUnique()
+            .HasDatabaseName("idx_unique_gateway_transaction");
+
+        builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
         builder.HasIndex(e => e.TransactionId).HasDatabaseName("idx_transaction");
-        builder.HasIndex(e => e.RecipientWalletId).HasDatabaseName("idx_recipient_wallet");
         builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
+        builder.HasIndex(e => e.CashoutType).HasDatabaseName("idx_type");
+        builder.HasIndex(e => e.ProcessedAt).HasDatabaseName("idx_processed");
         builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId }).HasDatabaseName("idx_reference");
-        builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created_at");
     }
 }

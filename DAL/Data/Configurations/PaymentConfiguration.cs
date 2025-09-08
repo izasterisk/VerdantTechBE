@@ -62,27 +62,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasDefaultValueSql("'{}'")
             .HasColumnName("gateway_response");
         
-        // Reference fields
-        builder.Property(e => e.ReferenceType)
-            .HasMaxLength(50)
-            .HasColumnName("reference_type");
-            
-        builder.Property(e => e.ReferenceId)
-            .HasColumnType("bigint unsigned")
-            .HasColumnName("reference_id");
-        
-        // Notes
-        builder.Property(e => e.Notes)
-            .HasColumnType("text")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("notes");
-        
         // DateTime fields
-        builder.Property(e => e.ProcessedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("processed_at");
-            
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -108,8 +88,5 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             
         builder.HasIndex(e => e.PaymentMethod)
             .HasDatabaseName("idx_payment_method");
-            
-        builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId })
-            .HasDatabaseName("idx_reference");
     }
 }

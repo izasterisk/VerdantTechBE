@@ -19,9 +19,9 @@ public partial class ChatbotConversation
     public string? Title { get; set; }
 
     /// <summary>
-    /// Conversation context and metadata (JSON)
+    /// Conversation context and metadata
     /// </summary>
-    public Dictionary<string, object> Context { get; set; } = new();
+    public string? Context { get; set; }
 
     public bool IsActive { get; set; } = true;
 

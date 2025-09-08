@@ -34,8 +34,10 @@ public partial class Order
     [StringLength(100)]
     public string? TrackingNumber { get; set; }
 
+    [StringLength(500)]
     public string? Notes { get; set; }
 
+    [StringLength(500)]
     public string? CancelledReason { get; set; }
 
     public DateTime? CancelledAt { get; set; }

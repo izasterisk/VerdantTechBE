@@ -21,6 +21,7 @@ public partial class VendorSustainabilityCredential
     [Required]
     public VendorSustainabilityCredentialStatus Status { get; set; } = VendorSustainabilityCredentialStatus.Pending;
 
+    [StringLength(500)]
     public string? RejectionReason { get; set; }
 
     public DateTime UploadedAt { get; set; }

@@ -38,12 +38,12 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
         
-        // JSON field for context
+        // TEXT field for context
         builder.Property(e => e.Context)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json");
+            .HasColumnType("text")
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .IsRequired(false);
         
         // Boolean default
         builder.Property(e => e.IsActive)

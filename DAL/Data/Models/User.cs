@@ -56,7 +56,6 @@ public partial class User
     public virtual VendorProfile? VendorProfile { get; set; }
     
     // One-to-many relationships
-    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
     public virtual ICollection<Order> CustomerOrders { get; set; } = new List<Order>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     public virtual ICollection<ForumPost> ForumPosts { get; set; } = new List<ForumPost>();
@@ -67,6 +66,8 @@ public partial class User
     public virtual ICollection<SalesInventory> SalesInventories { get; set; } = new List<SalesInventory>();
     public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
     public virtual ICollection<Transaction> TransactionsCreated { get; set; } = new List<Transaction>();
+    public virtual ICollection<Transaction> TransactionsProcessed { get; set; } = new List<Transaction>();
+    public virtual ICollection<Cashout> CashoutsProcessed { get; set; } = new List<Cashout>();
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
     
     // Verification relationships
@@ -74,4 +75,6 @@ public partial class User
     public virtual ICollection<ForumPost> ModeratedForumPosts { get; set; } = new List<ForumPost>();
     public virtual ICollection<ForumComment> ModeratedForumComments { get; set; } = new List<ForumComment>();
     public virtual ICollection<VendorSustainabilityCredential> VerifiedSustainabilityCredentials { get; set; } = new List<VendorSustainabilityCredential>();
+    public virtual ICollection<Request> RequestsAssigned { get; set; } = new List<Request>();
+    public virtual ICollection<Request> RequestsProcessed { get; set; } = new List<Request>();
 }
