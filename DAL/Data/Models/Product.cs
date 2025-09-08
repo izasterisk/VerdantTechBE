@@ -9,8 +9,6 @@ public partial class Product
 {
     public ulong Id { get; set; }
 
-    public ulong VendorId { get; set; }
-
     public ulong CategoryId { get; set; }
 
     [Required]
@@ -33,6 +31,10 @@ public partial class Product
     public string? DescriptionEn { get; set; }
 
     public decimal Price { get; set; }
+
+    public decimal CostPrice { get; set; } = 0.00m;
+
+    public decimal CommissionRate { get; set; } = 0.00m;
 
     public decimal DiscountPercentage { get; set; } = 0.00m;
 
@@ -87,9 +89,9 @@ public partial class Product
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual User Vendor { get; set; } = null!;
     public virtual ProductCategory Category { get; set; } = null!;
-    public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
+    public virtual ICollection<PurchaseInventory> PurchaseInventories { get; set; } = new List<PurchaseInventory>();
+    public virtual ICollection<SalesInventory> SalesInventories { get; set; } = new List<SalesInventory>();
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();

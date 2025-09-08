@@ -58,13 +58,15 @@ public partial class User
     // One-to-many relationships
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
     public virtual ICollection<Order> CustomerOrders { get; set; } = new List<Order>();
-    public virtual ICollection<Order> VendorOrders { get; set; } = new List<Order>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     public virtual ICollection<ForumPost> ForumPosts { get; set; } = new List<ForumPost>();
     public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
     public virtual ICollection<ChatbotConversation> ChatbotConversations { get; set; } = new List<ChatbotConversation>();
     public virtual ICollection<EnvironmentalDatum> EnvironmentalData { get; set; } = new List<EnvironmentalDatum>();
-    public virtual ICollection<InventoryLog> InventoryLogs { get; set; } = new List<InventoryLog>();
+    public virtual ICollection<PurchaseInventory> PurchaseInventories { get; set; } = new List<PurchaseInventory>();
+    public virtual ICollection<SalesInventory> SalesInventories { get; set; } = new List<SalesInventory>();
+    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
+    public virtual ICollection<Transaction> TransactionsCreated { get; set; } = new List<Transaction>();
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
     
     // Verification relationships

@@ -50,5 +50,5 @@ public partial class VendorProfile
     public virtual ICollection<VendorSustainabilityCredential> VendorSustainabilityCredentials { get; set; } = new List<VendorSustainabilityCredential>();
     public virtual ICollection<VendorBankAccount> VendorBankAccounts { get; set; } = new List<VendorBankAccount>();
     public virtual Wallet? Wallet { get; set; }
-    public virtual ICollection<Payout> Payouts { get; set; } = new List<Payout>();
+    public virtual ICollection<PurchaseInventory> PurchaseInventories { get; set; } = new List<PurchaseInventory>();
 }

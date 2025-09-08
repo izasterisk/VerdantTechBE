@@ -28,7 +28,6 @@ public partial class SupportedBank
 
     // Navigation Properties
     public virtual ICollection<VendorBankAccount> VendorBankAccounts { get; set; } = new List<VendorBankAccount>();
-    public virtual ICollection<Payout> Payouts { get; set; } = new List<Payout>();
 }
 
 

@@ -18,11 +18,10 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
         
-        // Foreign Key
-        builder.Property(e => e.OrderId)
+        // Foreign Key to Transaction
+        builder.Property(e => e.TransactionId)
             .HasColumnType("bigint unsigned")
-            .IsRequired()
-            .HasColumnName("order_id");
+            .HasColumnName("transaction_id");
         
         // Enum conversions
         builder.Property(e => e.PaymentMethod)
@@ -42,22 +41,17 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnType("enum('pending','processing','completed','failed','refunded','partially_refunded')")
             .HasDefaultValue(PaymentStatus.Pending);
         
-        // Optional unique transaction ID
-        builder.Property(e => e.TransactionId)
+        // Gateway transaction ID
+        builder.Property(e => e.GatewayTransactionId)
             .HasMaxLength(255)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("transaction_id");
+            .HasColumnName("gateway_transaction_id");
         
-        // Amount fields
+        // Amount field
         builder.Property(e => e.Amount)
             .HasPrecision(12, 2)
             .IsRequired();
-            
-        builder.Property(e => e.RefundAmount)
-            .HasPrecision(12, 2)
-            .HasDefaultValue(0.00m)
-            .HasColumnName("refund_amount");
         
         // JSON field for gateway response
         builder.Property(e => e.GatewayResponse)
@@ -68,25 +62,26 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasDefaultValueSql("'{}'")
             .HasColumnName("gateway_response");
         
-        // Refund reason
-        builder.Property(e => e.RefundReason)
+        // Reference fields
+        builder.Property(e => e.ReferenceType)
+            .HasMaxLength(50)
+            .HasColumnName("reference_type");
+            
+        builder.Property(e => e.ReferenceId)
+            .HasColumnType("bigint unsigned")
+            .HasColumnName("reference_id");
+        
+        // Notes
+        builder.Property(e => e.Notes)
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("refund_reason");
+            .HasColumnName("notes");
         
         // DateTime fields
-        builder.Property(e => e.RefundedAt)
+        builder.Property(e => e.ProcessedAt)
             .HasColumnType("timestamp")
-            .HasColumnName("refunded_at");
-            
-        builder.Property(e => e.PaidAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("paid_at");
-            
-        builder.Property(e => e.FailedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("failed_at");
+            .HasColumnName("processed_at");
             
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
@@ -99,24 +94,22 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnName("updated_at");
         
         // Foreign Key Relationship
-        builder.HasOne(d => d.Order)
+        builder.HasOne(d => d.Transaction)
             .WithMany(p => p.Payments)
-            .HasForeignKey(d => d.OrderId)
-            .OnDelete(DeleteBehavior.Restrict);
-        
-        // Unique constraint on transaction_id
-        builder.HasIndex(e => e.TransactionId)
-            .IsUnique()
-            .HasDatabaseName("idx_transaction");
+            .HasForeignKey(d => d.TransactionId)
+            .OnDelete(DeleteBehavior.SetNull);
         
         // Indexes
-        builder.HasIndex(e => e.OrderId)
-            .HasDatabaseName("idx_order");
+        builder.HasIndex(e => e.TransactionId)
+            .HasDatabaseName("idx_transaction");
             
         builder.HasIndex(e => e.Status)
             .HasDatabaseName("idx_status");
             
         builder.HasIndex(e => e.PaymentMethod)
             .HasDatabaseName("idx_payment_method");
+            
+        builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId })
+            .HasDatabaseName("idx_reference");
     }
 }

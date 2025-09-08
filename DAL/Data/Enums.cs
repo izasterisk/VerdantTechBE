@@ -4,6 +4,7 @@ public enum UserRole
 {
     Customer,
     Seller,
+    Vendor,
     Admin,
     Manager
 }
@@ -110,6 +111,50 @@ public enum InventoryType
 {
     In,
     Out,
+    Adjustment
+}
+
+public enum RequestType
+{
+    RefundRequest,
+    PayoutRequest,
+    SupportRequest
+}
+
+public enum RequestStatus
+{
+    Pending,
+    InReview,
+    Approved,
+    Rejected,
+    Completed,
+    Cancelled
+}
+
+public enum RequestPriority
+{
+    Low,
+    Medium,
+    High,
+    Urgent
+}
+
+public enum MovementType
+{
+    Sale,
+    Return,
+    Damage,
+    Loss,
+    Adjustment
+}
+
+public enum TransactionType
+{
+    CustomerPayment,
+    VendorCommission,
+    Refund,
+    Payout,
+    SystemFee,
     Adjustment
 }
 

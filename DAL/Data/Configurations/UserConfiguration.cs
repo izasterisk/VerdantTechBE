@@ -41,7 +41,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         // Enum conversions
         builder.Property(e => e.Role)
             .HasConversion<string>()
-            .HasColumnType("enum('customer','seller','admin','manager')")
+            .HasColumnType("enum('customer','seller','vendor','admin','manager')")
             .HasDefaultValue(UserRole.Customer);
         
         builder.Property(e => e.Status)
