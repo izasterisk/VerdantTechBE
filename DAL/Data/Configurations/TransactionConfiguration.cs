@@ -75,11 +75,10 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .IsRequired();
 
         builder.Property(e => e.Metadata)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
+            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
             .HasColumnType("json")
-            .HasColumnName("metadata");
+            .HasColumnName("metadata")
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
 
         // Reference to domain-specific tables
         builder.Property(e => e.ReferenceType)

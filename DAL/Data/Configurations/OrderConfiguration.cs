@@ -55,14 +55,13 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasColumnName("total_amount");
         
-        // JSON fields for addresses
+        // JSON field for shipping address using JsonHelpers
         builder.Property(e => e.ShippingAddress)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
+            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
             .HasColumnType("json")
             .IsRequired()
-            .HasColumnName("shipping_address");
+            .HasColumnName("shipping_address")
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
             
         // Optional string fields
         builder.Property(e => e.ShippingMethod)

@@ -111,21 +111,19 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasMaxLength(3000)
             .IsRequired(false);
         
-        // JSON fields - Dictionary conversions
+        // JSON fields - Using JsonHelpers for converter and comparer
         builder.Property(e => e.Specifications)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'{}'");
-            
-        builder.Property(e => e.DimensionsCm)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, decimal>() : JsonSerializer.Deserialize<Dictionary<string, decimal>>(v, (JsonSerializerOptions?)null)!)
+            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
             .HasColumnType("json")
             .HasDefaultValueSql("'{}'")
-            .HasColumnName("dimensions_cm");
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
+            
+        builder.Property(e => e.DimensionsCm)
+            .HasConversion(JsonHelpers.DictionaryStringDecimalConverter())
+            .HasColumnType("json")
+            .HasDefaultValueSql("'{}'")
+            .HasColumnName("dimensions_cm")
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringDecimalComparer());
         
         // Integer fields
         builder.Property(e => e.WarrantyMonths)

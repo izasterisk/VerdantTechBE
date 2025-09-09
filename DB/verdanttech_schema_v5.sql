@@ -475,7 +475,7 @@ CREATE TABLE requests (
     title VARCHAR(255) NOT NULL COMMENT 'Request title/subject',
     description TEXT NOT NULL COMMENT 'Detailed description of the request',
     status ENUM('pending', 'in_review', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',
-    priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+    priority ENUM('low', 'medium', 'high', 'urgent') NULL DEFAULT 'medium',
     reference_type VARCHAR(50) NULL COMMENT 'Type of referenced entity (order, product, etc.)',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID of referenced entity',
     amount DECIMAL(12,2) NULL COMMENT 'Amount involved (for refund/payout requests)',

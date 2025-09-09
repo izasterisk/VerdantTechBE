@@ -53,14 +53,13 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasPrecision(12, 2)
             .IsRequired();
         
-        // JSON field for gateway response
+        // JSON field for gateway response using JsonHelpers
         builder.Property(e => e.GatewayResponse)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
+            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
             .HasColumnType("json")
             .HasDefaultValueSql("'{}'")
-            .HasColumnName("gateway_response");
+            .HasColumnName("gateway_response")
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
         
         // DateTime fields
         builder.Property(e => e.CreatedAt)

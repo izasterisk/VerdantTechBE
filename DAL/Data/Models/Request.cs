@@ -22,7 +22,7 @@ public partial class Request
 
     public RequestStatus Status { get; set; } = RequestStatus.Pending;
 
-    public RequestPriority Priority { get; set; } = RequestPriority.Medium;
+    public RequestPriority? Priority { get; set; } = null;
 
     [StringLength(50)]
     public string? ReferenceType { get; set; }
@@ -30,8 +30,6 @@ public partial class Request
     public ulong? ReferenceId { get; set; }
 
     public decimal? Amount { get; set; }
-
-    public ulong? HandledBy { get; set; }
 
     public string? AdminNotes { get; set; }
 
@@ -50,5 +48,6 @@ public partial class Request
 
     // Navigation Properties
     public virtual User Requester { get; set; } = null!;
-    public virtual User? HandledByNavigation { get; set; }
+    public virtual User? AssignedToNavigation { get; set; }
+    public virtual User? ProcessedByNavigation { get; set; }
 }

@@ -93,7 +93,7 @@ public class PurchaseInventoryConfiguration : IEntityTypeConfiguration<PurchaseI
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(e => e.VendorProfile)
-            .WithMany()
+            .WithMany(v => v.PurchaseInventories)
             .HasForeignKey(e => e.VendorProfileId)
             .OnDelete(DeleteBehavior.SetNull);
 

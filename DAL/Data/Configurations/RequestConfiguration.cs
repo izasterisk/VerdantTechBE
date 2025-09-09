@@ -64,8 +64,12 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasColumnName("amount")
             .HasColumnType("decimal(12,2)");
 
-        builder.Property(e => e.HandledBy)
-            .HasColumnName("handled_by")
+        builder.Property(e => e.AssignedTo)
+            .HasColumnName("assigned_to")
+            .HasColumnType("bigint unsigned");
+            
+        builder.Property(e => e.ProcessedBy)
+            .HasColumnName("processed_by")
             .HasColumnType("bigint unsigned");
 
         builder.Property(e => e.AdminNotes)
@@ -88,21 +92,27 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
 
         // Foreign keys
         builder.HasOne(e => e.Requester)
-            .WithMany()
+            .WithMany(u => u.Requests)
             .HasForeignKey(e => e.RequesterId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(e => e.HandledByNavigation)
-            .WithMany()
-            .HasForeignKey(e => e.HandledBy)
+        builder.HasOne(e => e.AssignedToNavigation)
+            .WithMany(u => u.RequestsAssigned)
+            .HasForeignKey(e => e.AssignedTo)
+            .OnDelete(DeleteBehavior.SetNull);
+            
+        builder.HasOne(e => e.ProcessedByNavigation)
+            .WithMany(u => u.RequestsProcessed)
+            .HasForeignKey(e => e.ProcessedBy)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Indexes
+        // Indexes (matching schema SQL)
         builder.HasIndex(e => e.RequesterId).HasDatabaseName("idx_requester");
-        builder.HasIndex(e => e.RequestType).HasDatabaseName("idx_request_type");
-        builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
+        builder.HasIndex(e => new { e.RequestType, e.Status }).HasDatabaseName("idx_type_status");
         builder.HasIndex(e => e.Priority).HasDatabaseName("idx_priority");
-        builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId }).HasDatabaseName("idx_reference");
+        builder.HasIndex(e => e.AssignedTo).HasDatabaseName("idx_assigned");
+        builder.HasIndex(e => e.ProcessedBy).HasDatabaseName("idx_processed");
         builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created_at");
+        builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId }).HasDatabaseName("idx_reference");
     }
 }

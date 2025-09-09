@@ -86,14 +86,12 @@ public class WeatherDataCacheConfiguration : IEntityTypeConfiguration<WeatherDat
             .HasColumnName("sunset_time")
             .HasColumnType("time");
 
-        // Configure JSON property following Guide.txt pattern
+        // Configure JSON property using JsonHelpers
         builder.Property(e => e.RawApiResponse)
             .HasColumnName("raw_api_response")
             .HasColumnType("json")
-            .HasConversion(
-                v => v == null ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions)null!),
-                v => string.IsNullOrEmpty(v) ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null!)!
-            );
+            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
 
         builder.Property(e => e.FetchedAt)
             .HasColumnName("fetched_at")

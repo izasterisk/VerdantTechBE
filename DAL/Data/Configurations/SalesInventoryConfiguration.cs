@@ -83,7 +83,7 @@ public class SalesInventoryConfiguration : IEntityTypeConfiguration<SalesInvento
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(e => e.Order)
-            .WithMany()
+            .WithMany(o => o.SalesInventories)
             .HasForeignKey(e => e.OrderId)
             .OnDelete(DeleteBehavior.SetNull);
 
