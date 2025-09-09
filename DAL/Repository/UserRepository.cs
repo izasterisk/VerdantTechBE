@@ -27,7 +27,7 @@ public class UserRepository : IUserRepository
             user.UpdatedAt = DateTime.Now;
             user.Status = UserStatus.Active;
             
-            if(user.Role == UserRole.Admin || user.Role == UserRole.Manager)
+            if(user.Role == UserRole.Admin || user.Role == UserRole.Staff)
             {
                 user.IsVerified = true;
             }

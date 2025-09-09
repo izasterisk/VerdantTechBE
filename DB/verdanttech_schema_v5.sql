@@ -20,7 +20,7 @@ CREATE TABLE users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('customer', 'seller', 'vendor', 'admin', 'manager') NOT NULL DEFAULT 'customer',
+    role ENUM('customer', 'staff', 'vendor', 'admin') NOT NULL DEFAULT 'customer',
     full_name VARCHAR(255) NOT NULL,
     phone_number VARCHAR(20),
     is_verified BOOLEAN DEFAULT FALSE,
