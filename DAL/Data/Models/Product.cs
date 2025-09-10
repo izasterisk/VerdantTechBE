@@ -38,11 +38,6 @@ public partial class Product
 
     public decimal DiscountPercentage { get; set; } = 0.00m;
 
-    /// <summary>
-    /// Eco certification codes, comma-separated
-    /// </summary>
-    [StringLength(500)]
-    public string? GreenCertifications { get; set; }
 
     [StringLength(10)]
     public string? EnergyEfficiencyRating { get; set; }
@@ -98,4 +93,5 @@ public partial class Product
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
+    public virtual ICollection<ProductSustainabilityCredential> ProductSustainabilityCredentials { get; set; } = new List<ProductSustainabilityCredential>();
 }

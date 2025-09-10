@@ -97,10 +97,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("rating_average");
         
         // VARCHAR fields - Simple string properties
-        builder.Property(e => e.GreenCertifications)
-            .HasMaxLength(1000)
-            .HasColumnName("green_certifications")
-            .IsRequired(false);
             
         builder.Property(e => e.ManualUrls)
             .HasMaxLength(2000)

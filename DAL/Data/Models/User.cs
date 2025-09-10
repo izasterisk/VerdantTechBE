@@ -75,6 +75,7 @@ public partial class User
     public virtual ICollection<ForumPost> ModeratedForumPosts { get; set; } = new List<ForumPost>();
     public virtual ICollection<ForumComment> ModeratedForumComments { get; set; } = new List<ForumComment>();
     public virtual ICollection<VendorSustainabilityCredential> VerifiedSustainabilityCredentials { get; set; } = new List<VendorSustainabilityCredential>();
+    public virtual ICollection<ProductSustainabilityCredential> VerifiedProductSustainabilityCredentials { get; set; } = new List<ProductSustainabilityCredential>();
     public virtual ICollection<Request> RequestsAssigned { get; set; } = new List<Request>();
     public virtual ICollection<Request> RequestsProcessed { get; set; } = new List<Request>();
 }

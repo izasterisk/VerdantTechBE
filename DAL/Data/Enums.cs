@@ -41,6 +41,13 @@ public enum VendorSustainabilityCredentialStatus
     Rejected
 }
 
+public enum ProductSustainabilityCredentialStatus
+{
+    Pending,
+    Verified,
+    Rejected
+}
+
 // =====================================================
 // ENVIRONMENTAL DATA ENUMS
 // =====================================================
@@ -215,6 +222,22 @@ public enum MovementType
     Damage,
     Loss,
     Adjustment
+}
+
+public enum QualityCheckStatus
+{
+    Pending,
+    Passed,
+    Failed,
+    NotRequired
+}
+
+public enum ConditionOnArrival
+{
+    New,
+    Good,
+    Fair,
+    Damaged
 }
 
 

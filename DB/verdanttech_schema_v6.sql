@@ -1,10 +1,10 @@
--- VerdantTech Solutions Database Schema
--- AI-Integrated Green Agricultural Equipment Platform for Sustainable Vegetable Farming
--- Version: 5.0
--- Engine: InnoDB (for transaction support)
--- Character Set: utf8mb4 (for multilingual support)
+-- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
+-- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
+-- Phiên bản: 6.0
+-- Engine: InnoDB (hỗ trợ giao dịch)
+-- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
--- Create database
+-- Tạo cơ sở dữ liệu
 CREATE DATABASE IF NOT EXISTS verdanttech_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
@@ -12,10 +12,10 @@ CREATE DATABASE IF NOT EXISTS verdanttech_db
 USE verdanttech_db;
 
 -- =====================================================
--- USER MANAGEMENT TABLES
+-- CÁC BẢNG QUẢN LÝ NGƯỜI DÙNG
 -- =====================================================
 
--- Users table (base authentication)
+-- Bảng người dùng (xác thực cơ bản)
 CREATE TABLE users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -39,9 +39,9 @@ CREATE TABLE users (
     INDEX idx_role (role),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Base user authentication and profile table';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng xác thực và hồ sơ người dùng cơ bản';
 
--- Vendor profiles for sellers
+-- Hồ sơ nhà cung cấp cho người bán
 CREATE TABLE vendor_profiles (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL UNIQUE,
@@ -52,7 +52,7 @@ CREATE TABLE vendor_profiles (
     company_address TEXT,
     verified_at TIMESTAMP NULL,
     verified_by BIGINT UNSIGNED NULL,
-    commission_rate DECIMAL(5,2) DEFAULT 10.00 COMMENT 'Platform commission percentage',
+    commission_rate DECIMAL(5,2) DEFAULT 10.00 COMMENT 'Tỷ lệ hoa hồng của nền tảng',
     rating_average DECIMAL(3,2) DEFAULT 0.00,
     total_reviews INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -64,16 +64,16 @@ CREATE TABLE vendor_profiles (
     INDEX idx_slug (slug),
     INDEX idx_verified (verified_at),
     INDEX idx_rating (rating_average)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor/seller profile and verification details';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Hồ sơ nhà cung cấp/người bán và chi tiết xác minh';
 
--- Sustainability certifications reference table
+-- Bảng tham chiếu chứng chỉ bền vững
 CREATE TABLE sustainability_certifications (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    code VARCHAR(100) NOT NULL UNIQUE COMMENT 'Certification code (e.g., GLOBALGAP, USDA_ORGANIC)',
-    name VARCHAR(255) NOT NULL COMMENT 'Full certification name',
+    code VARCHAR(100) NOT NULL UNIQUE COMMENT 'Mã chứng chỉ (ví dụ: GLOBALGAP, USDA_ORGANIC)',
+    name VARCHAR(255) NOT NULL COMMENT 'Tên đầy đủ của chứng chỉ',
     category ENUM('organic', 'environmental', 'fair_trade', 'food_safety', 'social', 'energy') NOT NULL,
-    issuing_body VARCHAR(255) NULL COMMENT 'Organization that issues the certification',
-    description TEXT COMMENT 'Detailed description of the certification',
+    issuing_body VARCHAR(255) NULL COMMENT 'Tổ chức cấp chứng chỉ',
+    description TEXT COMMENT 'Mô tả chi tiết về chứng chỉ',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -81,16 +81,16 @@ CREATE TABLE sustainability_certifications (
     INDEX idx_code (code),
     INDEX idx_category (category),
     INDEX idx_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Master list of sustainability certifications';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh sách chính các chứng chỉ bền vững';
 
--- Vendor sustainability credentials (uploaded certificates)
+-- Thông tin chứng chỉ bền vững của nhà cung cấp (chứng chỉ đã tải lên)
 CREATE TABLE vendor_sustainability_credentials (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     vendor_id BIGINT UNSIGNED NOT NULL,
     certification_id BIGINT UNSIGNED NOT NULL,
-    certificate_url VARCHAR(500) NOT NULL COMMENT 'URL to uploaded certificate image/file',
+    certificate_url VARCHAR(500) NOT NULL COMMENT 'URL đến hình ảnh/tập tin chứng chỉ đã tải lên',
     status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
-    rejection_reason VARCHAR(500) NULL COMMENT 'Reason for rejection if status is rejected',
+    rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu trạng thái bị từ chối',
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     verified_at TIMESTAMP NULL,
     verified_by BIGINT UNSIGNED NULL,
@@ -106,21 +106,46 @@ CREATE TABLE vendor_sustainability_credentials (
     INDEX idx_status (status),
     INDEX idx_uploaded (uploaded_at),
     INDEX idx_verified (verified_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor uploaded sustainability certificates for verification';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do nhà cung cấp tải lên để xác minh';
 
--- Supported banks master list
+-- Thông tin chứng chỉ bền vững của sản phẩm (chứng chỉ đã tải lên)
+CREATE TABLE product_sustainability_credentials (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT UNSIGNED NOT NULL,
+    certification_id BIGINT UNSIGNED NOT NULL,
+    certificate_url VARCHAR(500) NULL COMMENT 'URL đến hình ảnh/tập tin chứng chỉ đã tải lên',
+    status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
+    rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu trạng thái bị từ chối',
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    verified_at TIMESTAMP NULL,
+    verified_by BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (certification_id) REFERENCES sustainability_certifications(id) ON DELETE RESTRICT,
+    FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_product_certification (product_id, certification_id),
+    INDEX idx_product (product_id),
+    INDEX idx_certification (certification_id),
+    INDEX idx_status (status),
+    INDEX idx_uploaded (uploaded_at),
+    INDEX idx_verified (verified_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do sản phẩm gắn kết để xác minh';
+
+-- Danh sách chính các ngân hàng được hỗ trợ
 CREATE TABLE supported_banks (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    bank_code VARCHAR(20) NOT NULL UNIQUE COMMENT 'Short bank code, e.g., VCB, TCB',
-    bank_name VARCHAR(255) NOT NULL COMMENT 'Full bank name, e.g., Vietcombank',
+    bank_code VARCHAR(20) NOT NULL UNIQUE COMMENT 'Mã ngân hàng ngắn, ví dụ: VCB, TCB',
+    bank_name VARCHAR(255) NOT NULL COMMENT 'Tên đầy đủ ngân hàng, ví dụ: Vietcombank',
     image_url VARCHAR(500) NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='List of supported banks';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh sách các ngân hàng được hỗ trợ';
 
--- Vendor bank accounts (one vendor may have multiple bank accounts)
+-- Tài khoản ngân hàng của nhà cung cấp (một nhà cung cấp có thể có nhiều tài khoản ngân hàng)
 CREATE TABLE vendor_bank_accounts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     vendor_id BIGINT UNSIGNED NOT NULL,
@@ -136,13 +161,13 @@ CREATE TABLE vendor_bank_accounts (
     INDEX idx_vendor (vendor_id),
     INDEX idx_bank (bank_id),
     INDEX idx_vendor_default (vendor_id, is_default)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bank accounts of vendor profiles';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tài khoản ngân hàng của các hồ sơ nhà cung cấp';
 
 -- =====================================================
--- ENVIRONMENTAL DATA TABLES
+-- CÁC BẢNG DỮ LIỆU MÔI TRƯỜNG
 -- =====================================================
 
--- Farm profiles for farmers
+-- Hồ sơ trang trại cho nông dân
 CREATE TABLE farm_profiles (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL UNIQUE,
@@ -154,23 +179,23 @@ CREATE TABLE farm_profiles (
     commune VARCHAR(100),
     latitude DECIMAL(10,8),
     longitude DECIMAL(11,8),
-    primary_crops VARCHAR(500) COMMENT 'Main crops grown, comma-separated list',
+    primary_crops VARCHAR(500) COMMENT 'Các loại cây trồng chính, danh sách phân cách bằng dấu phẩy',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_location (province, district),
     INDEX idx_farm_size (farm_size_hectares)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Farm profile details for farmer users';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hồ sơ trang trại cho người dùng nông dân';
 
--- Environmental monitoring data
+-- Dữ liệu giám sát môi trường
 CREATE TABLE environmental_data (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     farm_profile_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
     measurement_date DATE NOT NULL,
     soil_ph DECIMAL(3,1) CHECK (soil_ph >= 0 AND soil_ph <= 14),
-    co2_footprint DECIMAL(10,2) COMMENT 'CO2 emissions in kg',
+    co2_footprint DECIMAL(10,2) COMMENT 'Lượng khí thải CO2 tính bằng kg',
     soil_moisture_percentage DECIMAL(5,2),
     soil_type ENUM('Đất phù sa', 'Đất đỏ Bazan', 'Đất Feralit', 'Đất thịt', 'Đất sét', 'Đất cát') NOT NULL,
     notes VARCHAR(500),
@@ -183,9 +208,9 @@ CREATE TABLE environmental_data (
     INDEX idx_user (user_id),
     INDEX idx_date (measurement_date),
     INDEX idx_soil_type (soil_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Manual environmental data input by farmers';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu môi trường do nông dân nhập thủ công';
 
--- Fertilizer usage tracking
+-- Theo dõi việc sử dụng phân bón
 CREATE TABLE fertilizers (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     environmental_data_id BIGINT UNSIGNED NOT NULL,
@@ -198,9 +223,9 @@ CREATE TABLE fertilizers (
     
     FOREIGN KEY (environmental_data_id) REFERENCES environmental_data(id) ON DELETE CASCADE,
     INDEX idx_environmental_data (environmental_data_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Fertilizer usage data for CO2 footprint calculation';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng phân bón để tính toán lượng khí thải CO2';
 
--- Energy usage tracking
+-- Theo dõi việc sử dụng năng lượng
 CREATE TABLE energy_usage (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     environmental_data_id BIGINT UNSIGNED NOT NULL,
@@ -212,9 +237,9 @@ CREATE TABLE energy_usage (
     
     FOREIGN KEY (environmental_data_id) REFERENCES environmental_data(id) ON DELETE CASCADE,
     INDEX idx_environmental_data (environmental_data_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Energy usage data for CO2 footprint calculation';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng năng lượng để tính toán lượng khí thải CO2';
 
--- Weather data cache
+-- Bộ nhớ đệm dữ liệu thời tiết
 CREATE TABLE weather_data_cache (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     farm_profile_id BIGINT UNSIGNED NOT NULL,
@@ -239,19 +264,19 @@ CREATE TABLE weather_data_cache (
     UNIQUE KEY unique_farm_date_source (farm_profile_id, weather_date, api_source),
     INDEX idx_farm_date (farm_profile_id, weather_date),
     INDEX idx_fetched (fetched_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Cached weather data from external APIs';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu thời tiết được lưu đệm từ các API bên ngoài';
 
 -- =====================================================
--- AI CHATBOT TABLES
+-- CÁC BẢNG CHATBOT AI
 -- =====================================================
 
--- Chatbot conversations
+-- Các cuộc hội thoại chatbot
 CREATE TABLE chatbot_conversations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     session_id VARCHAR(255) NOT NULL,
     title VARCHAR(255),
-    context TEXT COMMENT 'Conversation context and metadata',
+    context TEXT COMMENT 'Bối cảnh cuộc hội thoại và metadata',
     is_active BOOLEAN DEFAULT TRUE,
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP NULL,
@@ -260,28 +285,28 @@ CREATE TABLE chatbot_conversations (
     INDEX idx_user_session (user_id, session_id),
     INDEX idx_active (is_active),
     INDEX idx_started (started_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chatbot conversation sessions';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các phiên hội thoại chatbot';
 
--- Chatbot messages
+-- Tin nhắn chatbot
 CREATE TABLE chatbot_messages (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     conversation_id BIGINT UNSIGNED NOT NULL,
     message_type ENUM('user', 'bot', 'system') NOT NULL,
     message_text TEXT NOT NULL,
-    attachments VARCHAR(1000) COMMENT 'Image or file attachment URLs, comma-separated',
+    attachments VARCHAR(1000) COMMENT 'URL đính kèm hình ảnh hoặc tập tin, phân cách bằng dấu phẩy',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     FOREIGN KEY (conversation_id) REFERENCES chatbot_conversations(id) ON DELETE CASCADE,
     INDEX idx_conversation (conversation_id),
     INDEX idx_type (message_type),
     INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Individual chatbot messages';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các tin nhắn chatbot riêng lẻ';
 
 -- =====================================================
--- COMMUNITY TABLES
+-- CÁC BẢNG CỘNG ĐỒNG
 -- =====================================================
 
--- Forum categories
+-- Danh mục diễn đàn
 CREATE TABLE forum_categories (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -291,17 +316,17 @@ CREATE TABLE forum_categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     INDEX idx_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Forum discussion categories';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các danh mục thảo luận diễn đàn';
 
--- Forum posts
+-- Bài viết diễn đàn
 CREATE TABLE forum_posts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
-    content JSON NOT NULL COMMENT 'Mixed content blocks: [{"order": 1, "type": "text", "content": "Hello world"}, {"order": 2, "type": "image", "content": "https://example.com/image.jpg"}]',
-    tags VARCHAR(500) COMMENT 'Tags, comma-separated list',
+    content JSON NOT NULL COMMENT 'Các khối nội dung hỗn hợp: [{"order": 1, "type": "text", "content": "Hello world"}, {"order": 2, "type": "image", "content": "https://example.com/image.jpg"}]',
+    tags VARCHAR(500) COMMENT 'Thẻ, danh sách phân cách bằng dấu phẩy',
     view_count BIGINT DEFAULT 0,
     reply_count INT DEFAULT 0,
     like_count INT DEFAULT 0,
@@ -324,14 +349,14 @@ CREATE TABLE forum_posts (
     INDEX idx_status_pinned (status, is_pinned),
     INDEX idx_last_activity (last_activity_at),
     FULLTEXT idx_search (title)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Forum discussion posts';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bài viết thảo luận diễn đàn';
 
--- Forum comments
+-- Bình luận diễn đàn
 CREATE TABLE forum_comments (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     post_id BIGINT UNSIGNED NOT NULL,
     user_id BIGINT UNSIGNED NOT NULL,
-    parent_id BIGINT UNSIGNED NULL COMMENT 'For nested comments',
+    parent_id BIGINT UNSIGNED NULL COMMENT 'Dành cho bình luận lồng nhau',
     content TEXT NOT NULL,
     like_count INT DEFAULT 0,
     dislike_count INT DEFAULT 0,
@@ -349,13 +374,13 @@ CREATE TABLE forum_comments (
     INDEX idx_user (user_id),
     INDEX idx_parent (parent_id),
     INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Forum post comments';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bình luận bài viết diễn đàn';
 
 -- =====================================================
--- PRODUCT AND INVENTORY TABLES
+-- CÁC BẢNG SẢN PHẨM VÀ TỒN KHO
 -- =====================================================
 
--- Product categories
+-- Danh mục sản phẩm
 CREATE TABLE product_categories (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     parent_id BIGINT UNSIGNED NULL,
@@ -373,9 +398,9 @@ CREATE TABLE product_categories (
     INDEX idx_parent (parent_id),
     INDEX idx_slug (slug),
     INDEX idx_active_sort (is_active, sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Hierarchical product categories';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục sản phẩm theo cấp bậc';
 
--- Products table
+-- Bảng sản phẩm
 CREATE TABLE products (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category_id BIGINT UNSIGNED NOT NULL,
@@ -386,18 +411,17 @@ CREATE TABLE products (
     description TEXT,
     description_en TEXT,
     price DECIMAL(12,2) NOT NULL,
-    cost_price DECIMAL(12,2) DEFAULT 0.00 COMMENT 'Cost price for profit calculation',
-    commission_rate DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Commission percentage for original vendor (0% = full purchase)',
+    cost_price DECIMAL(12,2) DEFAULT 0.00 COMMENT 'Giá vốn để tính toán lợi nhuận',
+    commission_rate DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Tỷ lệ hoa hồng cho nhà cung cấp gốc (0% = mua đầy đủ)',
     discount_percentage DECIMAL(5,2) DEFAULT 0.00,
-    green_certifications VARCHAR(500) COMMENT 'Eco certification codes, comma-separated',
     energy_efficiency_rating VARCHAR(10),
-    specifications JSON COMMENT 'Technical specifications as key-value pairs',
-    manual_urls VARCHAR(1000) COMMENT 'Manual/guide URLs, comma-separated',
-    images VARCHAR(1000) COMMENT 'Image URLs, comma-separated',
+    specifications JSON COMMENT 'Thông số kỹ thuật dưới dạng cặp khóa-giá trị',
+    manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn/sổ tay, phân cách bằng dấu phẩy',
+    images VARCHAR(1000) COMMENT 'URL hình ảnh, phân cách bằng dấu phẩy',
     warranty_months INT DEFAULT 12,
     stock_quantity INT DEFAULT 0,
     weight_kg DECIMAL(10,3),
-    dimensions_cm JSON COMMENT '{length, width, height}',
+    dimensions_cm JSON COMMENT '{chiều dài, chiều rộng, chiều cao}',
     is_featured BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     view_count BIGINT DEFAULT 0,
@@ -417,9 +441,9 @@ CREATE TABLE products (
     INDEX idx_active_featured (is_active, is_featured),
     INDEX idx_rating (rating_average),
     FULLTEXT idx_search (name, name_en, description, description_en)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Green agricultural equipment products in company inventory';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sản phẩm thiết bị nông nghiệp xanh trong kho công ty';
 
--- Shopping cart table
+-- Bảng giỏ hàng
 CREATE TABLE cart (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
@@ -433,56 +457,78 @@ CREATE TABLE cart (
     UNIQUE KEY unique_user_product (user_id, product_id),
     INDEX idx_user (user_id),
     INDEX idx_product (product_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Shopping cart for users';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Giỏ hàng cho người dùng';
 
--- Purchase inventory tracking (stock in)
+-- Theo dõi tồn kho nhập (hàng vào)
 CREATE TABLE purchase_inventory (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT UNSIGNED NOT NULL,
-    vendor_profile_id BIGINT UNSIGNED NULL COMMENT 'Vendor who provided the products (if applicable)',
+    sku VARCHAR(100) NOT NULL COMMENT 'Mã quản lý kho - mã nhận dạng duy nhất cho lô hàng này',
+    vendor_profile_id BIGINT UNSIGNED NULL COMMENT 'Nhà cung cấp đã cung cấp sản phẩm (nếu có)',
     quantity INT NOT NULL,
-    unit_cost_price DECIMAL(12,2) NOT NULL COMMENT 'Cost price per unit when purchased',
-    total_cost DECIMAL(12,2) NOT NULL COMMENT 'Total cost for this purchase',
-    commission_rate DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Commission rate for this purchase',
-    batch_number VARCHAR(100) NULL COMMENT 'Batch or lot number for tracking',
-    supplier_invoice VARCHAR(255) NULL COMMENT 'Supplier invoice reference',
+    unit_cost_price DECIMAL(12,2) NOT NULL COMMENT 'Giá vốn mỗi đơn vị khi mua',
+    total_cost DECIMAL(12,2) NOT NULL COMMENT 'Tổng chi phí cho lần mua này',
+    commission_rate DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Tỷ lệ hoa hồng cho lần mua này',
+    batch_number VARCHAR(100) NULL COMMENT 'Số lô hoặc số lô hàng để theo dõi',
+    lot_number VARCHAR(100) NULL COMMENT 'Số lô sản xuất',
+    serial_numbers TEXT NULL COMMENT 'Số serial của từng sản phẩm, phân cách bằng dấu phẩy',
+    supplier_invoice VARCHAR(255) NULL COMMENT 'Tham chiếu hóa đơn nhà cung cấp',
+    purchase_order_number VARCHAR(100) NULL COMMENT 'Số tham chiếu đơn đặt hàng',
+    warehouse_location VARCHAR(100) NULL COMMENT 'Vị trí lưu trữ trong kho (kệ, khu vực, v.v.)',
+    expiry_date DATE NULL COMMENT 'Ngày hết hạn sản phẩm nếu có',
+    manufacturing_date DATE NULL COMMENT 'Ngày sản xuất nếu có',
+    quality_check_status ENUM('pending', 'passed', 'failed', 'not_required') DEFAULT 'not_required' COMMENT 'Trạng thái kiểm tra chất lượng',
+    quality_check_notes VARCHAR(500) NULL COMMENT 'Ghi chú kiểm tra chất lượng',
+    quality_checked_by BIGINT UNSIGNED NULL COMMENT 'Người thực hiện kiểm tra chất lượng',
+    quality_checked_at TIMESTAMP NULL COMMENT 'Khi nào kiểm tra chất lượng được thực hiện',
+    condition_on_arrival ENUM('new', 'good', 'fair', 'damaged') DEFAULT 'new' COMMENT 'Tình trạng hàng hóa khi nhận',
+    damage_notes VARCHAR(500) NULL COMMENT 'Ghi chú về bất kỳ hư hỏng hoặc vấn đề nào',
     notes VARCHAR(500) NULL,
-    balance_after INT NOT NULL COMMENT 'Stock balance after this purchase',
-    created_by BIGINT UNSIGNED NOT NULL COMMENT 'User who recorded this purchase',
+    balance_after INT NOT NULL COMMENT 'Số dư tồn kho sau lần mua này',
+    created_by BIGINT UNSIGNED NOT NULL COMMENT 'Người ghi nhận lần mua này',
     purchased_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    received_at TIMESTAMP NULL COMMENT 'Khi hàng hóa được nhận về thực tế',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (vendor_profile_id) REFERENCES vendor_profiles(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (quality_checked_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_product (product_id),
+    INDEX idx_sku (sku),
     INDEX idx_vendor (vendor_profile_id),
     INDEX idx_purchased_date (purchased_at),
+    INDEX idx_received_date (received_at),
+    INDEX idx_expiry_date (expiry_date),
+    INDEX idx_quality_status (quality_check_status),
+    INDEX idx_condition (condition_on_arrival),
     INDEX idx_created_by (created_by),
-    INDEX idx_batch (batch_number)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Purchase inventory tracking - stock coming in';
+    INDEX idx_batch (batch_number),
+    INDEX idx_lot (lot_number),
+    INDEX idx_warehouse_location (warehouse_location)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi tồn kho nhập - hàng vào với thông tin nhận hàng chi tiết';
 
 -- =====================================================
--- REQUEST MANAGEMENT TABLES
+-- CÁC BẢNG QUẢN LÝ YÊU CẦU
 -- =====================================================
 
--- Generic requests table for various request types
+-- Bảng yêu cầu tổng quát cho các loại yêu cầu khác nhau
 CREATE TABLE requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    requester_id BIGINT UNSIGNED NOT NULL COMMENT 'User who made the request',
+    requester_id BIGINT UNSIGNED NOT NULL COMMENT 'Người dùng tạo yêu cầu',
     request_type ENUM('refund_request', 'payout_request', 'support_request') NOT NULL,
-    title VARCHAR(255) NOT NULL COMMENT 'Request title/subject',
-    description TEXT NOT NULL COMMENT 'Detailed description of the request',
+    title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề/chủ đề yêu cầu',
+    description TEXT NOT NULL COMMENT 'Mô tả chi tiết về yêu cầu',
     status ENUM('pending', 'in_review', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',
     priority ENUM('low', 'medium', 'high', 'urgent') NULL DEFAULT 'medium',
-    reference_type VARCHAR(50) NULL COMMENT 'Type of referenced entity (order, product, etc.)',
-    reference_id BIGINT UNSIGNED NULL COMMENT 'ID of referenced entity',
-    amount DECIMAL(12,2) NULL COMMENT 'Amount involved (for refund/payout requests)',
-    admin_notes TEXT NULL COMMENT 'Internal notes from admin/staff',
-    rejection_reason VARCHAR(500) NULL COMMENT 'Reason for rejection if status is rejected',
-    assigned_to BIGINT UNSIGNED NULL COMMENT 'Admin/staff assigned to handle this request',
-    processed_by BIGINT UNSIGNED NULL COMMENT 'Admin/staff who processed the request',
+    reference_type VARCHAR(50) NULL COMMENT 'Loại thực thể được tham chiếu (đơn hàng, sản phẩm, v.v.)',
+    reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể được tham chiếu',
+    amount DECIMAL(12,2) NULL COMMENT 'Số tiền liên quan (cho yêu cầu hoàn tiền/thanh toán)',
+    admin_notes TEXT NULL COMMENT 'Ghi chú nội bộ từ admin/nhân viên',
+    rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu trạng thái bị từ chối',
+    assigned_to BIGINT UNSIGNED NULL COMMENT 'Admin/nhân viên được giao xử lý yêu cầu này',
+    processed_by BIGINT UNSIGNED NULL COMMENT 'Admin/nhân viên đã xử lý yêu cầu',
     processed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -497,13 +543,13 @@ CREATE TABLE requests (
     INDEX idx_processed (processed_by),
     INDEX idx_created_at (created_at),
     INDEX idx_reference (reference_type, reference_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Generic request management system';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Hệ thống quản lý yêu cầu tổng quát';
 
 -- =====================================================
--- ORDER AND PAYMENT TABLES
+-- CÁC BẢNG ĐƠN HÀNG VÀ THANH TOÁN
 -- =====================================================
 
--- Orders table
+-- Bảng đơn hàng
 CREATE TABLE orders (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT UNSIGNED NOT NULL,
@@ -529,9 +575,9 @@ CREATE TABLE orders (
     INDEX idx_customer (customer_id),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Customer orders';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đơn hàng của khách hàng';
 
--- Order details
+-- Chi tiết đơn hàng
 CREATE TABLE order_details (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     order_id BIGINT UNSIGNED NOT NULL,
@@ -546,52 +592,52 @@ CREATE TABLE order_details (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     INDEX idx_order (order_id),
     INDEX idx_product (product_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Order line items';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các mục trong đơn hàng';
 
 -- =====================================================
--- FINANCIAL SYSTEM TABLES
+-- CÁC BẢNG HỆ THỐNG TÀI CHÍNH
 -- =====================================================
 
--- Wallets for vendors (one wallet per vendor)
+-- Ví cho nhà cung cấp (một ví cho một nhà cung cấp)
 CREATE TABLE wallets (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     vendor_id BIGINT UNSIGNED NOT NULL UNIQUE,
-    balance DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Available balance',
-    pending_withdraw DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Amount requested to withdraw, pending',
+    balance DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Số dư khả dụng',
+    pending_withdraw DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Số tiền yêu cầu rút, đang chờ xử lý',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor wallets tracking balances';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ví nhà cung cấp theo dõi số dư';
 
--- Transactions table (central ledger - single source of truth for all financial movements)
+-- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
 CREATE TABLE transactions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     transaction_type ENUM('payment_in', 'cashout', 'wallet_credit', 'wallet_debit', 'commission', 'refund', 'adjustment') NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'VND',
     
-    -- Core references
-    order_id BIGINT UNSIGNED NULL COMMENT 'Reference to orders table',
-    customer_id BIGINT UNSIGNED NULL COMMENT 'Customer involved in transaction',
-    vendor_id BIGINT UNSIGNED NULL COMMENT 'Vendor involved in transaction',
+    -- Tham chiếu cốt lõi
+    order_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng đơn hàng',
+    customer_id BIGINT UNSIGNED NULL COMMENT 'Khách hàng liên quan đến giao dịch',
+    vendor_id BIGINT UNSIGNED NULL COMMENT 'Nhà cung cấp liên quan đến giao dịch',
     
-    -- Wallet related fields
-    wallet_id BIGINT UNSIGNED NULL COMMENT 'Reference to wallets table',
-    balance_before DECIMAL(12,2) NULL COMMENT 'Wallet balance before transaction',
-    balance_after DECIMAL(12,2) NULL COMMENT 'Wallet balance after transaction',
+    -- Các trường liên quan đến ví
+    wallet_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng ví',
+    balance_before DECIMAL(12,2) NULL COMMENT 'Số dư ví trước giao dịch',
+    balance_after DECIMAL(12,2) NULL COMMENT 'Số dư ví sau giao dịch',
     
-    -- Status and metadata
+    -- Trạng thái và metadata
     status ENUM('pending','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
-    description VARCHAR(255) NOT NULL COMMENT 'Human readable description',
-    metadata JSON NULL COMMENT 'Additional transaction metadata',
+    description VARCHAR(255) NOT NULL COMMENT 'Mô tả có thể đọc được',
+    metadata JSON NULL COMMENT 'Metadata bổ sung của giao dịch',
     
-    -- Reference to domain-specific tables (payments/cashouts will reference back to this)
-    reference_type VARCHAR(50) NULL COMMENT 'Type of additional reference entity',
-    reference_id BIGINT UNSIGNED NULL COMMENT 'ID of additional reference entity',
+    -- Tham chiếu đến các bảng cụ thể theo lĩnh vực (thanh toán/rút tiền sẽ tham chiếu ngược lại đến bảng này)
+    reference_type VARCHAR(50) NULL COMMENT 'Loại thực thể tham chiếu bổ sung',
+    reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu bổ sung',
     
-    -- Audit fields
-    created_by BIGINT UNSIGNED NULL COMMENT 'User who initiated this transaction',
-    processed_by BIGINT UNSIGNED NULL COMMENT 'User who processed this transaction',
+    -- Các trường kiểm toán
+    created_by BIGINT UNSIGNED NULL COMMENT 'Người dùng khởi tạo giao dịch này',
+    processed_by BIGINT UNSIGNED NULL COMMENT 'Người dùng xử lý giao dịch này',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -613,19 +659,19 @@ CREATE TABLE transactions (
     INDEX idx_reference (reference_type, reference_id),
     INDEX idx_amount (amount),
     INDEX idx_created_by (created_by)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Central financial ledger - single source of truth for all money movements';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sổ cái tài chính trung tâm - nguồn sự thật duy nhất cho tất cả chuyển động tiền tệ';
 
--- Payments table
+-- Bảng thanh toán
 CREATE TABLE payments (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     order_id BIGINT UNSIGNED NOT NULL,
-    transaction_id BIGINT UNSIGNED NULL COMMENT 'Reference to transactions table for consistency',
+    transaction_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng giao dịch để đảm bảo tính nhất quán',
     payment_method ENUM('credit_card', 'debit_card', 'paypal', 'stripe', 'bank_transfer', 'cod') NOT NULL,
     payment_gateway ENUM('stripe', 'paypal', 'vnpay', 'momo', 'manual') NOT NULL,
-    gateway_transaction_id VARCHAR(255) UNIQUE COMMENT 'Transaction ID from payment gateway',
+    gateway_transaction_id VARCHAR(255) UNIQUE COMMENT 'ID giao dịch từ cổng thanh toán',
     amount DECIMAL(12,2) NOT NULL,
     status ENUM('pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded') DEFAULT 'pending',
-    gateway_response JSON COMMENT 'Raw response from payment gateway',
+    gateway_response JSON COMMENT 'Phản hồi thô từ cổng thanh toán',
     refund_amount DECIMAL(12,2) DEFAULT 0.00,
     refund_reason VARCHAR(500),
     refunded_at TIMESTAMP NULL,
@@ -641,24 +687,24 @@ CREATE TABLE payments (
     INDEX idx_gateway_transaction (gateway_transaction_id),
     INDEX idx_status (status),
     INDEX idx_payment_method (payment_method)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Payment transactions with gateway details';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các giao dịch thanh toán với chi tiết cổng thanh toán';
 
--- Cashouts table (money going out - vendor payouts, expenses)
+-- Bảng rút tiền (tiền ra - thanh toán cho nhà cung cấp, chi phí)
 CREATE TABLE cashouts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     vendor_id BIGINT UNSIGNED NOT NULL,
-    transaction_id BIGINT UNSIGNED NULL COMMENT 'Reference to transactions table for consistency',
+    transaction_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng giao dịch để đảm bảo tính nhất quán',
     amount DECIMAL(12,2) NOT NULL,
     bank_code VARCHAR(20) NOT NULL,
     bank_account_number VARCHAR(50) NOT NULL,
     bank_account_holder VARCHAR(255) NOT NULL,
     status ENUM('pending','processing','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
     cashout_type ENUM('commission_payout', 'vendor_payment', 'expense', 'refund') DEFAULT 'commission_payout',
-    gateway_transaction_id VARCHAR(255) NULL COMMENT 'External payment gateway transaction ID',
-    reference_type VARCHAR(50) NULL COMMENT 'Type of reference (order, request, etc.)',
-    reference_id BIGINT UNSIGNED NULL COMMENT 'ID of reference entity',
+    gateway_transaction_id VARCHAR(255) NULL COMMENT 'ID giao dịch cổng thanh toán bên ngoài',
+    reference_type VARCHAR(50) NULL COMMENT 'Loại tham chiếu (đơn hàng, yêu cầu, v.v.)',
+    reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu',
     notes VARCHAR(500) NULL,
-    processed_by BIGINT UNSIGNED NULL COMMENT 'Admin who processed this cashout',
+    processed_by BIGINT UNSIGNED NULL COMMENT 'Admin đã xử lý lần rút tiền này',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -674,21 +720,21 @@ CREATE TABLE cashouts (
     INDEX idx_type (cashout_type),
     INDEX idx_processed (processed_at),
     INDEX idx_reference (reference_type, reference_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Money going out - vendor payouts and expenses with banking details';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tiền ra - thanh toán cho nhà cung cấp và chi phí với chi tiết ngân hàng';
 
--- Sales inventory tracking (stock out)
+-- Theo dõi tồn kho bán hàng (hàng ra)
 CREATE TABLE sales_inventory (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT UNSIGNED NOT NULL,
-    order_id BIGINT UNSIGNED NULL COMMENT 'Order that caused this stock movement',
-    quantity INT NOT NULL COMMENT 'Quantity sold (negative for returns)',
-    unit_sale_price DECIMAL(12,2) NOT NULL COMMENT 'Sale price per unit',
-    total_revenue DECIMAL(12,2) NOT NULL COMMENT 'Total revenue from this sale',
-    commission_amount DECIMAL(12,2) DEFAULT 0.00 COMMENT 'Commission amount to be paid to vendor',
-    balance_after INT NOT NULL COMMENT 'Stock balance after this sale',
+    order_id BIGINT UNSIGNED NULL COMMENT 'Đơn hàng gây ra chuyển động tồn kho này',
+    quantity INT NOT NULL COMMENT 'Số lượng bán (âm cho hàng trả)',
+    unit_sale_price DECIMAL(12,2) NOT NULL COMMENT 'Giá bán mỗi đơn vị',
+    total_revenue DECIMAL(12,2) NOT NULL COMMENT 'Tổng doanh thu từ lần bán này',
+    commission_amount DECIMAL(12,2) DEFAULT 0.00 COMMENT 'Số tiền hoa hồng để trả cho nhà cung cấp',
+    balance_after INT NOT NULL COMMENT 'Số dư tồn kho sau lần bán này',
     movement_type ENUM('sale', 'return', 'damage', 'loss', 'adjustment') DEFAULT 'sale',
     notes VARCHAR(500) NULL,
-    created_by BIGINT UNSIGNED NOT NULL COMMENT 'User who recorded this movement',
+    created_by BIGINT UNSIGNED NOT NULL COMMENT 'Người dùng ghi nhận chuyển động này',
     sold_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -700,9 +746,9 @@ CREATE TABLE sales_inventory (
     INDEX idx_movement_type (movement_type),
     INDEX idx_sold_date (sold_at),
     INDEX idx_created_by (created_by)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sales inventory tracking - stock going out';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi tồn kho bán hàng - hàng ra';
 
--- Reviews and ratings
+-- Đánh giá và xếp hạng
 CREATE TABLE product_reviews (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT UNSIGNED NOT NULL,
@@ -711,7 +757,7 @@ CREATE TABLE product_reviews (
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     title VARCHAR(255),
     comment TEXT,
-    images VARCHAR(1000) COMMENT 'Review image URLs, comma-separated',
+    images VARCHAR(1000) COMMENT 'URL hình ảnh đánh giá, phân cách bằng dấu phẩy',
     helpful_count INT DEFAULT 0,
     unhelpful_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -724,23 +770,22 @@ CREATE TABLE product_reviews (
     INDEX idx_product_rating (product_id, rating),
     INDEX idx_customer (customer_id),
     INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Product reviews and ratings';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đánh giá và xếp hạng sản phẩm';
 
 -- =====================================================
--- ADDITIONAL INDEXES FOR PERFORMANCE OPTIMIZATION
+-- CÁC INDEX BỔ SUNG ĐỂ TỐI ƯU HÓA HIỆU SUẤT
 -- =====================================================
 CREATE INDEX idx_products_search ON products(is_active, category_id, price);
 CREATE INDEX idx_orders_date_range ON orders(created_at, status);
 CREATE INDEX idx_env_data_analysis ON environmental_data(farm_profile_id, measurement_date, soil_ph);
 CREATE INDEX idx_weather_lookup ON weather_data_cache(farm_profile_id, weather_date, api_source);
 
--- Database schema completed
--- Version 5.0 - Major restructure: Removed vendor dependencies, added request system, restructured financial flow
--- Total tables: 31
--- Key changes:
--- - Products no longer tied to specific vendors (now in company inventory)
--- - Added commission tracking at product level
--- - Split inventory into purchase_inventory and sales_inventory
--- - Added comprehensive request management system
--- - Restructured financial system: payments (in) + cashouts (out) + transactions (history)
--- Ready for deployment
+-- Lược đồ cơ sở dữ liệu hoàn thành
+-- Phiên bản 6.0 - Cải tiến quản lý chứng chỉ bền vững cho sản phẩm
+-- Tổng số bảng: 30
+-- Thay đổi từ v5.0:
+-- - Thêm bảng product_sustainability_credentials để quản lý chứng chỉ bền vững gắn với sản phẩm
+-- - Xóa cột green_certifications từ bảng products (thay thế bằng quan hệ chuẩn hóa)
+-- - Tăng cường tính toàn vẹn dữ liệu và khả năng truy vấn cho chứng chỉ sản phẩm
+-- - Hỗ trợ trạng thái xác minh và theo dõi lịch sử chứng chỉ sản phẩm
+-- Sẵn sàng cho triển khai

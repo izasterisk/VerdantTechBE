@@ -19,6 +19,7 @@ public class VerdantTechDbContext : DbContext
     // Sustainability DbSets
     public DbSet<SustainabilityCertification> SustainabilityCertifications { get; set; }
     public DbSet<VendorSustainabilityCredential> VendorSustainabilityCredentials { get; set; }
+    public DbSet<ProductSustainabilityCredential> ProductSustainabilityCredentials { get; set; }
     
     // Product and Inventory DbSets
     public DbSet<ProductCategory> ProductCategories { get; set; }
@@ -64,6 +65,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new WalletConfiguration());
         modelBuilder.ApplyConfiguration(new SustainabilityCertificationConfiguration());
         modelBuilder.ApplyConfiguration(new VendorSustainabilityCredentialConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductSustainabilityCredentialConfiguration());
         modelBuilder.ApplyConfiguration(new ProductCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new CartConfiguration());
