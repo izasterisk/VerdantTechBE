@@ -1,6 +1,6 @@
 ```sql
 -- =====================================================
--- VERDANTTECH SCHEMA – v6.5 (Kept cart from v6.3, added cart_items, ensured orders.payment_id)
+-- VERDANTTECH SCHEMA – v6.7 (Updated cart to ensure one cart per user, kept cart_items)
 -- Engine: InnoDB | Charset: utf8mb4
 -- =====================================================
 
@@ -73,10 +73,23 @@ CREATE TABLE vendor_certificates (
     INDEX idx_verified (verified_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor certificates';
 
+CREATE TABLE bank_supports (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    bank_code VARCHAR(20) NOT NULL UNIQUE COMMENT 'e.g., VCB, TCB, BIDV',
+    bank_name VARCHAR(255) NOT NULL,
+    country_code VARCHAR(3) DEFAULT 'VN' COMMENT 'ISO 3166-1 alpha-2 (e.g., VN)',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX idx_bank_code (bank_code),
+    INDEX idx_is_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Supported banks for payments and payouts';
+
 CREATE TABLE vendor_bank_accounts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     vendor_id BIGINT UNSIGNED NOT NULL,
-    bank_name VARCHAR(255) NOT NULL,
+    bank_code VARCHAR(20) NOT NULL COMMENT 'Linked to bank_supports.bank_code',
     account_number VARCHAR(50) NOT NULL,
     account_holder VARCHAR(255) NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
@@ -84,8 +97,10 @@ CREATE TABLE vendor_bank_accounts (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_vendor_bank_account (vendor_id, bank_name, account_number),
+    FOREIGN KEY (bank_code) REFERENCES bank_supports(bank_code) ON DELETE RESTRICT,
+    UNIQUE KEY unique_vendor_bank_account (vendor_id, bank_code, account_number),
     INDEX idx_vendor (vendor_id),
+    INDEX idx_bank_code (bank_code),
     INDEX idx_vendor_default (vendor_id, is_default)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Vendor bank accounts';
 
@@ -106,7 +121,7 @@ CREATE TABLE cashouts (
     vendor_id BIGINT UNSIGNED NOT NULL,
     transaction_id BIGINT UNSIGNED NULL COMMENT 'Linked post-processing',
     amount DECIMAL(12,2) NOT NULL,
-    bank_code VARCHAR(20) NOT NULL,
+    bank_code VARCHAR(20) NOT NULL COMMENT 'Linked to bank_supports.bank_code',
     bank_account_number VARCHAR(50) NOT NULL,
     bank_account_holder VARCHAR(255) NOT NULL,
     status ENUM('pending', 'processing', 'completed', 'failed', 'cancelled') NOT NULL DEFAULT 'pending',
@@ -122,10 +137,12 @@ CREATE TABLE cashouts (
 
     FOREIGN KEY (vendor_id) REFERENCES vendor_profiles(id) ON DELETE RESTRICT,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL,
+    FOREIGN KEY (bank_code) REFERENCES bank_supports(bank_code) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE SET NULL,
     UNIQUE KEY idx_unique_gateway_transaction (gateway_transaction_id),
     INDEX idx_vendor (vendor_id),
     INDEX idx_transaction (transaction_id),
+    INDEX idx_bank_code (bank_code),
     INDEX idx_status (status),
     INDEX idx_type (cashout_type),
     INDEX idx_processed (processed_at),
@@ -430,17 +447,13 @@ CREATE TABLE product_certificates (
 CREATE TABLE cart (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT UNSIGNED NOT NULL,
-    product_id BIGINT UNSIGNED NOT NULL,
-    quantity INT NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_user_product (customer_id, product_id),
-    INDEX idx_customer (customer_id),
-    INDEX idx_product (product_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Cart';
+    UNIQUE KEY unique_customer (customer_id) COMMENT 'Ensure one cart per customer',
+    INDEX idx_customer (customer_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Cart (one per customer)';
 
 CREATE TABLE cart_items (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -449,7 +462,7 @@ CREATE TABLE cart_items (
     quantity INT NOT NULL DEFAULT 1 CHECK (quantity > 0),
     unit_price DECIMAL(12,2) NOT NULL COMMENT 'Price at the time of adding to cart',
     subtotal DECIMAL(12,2) NOT NULL COMMENT 'quantity * unit_price',
-   -- metadata JSON NULL COMMENT 'Additional info, e.g., variant (color, size)',
+    metadata JSON NULL COMMENT 'Additional info, e.g., variant (color, size)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
