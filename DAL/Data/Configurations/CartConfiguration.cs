@@ -18,15 +18,7 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
             
         builder.Property(c => c.UserId)
             .HasColumnName("user_id")
-            .IsRequired();
-            
-        builder.Property(c => c.ProductId)
-            .HasColumnName("product_id")
-            .IsRequired();
-            
-        builder.Property(c => c.Quantity)
-            .HasColumnName("quantity")
-            .HasDefaultValue(1)
+            .HasColumnType("bigint unsigned")
             .IsRequired();
             
         builder.Property(c => c.CreatedAt)
@@ -44,22 +36,9 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
             .WithMany(u => u.Carts)
             .HasForeignKey(c => c.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-            
-        builder.HasOne(c => c.Product)
-            .WithMany(p => p.Carts)
-            .HasForeignKey(c => c.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
         
-        // Unique constraint
-        builder.HasIndex(c => new { c.UserId, c.ProductId })
-            .IsUnique()
-            .HasDatabaseName("unique_user_product");
-            
-        // Additional indexes
+        // Index
         builder.HasIndex(c => c.UserId)
             .HasDatabaseName("idx_user");
-            
-        builder.HasIndex(c => c.ProductId)
-            .HasDatabaseName("idx_product");
     }
 }

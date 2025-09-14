@@ -11,7 +11,9 @@ public partial class VendorBankAccount
 
     public ulong VendorId { get; set; }
 
-    public ulong BankId { get; set; }
+    [Required]
+    [StringLength(20)]
+    public string BankCode { get; set; } = null!;
 
     [Required]
     [StringLength(50)]
@@ -29,7 +31,6 @@ public partial class VendorBankAccount
 
     // Navigation
     public virtual VendorProfile VendorProfile { get; set; } = null!;
-    public virtual SupportedBank Bank { get; set; } = null!;
 }
 
 

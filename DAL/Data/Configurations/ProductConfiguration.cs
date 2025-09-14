@@ -17,11 +17,16 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
         
-        // Foreign Key
+        // Foreign Keys
         builder.Property(e => e.CategoryId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
             .HasColumnName("category_id");
+
+        builder.Property(e => e.VendorId)
+            .HasColumnType("bigint unsigned")
+            .IsRequired()
+            .HasColumnName("vendor_id");
         
         // Required fields
         builder.Property(e => e.ProductCode)
@@ -38,12 +43,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .UseCollation("utf8mb4_unicode_ci");
         
         // Optional string fields
-        builder.Property(e => e.NameEn)
-            .HasMaxLength(255)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("name_en");
-            
         builder.Property(e => e.Slug)
             .HasMaxLength(255)
             .IsRequired()
@@ -54,12 +53,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
-            
-        builder.Property(e => e.DescriptionEn)
-            .HasColumnType("text")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("description_en");
             
         builder.Property(e => e.EnergyEfficiencyRating)
             .HasMaxLength(10)
@@ -96,15 +89,14 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(0.00)
             .HasColumnName("rating_average");
         
-        // VARCHAR fields - Simple string properties
-            
+        // VARCHAR fields - Simple string properties          
         builder.Property(e => e.ManualUrls)
-            .HasMaxLength(2000)
+            .HasMaxLength(1000)
             .HasColumnName("manual_urls")
             .IsRequired(false);
             
         builder.Property(e => e.Images)
-            .HasMaxLength(3000)
+            .HasMaxLength(1000)
             .IsRequired(false);
         
         // JSON fields - Using JsonHelpers for converter and comparer
@@ -146,10 +138,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("sold_count");
         
         // Boolean fields
-        builder.Property(e => e.IsFeatured)
-            .HasDefaultValue(false)
-            .HasColumnName("is_featured");
-            
         builder.Property(e => e.IsActive)
             .HasDefaultValue(true)
             .HasColumnName("is_active");
@@ -170,6 +158,11 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .WithMany(p => p.Products)
             .HasForeignKey(d => d.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(d => d.Vendor)
+            .WithMany(p => p.Products)
+            .HasForeignKey(d => d.VendorId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Unique constraints
         builder.HasIndex(e => e.ProductCode)
@@ -180,27 +173,19 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .IsUnique()
             .HasDatabaseName("idx_slug");
         
-        // Regular indexes
+        // Regular indexes (max 5 for large table)
         builder.HasIndex(e => e.CategoryId)
             .HasDatabaseName("idx_category");
-            
-        builder.HasIndex(e => e.Name)
-            .HasDatabaseName("idx_name");
             
         builder.HasIndex(e => e.Price)
             .HasDatabaseName("idx_price");
             
-        builder.HasIndex(e => e.CommissionRate)
-            .HasDatabaseName("idx_commission");
-            
-        builder.HasIndex(e => new { e.IsActive, e.IsFeatured })
-            .HasDatabaseName("idx_active_featured");
-            
-        builder.HasIndex(e => e.RatingAverage)
-            .HasDatabaseName("idx_rating");
+        builder.HasIndex(e => e.IsActive)
+            .HasDatabaseName("idx_active");
         
-        // Full text index
-        builder.HasIndex(e => new { e.Name, e.NameEn, e.Description, e.DescriptionEn })
+        // Full text index (only name and description in v7)
+        builder.HasIndex(e => new { e.Name, e.Description })
+            .HasAnnotation("MySql:FullTextIndex", true)
             .HasDatabaseName("idx_search");
     }
 }

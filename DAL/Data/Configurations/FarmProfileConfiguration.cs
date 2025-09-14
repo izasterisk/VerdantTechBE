@@ -57,12 +57,6 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
         
-        // Geographic coordinates with precise decimals
-        builder.Property(e => e.Latitude)
-            .HasPrecision(10, 8);
-            
-        builder.Property(e => e.Longitude)
-            .HasPrecision(11, 8);
         
         // Simple text fields
         builder.Property(e => e.PrimaryCrops)

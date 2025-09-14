@@ -5,13 +5,15 @@ namespace DAL.Data.Models;
 /// <summary>
 /// Product sustainability credentials uploaded for verification
 /// </summary>
-public partial class ProductSustainabilityCredential
+public partial class ProductCertificate
 {
     public ulong Id { get; set; }
 
     public ulong ProductId { get; set; }
 
-    public ulong CertificationId { get; set; }
+    [Required]
+    [StringLength(255)]
+    public string CertificationName { get; set; } = null!;
 
     /// <summary>
     /// URL to uploaded certificate image/file
@@ -19,7 +21,7 @@ public partial class ProductSustainabilityCredential
     [StringLength(500)]
     public string? CertificateUrl { get; set; }
 
-    public ProductSustainabilityCredentialStatus Status { get; set; } = ProductSustainabilityCredentialStatus.Pending;
+    public ProductCertificateStatus Status { get; set; } = ProductCertificateStatus.Pending;
 
     /// <summary>
     /// Rejection reason if status is rejected
@@ -39,6 +41,5 @@ public partial class ProductSustainabilityCredential
 
     // Navigation Properties
     public virtual Product Product { get; set; } = null!;
-    public virtual SustainabilityCertification Certification { get; set; } = null!;
-    public virtual User? VerifiedByUser { get; set; }
+    public virtual User? VerifiedByNavigation { get; set; }
 }

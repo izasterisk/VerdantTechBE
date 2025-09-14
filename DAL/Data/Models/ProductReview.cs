@@ -29,10 +29,6 @@ public partial class ProductReview
     [StringLength(1000)]
     public string? Images { get; set; }
 
-    public int HelpfulCount { get; set; } = 0;
-
-    public int UnhelpfulCount { get; set; } = 0;
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

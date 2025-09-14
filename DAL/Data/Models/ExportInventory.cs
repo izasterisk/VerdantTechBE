@@ -3,9 +3,9 @@ using System.ComponentModel.DataAnnotations;
 namespace DAL.Data.Models;
 
 /// <summary>
-/// Sales inventory tracking (stock out)
+/// Export inventory tracking (stock out) - phiên bản đơn giản hóa
 /// </summary>
-public partial class SalesInventory
+public partial class ExportInventory
 {
     public ulong Id { get; set; }
 
@@ -17,10 +17,6 @@ public partial class SalesInventory
 
     public decimal UnitSalePrice { get; set; }
 
-    public decimal TotalRevenue { get; set; }
-
-    public decimal CommissionAmount { get; set; } = 0.00m;
-
     public int BalanceAfter { get; set; }
 
     public MovementType MovementType { get; set; } = MovementType.Sale;
@@ -28,9 +24,8 @@ public partial class SalesInventory
     [StringLength(500)]
     public string? Notes { get; set; }
 
+    [Required]
     public ulong CreatedBy { get; set; }
-
-    public DateTime SoldAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

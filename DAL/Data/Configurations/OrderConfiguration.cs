@@ -19,10 +19,10 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .ValueGeneratedOnAdd();
         
         // Foreign Key
-        builder.Property(e => e.CustomerId)
+        builder.Property(e => e.UserId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
-            .HasColumnName("customer_id");
+            .HasColumnName("user_id");
         
         // Enum conversion for status
         builder.Property(e => e.Status)
@@ -115,15 +115,14 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnName("updated_at");
         
         // Foreign Key Relationships
-        // Foreign Key Relationships
-        builder.HasOne(d => d.Customer)
-            .WithMany(p => p.CustomerOrders)
-            .HasForeignKey(d => d.CustomerId)
+        builder.HasOne(d => d.User)
+            .WithMany(p => p.Orders)
+            .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
-        builder.HasIndex(e => e.CustomerId)
-            .HasDatabaseName("idx_customer");
+        builder.HasIndex(e => e.UserId)
+            .HasDatabaseName("idx_user");
             
         builder.HasIndex(e => e.Status)
             .HasDatabaseName("idx_status");

@@ -96,11 +96,6 @@ public class ForumCommentConfiguration : IEntityTypeConfiguration<ForumComment>
             .HasForeignKey(d => d.ParentId)
             .OnDelete(DeleteBehavior.Cascade);
         
-        // Relationship with User (moderator)
-        builder.HasOne(d => d.ModeratedByNavigation)
-            .WithMany(p => p.ModeratedForumComments)
-            .HasForeignKey(d => d.ModeratedBy)
-            .OnDelete(DeleteBehavior.SetNull);
         
         // Indexes
         builder.HasIndex(e => e.PostId)

@@ -35,12 +35,6 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
             .UseCollation("utf8mb4_unicode_ci");
         
         // Optional fields
-        builder.Property(e => e.NameEn)
-            .HasMaxLength(255)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("name_en");
-            
         builder.Property(e => e.Description)
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
@@ -51,11 +45,6 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("icon_url");
-        
-        // Integer fields with defaults
-        builder.Property(e => e.SortOrder)
-            .HasDefaultValue(0)
-            .HasColumnName("sort_order");
         
         // Boolean defaults
         builder.Property(e => e.IsActive)
@@ -87,7 +76,7 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
             .IsUnique()
             .HasDatabaseName("idx_slug");
             
-        builder.HasIndex(e => new { e.IsActive, e.SortOrder })
-            .HasDatabaseName("idx_active_sort");
+        builder.HasIndex(e => e.IsActive)
+            .HasDatabaseName("idx_active");
     }
 }

@@ -12,21 +12,20 @@ public class VerdantTechDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<FarmProfile> FarmProfiles { get; set; }
     public DbSet<VendorProfile> VendorProfiles { get; set; }
-    public DbSet<SupportedBank> SupportedBanks { get; set; }
     public DbSet<VendorBankAccount> VendorBankAccounts { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
     
-    // Sustainability DbSets
-    public DbSet<SustainabilityCertification> SustainabilityCertifications { get; set; }
-    public DbSet<VendorSustainabilityCredential> VendorSustainabilityCredentials { get; set; }
-    public DbSet<ProductSustainabilityCredential> ProductSustainabilityCredentials { get; set; }
+    // Certificate DbSets
+    public DbSet<VendorCertificate> VendorCertificates { get; set; }
+    public DbSet<ProductCertificate> ProductCertificates { get; set; }
     
     // Product and Inventory DbSets
     public DbSet<ProductCategory> ProductCategories { get; set; }
     public DbSet<Product> Products { get; set; }
-    public DbSet<Cart> Cart { get; set; }
-    public DbSet<PurchaseInventory> PurchaseInventories { get; set; }
-    public DbSet<SalesInventory> SalesInventories { get; set; }
+    public DbSet<Cart> Carts { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
+    public DbSet<BatchInventory> BatchInventories { get; set; }
+    public DbSet<ExportInventory> ExportInventories { get; set; }
     
     // Request Management DbSets
     public DbSet<Request> Requests { get; set; }
@@ -43,7 +42,6 @@ public class VerdantTechDbContext : DbContext
     public DbSet<EnvironmentalDatum> EnvironmentalData { get; set; }
     public DbSet<Fertilizer> Fertilizers { get; set; }
     public DbSet<EnergyUsage> EnergyUsage { get; set; }
-    public DbSet<WeatherDataCache> WeatherDataCache { get; set; }
     
     // AI Chatbot DbSets
     public DbSet<ChatbotConversation> ChatbotConversations { get; set; }
@@ -60,17 +58,16 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new FarmProfileConfiguration());
         modelBuilder.ApplyConfiguration(new VendorProfileConfiguration());
-        modelBuilder.ApplyConfiguration(new SupportedBankConfiguration());
         modelBuilder.ApplyConfiguration(new VendorBankAccountConfiguration());
         modelBuilder.ApplyConfiguration(new WalletConfiguration());
-        modelBuilder.ApplyConfiguration(new SustainabilityCertificationConfiguration());
-        modelBuilder.ApplyConfiguration(new VendorSustainabilityCredentialConfiguration());
-        modelBuilder.ApplyConfiguration(new ProductSustainabilityCredentialConfiguration());
+        modelBuilder.ApplyConfiguration(new VendorCertificateConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductCertificateConfiguration());
         modelBuilder.ApplyConfiguration(new ProductCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new CartConfiguration());
-        modelBuilder.ApplyConfiguration(new PurchaseInventoryConfiguration());
-        modelBuilder.ApplyConfiguration(new SalesInventoryConfiguration());
+        modelBuilder.ApplyConfiguration(new CartItemConfiguration());
+        modelBuilder.ApplyConfiguration(new BatchInventoryConfiguration());
+        modelBuilder.ApplyConfiguration(new ExportInventoryConfiguration());
         modelBuilder.ApplyConfiguration(new RequestConfiguration());
         modelBuilder.ApplyConfiguration(new OrderConfiguration());
         modelBuilder.ApplyConfiguration(new OrderDetailConfiguration());
@@ -81,7 +78,6 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new EnvironmentalDataConfiguration());
         modelBuilder.ApplyConfiguration(new FertilizerConfiguration());
         modelBuilder.ApplyConfiguration(new EnergyUsageConfiguration());
-        modelBuilder.ApplyConfiguration(new WeatherDataCacheConfiguration());
         modelBuilder.ApplyConfiguration(new ChatbotConversationConfiguration());
         modelBuilder.ApplyConfiguration(new ChatbotMessageConfiguration());
         modelBuilder.ApplyConfiguration(new ForumCategoryConfiguration());

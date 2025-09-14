@@ -11,6 +11,8 @@ public partial class Product
 
     public ulong CategoryId { get; set; }
 
+    public ulong VendorId { get; set; }
+
     [Required]
     [StringLength(100)]
     public string ProductCode { get; set; } = null!;
@@ -19,16 +21,11 @@ public partial class Product
     [StringLength(255)]
     public string Name { get; set; } = null!;
 
-    [StringLength(255)]
-    public string? NameEn { get; set; }
-
     [Required]
     [StringLength(255)]
     public string Slug { get; set; } = null!;
 
     public string? Description { get; set; }
-
-    public string? DescriptionEn { get; set; }
 
     public decimal Price { get; set; }
 
@@ -37,7 +34,6 @@ public partial class Product
     public decimal CommissionRate { get; set; } = 0.00m;
 
     public decimal DiscountPercentage { get; set; } = 0.00m;
-
 
     [StringLength(10)]
     public string? EnergyEfficiencyRating { get; set; }
@@ -70,8 +66,6 @@ public partial class Product
     /// </summary>
     public Dictionary<string, decimal> DimensionsCm { get; set; } = new();
 
-    public bool IsFeatured { get; set; } = false;
-
     public bool IsActive { get; set; } = true;
 
     public long ViewCount { get; set; } = 0L;
@@ -88,10 +82,11 @@ public partial class Product
 
     // Navigation Properties
     public virtual ProductCategory Category { get; set; } = null!;
-    public virtual ICollection<PurchaseInventory> PurchaseInventories { get; set; } = new List<PurchaseInventory>();
-    public virtual ICollection<SalesInventory> SalesInventories { get; set; } = new List<SalesInventory>();
+    public virtual VendorProfile Vendor { get; set; } = null!;
+    public virtual ICollection<BatchInventory> BatchInventories { get; set; } = new List<BatchInventory>();
+    public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
-    public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
-    public virtual ICollection<ProductSustainabilityCredential> ProductSustainabilityCredentials { get; set; } = new List<ProductSustainabilityCredential>();
+    public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+    public virtual ICollection<ProductCertificate> ProductCertificates { get; set; } = new List<ProductCertificate>();
 }

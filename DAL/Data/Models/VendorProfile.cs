@@ -22,23 +22,20 @@ public partial class VendorProfile
     [StringLength(100)]
     public string? BusinessRegistrationNumber { get; set; }
 
-    [StringLength(50)]
-    public string? TaxCode { get; set; }
-
     public string? CompanyAddress { get; set; }
+
+    [StringLength(100)]
+    public string? Province { get; set; }
+
+    [StringLength(100)]
+    public string? District { get; set; }
+
+    [StringLength(100)]
+    public string? Commune { get; set; }
 
     public DateTime? VerifiedAt { get; set; }
 
     public ulong? VerifiedBy { get; set; }
-
-    /// <summary>
-    /// Platform commission percentage
-    /// </summary>
-    public decimal CommissionRate { get; set; } = 10.00m;
-
-    public decimal RatingAverage { get; set; } = 0.00m;
-
-    public int TotalReviews { get; set; } = 0;
 
     public DateTime CreatedAt { get; set; }
 
@@ -47,10 +44,11 @@ public partial class VendorProfile
     // Navigation Properties
     public virtual User User { get; set; } = null!;
     public virtual User? VerifiedByNavigation { get; set; }
-    public virtual ICollection<VendorSustainabilityCredential> VendorSustainabilityCredentials { get; set; } = new List<VendorSustainabilityCredential>();
+    public virtual ICollection<VendorCertificate> VendorCertificates { get; set; } = new List<VendorCertificate>();
     public virtual ICollection<VendorBankAccount> VendorBankAccounts { get; set; } = new List<VendorBankAccount>();
     public virtual Wallet? Wallet { get; set; }
-    public virtual ICollection<PurchaseInventory> PurchaseInventories { get; set; } = new List<PurchaseInventory>();
+    public virtual ICollection<BatchInventory> BatchInventories { get; set; } = new List<BatchInventory>();
     public virtual ICollection<Cashout> Cashouts { get; set; } = new List<Cashout>();
     public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 }

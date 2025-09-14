@@ -9,7 +9,7 @@ public partial class Order
 {
     public ulong Id { get; set; }
 
-    public ulong CustomerId { get; set; }
+    public ulong UserId { get; set; }
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
@@ -53,8 +53,10 @@ public partial class Order
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual User Customer { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
-    public virtual ICollection<SalesInventory> SalesInventories { get; set; } = new List<SalesInventory>();
+    public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
+    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

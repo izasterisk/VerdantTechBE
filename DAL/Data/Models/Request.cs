@@ -9,7 +9,7 @@ public partial class Request
 {
     public ulong Id { get; set; }
 
-    public ulong RequesterId { get; set; }
+    public ulong? UserId { get; set; }
 
     public RequestType RequestType { get; set; }
 
@@ -22,21 +22,12 @@ public partial class Request
 
     public RequestStatus Status { get; set; } = RequestStatus.Pending;
 
-    public RequestPriority? Priority { get; set; } = null;
-
-    [StringLength(50)]
-    public string? ReferenceType { get; set; }
-
-    public ulong? ReferenceId { get; set; }
-
     public decimal? Amount { get; set; }
 
     public string? AdminNotes { get; set; }
 
     [StringLength(500)]
     public string? RejectionReason { get; set; }
-
-    public ulong? AssignedTo { get; set; }
 
     public ulong? ProcessedBy { get; set; }
 
@@ -47,7 +38,6 @@ public partial class Request
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual User Requester { get; set; } = null!;
-    public virtual User? AssignedToNavigation { get; set; }
+    public virtual User? User { get; set; }
     public virtual User? ProcessedByNavigation { get; set; }
 }

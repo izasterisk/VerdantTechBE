@@ -21,27 +21,17 @@ public enum UserStatus
 }
 
 // =====================================================
-// SUSTAINABILITY ENUMS
+// CERTIFICATE ENUMS
 // =====================================================
 
-public enum SustainabilityCertificationCategory
-{
-    Organic,
-    Environmental,
-    FairTrade,
-    FoodSafety,
-    Social,
-    Energy
-}
-
-public enum VendorSustainabilityCredentialStatus
+public enum VendorCertificateStatus
 {
     Pending,
     Verified,
     Rejected
 }
 
-public enum ProductSustainabilityCredentialStatus
+public enum ProductCertificateStatus
 {
     Pending,
     Verified,
@@ -60,12 +50,6 @@ public enum SoilType
     DatThit,        // Đất thịt
     DatSet,         // Đất sét
     DatCat          // Đất cát
-}
-
-public enum WeatherApiSource
-{
-    Openweathermap,
-    Accuweather
 }
 
 // =====================================================
@@ -106,7 +90,8 @@ public enum RequestType
 {
     RefundRequest,
     PayoutRequest,
-    SupportRequest
+    SupportRequest,
+    VendorRegister
 }
 
 public enum RequestStatus

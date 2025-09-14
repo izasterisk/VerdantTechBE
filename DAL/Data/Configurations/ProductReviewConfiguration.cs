@@ -53,15 +53,6 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             .HasMaxLength(2000)
             .IsRequired(false);
         
-        // Count fields with defaults
-        builder.Property(e => e.HelpfulCount)
-            .HasDefaultValue(0)
-            .HasColumnName("helpful_count");
-            
-        builder.Property(e => e.UnhelpfulCount)
-            .HasDefaultValue(0)
-            .HasColumnName("unhelpful_count");
-        
         // DateTime fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")

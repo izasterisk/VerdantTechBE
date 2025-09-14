@@ -20,10 +20,12 @@ public class VendorBankAccountConfiguration : IEntityTypeConfiguration<VendorBan
             .IsRequired()
             .HasColumnName("vendor_id");
 
-        builder.Property(e => e.BankId)
-            .HasColumnType("bigint unsigned")
+        builder.Property(e => e.BankCode)
+            .HasMaxLength(20)
             .IsRequired()
-            .HasColumnName("bank_id");
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("bank_code");
 
         builder.Property(e => e.AccountNumber)
             .HasMaxLength(50)
@@ -58,17 +60,12 @@ public class VendorBankAccountConfiguration : IEntityTypeConfiguration<VendorBan
             .HasForeignKey(d => d.VendorId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(d => d.Bank)
-            .WithMany(p => p.VendorBankAccounts)
-            .HasForeignKey(d => d.BankId)
-            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(e => new { e.VendorId, e.BankId, e.AccountNumber })
+        builder.HasIndex(e => new { e.VendorId, e.AccountNumber })
             .IsUnique()
             .HasDatabaseName("unique_vendor_bank_account");
 
         builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
-        builder.HasIndex(e => e.BankId).HasDatabaseName("idx_bank");
         builder.HasIndex(e => new { e.VendorId, e.IsDefault }).HasDatabaseName("idx_vendor_default");
     }
 }

@@ -47,12 +47,6 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("business_registration_number");
-            
-        builder.Property(e => e.TaxCode)
-            .HasMaxLength(50)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("tax_code");
         
         // Address field
         builder.Property(e => e.CompanyAddress)
@@ -60,24 +54,6 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("company_address");
-        
-        // Removed bank_account_info JSON column in new schema
-        
-        // Decimal fields with precision
-        builder.Property(e => e.CommissionRate)
-            .HasPrecision(5, 2)
-            .HasDefaultValue(10.00m)
-            .HasColumnName("commission_rate");
-            
-        builder.Property(e => e.RatingAverage)
-            .HasPrecision(3, 2)
-            .HasDefaultValue(0.00m)
-            .HasColumnName("rating_average");
-        
-        // Integer fields with defaults
-        builder.Property(e => e.TotalReviews)
-            .HasDefaultValue(0)
-            .HasColumnName("total_reviews");
         
         // DateTime fields
         builder.Property(e => e.VerifiedAt)
@@ -124,8 +100,5 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
             
         builder.HasIndex(e => e.VerifiedAt)
             .HasDatabaseName("idx_verified");
-            
-        builder.HasIndex(e => e.RatingAverage)
-            .HasDatabaseName("idx_rating");
     }
 }

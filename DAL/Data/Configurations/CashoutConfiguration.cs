@@ -109,11 +109,6 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasForeignKey(e => e.TransactionId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasOne(e => e.Bank)
-            .WithMany()
-            .HasForeignKey(e => e.BankCode)
-            .HasPrincipalKey(b => b.BankCode)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.ProcessedByNavigation)
             .WithMany(u => u.CashoutsProcessed)

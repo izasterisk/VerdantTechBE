@@ -139,11 +139,6 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Relationship with User (moderator)
-        builder.HasOne(d => d.ModeratedByNavigation)
-            .WithMany(p => p.ModeratedForumPosts)
-            .HasForeignKey(d => d.ModeratedBy)
-            .OnDelete(DeleteBehavior.SetNull);
 
         // Indexes
         builder.HasIndex(e => e.CategoryId)

@@ -15,9 +15,6 @@ public partial class ProductCategory
     [StringLength(255)]
     public string Name { get; set; } = null!;
 
-    [StringLength(255)]
-    public string? NameEn { get; set; }
-
     [Required]
     [StringLength(255)]
     public string Slug { get; set; } = null!;
@@ -26,8 +23,6 @@ public partial class ProductCategory
 
     [StringLength(500)]
     public string? IconUrl { get; set; }
-
-    public int SortOrder { get; set; } = 0;
 
     public bool IsActive { get; set; } = true;
 

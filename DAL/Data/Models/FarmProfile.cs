@@ -28,10 +28,6 @@ public partial class FarmProfile
     [StringLength(100)]
     public string? Commune { get; set; }
 
-    public decimal? Latitude { get; set; }
-
-    public decimal? Longitude { get; set; }
-
     /// <summary>
     /// Main crops grown, comma-separated list
     /// </summary>
@@ -45,5 +41,4 @@ public partial class FarmProfile
     // Navigation Properties
     public virtual User User { get; set; } = null!;
     public virtual ICollection<EnvironmentalDatum> EnvironmentalData { get; set; } = new List<EnvironmentalDatum>();
-    public virtual ICollection<WeatherDataCache> WeatherDataCache { get; set; } = new List<WeatherDataCache>();
 }

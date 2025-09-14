@@ -56,26 +56,24 @@ public partial class User
     public virtual VendorProfile? VendorProfile { get; set; }
     
     // One-to-many relationships
-    public virtual ICollection<Order> CustomerOrders { get; set; } = new List<Order>();
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     public virtual ICollection<ForumPost> ForumPosts { get; set; } = new List<ForumPost>();
     public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
     public virtual ICollection<ChatbotConversation> ChatbotConversations { get; set; } = new List<ChatbotConversation>();
     public virtual ICollection<EnvironmentalDatum> EnvironmentalData { get; set; } = new List<EnvironmentalDatum>();
-    public virtual ICollection<PurchaseInventory> PurchaseInventories { get; set; } = new List<PurchaseInventory>();
-    public virtual ICollection<SalesInventory> SalesInventories { get; set; } = new List<SalesInventory>();
+    public virtual ICollection<BatchInventory> BatchInventoriesQualityChecked { get; set; } = new List<BatchInventory>();
+    public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
     public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
     public virtual ICollection<Transaction> TransactionsCreated { get; set; } = new List<Transaction>();
     public virtual ICollection<Transaction> TransactionsProcessed { get; set; } = new List<Transaction>();
+    public virtual ICollection<Transaction> TransactionsCustomer { get; set; } = new List<Transaction>();
     public virtual ICollection<Cashout> CashoutsProcessed { get; set; } = new List<Cashout>();
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
     
     // Verification relationships
     public virtual ICollection<VendorProfile> VerifiedVendorProfiles { get; set; } = new List<VendorProfile>();
-    public virtual ICollection<ForumPost> ModeratedForumPosts { get; set; } = new List<ForumPost>();
-    public virtual ICollection<ForumComment> ModeratedForumComments { get; set; } = new List<ForumComment>();
-    public virtual ICollection<VendorSustainabilityCredential> VerifiedSustainabilityCredentials { get; set; } = new List<VendorSustainabilityCredential>();
-    public virtual ICollection<ProductSustainabilityCredential> VerifiedProductSustainabilityCredentials { get; set; } = new List<ProductSustainabilityCredential>();
-    public virtual ICollection<Request> RequestsAssigned { get; set; } = new List<Request>();
+    public virtual ICollection<VendorCertificate> VerifiedVendorCertificates { get; set; } = new List<VendorCertificate>();
+    public virtual ICollection<ProductCertificate> VerifiedProductCertificates { get; set; } = new List<ProductCertificate>();
     public virtual ICollection<Request> RequestsProcessed { get; set; } = new List<Request>();
 }

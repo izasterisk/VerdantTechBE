@@ -17,10 +17,9 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
 
-        builder.Property(e => e.RequesterId)
-            .HasColumnName("requester_id")
-            .HasColumnType("bigint unsigned")
-            .IsRequired();
+        builder.Property(e => e.UserId)
+            .HasColumnName("user_id")
+            .HasColumnType("bigint unsigned");
 
         builder.Property(e => e.RequestType)
             .HasConversion<string>()
@@ -45,29 +44,10 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasColumnType("enum('pending','in_review','approved','rejected','completed','cancelled')")
             .HasDefaultValue(RequestStatus.Pending);
 
-        builder.Property(e => e.Priority)
-            .HasConversion<string>()
-            .HasColumnName("priority")
-            .HasColumnType("enum('low','medium','high','urgent')")
-            .HasDefaultValue(RequestPriority.Medium);
-
-        builder.Property(e => e.ReferenceType)
-            .HasColumnName("reference_type")
-            .HasColumnType("varchar(50)")
-            .HasMaxLength(50);
-
-        builder.Property(e => e.ReferenceId)
-            .HasColumnName("reference_id")
-            .HasColumnType("bigint unsigned");
-
         builder.Property(e => e.Amount)
             .HasColumnName("amount")
             .HasColumnType("decimal(12,2)");
 
-        builder.Property(e => e.AssignedTo)
-            .HasColumnName("assigned_to")
-            .HasColumnType("bigint unsigned");
-            
         builder.Property(e => e.ProcessedBy)
             .HasColumnName("processed_by")
             .HasColumnType("bigint unsigned");
@@ -91,28 +71,18 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
         // Foreign keys
-        builder.HasOne(e => e.Requester)
+        builder.HasOne(e => e.User)
             .WithMany(u => u.Requests)
-            .HasForeignKey(e => e.RequesterId)
+            .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(e => e.AssignedToNavigation)
-            .WithMany(u => u.RequestsAssigned)
-            .HasForeignKey(e => e.AssignedTo)
-            .OnDelete(DeleteBehavior.SetNull);
             
         builder.HasOne(e => e.ProcessedByNavigation)
             .WithMany(u => u.RequestsProcessed)
             .HasForeignKey(e => e.ProcessedBy)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
-        // Indexes (matching schema SQL)
-        builder.HasIndex(e => e.RequesterId).HasDatabaseName("idx_requester");
+        // Indexes (matching schema v7)
         builder.HasIndex(e => new { e.RequestType, e.Status }).HasDatabaseName("idx_type_status");
-        builder.HasIndex(e => e.Priority).HasDatabaseName("idx_priority");
-        builder.HasIndex(e => e.AssignedTo).HasDatabaseName("idx_assigned");
-        builder.HasIndex(e => e.ProcessedBy).HasDatabaseName("idx_processed");
         builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created_at");
-        builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId }).HasDatabaseName("idx_reference");
     }
 }
