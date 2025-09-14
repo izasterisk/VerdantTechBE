@@ -34,4 +34,5 @@ public partial class SustainabilityCertification
 
     // Navigation Properties
     public virtual ICollection<VendorSustainabilityCredential> VendorSustainabilityCredentials { get; set; } = new List<VendorSustainabilityCredential>();
+    public virtual ICollection<ProductSustainabilityCredential> ProductSustainabilityCredentials { get; set; } = new List<ProductSustainabilityCredential>();
 }

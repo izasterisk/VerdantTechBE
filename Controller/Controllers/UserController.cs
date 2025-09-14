@@ -26,7 +26,7 @@ public class UserController : BaseController
     [AllowAnonymous]
     [EndpointSummary("Create New User (note.)")]
     [EndpointDescription("Nếu không truyền role thì mặc định sẽ là customer, muốn tạo role khác thì truyền Role tương ứng. " +
-                         "Nếu role=admin/manager thì sẽ được tự động IsVerified=true, " +
+                         "Nếu role=admin/staff thì sẽ được tự động IsVerified=true, " +
                          "không gửi Verification Email nhưng thay vào đó sẽ gửi email tài khoản được cấp.")]
     public async Task<ActionResult<APIResponse>> CreateUser([FromBody] UserCreateDTO dto)
     {
@@ -74,10 +74,10 @@ public class UserController : BaseController
     /// </summary>
     /// <param name="page">Số trang (mặc định: 1)</param>
     /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
-    /// <param name="role">Role để filter (Customer, Seller, Admin, Manager). Mặc định: Customer</param>
+    /// <param name="role">Role để filter (Customer, Staff, Admin, Vendor). Mặc định: Customer</param>
     /// <returns>Danh sách người dùng có phân trang</returns>
     [HttpGet]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Get All Users (note.)")]
     [EndpointDescription("Lọc người dùng theo role. Nếu không ghi ra, chỉ trả về Customer. Mẫu: /api/User?page=2&pageSize=20&role=admin")]
     public async Task<ActionResult<APIResponse>> GetAllUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? role = null)
@@ -136,7 +136,7 @@ public class UserController : BaseController
     [EndpointSummary("Change User Status (note.)")]
     [EndpointDescription("Thay đổi trạng thái của người dùng thành 1 trong: Active, Inactive, Suspended, Deleted. " +
                          "Active = bình thường, Inactive = tạm dừng (người dùng có thể tự đặt), " +
-                         "Suspended = đình chỉ (bị admin/manager chém), Deleted = xóa (chỉ là bị soft delete, không xóa hoàn toàn.")]
+                         "Suspended = đình chỉ (bị admin/staff chém), Deleted = xóa (chỉ là bị soft delete, không xóa hoàn toàn.")]
     public async Task<ActionResult<APIResponse>> ChangeUserStatus(ulong id, [FromQuery] string status)
     {
         if (string.IsNullOrWhiteSpace(status))

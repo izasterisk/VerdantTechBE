@@ -64,13 +64,12 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
         builder.Property(e => e.Longitude)
             .HasPrecision(11, 8);
         
-        // JSON fields with conversions
+        // Simple text fields
         builder.Property(e => e.PrimaryCrops)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
+            .HasMaxLength(500)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasComment("Main crops grown, comma-separated list")
             .HasColumnName("primary_crops");
         
         // DateTime fields

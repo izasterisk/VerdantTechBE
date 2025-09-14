@@ -24,9 +24,10 @@ public partial class ProductReview
     public string? Comment { get; set; }
 
     /// <summary>
-    /// Array of review image URLs (JSON)
+    /// Review image URLs, comma-separated
     /// </summary>
-    public List<string> Images { get; set; } = new();
+    [StringLength(1000)]
+    public string? Images { get; set; }
 
     public int HelpfulCount { get; set; } = 0;
 

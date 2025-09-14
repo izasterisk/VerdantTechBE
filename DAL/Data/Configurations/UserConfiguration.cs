@@ -41,7 +41,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         // Enum conversions
         builder.Property(e => e.Role)
             .HasConversion<string>()
-            .HasColumnType("enum('customer','seller','admin','manager')")
+            .HasColumnType("enum('customer','seller','vendor','admin','manager')")
             .HasDefaultValue(UserRole.Customer);
         
         builder.Property(e => e.Status)
@@ -95,6 +95,15 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(e => e.DeletedAt)
             .HasColumnType("timestamp")
             .HasColumnName("deleted_at");
+
+        builder.Property(e => e.RefreshToken)
+            .HasColumnName("RefreshToken")
+            .HasColumnType("varchar(500)")
+            .HasMaxLength(500);
+
+        builder.Property(e => e.RefreshTokenExpiresAt)
+            .HasColumnName("RefreshTokenExpiresAt")
+            .HasColumnType("timestamp");
         
         // Indexes
         builder.HasIndex(e => e.Email)

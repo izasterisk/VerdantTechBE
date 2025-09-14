@@ -17,12 +17,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
         
-        // Foreign Keys
-        builder.Property(e => e.VendorId)
-            .HasColumnType("bigint unsigned")
-            .IsRequired()
-            .HasColumnName("vendor_id");
-            
+        // Foreign Key
         builder.Property(e => e.CategoryId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
@@ -77,6 +72,16 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasPrecision(12, 2)
             .IsRequired();
             
+        builder.Property(e => e.CostPrice)
+            .HasPrecision(12, 2)
+            .HasDefaultValue(0.00m)
+            .HasColumnName("cost_price");
+            
+        builder.Property(e => e.CommissionRate)
+            .HasPrecision(5, 2)
+            .HasDefaultValue(0.00m)
+            .HasColumnName("commission_rate");
+            
         builder.Property(e => e.DiscountPercentage)
             .HasPrecision(5, 2)
             .HasDefaultValue(0.00)
@@ -91,48 +96,32 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(0.00)
             .HasColumnName("rating_average");
         
-        // JSON fields - List<string> conversions
-        builder.Property(e => e.GreenCertifications)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
-            .HasColumnName("green_certifications");
-            
-        builder.Property(e => e.Specifications)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'{}'")
-            .HasColumnName("specifications");
+        // VARCHAR fields - Simple string properties
             
         builder.Property(e => e.ManualUrls)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
-            .HasColumnName("manual_urls");
+            .HasMaxLength(2000)
+            .HasColumnName("manual_urls")
+            .IsRequired(false);
             
         builder.Property(e => e.Images)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
-            .HasColumnName("images");
-            
-        builder.Property(e => e.DimensionsCm)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, decimal>() : JsonSerializer.Deserialize<Dictionary<string, decimal>>(v, (JsonSerializerOptions?)null)!)
+            .HasMaxLength(3000)
+            .IsRequired(false);
+        
+        // JSON fields - Using JsonHelpers for converter and comparer
+        builder.Property(e => e.Specifications)
+            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
             .HasColumnType("json")
             .HasDefaultValueSql("'{}'")
-            .HasColumnName("dimensions_cm");
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
+            
+        builder.Property(e => e.DimensionsCm)
+            .HasConversion(JsonHelpers.DictionaryStringDecimalConverter())
+            .HasColumnType("json")
+            .HasDefaultValueSql("'{}'")
+            .HasColumnName("dimensions_cm")
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringDecimalComparer());
         
-        // Integer fields with defaults
+        // Integer fields
         builder.Property(e => e.WarrantyMonths)
             .HasDefaultValue(12)
             .HasColumnName("warranty_months");
@@ -145,16 +134,18 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(0)
             .HasColumnName("total_reviews");
         
-        // Long fields with defaults
+        // Big integer fields
         builder.Property(e => e.ViewCount)
+            .HasColumnType("bigint")
             .HasDefaultValue(0L)
             .HasColumnName("view_count");
             
         builder.Property(e => e.SoldCount)
+            .HasColumnType("bigint")
             .HasDefaultValue(0L)
             .HasColumnName("sold_count");
         
-        // Boolean defaults
+        // Boolean fields
         builder.Property(e => e.IsFeatured)
             .HasDefaultValue(false)
             .HasColumnName("is_featured");
@@ -163,7 +154,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(true)
             .HasColumnName("is_active");
         
-        // DateTime fields
+        // Timestamp fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -175,23 +166,12 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("updated_at");
         
         // Foreign Key Relationships
-        builder.HasOne(d => d.Vendor)
-            .WithMany(p => p.Products)
-            .HasForeignKey(d => d.VendorId)
-            .OnDelete(DeleteBehavior.Cascade);
-            
         builder.HasOne(d => d.Category)
             .WithMany(p => p.Products)
             .HasForeignKey(d => d.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
         
-        // Indexes
-        builder.HasIndex(e => e.VendorId)
-            .HasDatabaseName("idx_vendor");
-            
-        builder.HasIndex(e => e.CategoryId)
-            .HasDatabaseName("idx_category");
-            
+        // Unique constraints
         builder.HasIndex(e => e.ProductCode)
             .IsUnique()
             .HasDatabaseName("idx_product_code");
@@ -199,6 +179,10 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(e => e.Slug)
             .IsUnique()
             .HasDatabaseName("idx_slug");
+        
+        // Regular indexes
+        builder.HasIndex(e => e.CategoryId)
+            .HasDatabaseName("idx_category");
             
         builder.HasIndex(e => e.Name)
             .HasDatabaseName("idx_name");
@@ -206,15 +190,17 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(e => e.Price)
             .HasDatabaseName("idx_price");
             
+        builder.HasIndex(e => e.CommissionRate)
+            .HasDatabaseName("idx_commission");
+            
         builder.HasIndex(e => new { e.IsActive, e.IsFeatured })
             .HasDatabaseName("idx_active_featured");
             
         builder.HasIndex(e => e.RatingAverage)
             .HasDatabaseName("idx_rating");
         
-        // Full-text search index
+        // Full text index
         builder.HasIndex(e => new { e.Name, e.NameEn, e.Description, e.DescriptionEn })
-            .HasAnnotation("MySql:FullTextIndex", true)
             .HasDatabaseName("idx_search");
     }
 }

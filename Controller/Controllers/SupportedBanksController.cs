@@ -23,7 +23,7 @@ public class SupportedBanksController : BaseController
     /// <param name="dto">Thông tin ngân hàng cần tạo</param>
     /// <returns>Thông tin ngân hàng đã tạo</returns>
     [HttpPost]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Create New Supported Bank")]
     [EndpointDescription("Không bắt buộc ImageUrl.")]
     public async Task<ActionResult<APIResponse>> CreateSupportedBank([FromBody] SupportedBanksCreateDTO dto)
@@ -129,7 +129,7 @@ public class SupportedBanksController : BaseController
     /// <param name="dto">Thông tin ngân hàng cần cập nhật</param>
     /// <returns>Thông tin ngân hàng đã cập nhật</returns>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Update Supported Bank")]
     public async Task<ActionResult<APIResponse>> UpdateSupportedBank(ulong id, [FromBody] SupportedBanksUpdateDTO dto)
     {

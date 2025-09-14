@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace DAL.Data.Models;
 
 /// <summary>
-/// Payment transactions
+/// Payments table (money coming in)
 /// </summary>
 public partial class Payment
 {
@@ -11,12 +11,14 @@ public partial class Payment
 
     public ulong OrderId { get; set; }
 
+    public ulong? TransactionId { get; set; }
+
     public PaymentMethod PaymentMethod { get; set; }
 
     public PaymentGateway PaymentGateway { get; set; }
 
     [StringLength(255)]
-    public string? TransactionId { get; set; }
+    public string? GatewayTransactionId { get; set; }
 
     public decimal Amount { get; set; }
 
@@ -29,6 +31,7 @@ public partial class Payment
 
     public decimal RefundAmount { get; set; } = 0.00m;
 
+    [StringLength(500)]
     public string? RefundReason { get; set; }
 
     public DateTime? RefundedAt { get; set; }
@@ -43,4 +46,5 @@ public partial class Payment
 
     // Navigation Properties
     public virtual Order Order { get; set; } = null!;
+    public virtual Transaction? Transaction { get; set; }
 }

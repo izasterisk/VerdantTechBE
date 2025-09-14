@@ -17,9 +17,10 @@ public partial class ChatbotMessage
     public string MessageText { get; set; } = null!;
 
     /// <summary>
-    /// Image or file attachments (JSON)
+    /// Image or file attachment URLs, comma-separated
     /// </summary>
-    public List<string> Attachments { get; set; } = new();
+    [StringLength(1000)]
+    public string? Attachments { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

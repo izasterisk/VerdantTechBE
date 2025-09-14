@@ -57,28 +57,18 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
 
-        // JSON field for mixed content blocks
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false
-        };
-
+        // JSON field for mixed content blocks using JsonHelpers
         builder.Property(e => e.Content)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, jsonOptions),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<ContentBlock>() : JsonSerializer.Deserialize<List<ContentBlock>>(v, jsonOptions)!)
+            .HasConversion(JsonHelpers.ListContentBlockConverter())
             .HasColumnType("json")
             .HasDefaultValueSql("'[]'")
-            .IsRequired();
+            .IsRequired()
+            .Metadata.SetValueComparer(JsonHelpers.ListContentBlockComparer());
 
-        // JSON field for tags array
+        // VARCHAR field for tags array
         builder.Property(e => e.Tags)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, jsonOptions),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, jsonOptions)!)
-            .HasColumnType("json")
-            .HasDefaultValueSql("'[]'");
+            .HasMaxLength(1000)
+            .IsRequired(false);
 
         // Optional text field
         builder.Property(e => e.ModeratedReason)

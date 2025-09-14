@@ -23,7 +23,7 @@ public class SustainabilityCertificationsController : BaseController
     /// <param name="dto">Thông tin sustainability certification cần tạo</param>
     /// <returns>Thông tin sustainability certification đã tạo</returns>
     [HttpPost]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Create New Sustainability Certification")]
     [EndpointDescription("Description và IssuingBody không bắt buộc.")]
     public async Task<ActionResult<APIResponse>> CreateSustainabilityCertification([FromBody] SustainabilityCertificationsCreateDTO dto)
@@ -105,7 +105,7 @@ public class SustainabilityCertificationsController : BaseController
     /// <param name="dto">Thông tin sustainability certification cần cập nhật</param>
     /// <returns>Thông tin sustainability certification đã cập nhật</returns>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Update Sustainability Certification")]
     public async Task<ActionResult<APIResponse>> UpdateSustainabilityCertification(ulong id, [FromBody] SustainabilityCertificationsUpdateDTO dto)
     {

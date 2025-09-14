@@ -1,26 +1,29 @@
 using System.ComponentModel.DataAnnotations;
-using DAL.Data;
 
 namespace DAL.Data.Models;
 
 /// <summary>
-/// Vendor uploaded sustainability certificates for verification
+/// Product sustainability credentials uploaded for verification
 /// </summary>
-public partial class VendorSustainabilityCredential
+public partial class ProductSustainabilityCredential
 {
     public ulong Id { get; set; }
 
-    public ulong VendorId { get; set; }
+    public ulong ProductId { get; set; }
 
     public ulong CertificationId { get; set; }
 
-    [Required]
+    /// <summary>
+    /// URL to uploaded certificate image/file
+    /// </summary>
     [StringLength(500)]
-    public string CertificateUrl { get; set; } = null!;
+    public string? CertificateUrl { get; set; }
 
-    [Required]
-    public VendorSustainabilityCredentialStatus Status { get; set; } = VendorSustainabilityCredentialStatus.Pending;
+    public ProductSustainabilityCredentialStatus Status { get; set; } = ProductSustainabilityCredentialStatus.Pending;
 
+    /// <summary>
+    /// Rejection reason if status is rejected
+    /// </summary>
     [StringLength(500)]
     public string? RejectionReason { get; set; }
 
@@ -35,7 +38,7 @@ public partial class VendorSustainabilityCredential
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual VendorProfile Vendor { get; set; } = null!;
+    public virtual Product Product { get; set; } = null!;
     public virtual SustainabilityCertification Certification { get; set; } = null!;
-    public virtual User? VerifiedByNavigation { get; set; }
+    public virtual User? VerifiedByUser { get; set; }
 }

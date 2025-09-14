@@ -18,11 +18,10 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
         
-        // Foreign Key
-        builder.Property(e => e.OrderId)
+        // Foreign Key to Transaction
+        builder.Property(e => e.TransactionId)
             .HasColumnType("bigint unsigned")
-            .IsRequired()
-            .HasColumnName("order_id");
+            .HasColumnName("transaction_id");
         
         // Enum conversions
         builder.Property(e => e.PaymentMethod)
@@ -42,52 +41,27 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnType("enum('pending','processing','completed','failed','refunded','partially_refunded')")
             .HasDefaultValue(PaymentStatus.Pending);
         
-        // Optional unique transaction ID
-        builder.Property(e => e.TransactionId)
+        // Gateway transaction ID
+        builder.Property(e => e.GatewayTransactionId)
             .HasMaxLength(255)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("transaction_id");
+            .HasColumnName("gateway_transaction_id");
         
-        // Amount fields
+        // Amount field
         builder.Property(e => e.Amount)
             .HasPrecision(12, 2)
             .IsRequired();
-            
-        builder.Property(e => e.RefundAmount)
-            .HasPrecision(12, 2)
-            .HasDefaultValue(0.00m)
-            .HasColumnName("refund_amount");
         
-        // JSON field for gateway response
+        // JSON field for gateway response using JsonHelpers
         builder.Property(e => e.GatewayResponse)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
+            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
             .HasColumnType("json")
             .HasDefaultValueSql("'{}'")
-            .HasColumnName("gateway_response");
-        
-        // Refund reason
-        builder.Property(e => e.RefundReason)
-            .HasColumnType("text")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("refund_reason");
+            .HasColumnName("gateway_response")
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
         
         // DateTime fields
-        builder.Property(e => e.RefundedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("refunded_at");
-            
-        builder.Property(e => e.PaidAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("paid_at");
-            
-        builder.Property(e => e.FailedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("failed_at");
-            
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -99,19 +73,14 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnName("updated_at");
         
         // Foreign Key Relationship
-        builder.HasOne(d => d.Order)
+        builder.HasOne(d => d.Transaction)
             .WithMany(p => p.Payments)
-            .HasForeignKey(d => d.OrderId)
-            .OnDelete(DeleteBehavior.Restrict);
-        
-        // Unique constraint on transaction_id
-        builder.HasIndex(e => e.TransactionId)
-            .IsUnique()
-            .HasDatabaseName("idx_transaction");
+            .HasForeignKey(d => d.TransactionId)
+            .OnDelete(DeleteBehavior.SetNull);
         
         // Indexes
-        builder.HasIndex(e => e.OrderId)
-            .HasDatabaseName("idx_order");
+        builder.HasIndex(e => e.TransactionId)
+            .HasDatabaseName("idx_transaction");
             
         builder.HasIndex(e => e.Status)
             .HasDatabaseName("idx_status");

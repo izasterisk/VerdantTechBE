@@ -18,16 +18,11 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
         
-        // Foreign Keys
+        // Foreign Key
         builder.Property(e => e.CustomerId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
             .HasColumnName("customer_id");
-            
-        builder.Property(e => e.VendorId)
-            .HasColumnType("bigint unsigned")
-            .IsRequired()
-            .HasColumnName("vendor_id");
         
         // Enum conversion for status
         builder.Property(e => e.Status)
@@ -60,14 +55,13 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasColumnName("total_amount");
         
-        // JSON fields for addresses
+        // JSON field for shipping address using JsonHelpers
         builder.Property(e => e.ShippingAddress)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "{}" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "{}" ? new Dictionary<string, object>() : JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null)!)
+            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
             .HasColumnType("json")
             .IsRequired()
-            .HasColumnName("shipping_address");
+            .HasColumnName("shipping_address")
+            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
             
         // Optional string fields
         builder.Property(e => e.ShippingMethod)
@@ -121,22 +115,15 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnName("updated_at");
         
         // Foreign Key Relationships
+        // Foreign Key Relationships
         builder.HasOne(d => d.Customer)
             .WithMany(p => p.CustomerOrders)
             .HasForeignKey(d => d.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
-            
-        builder.HasOne(d => d.Vendor)
-            .WithMany(p => p.VendorOrders)
-            .HasForeignKey(d => d.VendorId)
             .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
         builder.HasIndex(e => e.CustomerId)
             .HasDatabaseName("idx_customer");
-            
-        builder.HasIndex(e => e.VendorId)
-            .HasDatabaseName("idx_vendor");
             
         builder.HasIndex(e => e.Status)
             .HasDatabaseName("idx_status");

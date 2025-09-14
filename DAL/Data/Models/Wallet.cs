@@ -19,7 +19,7 @@ public partial class Wallet
 
     // Navigation
     public virtual VendorProfile VendorProfile { get; set; } = null!;
-    public virtual ICollection<WalletTransaction> WalletTransactions { get; set; } = new List<WalletTransaction>();
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }
 
 

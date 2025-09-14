@@ -11,8 +11,6 @@ public partial class Order
 
     public ulong CustomerId { get; set; }
 
-    public ulong VendorId { get; set; }
-
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
     public decimal Subtotal { get; set; }
@@ -36,8 +34,10 @@ public partial class Order
     [StringLength(100)]
     public string? TrackingNumber { get; set; }
 
+    [StringLength(500)]
     public string? Notes { get; set; }
 
+    [StringLength(500)]
     public string? CancelledReason { get; set; }
 
     public DateTime? CancelledAt { get; set; }
@@ -54,8 +54,7 @@ public partial class Order
 
     // Navigation Properties
     public virtual User Customer { get; set; } = null!;
-    public virtual User Vendor { get; set; } = null!;
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
+    public virtual ICollection<SalesInventory> SalesInventories { get; set; } = new List<SalesInventory>();
 }

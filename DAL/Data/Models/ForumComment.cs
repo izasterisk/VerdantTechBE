@@ -27,6 +27,7 @@ public partial class ForumComment
 
     public ForumCommentStatus Status { get; set; } = ForumCommentStatus.Visible;
 
+    [StringLength(500)]
     public string? ModeratedReason { get; set; }
 
     public ulong? ModeratedBy { get; set; }

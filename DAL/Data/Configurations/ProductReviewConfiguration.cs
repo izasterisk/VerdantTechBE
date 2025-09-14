@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Text.Json;
 using DAL.Data.Models;
 using DAL.Data;
 
@@ -49,12 +48,10 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
         
-        // JSON field for images array
+        // VARCHAR field for images array
         builder.Property(e => e.Images)
-            .HasConversion(
-                v => v == null || v.Count == 0 ? "[]" : JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                v => string.IsNullOrEmpty(v) || v == "[]" ? new List<string>() : JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null)!)
-            .HasColumnType("json");
+            .HasMaxLength(2000)
+            .IsRequired(false);
         
         // Count fields with defaults
         builder.Property(e => e.HelpfulCount)
