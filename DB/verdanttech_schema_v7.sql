@@ -132,11 +132,13 @@ CREATE TABLE farm_profiles (
     district VARCHAR(100),
     commune VARCHAR(100),
     primary_crops VARCHAR(500) COMMENT 'Các loại cây trồng chính, danh sách phân cách bằng dấu phẩy',
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     INDEX idx_location (province, district),
-    INDEX idx_farm_size (farm_size_hectares)
+    INDEX idx_farm_size (farm_size_hectares),
+    INDEX idx_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hồ sơ trang trại cho người dùng nông dân';
 
 -- Dữ liệu giám sát môi trường

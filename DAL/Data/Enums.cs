@@ -38,6 +38,13 @@ public enum ProductCertificateStatus
     Rejected
 }
 
+public enum ProductRegistrationStatus
+{
+    Pending,
+    Approved,
+    Rejected
+}
+
 // =====================================================
 // ENVIRONMENTAL DATA ENUMS
 // =====================================================
@@ -69,10 +76,8 @@ public enum MessageType
 
 public enum ForumPostStatus
 {
-    Published,
-    Draft,
-    Moderated,
-    Deleted
+    Visible,
+    Hidden
 }
 
 public enum ForumCommentStatus
@@ -211,10 +216,10 @@ public enum MovementType
 
 public enum QualityCheckStatus
 {
+    NotRequired,
     Pending,
     Passed,
-    Failed,
-    NotRequired
+    Failed
 }
 
 public enum ConditionOnArrival

@@ -74,7 +74,9 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
 
         // Enum conversion for quality check status
         builder.Property(e => e.QualityCheckStatus)
-            .HasConversion<string>()
+            .HasConversion(
+                v => v.ToString().ToLowerInvariant().Replace("notrequired", "not_required"),
+                v => Enum.Parse<QualityCheckStatus>(v.Replace("not_required", "NotRequired"), true))
             .HasColumnType("enum('pending','passed','failed','not_required')")
             .HasDefaultValue(QualityCheckStatus.NotRequired)
             .HasColumnName("quality_check_status");

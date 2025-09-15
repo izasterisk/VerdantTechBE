@@ -27,11 +27,6 @@ public partial class ForumComment
 
     public ForumCommentStatus Status { get; set; } = ForumCommentStatus.Visible;
 
-    [StringLength(500)]
-    public string? ModeratedReason { get; set; }
-
-    public ulong? ModeratedBy { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
@@ -40,6 +35,5 @@ public partial class ForumComment
     public virtual ForumPost Post { get; set; } = null!;
     public virtual User User { get; set; } = null!;
     public virtual ForumComment? Parent { get; set; }
-    public virtual User? ModeratedByNavigation { get; set; }
     public virtual ICollection<ForumComment> InverseParent { get; set; } = new List<ForumComment>();
 }

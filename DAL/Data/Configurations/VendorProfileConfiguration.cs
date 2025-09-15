@@ -79,7 +79,7 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
         builder.HasOne(d => d.VerifiedByNavigation)
             .WithMany(p => p.VerifiedVendorProfiles)
             .HasForeignKey(d => d.VerifiedBy)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Unique constraints
         builder.HasIndex(e => e.UserId)

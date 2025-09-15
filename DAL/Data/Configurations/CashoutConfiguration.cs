@@ -50,13 +50,22 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .IsRequired();
 
         builder.Property(e => e.Status)
-            .HasConversion<string>()
+            .HasConversion(
+                v => v.ToString().ToLowerInvariant(),
+                v => Enum.Parse<CashoutStatus>(v, true))
             .HasColumnName("status")
             .HasColumnType("enum('pending','processing','completed','failed','cancelled')")
             .HasDefaultValue(CashoutStatus.Pending);
 
         builder.Property(e => e.CashoutType)
-            .HasConversion<string>()
+            .HasConversion(
+                v => v.ToString()
+                    .ToLowerInvariant()
+                    .Replace("commissionpayout", "commission_payout")
+                    .Replace("vendorpayment", "vendor_payment"),
+                v => Enum.Parse<CashoutType>(v
+                    .Replace("commission_payout", "CommissionPayout")
+                    .Replace("vendor_payment", "VendorPayment"), true))
             .HasColumnName("cashout_type")
             .HasColumnType("enum('commission_payout','vendor_payment','expense','refund')")
             .HasDefaultValue(CashoutType.CommissionPayout);
@@ -107,13 +116,12 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
         builder.HasOne(e => e.Transaction)
             .WithMany(t => t.Cashouts)
             .HasForeignKey(e => e.TransactionId)
-            .OnDelete(DeleteBehavior.SetNull);
-
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.ProcessedByNavigation)
             .WithMany(u => u.CashoutsProcessed)
             .HasForeignKey(e => e.ProcessedBy)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
         builder.HasIndex(e => e.GatewayTransactionId)

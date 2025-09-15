@@ -22,6 +22,7 @@ public class VerdantTechDbContext : DbContext
     // Product and Inventory DbSets
     public DbSet<ProductCategory> ProductCategories { get; set; }
     public DbSet<Product> Products { get; set; }
+    public DbSet<ProductRegistration> ProductRegistrations { get; set; }
     public DbSet<Cart> Carts { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<BatchInventory> BatchInventories { get; set; }
@@ -64,6 +65,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ProductCertificateConfiguration());
         modelBuilder.ApplyConfiguration(new ProductCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductRegistrationConfiguration());
         modelBuilder.ApplyConfiguration(new CartConfiguration());
         modelBuilder.ApplyConfiguration(new CartItemConfiguration());
         modelBuilder.ApplyConfiguration(new BatchInventoryConfiguration());

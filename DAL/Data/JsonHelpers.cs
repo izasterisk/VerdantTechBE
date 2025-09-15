@@ -174,12 +174,11 @@ public static class JsonHelpersExtensions
     /// </summary>
     public static PropertyBuilder<Dictionary<string, object>> 
         ConfigureAsJson(this PropertyBuilder<Dictionary<string, object>> propertyBuilder,
-                       string columnName, string defaultValue = "{}")
+                       string columnName)
     {
         propertyBuilder
             .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
             .HasColumnType("json")
-            .HasDefaultValueSql($"'{defaultValue}'")
             .HasColumnName(columnName);
         
         propertyBuilder.Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
@@ -191,12 +190,11 @@ public static class JsonHelpersExtensions
     /// </summary>
     public static PropertyBuilder<Dictionary<string, decimal>> 
         ConfigureAsJson(this PropertyBuilder<Dictionary<string, decimal>> propertyBuilder,
-                       string columnName, string defaultValue = "{}")
+                       string columnName)
     {
         propertyBuilder
             .HasConversion(JsonHelpers.DictionaryStringDecimalConverter())
             .HasColumnType("json")
-            .HasDefaultValueSql($"'{defaultValue}'")
             .HasColumnName(columnName);
         
         propertyBuilder.Metadata.SetValueComparer(JsonHelpers.DictionaryStringDecimalComparer());

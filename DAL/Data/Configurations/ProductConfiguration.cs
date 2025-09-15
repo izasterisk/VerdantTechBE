@@ -101,17 +101,10 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         
         // JSON fields - Using JsonHelpers for converter and comparer
         builder.Property(e => e.Specifications)
-            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
-            .HasColumnType("json")
-            .HasDefaultValueSql("'{}'")
-            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
+            .ConfigureAsJson("specifications");
             
         builder.Property(e => e.DimensionsCm)
-            .HasConversion(JsonHelpers.DictionaryStringDecimalConverter())
-            .HasColumnType("json")
-            .HasDefaultValueSql("'{}'")
-            .HasColumnName("dimensions_cm")
-            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringDecimalComparer());
+            .ConfigureAsJson("dimensions_cm");
         
         // Integer fields
         builder.Property(e => e.WarrantyMonths)

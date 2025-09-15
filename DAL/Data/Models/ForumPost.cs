@@ -22,7 +22,7 @@ public partial class ForumPost
     public string Slug { get; set; } = null!;
 
     /// <summary>
-    /// Mixed content blocks: text, images, videos, etc.
+    /// Mixed content blocks: [{"order": 1, "type": "text", "content": "Hello world"}, {"order": 2, "type": "image", "content": "https://example.com/image.jpg"}]
     /// </summary>
     [Required]
     public List<ContentBlock> Content { get; set; } = new();
@@ -35,22 +35,13 @@ public partial class ForumPost
 
     public long ViewCount { get; set; } = 0L;
 
-    public int ReplyCount { get; set; } = 0;
-
     public int LikeCount { get; set; } = 0;
 
     public int DislikeCount { get; set; } = 0;
 
     public bool IsPinned { get; set; } = false;
 
-    public bool IsLocked { get; set; } = false;
-
-    public ForumPostStatus Status { get; set; } = ForumPostStatus.Published;
-
-    [StringLength(500)]
-    public string? ModeratedReason { get; set; }
-
-    public ulong? ModeratedBy { get; set; }
+    public ForumPostStatus Status { get; set; } = ForumPostStatus.Visible;
 
     public DateTime LastActivityAt { get; set; }
 
@@ -61,6 +52,5 @@ public partial class ForumPost
     // Navigation Properties
     public virtual ForumCategory Category { get; set; } = null!;
     public virtual User User { get; set; } = null!;
-    public virtual User? ModeratedByNavigation { get; set; }
     public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
 }

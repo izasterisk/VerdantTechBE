@@ -40,9 +40,6 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .IsRequired()
             .HasColumnName("user_id");
 
-        builder.Property(e => e.ModeratedBy)
-            .HasColumnType("bigint unsigned")
-            .HasColumnName("moderated_by");
 
         // Required string fields
         builder.Property(e => e.Title)
@@ -61,7 +58,6 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
         builder.Property(e => e.Content)
             .HasConversion(JsonHelpers.ListContentBlockConverter())
             .HasColumnType("json")
-            .HasDefaultValueSql("'[]'")
             .IsRequired()
             .Metadata.SetValueComparer(JsonHelpers.ListContentBlockComparer());
 
@@ -70,21 +66,12 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .HasMaxLength(1000)
             .IsRequired(false);
 
-        // Optional text field
-        builder.Property(e => e.ModeratedReason)
-            .HasColumnType("text")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("moderated_reason");
 
         // Count fields with defaults
         builder.Property(e => e.ViewCount)
             .HasDefaultValue(0L)
             .HasColumnName("view_count");
 
-        builder.Property(e => e.ReplyCount)
-            .HasDefaultValue(0)
-            .HasColumnName("reply_count");
 
         builder.Property(e => e.LikeCount)
             .HasDefaultValue(0)
@@ -99,15 +86,12 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .HasDefaultValue(false)
             .HasColumnName("is_pinned");
 
-        builder.Property(e => e.IsLocked)
-            .HasDefaultValue(false)
-            .HasColumnName("is_locked");
 
         // Enum conversion for status
         builder.Property(e => e.Status)
             .HasConversion<string>()
-            .HasColumnType("enum('published','draft','moderated','deleted')")
-            .HasDefaultValue(ForumPostStatus.Published);
+            .HasColumnType("enum('visible','hidden')")
+            .HasDefaultValue(ForumPostStatus.Visible);
 
         // DateTime fields
         builder.Property(e => e.LastActivityAt)

@@ -19,7 +19,16 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .ValueGeneratedOnAdd();
 
         builder.Property(e => e.TransactionType)
-            .HasConversion<string>()
+            .HasConversion(
+                v => v.ToString()
+                    .ToLowerInvariant()
+                    .Replace("paymentin", "payment_in")
+                    .Replace("walletcredit", "wallet_credit")
+                    .Replace("walletdebit", "wallet_debit"),
+                v => Enum.Parse<TransactionType>(v
+                    .Replace("payment_in", "PaymentIn")
+                    .Replace("wallet_credit", "WalletCredit")
+                    .Replace("wallet_debit", "WalletDebit"), true))
             .HasColumnName("transaction_type")
             .HasColumnType("enum('payment_in','cashout','wallet_credit','wallet_debit','commission','refund','adjustment')")
             .IsRequired();
@@ -63,7 +72,9 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 
         // Status and metadata
         builder.Property(e => e.Status)
-            .HasConversion<string>()
+            .HasConversion(
+                v => v.ToString().ToLowerInvariant(),
+                v => Enum.Parse<TransactionStatus>(v, true))
             .HasColumnName("status")
             .HasColumnType("enum('pending','completed','failed','cancelled')")
             .HasDefaultValue(TransactionStatus.Pending);
@@ -115,34 +126,34 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 
         // Foreign keys
         builder.HasOne(e => e.Order)
-            .WithMany()
+            .WithMany(o => o.Transactions)
             .HasForeignKey(e => e.OrderId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Customer)
             .WithMany()
             .HasForeignKey(e => e.CustomerId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Vendor)
             .WithMany(v => v.Transactions)
             .HasForeignKey(e => e.VendorId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Wallet)
             .WithMany(w => w.Transactions)
             .HasForeignKey(e => e.WalletId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.CreatedByNavigation)
             .WithMany(u => u.TransactionsCreated)
             .HasForeignKey(e => e.CreatedBy)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.ProcessedByNavigation)
             .WithMany(u => u.TransactionsProcessed)
             .HasForeignKey(e => e.ProcessedBy)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
         builder.HasIndex(e => new { e.TransactionType, e.Status }).HasDatabaseName("idx_type_status");

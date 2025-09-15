@@ -66,6 +66,11 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .HasComment("Main crops grown, comma-separated list")
             .HasColumnName("primary_crops");
         
+        // Boolean fields
+        builder.Property(e => e.IsActive)
+            .HasDefaultValue(true)
+            .HasColumnName("is_active");
+        
         // DateTime fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
@@ -94,5 +99,8 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             
         builder.HasIndex(e => e.FarmSizeHectares)
             .HasDatabaseName("idx_farm_size");
+            
+        builder.HasIndex(e => e.IsActive)
+            .HasDatabaseName("idx_active");
     }
 }

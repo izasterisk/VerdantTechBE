@@ -32,9 +32,6 @@ public class ForumCommentConfiguration : IEntityTypeConfiguration<ForumComment>
             .HasColumnType("bigint unsigned")
             .HasColumnName("parent_id");
             
-        builder.Property(e => e.ModeratedBy)
-            .HasColumnType("bigint unsigned")
-            .HasColumnName("moderated_by");
         
         // Required Content field
         builder.Property(e => e.Content)
@@ -43,12 +40,6 @@ public class ForumCommentConfiguration : IEntityTypeConfiguration<ForumComment>
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
         
-        // Optional text field
-        builder.Property(e => e.ModeratedReason)
-            .HasColumnType("text")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("moderated_reason");
         
         // Count fields with defaults
         builder.Property(e => e.LikeCount)
