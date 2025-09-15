@@ -54,10 +54,9 @@ namespace VerdantTech.Application.FarmProfiles
             entity.LocationAddress  = dto.LocationAddress;
             entity.Province         = dto.Province;
             entity.District         = dto.District;
+            entity.IsActive         = dto.IsActive;
             entity.Commune          = dto.Commune;
-            entity.Latitude         = dto.Latitude;
-            entity.Longitude        = dto.Longitude;
-            entity.PrimaryCrops     = dto.PrimaryCrops ?? new List<string>();
+            entity.PrimaryCrops     = dto.PrimaryCrops;
             entity.UpdatedAt        = DateTime.UtcNow;
 
             var updated = await _farmRepo.UpdateAsync(entity);

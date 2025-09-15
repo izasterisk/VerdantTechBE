@@ -10,10 +10,12 @@ public class FarmProfileResponseDTO
     public string? LocationAddress { get; set; }
     public string? Province { get; set; }
     public string? District { get; set; }
+    
+    public bool IsActive { get; set; } 
     public string? Commune { get; set; }
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
-    public List<string> PrimaryCrops { get; set; } = new();
+    public string? PrimaryCrops { get; set; } 
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
