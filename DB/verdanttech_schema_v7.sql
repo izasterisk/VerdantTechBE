@@ -67,7 +67,7 @@ CREATE TABLE vendor_profiles (
 CREATE TABLE vendor_certificates (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     vendor_id BIGINT UNSIGNED NOT NULL,
-    certification_id BIGINT UNSIGNED NOT NULL,
+    certification_code VARCHAR(50) NOT NULL,
     certification_name VARCHAR(255) NOT NULL,
     certificate_url VARCHAR(500) NOT NULL COMMENT 'URL đến hình ảnh/tập tin chứng chỉ đã tải lên',
     status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
@@ -87,7 +87,8 @@ CREATE TABLE vendor_certificates (
 CREATE TABLE product_certificates (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT UNSIGNED NOT NULL,
-    certification_id BIGINT UNSIGNED NOT NULL,
+    certification_code VARCHAR(50) NOT NULL,
+    certification_name VARCHAR(255) NOT NULL,
     certificate_url VARCHAR(500) NULL COMMENT 'URL đến hình ảnh/tập tin chứng chỉ đã tải lên',
     status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
     rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu trạng thái bị từ chối',
@@ -150,7 +151,7 @@ CREATE TABLE environmental_data (
     soil_ph DECIMAL(3,1) CHECK (soil_ph >= 0 AND soil_ph <= 14),
     co2_footprint DECIMAL(10,2) COMMENT 'Lượng khí thải CO2 tính bằng kg',
     soil_moisture_percentage DECIMAL(5,2),
-    soil_type ENUM('Đất phù sa', 'Đất đỏ Bazan', 'Đất Feralit', 'Đất thịt', 'Đất sét', 'Đất cát') NOT NULL,
+    soil_type ENUM('DatPhuSa', 'DatDoBazan', 'DatFeralit', 'DatThit', 'DatSet', 'DatCat') NOT NULL,
     notes VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -12,6 +12,10 @@ public partial class ProductCertificate
     public ulong ProductId { get; set; }
 
     [Required]
+    [StringLength(50)]
+    public string CertificationCode { get; set; } = null!;
+
+    [Required]
     [StringLength(255)]
     public string CertificationName { get; set; } = null!;
 

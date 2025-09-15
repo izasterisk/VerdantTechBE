@@ -23,6 +23,13 @@ public class VendorCertificateConfiguration : IEntityTypeConfiguration<VendorCer
             .HasColumnName("vendor_id");
 
         // Required fields
+        builder.Property(e => e.CertificationCode)
+            .HasMaxLength(50)
+            .IsRequired()
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("certification_code");
+
         builder.Property(e => e.CertificationName)
             .HasMaxLength(255)
             .IsRequired()
