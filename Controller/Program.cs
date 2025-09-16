@@ -14,6 +14,8 @@ using Infrastructure.Extensions;
 using BLL.DTO;
 using System.Net;
 using Newtonsoft.Json;
+using VerdantTech.Application.FarmProfiles;
+using VerdantTech.Application.FarmProfiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,13 +48,20 @@ builder.Services.AddDbContext<VerdantTechDbContext>(options =>
 //Dependency Injection
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>>();
+builder.Services.AddScoped<IRepository<FarmProfile>, Repository<FarmProfile>>();
+// builder.Services.AddScoped<IRepository<SustainabilityCertification>, Repository<SustainabilityCertification>>();
+// builder.Services.AddScoped<IRepository<SupportedBank>, Repository<SupportedBank>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IVendorProfilesRepository, VendorProfilesRepository>();
+// builder.Services.AddScoped<ISustainabilityCertificationsRepository, SustainabilityCertificationsRepository>();
+// builder.Services.AddScoped<ISupportedBanksRepository, SupportedBanksRepository>();
+builder.Services.AddScoped<IFarmProfileRepository, FarmProfileRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFarmProfileService, FarmProfileService>();
 builder.Services.AddScoped<IVendorProfilesService, VendorProfilesService>();
 
 // Infrastructure registrations
