@@ -6,7 +6,7 @@ namespace BLL.Interfaces
     {
         Task<FarmProfileResponseDTO> CreateAsync(ulong currentUserId, FarmProfileCreateDto dto, CancellationToken ct = default);
 
-        Task<FarmProfileResponseDTO?> GetAsync(ulong id, ulong currentUserId, CancellationToken ct = default);
+        Task<FarmProfileResponseDTO?> GetAsync(ulong id, CancellationToken ct = default);
 
         Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllByUserIdAsync(ulong userId, CancellationToken ct = default);
 

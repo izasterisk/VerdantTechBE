@@ -55,11 +55,10 @@ namespace Controller.Controllers
         [EndpointSummary("Get Farm Profile By Id")]
         public async Task<ActionResult<APIResponse>> GetById([FromRoute] ulong id, CancellationToken ct)
         {
-            if (!TryGetCurrentUserId(out var userId)) return ErrorResponse("User not authenticated", HttpStatusCode.Unauthorized);
 
             try
             {
-                var result = await _service.GetAsync(id, userId, ct);
+                var result = await _service.GetAsync(id, ct);
                 if (result == null) return ErrorResponse("Farm profile not found", HttpStatusCode.NotFound);
                 return SuccessResponse(result);
             }
@@ -70,35 +69,10 @@ namespace Controller.Controllers
         }
 
         /// <summary>Get all farm profiles of current user</summary>
-        [HttpGet("me")]
+        [HttpGet("User")]
         [EndpointSummary("Get My Farm Profiles")]
-        public async Task<ActionResult<APIResponse>> GetMine(CancellationToken ct)
+        public async Task<ActionResult<APIResponse>> GetAllFarmByUser(ulong userId, CancellationToken ct)
         {
-            if (!TryGetCurrentUserId(out var userId)) return ErrorResponse("User not authenticated", HttpStatusCode.Unauthorized);
-
-            try
-            {
-                var list = await _service.GetAllByUserIdAsync(userId, ct);
-                return SuccessResponse(list);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        /// <summary>(Optional) Admin/Staff: Get all farm profiles of a specific user (require proper policy)</summary>
-        [HttpGet] // removed :ulong
-        [Authorize(Policy = "CanViewUserProfiles")]
-        [EndpointSummary("Get Farm Profiles By UserId")]
-        public async Task<ActionResult<APIResponse>> GetAllByUser( CancellationToken ct)
-        {
-            var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(idStr)) return ErrorResponse("User ID claim missing", HttpStatusCode.BadRequest);
-            ulong userId = ulong.Parse(idStr);
-
-            var validationResult = ValidateModel();
-            if (validationResult != null) return validationResult;
 
             try
             {
