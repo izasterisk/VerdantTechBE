@@ -10,8 +10,7 @@ namespace BLL.Interfaces
 
         Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllByUserIdAsync(ulong userId, CancellationToken ct = default);
 
-        Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileResponseDTO dto, CancellationToken ct = default);
-
+        Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileUpdateDTO dto, CancellationToken ct = default);
         /// <summary>Hard delete.</summary>
         Task<bool> DeleteAsync(ulong id, ulong currentUserId, CancellationToken ct = default);
     }

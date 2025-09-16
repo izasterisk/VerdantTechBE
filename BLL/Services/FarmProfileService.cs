@@ -14,13 +14,13 @@ namespace VerdantTech.Application.FarmProfiles
         public FarmProfileService(IFarmProfileRepository farmRepo, IMapper mapper)
         {
             _farmRepo = farmRepo;
-            _mapper   = mapper;
+            _mapper = mapper;
         }
 
         public async Task<FarmProfileResponseDTO> CreateAsync(ulong currentUserId, FarmProfileCreateDto dto, CancellationToken ct = default)
         {
             var entity = _mapper.Map<FarmProfile>(dto);
-            entity.UserId    = currentUserId;
+            entity.UserId = currentUserId;
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
 
@@ -42,22 +42,16 @@ namespace VerdantTech.Application.FarmProfiles
             return _mapper.Map<IReadOnlyList<FarmProfileResponseDTO>>(ordered);
         }
 
-        public async Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileResponseDTO dto, CancellationToken ct = default)
+        // Đổi sang dùng FarmProfileUpdateDTO (đúng kiểu)
+        public async Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileUpdateDTO dto, CancellationToken ct = default)
         {
             var entity = await _farmRepo.GetFarmProfileAsync(id, useNoTracking: false);
             if (entity == null || entity.UserId != currentUserId)
                 throw new KeyNotFoundException("Farm profile not found or access denied.");
 
-            // Map “có kiểm soát” từ ResponseDTO sang entity (vì bạn dùng ResponseDTO cho Update)
-            entity.FarmName         = dto.FarmName;
-            entity.FarmSizeHectares = dto.FarmSizeHectares;
-            entity.LocationAddress  = dto.LocationAddress;
-            entity.Province         = dto.Province;
-            entity.District         = dto.District;
-            entity.IsActive         = dto.IsActive;
-            entity.Commune          = dto.Commune;
-            entity.PrimaryCrops     = dto.PrimaryCrops;
-            entity.UpdatedAt        = DateTime.UtcNow;
+            // Map những trường có giá trị từ DTO vào entity (đã cấu hình Condition)
+            _mapper.Map(dto, entity);
+            entity.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _farmRepo.UpdateAsync(entity);
             return _mapper.Map<FarmProfileResponseDTO>(updated);
@@ -67,8 +61,8 @@ namespace VerdantTech.Application.FarmProfiles
         {
             var entity = await _farmRepo.GetFarmProfileAsync(id, useNoTracking: false);
             if (entity == null || entity.UserId != currentUserId) return false;
-
             return await _farmRepo.DeleteAsync(entity);
         }
     }
 }
+
