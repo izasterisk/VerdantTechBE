@@ -25,20 +25,22 @@ public class AutoMapperConfig : Profile
         CreateMap<UserReadOnlyDTO, User>().ReverseMap();
         CreateMap<UserUpdateDTO, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-        
-        // CreateMap<SustainabilityCertificationsCreateDTO, SustainabilityCertification>().ReverseMap();
-        // CreateMap<SustainabilityCertificationsReadOnlyDTO, SustainabilityCertification>().ReverseMap();
-        // CreateMap<SustainabilityCertificationsUpdateDTO, SustainabilityCertification>().ReverseMap()
-            // .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-        
-        // CreateMap<SupportedBanksCreateDTO, SupportedBank>().ReverseMap();
-        // CreateMap<SupportedBanksReadOnlyDTO, SupportedBank>().ReverseMap();
-        // CreateMap<SupportedBanksUpdateDTO, SupportedBank>().ReverseMap()
-        //     .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-        CreateMap<FarmProfile, FarmProfileCreateDto>();
+
+
         CreateMap<FarmProfileCreateDto, FarmProfile>()
-            .ForMember(d => d.UserId,    o => o.Ignore())
-            .ForMember(d => d.CreatedAt, o => o.Ignore())
-            .ForMember(d => d.UpdatedAt, o => o.Ignore());
+       .ForMember(d => d.UserId, o => o.Ignore())
+       .ForMember(d => d.CreatedAt, o => o.Ignore())
+       .ForMember(d => d.UpdatedAt, o => o.Ignore())
+       .ForMember(d => d.PrimaryCrops,
+           o => o.MapFrom(s => (s.PrimaryCrops == null || s.PrimaryCrops.Count == 0)
+                               ? null
+                               : string.Join(",", s.PrimaryCrops)));
+
+        // Update: List<string> -> string (CSV)
+        CreateMap<FarmProfileUpdateDTO, FarmProfile>();
+         
+        // Response: Entity -> DTO (string giữ nguyên CSV)
+        CreateMap<FarmProfile, FarmProfileResponseDTO>();
+
     }
 }

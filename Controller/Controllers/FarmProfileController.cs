@@ -1,8 +1,10 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using BLL.Interfaces;
 using BLL.DTO;
 using BLL.DTO.FarmProfile;
+using BLL.Interfaces;
+using DAL.Data.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Sprache;
 using System.Net;
 using System.Security.Claims;
 
@@ -86,11 +88,15 @@ namespace Controller.Controllers
         }
 
         /// <summary>(Optional) Admin/Staff: Get all farm profiles of a specific user (require proper policy)</summary>
-        [HttpGet("user/{userId}")] // removed :ulong
+        [HttpGet] // removed :ulong
         [Authorize(Policy = "CanViewUserProfiles")]
         [EndpointSummary("Get Farm Profiles By UserId")]
-        public async Task<ActionResult<APIResponse>> GetAllByUser([FromRoute] ulong userId, CancellationToken ct)
+        public async Task<ActionResult<APIResponse>> GetAllByUser( CancellationToken ct)
         {
+            var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(idStr)) return ErrorResponse("User ID claim missing", HttpStatusCode.BadRequest);
+            ulong userId = ulong.Parse(idStr);
+
             var validationResult = ValidateModel();
             if (validationResult != null) return validationResult;
 
@@ -108,7 +114,7 @@ namespace Controller.Controllers
         /// <summary>Update a farm profile (must be owned by current user)</summary>
         [HttpPut("{id}")] // removed :ulong
         [EndpointSummary("Update Farm Profile")]
-        public async Task<ActionResult<APIResponse>> Update([FromRoute] ulong id, [FromBody] FarmProfileResponseDTO dto, CancellationToken ct)
+        public async Task<ActionResult<APIResponse>> Update([FromRoute] ulong id, [FromBody] FarmProfileUpdateDTO dto, CancellationToken ct)
         {
             var validationResult = ValidateModel();
             if (validationResult != null) return validationResult;
