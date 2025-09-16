@@ -28,10 +28,9 @@ namespace VerdantTech.Application.FarmProfiles
             return _mapper.Map<FarmProfileResponseDTO>(created);
         }
 
-        public async Task<FarmProfileResponseDTO?> GetAsync(ulong id, ulong currentUserId, CancellationToken ct = default)
+        public async Task<FarmProfileResponseDTO?> GetAsync(ulong id, CancellationToken ct = default)
         {
             var entity = await _farmRepo.GetFarmProfileAsync(id, useNoTracking: true);
-            if (entity == null || entity.UserId != currentUserId) return null;
             return _mapper.Map<FarmProfileResponseDTO>(entity);
         }
 
