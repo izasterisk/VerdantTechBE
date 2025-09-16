@@ -13,8 +13,6 @@ public class FarmProfileResponseDTO
     
     public bool IsActive { get; set; } 
     public string? Commune { get; set; }
-    public decimal? Latitude { get; set; }
-    public decimal? Longitude { get; set; }
     public string? PrimaryCrops { get; set; } 
 
     public DateTime CreatedAt { get; set; }

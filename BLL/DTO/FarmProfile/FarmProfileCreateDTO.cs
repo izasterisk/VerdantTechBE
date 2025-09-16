@@ -23,12 +23,12 @@ namespace BLL.DTO.FarmProfile;
         [StringLength(100)]
         public string? Commune { get; set; }
 
-        // Lat/Lng WGS84
-        [Range(-90, 90)]
-        public decimal? Latitude { get; set; }
-
-        [Range(-180, 180)]
-        public decimal? Longitude { get; set; }
+        // // Lat/Lng WGS84
+        // [Range(-90, 90)]
+        // public decimal? Latitude { get; set; }
+        //
+        // [Range(-180, 180)]
+        // public decimal? Longitude { get; set; }
 
         // Mảng JSON các cây trồng chủ lực
         [MinLength(0)]

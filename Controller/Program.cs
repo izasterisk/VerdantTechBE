@@ -48,7 +48,7 @@ builder.Services.AddDbContext<VerdantTechDbContext>(options =>
 //Dependency Injection
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>>();
-// builder.Services.AddScoped<IRepository<FarmProfile>, Repository<FarmProfile>>();
+builder.Services.AddScoped<IRepository<FarmProfile>, Repository<FarmProfile>>();
 // builder.Services.AddScoped<IRepository<SustainabilityCertification>, Repository<SustainabilityCertification>>();
 // builder.Services.AddScoped<IRepository<SupportedBank>, Repository<SupportedBank>>();
 

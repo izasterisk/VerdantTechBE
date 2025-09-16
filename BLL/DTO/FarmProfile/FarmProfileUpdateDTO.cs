@@ -20,13 +20,7 @@ public class FarmProfileUpdateDTO
 
     [StringLength(100)]
     public string? Commune { get; set; }
-
-    [Range(-90, 90)]
-    public decimal? Latitude { get; set; }
-
-    [Range(-180, 180)]
-    public decimal? Longitude { get; set; }
-
+    
     [MinLength(0)]
     public List<string>? PrimaryCrops { get; set; }
 }
