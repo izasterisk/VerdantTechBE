@@ -125,7 +125,7 @@ CREATE TABLE vendor_bank_accounts (
 -- Hồ sơ trang trại cho nông dân
 CREATE TABLE farm_profiles (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    user_id BIGINT UNSIGNED NOT NULL,
     farm_name VARCHAR(255) NOT NULL,
     farm_size_hectares DECIMAL(10,2),
     location_address TEXT,

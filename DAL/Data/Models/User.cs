@@ -52,7 +52,7 @@ public partial class User
     public DateTime? DeletedAt { get; set; }
 
     // Navigation Properties
-    public virtual FarmProfile? FarmProfile { get; set; }
+    public virtual ICollection<FarmProfile> FarmProfiles { get; set; } = new List<FarmProfile>();
     public virtual VendorProfile? VendorProfile { get; set; }
     
     // One-to-many relationships

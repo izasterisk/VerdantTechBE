@@ -82,16 +82,15 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
             .HasColumnName("updated_at");
         
-        // Foreign Key Relationship
+        // Foreign Key Relationship (1 User -> Many FarmProfiles)
         builder.HasOne(d => d.User)
-            .WithOne(p => p.FarmProfile)
-            .HasForeignKey<FarmProfile>(d => d.UserId)
+            .WithMany(p => p.FarmProfiles)
+            .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade);
         
-        // Unique constraint on UserId
+        // Indexes (removed unique constraint on UserId)
         builder.HasIndex(e => e.UserId)
-            .IsUnique()
-            .HasDatabaseName("unique_user_id");
+            .HasDatabaseName("idx_user_id");
             
         // Indexes
         builder.HasIndex(e => new { e.Province, e.District })
