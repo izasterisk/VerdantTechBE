@@ -1,5 +1,6 @@
 using AutoMapper;
 using BLL.DTO.FarmProfile;
+using BLL.Helpers;
 using BLL.Interfaces;
 using DAL.Data;
 using DAL.Data.Models;
@@ -45,16 +46,22 @@ namespace BLL.Services
             return _mapper.Map<IReadOnlyList<FarmProfileResponseDTO>>(ordered);
         }
 
-        // Đổi sang dùng FarmProfileUpdateDTO (đúng kiểu)
         public async Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileUpdateDTO dto)
         {
             var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false);
             if (entity == null || entity.UserId != currentUserId)
                 throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại hoặc không có quyền truy cập.");
+            
+            // Xử lý Status nếu có
+            if (!string.IsNullOrWhiteSpace(dto.Status))
+            {
+                var newStatus = Utils.ParseEnum<FarmProfileStatus>(dto.Status, "trạng thái trang trại");
+                entity.Status = newStatus;
+            }
+            
             // Map những trường có giá trị từ DTO vào entity (đã cấu hình Condition)
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;
-
             var updated = await _farmRepo.UpdateAsync(entity);
             return _mapper.Map<FarmProfileResponseDTO>(updated);
         }

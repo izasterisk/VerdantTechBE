@@ -720,3 +720,4 @@ sample-data/
 *.backup
 *.bak
 *.orig
+/.vscode

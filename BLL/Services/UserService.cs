@@ -3,6 +3,7 @@ using AutoMapper;
 using BLL.DTO;
 using BLL.DTO.User;
 using BLL.Helpers.Auth;
+using BLL.Helpers;
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
@@ -76,11 +77,10 @@ public class UserService : IUserService
         }
         if (!string.IsNullOrWhiteSpace(dto.Status))
         {
-            if (!Enum.TryParse<UserStatus>(dto.Status, true, out var newStatus))
-                throw new ArgumentException($"Invalid status '{dto.Status}'. Valid statuses are: {string.Join(", ", Enum.GetNames<UserStatus>())}");
+            var newStatus = Utils.ParseEnum<UserStatus>(dto.Status, "trạng thái người dùng");
 
             if (existingUser.Status == UserStatus.Deleted)
-                throw new InvalidOperationException("This account has already been deleted.");
+                throw new InvalidOperationException("Tài khoản này đã bị xóa.");
 
             if (existingUser.Status != newStatus)
             {

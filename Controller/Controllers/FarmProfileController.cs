@@ -99,21 +99,21 @@ namespace Controller.Controllers
         }
 
         /// <summary>Delete a farm profile (hard delete) owned by current user</summary>
-        [HttpDelete("{id}")]
-        [EndpointSummary("Delete Farm Profile (Hard)")]
-        public async Task<ActionResult<APIResponse>> Delete([FromRoute] ulong id)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var ok = await _service.DeleteAsync(id, userId);
-                if (!ok) return ErrorResponse("Farm profile not found", HttpStatusCode.NotFound);
-                return SuccessResponse("Deleted");
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
+        // [HttpDelete("{id}")]
+        // [EndpointSummary("Delete Farm Profile (Hard)")]
+        // public async Task<ActionResult<APIResponse>> Delete([FromRoute] ulong id)
+        // {
+        //     try
+        //     {
+        //         var userId = GetCurrentUserId();
+        //         var ok = await _service.DeleteAsync(id, userId);
+        //         if (!ok) return ErrorResponse("Farm profile not found", HttpStatusCode.NotFound);
+        //         return SuccessResponse("Deleted");
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return HandleException(ex);
+        //     }
+        // }
     }
 }
