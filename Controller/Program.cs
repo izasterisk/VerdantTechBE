@@ -14,8 +14,6 @@ using Infrastructure.Extensions;
 using BLL.DTO;
 using System.Net;
 using Newtonsoft.Json;
-using VerdantTech.Application.FarmProfiles;
-using VerdantTech.Application.FarmProfiles;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -135,13 +135,13 @@ CREATE TABLE farm_profiles (
     latitude DECIMAL(10,8) NULL COMMENT 'Vĩ độ của trang trại',
     longitude DECIMAL(11,8) NULL COMMENT 'Kinh độ của trang trại',
     primary_crops VARCHAR(500) COMMENT 'Các loại cây trồng chính, danh sách phân cách bằng dấu phẩy',
-    is_active BOOLEAN DEFAULT TRUE,
+    status ENUM('Active', 'Maintenance', 'Deleted') DEFAULT 'Active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     INDEX idx_location (province, district),
     INDEX idx_farm_size (farm_size_hectares),
-    INDEX idx_active (is_active)
+    INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hồ sơ trang trại cho người dùng nông dân';
 
 -- Dữ liệu giám sát môi trường

@@ -1,10 +1,10 @@
-namespace BLL.DTO.FarmProfile;
+using DAL.Data;
 
+namespace BLL.DTO.FarmProfile;
 public class FarmProfileResponseDTO
 {
     public ulong Id { get; set; }
     public ulong UserId { get; set; }
-
     public string FarmName { get; set; } = null!;
     public decimal? FarmSizeHectares { get; set; }
     public string? LocationAddress { get; set; }
@@ -13,10 +13,8 @@ public class FarmProfileResponseDTO
     public string? Commune { get; set; }
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
-    
-    public bool IsActive { get; set; } 
+    public FarmProfileStatus Status { get; set; }
     public string? PrimaryCrops { get; set; } 
-
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

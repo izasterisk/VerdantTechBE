@@ -13,35 +13,26 @@ namespace Controller.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
-    public class FarmProfilesController : BaseController
+    public class FarmProfileController : BaseController
     {
         private readonly IFarmProfileService _service;
 
-        public FarmProfilesController(IFarmProfileService service)
+        public FarmProfileController(IFarmProfileService service)
         {
             _service = service;
-        }
-
-        private bool TryGetCurrentUserId(out ulong userId)
-        {
-            userId = 0;
-            var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return !string.IsNullOrEmpty(idStr) && ulong.TryParse(idStr, out userId);
         }
 
         /// <summary>Create a farm profile for current user</summary>
         [HttpPost]
         [EndpointSummary("Create Farm Profile")]
-        public async Task<ActionResult<APIResponse>> Create([FromBody] FarmProfileCreateDto dto, CancellationToken ct)
+        public async Task<ActionResult<APIResponse>> Create([FromBody] FarmProfileCreateDto dto)
         {
             var validationResult = ValidateModel();
             if (validationResult != null) return validationResult;
-
-            if (!TryGetCurrentUserId(out var userId)) return ErrorResponse("User not authenticated", HttpStatusCode.Unauthorized);
-
             try
             {
-                var result = await _service.CreateAsync(userId, dto, ct);
+                var userId = GetCurrentUserId();
+                var result = await _service.CreateAsync(userId, dto);
                 return SuccessResponse(result);
             }
             catch (Exception ex)
@@ -52,13 +43,12 @@ namespace Controller.Controllers
 
         /// <summary>Get a farm profile by id (must be owned by current user)</summary>
         [HttpGet("{id}")] // removed :ulong
-        [EndpointSummary("Get Farm Profile By Id")]
-        public async Task<ActionResult<APIResponse>> GetById([FromRoute] ulong id, CancellationToken ct)
+        [EndpointSummary("Get Farm Profile By Farm Id")]
+        public async Task<ActionResult<APIResponse>> GetById([FromRoute] ulong id)
         {
-
             try
             {
-                var result = await _service.GetAsync(id, ct);
+                var result = await _service.GetAsync(id);
                 if (result == null) return ErrorResponse("Farm profile not found", HttpStatusCode.NotFound);
                 return SuccessResponse(result);
             }
@@ -70,13 +60,13 @@ namespace Controller.Controllers
 
         /// <summary>Get all farm profiles of current user</summary>
         [HttpGet("User")]
-        [EndpointSummary("Get Farm Profiles By UserID")]
-        public async Task<ActionResult<APIResponse>> GetAllFarmByUser(ulong userId, CancellationToken ct)
+        [EndpointSummary("Get Farm Profiles By User ID")]
+        public async Task<ActionResult<APIResponse>> GetAllFarmByUserId()
         {
-
             try
             {
-                var list = await _service.GetAllByUserIdAsync(userId, ct);
+                var userId = GetCurrentUserId();
+                var list = await _service.GetAllByUserIdAsync(userId);
                 return SuccessResponse(list);
             }
             catch (Exception ex)
@@ -86,18 +76,16 @@ namespace Controller.Controllers
         }
 
         /// <summary>Update a farm profile (must be owned by current user)</summary>
-        [HttpPut("{id}")] // removed :ulong
+        [HttpPut("{id}")]
         [EndpointSummary("Update Farm Profile")]
-        public async Task<ActionResult<APIResponse>> Update([FromRoute] ulong id, [FromBody] FarmProfileUpdateDTO dto, CancellationToken ct)
+        public async Task<ActionResult<APIResponse>> Update([FromRoute] ulong id, [FromBody] FarmProfileUpdateDTO dto)
         {
             var validationResult = ValidateModel();
             if (validationResult != null) return validationResult;
-
-            if (!TryGetCurrentUserId(out var userId)) return ErrorResponse("User not authenticated", HttpStatusCode.Unauthorized);
-
             try
             {
-                var result = await _service.UpdateAsync(id, userId, dto, ct);
+                var userId = GetCurrentUserId();
+                var result = await _service.UpdateAsync(id, userId, dto);
                 return SuccessResponse(result);
             }
             catch (KeyNotFoundException)
@@ -111,15 +99,14 @@ namespace Controller.Controllers
         }
 
         /// <summary>Delete a farm profile (hard delete) owned by current user</summary>
-        [HttpDelete("{id}")] // removed :ulong
+        [HttpDelete("{id}")]
         [EndpointSummary("Delete Farm Profile (Hard)")]
-        public async Task<ActionResult<APIResponse>> Delete([FromRoute] ulong id, CancellationToken ct)
+        public async Task<ActionResult<APIResponse>> Delete([FromRoute] ulong id)
         {
-            if (!TryGetCurrentUserId(out var userId)) return ErrorResponse("User not authenticated", HttpStatusCode.Unauthorized);
-
             try
             {
-                var ok = await _service.DeleteAsync(id, userId, ct);
+                var userId = GetCurrentUserId();
+                var ok = await _service.DeleteAsync(id, userId);
                 if (!ok) return ErrorResponse("Farm profile not found", HttpStatusCode.NotFound);
                 return SuccessResponse("Deleted");
             }

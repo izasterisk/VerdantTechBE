@@ -40,10 +40,9 @@ public class UserUpdateDTO
     [Url(ErrorMessage = "URL avatar không đúng định dạng")]
     public string? AvatarUrl { get; set; }
 
-    // [Required(ErrorMessage = "Trạng thái là bắt buộc")]
     [RegularExpression("^(active|inactive|suspended|deleted)$", 
         ErrorMessage = "Trạng thái phải là một trong các giá trị: active, inactive, suspended, deleted")]
-    public string? Status { get; set; } = "active";
+    public string? Status { get; set; }
 
     // public DateTime? LastLoginAt { get; set; }
 

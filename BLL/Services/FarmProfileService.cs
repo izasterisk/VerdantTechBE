@@ -1,10 +1,11 @@
 using AutoMapper;
 using BLL.DTO.FarmProfile;
 using BLL.Interfaces;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 
-namespace VerdantTech.Application.FarmProfiles
+namespace BLL.Services
 {
     public class FarmProfileService : IFarmProfileService
     {
@@ -17,10 +18,11 @@ namespace VerdantTech.Application.FarmProfiles
             _mapper = mapper;
         }
 
-        public async Task<FarmProfileResponseDTO> CreateAsync(ulong currentUserId, FarmProfileCreateDto dto, CancellationToken ct = default)
+        public async Task<FarmProfileResponseDTO> CreateAsync(ulong currentUserId, FarmProfileCreateDto dto)
         {
             var entity = _mapper.Map<FarmProfile>(dto);
             entity.UserId = currentUserId;
+            entity.Status = FarmProfileStatus.Active;
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
 
@@ -28,15 +30,15 @@ namespace VerdantTech.Application.FarmProfiles
             return _mapper.Map<FarmProfileResponseDTO>(created);
         }
 
-        public async Task<FarmProfileResponseDTO?> GetAsync(ulong id, CancellationToken ct = default)
+        public async Task<FarmProfileResponseDTO?> GetAsync(ulong id)
         {
-            var entity = await _farmRepo.GetFarmProfileAsync(id, useNoTracking: true);
+            var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: true);
             return _mapper.Map<FarmProfileResponseDTO>(entity);
         }
 
-        public async Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllByUserIdAsync(ulong userId, CancellationToken ct = default)
+        public async Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllByUserIdAsync(ulong userId)
         {
-            var list = await _farmRepo.GetAllFarmProfilesByUserAsync(userId, useNoTracking: true);
+            var list = await _farmRepo.GetAllFarmProfilesByUserIdAsync(userId, useNoTracking: true);
             if (list == null || !list.Any())
                 throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại nào cho người dùng này.");
             var ordered = list.OrderByDescending(x => x.UpdatedAt).ToList();
@@ -44,12 +46,11 @@ namespace VerdantTech.Application.FarmProfiles
         }
 
         // Đổi sang dùng FarmProfileUpdateDTO (đúng kiểu)
-        public async Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileUpdateDTO dto, CancellationToken ct = default)
+        public async Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileUpdateDTO dto)
         {
-            var entity = await _farmRepo.GetFarmProfileAsync(id, useNoTracking: false);
+            var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false);
             if (entity == null || entity.UserId != currentUserId)
                 throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại hoặc không có quyền truy cập.");
-
             // Map những trường có giá trị từ DTO vào entity (đã cấu hình Condition)
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;
@@ -58,9 +59,9 @@ namespace VerdantTech.Application.FarmProfiles
             return _mapper.Map<FarmProfileResponseDTO>(updated);
         }
 
-        public async Task<bool> DeleteAsync(ulong id, ulong currentUserId, CancellationToken ct = default)
+        public async Task<bool> DeleteAsync(ulong id, ulong currentUserId)
         {
-            var entity = await _farmRepo.GetFarmProfileAsync(id, useNoTracking: false);
+            var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false);
             if (entity == null || entity.UserId != currentUserId) return false;
             return await _farmRepo.DeleteAsync(entity);
         }

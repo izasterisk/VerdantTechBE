@@ -74,31 +74,23 @@ public class UserService : IUserService
         {
             throw new Exception($"User with ID {userId} not found.");
         }
+        if (!string.IsNullOrWhiteSpace(dto.Status))
+        {
+            if (!Enum.TryParse<UserStatus>(dto.Status, true, out var newStatus))
+                throw new ArgumentException($"Invalid status '{dto.Status}'. Valid statuses are: {string.Join(", ", Enum.GetNames<UserStatus>())}");
 
+            if (existingUser.Status == UserStatus.Deleted)
+                throw new InvalidOperationException("This account has already been deleted.");
+
+            if (existingUser.Status != newStatus)
+            {
+                existingUser.Status = newStatus;
+                if (newStatus == UserStatus.Deleted)
+                    existingUser.DeletedAt = DateTime.UtcNow;
+            }
+        }
         _mapper.Map(dto, existingUser);
         var updatedUser = await _userRepository.UpdateUserWithTransactionAsync(existingUser);
-        return _mapper.Map<UserReadOnlyDTO>(updatedUser);
-    }
-    
-    public async Task<UserReadOnlyDTO> ChangeUserStatusAsync(ulong userId, string status)
-    {
-        if (!Enum.TryParse<UserStatus>(status, true, out var newStatus))
-            throw new ArgumentException($"Invalid status '{status}'. Valid statuses are: {string.Join(", ", Enum.GetNames<UserStatus>())}");
-
-        var user = await _userRepository.GetUserByIdAsync(userId) 
-                   ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
-
-        if (user.Status == UserStatus.Deleted)
-            throw new InvalidOperationException("This account has already been deleted.");
-
-        if (user.Status == newStatus)
-            throw new InvalidOperationException($"User already has status '{newStatus}'");
-
-        user.Status = newStatus;
-        if (newStatus == UserStatus.Deleted)
-            user.DeletedAt = DateTime.UtcNow;
-
-        var updatedUser = await _userRepository.UpdateUserWithTransactionAsync(user);
         return _mapper.Map<UserReadOnlyDTO>(updatedUser);
     }
 }

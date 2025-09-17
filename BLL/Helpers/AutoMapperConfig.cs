@@ -26,20 +26,11 @@ public class AutoMapperConfig : Profile
         CreateMap<UserUpdateDTO, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
-
-        CreateMap<FarmProfileCreateDto, FarmProfile>()
-       .ForMember(d => d.UserId, o => o.Ignore())
-       .ForMember(d => d.CreatedAt, o => o.Ignore())
-       .ForMember(d => d.UpdatedAt, o => o.Ignore())
-       .ForMember(d => d.PrimaryCrops,
-           o => o.MapFrom(s => (s.PrimaryCrops == null || s.PrimaryCrops.Count == 0)
-                               ? null
-                               : string.Join(",", s.PrimaryCrops)));
-        // Update: List<string> -> string (CSV)
+        // FarmProfile mappings
+        CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();
+        CreateMap<FarmProfile, FarmProfileResponseDTO>().ReverseMap();
         CreateMap<FarmProfileUpdateDTO, FarmProfile>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-        // Response: Entity -> DTO (string giữ nguyên CSV)
-        CreateMap<FarmProfile, FarmProfileResponseDTO>();
 
     }
 }

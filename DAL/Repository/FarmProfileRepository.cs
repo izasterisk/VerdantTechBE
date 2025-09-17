@@ -15,12 +15,12 @@ public class FarmProfileRepository : IFarmProfileRepository
         _context = context;
     }
 
-    public async Task<FarmProfile?> GetFarmProfileAsync(ulong farmId, bool useNoTracking = true)
+    public async Task<FarmProfile?> GetFarmProfileByFarmIdAsync(ulong farmId, bool useNoTracking = true)
         => await _farmProfileRepository.GetAsync(f => f.Id == farmId, useNoTracking);
 
-    public async Task<List<FarmProfile>> GetAllFarmProfilesByUserAsync(ulong userId, bool useNoTracking = true)
-        => await _farmProfileRepository.GetAllByFilterAsync(f => f.UserId == userId, useNoTracking);
-
+    public async Task<List<FarmProfile>> GetAllFarmProfilesByUserIdAsync(ulong userId, bool useNoTracking = true)
+        => await _farmProfileRepository.GetAllByFilterAsync
+            (f => f.UserId == userId && f.Status != FarmProfileStatus.Deleted, useNoTracking);
     
     public Task<FarmProfile> CreateAsync(FarmProfile entity) => _farmProfileRepository.CreateAsync(entity);
 

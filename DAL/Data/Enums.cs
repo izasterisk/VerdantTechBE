@@ -49,6 +49,13 @@ public enum ProductRegistrationStatus
 // ENVIRONMENTAL DATA ENUMS
 // =====================================================
 
+public enum FarmProfileStatus
+{
+    Active,
+    Maintenance,
+    Deleted
+}
+
 public enum SoilType
 {
     DatPhuSa,       // Đất phù sa

@@ -154,7 +154,6 @@ public class AuthController : BaseController
             Role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
             Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
         };
-
         return SuccessResponse(profileInfo);
     }
 

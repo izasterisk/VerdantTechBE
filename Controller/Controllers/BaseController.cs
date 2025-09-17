@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using BLL.DTO;
 using System.Net;
+using System.Security.Claims;
 
 namespace Controller.Controllers;
 
@@ -76,5 +77,22 @@ public abstract class BaseController : ControllerBase
             HttpStatusCode.BadRequest => BadRequest(response),
             _ => StatusCode((int)statusCode, response)
         };
+    }
+
+    /// <summary>
+    /// Get current user ID from JWT token
+    /// </summary>
+    /// <returns>User ID hoặc throw exception nếu không authenticated</returns>
+    protected ulong GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (string.IsNullOrEmpty(userIdClaim))
+            throw new UnauthorizedAccessException("User not authenticated");
+
+        if (!ulong.TryParse(userIdClaim, out ulong userId))
+            throw new ArgumentException("Invalid user ID format");
+
+        return userId;
     }
 }

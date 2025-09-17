@@ -50,8 +50,9 @@ public class UserController : BaseController
     /// <param name="id">ID của người dùng</param>
     /// <returns>Thông tin người dùng</returns>
     [HttpGet("{id}")]
-    [Authorize]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Get User By ID")]
+    [EndpointDescription("Chỉ Admin/Staff mới có quyền.")]
     public async Task<ActionResult<APIResponse>> GetUserById(ulong id)
     {
         try
@@ -109,44 +110,14 @@ public class UserController : BaseController
     [HttpPut("{id}")]
     [Authorize]
     [EndpointSummary("Update User")]
+    [EndpointDescription("Cập nhật thông tin người dùng bao gồm cả status. Status có thể là: Active, Inactive, Suspended, Deleted")]
     public async Task<ActionResult<APIResponse>> UpdateUser(ulong id, [FromBody] UserUpdateDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
-
         try
         {
             var user = await _userService.UpdateUserAsync(id, dto);
-            return SuccessResponse(user);
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex);
-        }
-    }
-
-    /// <summary>
-    /// Thay đổi trạng thái người dùng
-    /// </summary>
-    /// <param name="id">ID của người dùng</param>
-    /// <param name="status">Trạng thái mới (Active, Inactive, Suspended, Deleted)</param>
-    /// <returns>Thông tin người dùng đã cập nhật trạng thái</returns>
-    [HttpPatch("{id}/status")]
-    [Authorize]
-    [EndpointSummary("Change User Status (note.)")]
-    [EndpointDescription("Thay đổi trạng thái của người dùng thành 1 trong: Active, Inactive, Suspended, Deleted. " +
-                         "Active = bình thường, Inactive = tạm dừng (người dùng có thể tự đặt), " +
-                         "Suspended = đình chỉ (bị admin/staff chém), Deleted = xóa (chỉ là bị soft delete, không xóa hoàn toàn.")]
-    public async Task<ActionResult<APIResponse>> ChangeUserStatus(ulong id, [FromQuery] string status)
-    {
-        if (string.IsNullOrWhiteSpace(status))
-        {
-            return ErrorResponse("Status parameter is required");
-        }
-
-        try
-        {
-            var user = await _userService.ChangeUserStatusAsync(id, status);
             return SuccessResponse(user);
         }
         catch (Exception ex)

@@ -1,36 +1,33 @@
 using System.ComponentModel.DataAnnotations;
+using DAL.Data;
 
 namespace BLL.DTO.FarmProfile;
-
-
     public class FarmProfileCreateDto
     {
-        [Required, StringLength(255)]
+        [Required(ErrorMessage = "Tên trang trại là bắt buộc")]
+        [StringLength(255, ErrorMessage = "Tên trang trại không được vượt quá 255 ký tự")]
         public string FarmName { get; set; } = null!;
 
-        // Diện tích (ha), cho phép null nếu chưa biết
-        [Range(0, 100000, ErrorMessage = "FarmSizeHectares phải >= 0")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Diện tích trang trại phải lớn hơn 0")]
         public decimal? FarmSizeHectares { get; set; }
 
         public string? LocationAddress { get; set; }
 
-        [StringLength(100)]
+        [StringLength(100, ErrorMessage = "Tỉnh/Thành phố không được vượt quá 100 ký tự")]
         public string? Province { get; set; }
 
-        [StringLength(100)]
+        [StringLength(100, ErrorMessage = "Quận/Huyện không được vượt quá 100 ký tự")]
         public string? District { get; set; }
 
-        [StringLength(100)]
+        [StringLength(100, ErrorMessage = "Xã/Phường không được vượt quá 100 ký tự")]
         public string? Commune { get; set; }
 
-        // Lat/Lng WGS84
-        [Range(-90, 90)]
+        [Range(-90, 90, ErrorMessage = "Vĩ độ phải nằm trong khoảng -90 đến 90")]
         public decimal? Latitude { get; set; }
 
-        [Range(-180, 180)]
+        [Range(-180, 180, ErrorMessage = "Kinh độ phải nằm trong khoảng -180 đến 180")]
         public decimal? Longitude { get; set; }
 
-        // Mảng JSON các cây trồng chủ lực
-        [MinLength(0)]
-        public List<string>? PrimaryCrops { get; set; } = new();
+        [StringLength(500, ErrorMessage = "Thông tin cây trồng chính không được vượt quá 500 ký tự")]
+        public string? PrimaryCrops { get; set; }
     }

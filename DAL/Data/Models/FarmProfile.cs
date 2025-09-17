@@ -27,24 +27,12 @@ public partial class FarmProfile
 
     [StringLength(100)]
     public string? Commune { get; set; }
-
-    /// <summary>
-    /// Farm latitude coordinate
-    /// </summary>
     public decimal? Latitude { get; set; }
-
-    /// <summary>
-    /// Farm longitude coordinate
-    /// </summary>
     public decimal? Longitude { get; set; }
-
-    /// <summary>
-    /// Main crops grown, comma-separated list
-    /// </summary>
     [StringLength(500)]
     public string? PrimaryCrops { get; set; }
 
-    public bool IsActive { get; set; } = true;
+    public FarmProfileStatus Status { get; set; } = FarmProfileStatus.Active;
 
     public DateTime CreatedAt { get; set; }
 
