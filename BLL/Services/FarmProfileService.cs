@@ -11,11 +11,13 @@ namespace BLL.Services
     public class FarmProfileService : IFarmProfileService
     {
         private readonly IFarmProfileRepository _farmRepo;
+        private readonly IUserService _userService;
         private readonly IMapper _mapper;
 
-        public FarmProfileService(IFarmProfileRepository farmRepo, IMapper mapper)
+        public FarmProfileService(IFarmProfileRepository farmRepo, IUserService userService, IMapper mapper)
         {
             _farmRepo = farmRepo;
+            _userService = userService;
             _mapper = mapper;
         }
 
@@ -28,23 +30,49 @@ namespace BLL.Services
             entity.UpdatedAt = DateTime.UtcNow;
 
             var created = await _farmRepo.CreateAsync(entity);
-            return _mapper.Map<FarmProfileResponseDTO>(created);
+            var response = _mapper.Map<FarmProfileResponseDTO>(created);
+            var user = await _userService.GetUserByIdAsync(created.UserId);
+            if (user != null)
+            {
+                response.User = user;
+            }
+            return response;
         }
 
         public async Task<FarmProfileResponseDTO?> GetAsync(ulong id)
         {
             var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: true);
-            return _mapper.Map<FarmProfileResponseDTO>(entity);
+            if (entity == null) return null;
+            
+            var response = _mapper.Map<FarmProfileResponseDTO>(entity);
+            var user = await _userService.GetUserByIdAsync(entity.UserId);
+            if (user != null)
+            {
+                response.User = user;
+            }
+            return response;
         }
 
         public async Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllByUserIdAsync(ulong userId)
         {
             var list = await _farmRepo.GetAllFarmProfilesByUserIdAsync(userId, useNoTracking: true);
-            if (list == null || !list.Any())
-                throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại nào cho người dùng này.");
-            var ordered = list.OrderByDescending(x => x.UpdatedAt).ToList();
-            return _mapper.Map<IReadOnlyList<FarmProfileResponseDTO>>(ordered);
+            if (list.Count == 0)
+            {
+                return Array.Empty<FarmProfileResponseDTO>();
+            }
+            list = list.OrderByDescending(x => x.UpdatedAt).ToList();
+            var responses = _mapper.Map<List<FarmProfileResponseDTO>>(list);
+            var user = await _userService.GetUserByIdAsync(userId);
+            if (user != null)
+            {
+                foreach (var response in responses)
+                {
+                    response.User = user;
+                }
+            }
+            return responses.AsReadOnly();
         }
+
 
         public async Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileUpdateDTO dto)
         {
@@ -63,7 +91,13 @@ namespace BLL.Services
             _mapper.Map(dto, entity);
             entity.UpdatedAt = DateTime.UtcNow;
             var updated = await _farmRepo.UpdateAsync(entity);
-            return _mapper.Map<FarmProfileResponseDTO>(updated);
+            var response = _mapper.Map<FarmProfileResponseDTO>(updated);
+            var user = await _userService.GetUserByIdAsync(updated.UserId);
+            if (user != null)
+            {
+                response.User = user;
+            }
+            return response;
         }
 
         public async Task<bool> DeleteAsync(ulong id, ulong currentUserId)
