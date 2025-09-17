@@ -132,6 +132,8 @@ CREATE TABLE farm_profiles (
     province VARCHAR(100),
     district VARCHAR(100),
     commune VARCHAR(100),
+    latitude DECIMAL(10,8) NULL COMMENT 'Vĩ độ của trang trại',
+    longitude DECIMAL(11,8) NULL COMMENT 'Kinh độ của trang trại',
     primary_crops VARCHAR(500) COMMENT 'Các loại cây trồng chính, danh sách phân cách bằng dấu phẩy',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

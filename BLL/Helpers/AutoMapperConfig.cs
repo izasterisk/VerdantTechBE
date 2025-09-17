@@ -35,10 +35,9 @@ public class AutoMapperConfig : Profile
            o => o.MapFrom(s => (s.PrimaryCrops == null || s.PrimaryCrops.Count == 0)
                                ? null
                                : string.Join(",", s.PrimaryCrops)));
-
         // Update: List<string> -> string (CSV)
-        CreateMap<FarmProfileUpdateDTO, FarmProfile>();
-         
+        CreateMap<FarmProfileUpdateDTO, FarmProfile>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         // Response: Entity -> DTO (string giữ nguyên CSV)
         CreateMap<FarmProfile, FarmProfileResponseDTO>();
 

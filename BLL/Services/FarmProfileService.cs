@@ -37,6 +37,8 @@ namespace VerdantTech.Application.FarmProfiles
         public async Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllByUserIdAsync(ulong userId, CancellationToken ct = default)
         {
             var list = await _farmRepo.GetAllFarmProfilesByUserAsync(userId, useNoTracking: true);
+            if (list == null || !list.Any())
+                throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại nào cho người dùng này.");
             var ordered = list.OrderByDescending(x => x.UpdatedAt).ToList();
             return _mapper.Map<IReadOnlyList<FarmProfileResponseDTO>>(ordered);
         }
@@ -46,7 +48,7 @@ namespace VerdantTech.Application.FarmProfiles
         {
             var entity = await _farmRepo.GetFarmProfileAsync(id, useNoTracking: false);
             if (entity == null || entity.UserId != currentUserId)
-                throw new KeyNotFoundException("Farm profile not found or access denied.");
+                throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại hoặc không có quyền truy cập.");
 
             // Map những trường có giá trị từ DTO vào entity (đã cấu hình Condition)
             _mapper.Map(dto, entity);

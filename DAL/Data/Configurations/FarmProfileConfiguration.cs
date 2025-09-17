@@ -57,6 +57,17 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
         
+        // Coordinates
+        builder.Property(e => e.Latitude)
+            .HasPrecision(10, 8)
+            .HasComment("Farm latitude coordinate")
+            .HasColumnName("latitude");
+            
+        builder.Property(e => e.Longitude)
+            .HasPrecision(11, 8)
+            .HasComment("Farm longitude coordinate")
+            .HasColumnName("longitude");
+        
         
         // Simple text fields
         builder.Property(e => e.PrimaryCrops)

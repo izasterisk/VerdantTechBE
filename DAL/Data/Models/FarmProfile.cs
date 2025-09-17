@@ -29,6 +29,16 @@ public partial class FarmProfile
     public string? Commune { get; set; }
 
     /// <summary>
+    /// Farm latitude coordinate
+    /// </summary>
+    public decimal? Latitude { get; set; }
+
+    /// <summary>
+    /// Farm longitude coordinate
+    /// </summary>
+    public decimal? Longitude { get; set; }
+
+    /// <summary>
     /// Main crops grown, comma-separated list
     /// </summary>
     [StringLength(500)]

@@ -70,7 +70,7 @@ namespace Controller.Controllers
 
         /// <summary>Get all farm profiles of current user</summary>
         [HttpGet("User")]
-        [EndpointSummary("Get My Farm Profiles")]
+        [EndpointSummary("Get Farm Profiles By UserID")]
         public async Task<ActionResult<APIResponse>> GetAllFarmByUser(ulong userId, CancellationToken ct)
         {
 
