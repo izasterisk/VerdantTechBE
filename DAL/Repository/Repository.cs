@@ -21,36 +21,36 @@ namespace DAL.Repository
             _dbSet = _dbContext.Set<T>();
         }
 
-        public async Task<T> CreateAsync(T dbRecord)
+        public async Task<T> CreateAsync(T dbRecord, CancellationToken cancellationToken = default)
         {
             _dbSet.Add(dbRecord);
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return dbRecord;
         }
 
-        public async Task<bool> DeleteAsync(T dbRecord)
+        public async Task<bool> DeleteAsync(T dbRecord, CancellationToken cancellationToken = default)
         {
             _dbSet.Remove(dbRecord);
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return true;
         }
 
-        public async Task<List<T>> GetAllAsync()
+        public async Task<List<T>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            return await _dbSet.ToListAsync();
+            return await _dbSet.ToListAsync(cancellationToken);
         }
 
-        public async Task<List<T>> GetAllWithRelationsAsync(Func<IQueryable<T>, IQueryable<T>>? includeFunc = null)
+        public async Task<List<T>> GetAllWithRelationsAsync(Func<IQueryable<T>, IQueryable<T>>? includeFunc = null, CancellationToken cancellationToken = default)
         {
             IQueryable<T> query = _dbSet;
             if (includeFunc != null)
             {
                 query = includeFunc(query);
             }
-            return await query.ToListAsync();
+            return await query.ToListAsync(cancellationToken);
         }
 
-        public async Task<T?> GetWithRelationsAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null)
+        public async Task<T?> GetWithRelationsAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null, CancellationToken cancellationToken = default)
         {
             IQueryable<T> query = _dbSet;
             if (useNoTracking)
@@ -61,29 +61,29 @@ namespace DAL.Repository
             {
                 query = includeFunc(query);
             }
-            return await query.Where(filter).FirstOrDefaultAsync();
+            return await query.Where(filter).FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false)
+        public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, CancellationToken cancellationToken = default)
         {
             if (useNoTracking)
             {
-                return await _dbSet.AsNoTracking().Where(filter).FirstOrDefaultAsync();
+                return await _dbSet.AsNoTracking().Where(filter).FirstOrDefaultAsync(cancellationToken);
             }
             else
             {
-                return await _dbSet.Where(filter).FirstOrDefaultAsync();
+                return await _dbSet.Where(filter).FirstOrDefaultAsync(cancellationToken);
             }
         }
-        public async Task<List<T>> GetAllByFilterAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false)
+        public async Task<List<T>> GetAllByFilterAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, CancellationToken cancellationToken = default)
         {
             if (useNoTracking)
             {
-                return await _dbSet.AsNoTracking().Where(filter).ToListAsync();
+                return await _dbSet.AsNoTracking().Where(filter).ToListAsync(cancellationToken);
             }
             else
             {
-                return await _dbSet.Where(filter).ToListAsync();
+                return await _dbSet.Where(filter).ToListAsync(cancellationToken);
             }
         }
 
@@ -92,14 +92,14 @@ namespace DAL.Repository
         //    return await _dbSet.Where(filter).FirstOrDefaultAsync();
         //}
 
-        public async Task<T> UpdateAsync(T dbRecord)
+        public async Task<T> UpdateAsync(T dbRecord, CancellationToken cancellationToken = default)
         {
             _dbContext.Update(dbRecord);
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
             return dbRecord;
         }
 
-        public async Task<List<T>> GetAllWithRelationsByFilterAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null)
+        public async Task<List<T>> GetAllWithRelationsByFilterAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null, CancellationToken cancellationToken = default)
         {
             IQueryable<T> query = _dbSet;
             if (useNoTracking)
@@ -110,24 +110,24 @@ namespace DAL.Repository
             {
                 query = includeFunc(query);
             }
-            return await query.Where(filter).ToListAsync();
+            return await query.Where(filter).ToListAsync(cancellationToken);
         }
 
-        public async Task<int> CountAsync(Expression<Func<T, bool>>? filter = null)
+        public async Task<int> CountAsync(Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default)
         {
             if (filter != null)
             {
-                return await _dbSet.Where(filter).CountAsync();
+                return await _dbSet.Where(filter).CountAsync(cancellationToken);
             }
-            return await _dbSet.CountAsync();
+            return await _dbSet.CountAsync(cancellationToken);
         }
 
-        public async Task<bool> AnyAsync(Expression<Func<T, bool>> filter)
+        public async Task<bool> AnyAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.AnyAsync(filter);
+            return await _dbSet.AnyAsync(filter, cancellationToken);
         }
 
-        public async Task<(List<T> items, int totalCount)> GetPaginatedAsync(int page, int pageSize, Expression<Func<T, bool>>? filter = null, bool useNoTracking = false, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null)
+        public async Task<(List<T> items, int totalCount)> GetPaginatedAsync(int page, int pageSize, Expression<Func<T, bool>>? filter = null, bool useNoTracking = false, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, CancellationToken cancellationToken = default)
         {
             IQueryable<T> query = _dbSet;
             
@@ -146,11 +146,11 @@ namespace DAL.Repository
                 query = orderBy(query);
             }
             
-            var totalCount = await query.CountAsync();
+            var totalCount = await query.CountAsync(cancellationToken);
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return (items, totalCount);
         }

@@ -80,19 +80,29 @@ public abstract class BaseController : ControllerBase
     }
 
     /// <summary>
-    /// Get current user ID from JWT token
+/// Lấy ID người dùng hiện tại từ JWT token
+/// </summary>
+/// <returns>ID người dùng hoặc throw exception nếu chưa xác thực</returns>
+protected ulong GetCurrentUserId()
+{
+    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    
+    if (string.IsNullOrEmpty(userIdClaim))
+        throw new UnauthorizedAccessException("Người dùng chưa được xác thực");
+
+    if (!ulong.TryParse(userIdClaim, out ulong userId))
+        throw new ArgumentException("Định dạng ID người dùng không hợp lệ");
+
+    return userId;
+}
+
+
+    /// <summary>
+    /// Get CancellationToken from HttpContext
     /// </summary>
-    /// <returns>User ID hoặc throw exception nếu không authenticated</returns>
-    protected ulong GetCurrentUserId()
+    /// <returns>CancellationToken from request context</returns>
+    protected CancellationToken GetCancellationToken()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
-        if (string.IsNullOrEmpty(userIdClaim))
-            throw new UnauthorizedAccessException("User not authenticated");
-
-        if (!ulong.TryParse(userIdClaim, out ulong userId))
-            throw new ArgumentException("Invalid user ID format");
-
-        return userId;
+        return HttpContext.RequestAborted;
     }
 }

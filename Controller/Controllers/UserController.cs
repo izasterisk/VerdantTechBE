@@ -35,7 +35,7 @@ public class UserController : BaseController
 
         try
         {
-            var user = await _userService.CreateUserAsync(dto);
+            var user = await _userService.CreateUserAsync(dto, GetCancellationToken());
             return SuccessResponse(user, HttpStatusCode.Created);
         }
         catch (Exception ex)
@@ -57,7 +57,7 @@ public class UserController : BaseController
     {
         try
         {
-            var user = await _userService.GetUserByIdAsync(id);
+            var user = await _userService.GetUserByIdAsync(id, GetCancellationToken());
             
             if (user == null)
                 return ErrorResponse($"Không tìm thấy người dùng với ID {id}", HttpStatusCode.NotFound);
@@ -92,7 +92,7 @@ public class UserController : BaseController
             if (pageSize < 1 || pageSize > 100)
                 return ErrorResponse("Page size must be between 1 and 100");
 
-            var users = await _userService.GetAllUsersAsync(page, pageSize, role);
+            var users = await _userService.GetAllUsersAsync(page, pageSize, role, GetCancellationToken());
             return SuccessResponse(users);
         }
         catch (Exception ex)
@@ -117,7 +117,7 @@ public class UserController : BaseController
         if (validationResult != null) return validationResult;
         try
         {
-            var user = await _userService.UpdateUserAsync(id, dto);
+            var user = await _userService.UpdateUserAsync(id, dto, GetCancellationToken());
             return SuccessResponse(user);
         }
         catch (Exception ex)

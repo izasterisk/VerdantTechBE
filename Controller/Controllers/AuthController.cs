@@ -32,7 +32,7 @@ public class AuthController : BaseController
 
         try
         {
-            var result = await _authService.LoginAsync(loginDto);
+            var result = await _authService.LoginAsync(loginDto, GetCancellationToken());
             return SuccessResponse(result);
         }
         catch (Exception ex)
@@ -56,7 +56,7 @@ public class AuthController : BaseController
 
         try
         {
-            var result = await _authService.GoogleLoginAsync(googleLoginDto);
+            var result = await _authService.GoogleLoginAsync(googleLoginDto, GetCancellationToken());
             return SuccessResponse(result);
         }
         catch (Exception ex)
@@ -80,7 +80,7 @@ public class AuthController : BaseController
 
         try
         {
-            await _authService.SendVerificationEmailAsync(dto.Email);
+            await _authService.SendVerificationEmailAsync(dto.Email, GetCancellationToken());
             return SuccessResponse("Verification email sent");
         }
         catch (Exception ex)
@@ -104,7 +104,7 @@ public class AuthController : BaseController
 
         try
         {
-            await _authService.VerifyEmailAsync(dto.Email, dto.Code);
+            await _authService.VerifyEmailAsync(dto.Email, dto.Code, GetCancellationToken());
             return SuccessResponse("Email verified successfully");
         }
         catch (Exception ex)
@@ -128,7 +128,7 @@ public class AuthController : BaseController
 
         try
         {
-            var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
+            var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken, GetCancellationToken());
             return SuccessResponse(result);
         }
         catch (Exception ex)
@@ -172,7 +172,7 @@ public class AuthController : BaseController
 
         try
         {
-            await _authService.SendForgotPasswordEmailAsync(dto.Email);
+            await _authService.SendForgotPasswordEmailAsync(dto.Email, GetCancellationToken());
             return SuccessResponse("Forgot password email sent successfully");
         }
         catch (Exception ex)
@@ -196,7 +196,7 @@ public class AuthController : BaseController
 
         try
         {
-            await _authService.UpdateForgotPasswordAsync(dto.Email, dto.NewPassword, dto.Code);
+            await _authService.UpdateForgotPasswordAsync(dto.Email, dto.NewPassword, dto.Code, GetCancellationToken());
             return SuccessResponse("Password reset successfully");
         }
         catch (Exception ex)
@@ -220,7 +220,7 @@ public class AuthController : BaseController
 
         try
         {
-            await _authService.ChangePassword(dto.Email, dto.OldPassword, dto.NewPassword);
+            await _authService.ChangePassword(dto.Email, dto.OldPassword, dto.NewPassword, GetCancellationToken());
             return SuccessResponse("Password changed successfully");
         }
         catch (Exception ex)
@@ -249,7 +249,7 @@ public class AuthController : BaseController
             if (!ulong.TryParse(userIdClaim, out ulong userId))
                 return ErrorResponse("Invalid user ID format", HttpStatusCode.BadRequest);
 
-            await _authService.LogoutAsync(userId);
+            await _authService.LogoutAsync(userId, GetCancellationToken());
             return SuccessResponse("Logged out successfully");
         }
         catch (Exception ex)

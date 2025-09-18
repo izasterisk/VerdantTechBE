@@ -38,10 +38,19 @@ if (string.IsNullOrEmpty(connectionString))
     throw new InvalidOperationException("DATABASE_CONNECTION_STRING not found in .env file.");
 }
 
+// Get database timeout from .env (default to 30 seconds)
+var databaseTimeoutStr = Environment.GetEnvironmentVariable("DATABASE_TIMEOUT") ?? "30";
+if (!int.TryParse(databaseTimeoutStr, out int databaseTimeout))
+{
+    databaseTimeout = 30; // fallback to 30 seconds
+    Console.WriteLine($"Warning: Invalid DATABASE_TIMEOUT value '{databaseTimeoutStr}'. Using default 30 seconds.");
+}
+
 // Configure DbContext
 builder.Services.AddDbContext<VerdantTechDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.Parse("8.0.43-mysql"), 
-        b => b.MigrationsAssembly("DAL")));
+        b => b.MigrationsAssembly("DAL")
+            .CommandTimeout(databaseTimeout)));
 
 //Dependency Injection
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();

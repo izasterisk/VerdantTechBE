@@ -6,11 +6,11 @@ public class APIResponse
 {
     public bool Status { get; set; }
     public HttpStatusCode StatusCode { get; set; }
-    public dynamic Data { get; set; }
+    public dynamic? Data { get; set; }
     public List<string> Errors { get; set; } = new List<string>();
 
     // Static helper methods để tạo response nhanh chóng
-    public static APIResponse Success(object data = null, HttpStatusCode statusCode = HttpStatusCode.OK)
+    public static APIResponse Success(object? data = null, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
         return new APIResponse
         {

@@ -16,26 +16,26 @@ public class AuthRepository : IAuthRepository
         _context = context;
     }
     
-    public async Task<User?> GetUserByEmailAsync(string email)
+    public async Task<User?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        return await _userRepository.GetAsync(u => u.Email.ToLower() == email.ToLower());
+        return await _userRepository.GetAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken: cancellationToken);
     }
 
-    public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken)
+    public async Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         return await _userRepository.GetAsync(u => u.RefreshToken == refreshToken 
                                                    && u.RefreshTokenExpiresAt > DateTime.UtcNow
-                                                   && u.DeletedAt == null && u.Status != UserStatus.Deleted);
+                                                   && u.DeletedAt == null && u.Status != UserStatus.Deleted, cancellationToken: cancellationToken);
     }
 
-    public async Task UpdateUserAsync(User user)
+    public async Task UpdateUserAsync(User user, CancellationToken cancellationToken = default)
     {
         user.UpdatedAt = DateTime.UtcNow;
-        await _userRepository.UpdateAsync(user);
-        await _context.SaveChangesAsync();
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
     
-    public async Task LogoutUserAsync(User user)
+    public async Task LogoutUserAsync(User user, CancellationToken cancellationToken = default)
     {
         if (user == null)
             throw new ArgumentNullException(nameof(user));
@@ -44,7 +44,7 @@ public class AuthRepository : IAuthRepository
         user.RefreshTokenExpiresAt = null;
         user.UpdatedAt = DateTime.UtcNow;
         
-        await _userRepository.UpdateAsync(user);
-        await _context.SaveChangesAsync();
+        await _userRepository.UpdateAsync(user, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

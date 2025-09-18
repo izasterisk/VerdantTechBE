@@ -17,9 +17,9 @@ public class UserRepository : IUserRepository
         _dbContext = context;
     }
     
-    public async Task<User> CreateUserWithTransactionAsync(User user)
+    public async Task<User> CreateUserWithTransactionAsync(User user, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             user.LastLoginAt = DateTime.Now;
@@ -32,40 +32,40 @@ public class UserRepository : IUserRepository
                 user.IsVerified = true;
             }
             
-            var createdUser = await _userRepository.CreateAsync(user);
-            await transaction.CommitAsync();
+            var createdUser = await _userRepository.CreateAsync(user, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
             return createdUser;
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }
 
-    public async Task<User> UpdateUserWithTransactionAsync(User user)
+    public async Task<User> UpdateUserWithTransactionAsync(User user, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             user.UpdatedAt = DateTime.Now;
-            var updatedUser = await _userRepository.UpdateAsync(user);
-            await transaction.CommitAsync();
+            var updatedUser = await _userRepository.UpdateAsync(user, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
             return updatedUser;
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }
     
-    public async Task<User?> GetUserByIdAsync(ulong userId)
+    public async Task<User?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
-        return await _userRepository.GetAsync(u =>u.Id == userId && u.Status == UserStatus.Active, useNoTracking: true);
+        return await _userRepository.GetAsync(u =>u.Id == userId && u.Status == UserStatus.Active, useNoTracking: true, cancellationToken);
     }
     
-    public async Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null)
+    public async Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)
     {
         Expression<Func<User, bool>> filter = u => u.Status == UserStatus.Active;
         
@@ -88,12 +88,13 @@ public class UserRepository : IUserRepository
             pageSize, 
             filter, 
             useNoTracking: true, 
-            orderBy: query => query.OrderByDescending(u => u.UpdatedAt)
+            orderBy: query => query.OrderByDescending(u => u.UpdatedAt),
+            cancellationToken
         );
     }
     
-    public async Task<bool> CheckEmailExistsAsync(string username)
+    public async Task<bool> CheckEmailExistsAsync(string username, CancellationToken cancellationToken = default)
     {
-        return await _userRepository.AnyAsync(u => u.Email.ToUpper() == username.ToUpper());
+        return await _userRepository.AnyAsync(u => u.Email.ToUpper() == username.ToUpper(), cancellationToken);
     }
 }

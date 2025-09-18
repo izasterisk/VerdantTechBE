@@ -32,7 +32,7 @@ namespace Controller.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                var result = await _service.CreateAsync(userId, dto);
+                var result = await _service.CreateAsync(userId, dto, GetCancellationToken());
                 return SuccessResponse(result);
             }
             catch (Exception ex)
@@ -48,7 +48,7 @@ namespace Controller.Controllers
         {
             try
             {
-                var result = await _service.GetAsync(id);
+                var result = await _service.GetAsync(id, GetCancellationToken());
                 if (result == null) return ErrorResponse("Farm profile not found", HttpStatusCode.NotFound);
                 return SuccessResponse(result);
             }
@@ -66,7 +66,7 @@ namespace Controller.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                var list = await _service.GetAllByUserIdAsync(userId);
+                var list = await _service.GetAllByUserIdAsync(userId, GetCancellationToken());
                 return SuccessResponse(list);
             }
             catch (Exception ex)
@@ -85,7 +85,7 @@ namespace Controller.Controllers
             try
             {
                 var userId = GetCurrentUserId();
-                var result = await _service.UpdateAsync(id, userId, dto);
+                var result = await _service.UpdateAsync(id, userId, dto, GetCancellationToken());
                 return SuccessResponse(result);
             }
             catch (KeyNotFoundException)
