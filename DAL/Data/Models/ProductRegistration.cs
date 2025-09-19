@@ -15,17 +15,15 @@ public partial class ProductRegistration
 
     [Required]
     [StringLength(100)]
-    public string ProductCode { get; set; } = null!;
+    public string ProposedProductCode { get; set; } = null!;
 
     [Required]
     [StringLength(255)]
-    public string Name { get; set; } = null!;
+    public string ProposedProductName { get; set; } = null!;
 
     public string? Description { get; set; }
 
-    public decimal Price { get; set; }
-
-    public decimal CommissionRate { get; set; } = 0.00m;
+    public decimal UnitPrice { get; set; }
 
     [StringLength(10)]
     public string? EnergyEfficiencyRating { get; set; }
@@ -53,10 +51,12 @@ public partial class ProductRegistration
 
     public DateTime CreatedAt { get; set; }
 
-    public DateTime? ReviewedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+
+    public DateTime? ApprovedAt { get; set; }
 
     // Navigation Properties
-    public virtual VendorProfile Vendor { get; set; } = null!;
+    public virtual User Vendor { get; set; } = null!;
     public virtual ProductCategory Category { get; set; } = null!;
     public virtual User? ApprovedByUser { get; set; }
 }

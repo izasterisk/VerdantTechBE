@@ -13,20 +13,14 @@ public partial class Cashout
 
     public ulong? TransactionId { get; set; }
 
+    public ulong BankAccountId { get; set; }
+
     public decimal Amount { get; set; }
-
-    [StringLength(20)]
-    public string BankCode { get; set; } = null!;
-
-    [StringLength(50)]
-    public string BankAccountNumber { get; set; } = null!;
-
-    [StringLength(255)]
-    public string BankAccountHolder { get; set; } = null!;
 
     public CashoutStatus Status { get; set; } = CashoutStatus.Pending;
 
-    public CashoutType CashoutType { get; set; } = CashoutType.CommissionPayout;
+    [StringLength(255)]
+    public string? Reason { get; set; }
 
     [StringLength(255)]
     public string? GatewayTransactionId { get; set; }
@@ -48,7 +42,8 @@ public partial class Cashout
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual VendorProfile Vendor { get; set; } = null!;
+    public virtual User Vendor { get; set; } = null!;
     public virtual Transaction? Transaction { get; set; }
+    public virtual VendorBankAccount BankAccount { get; set; } = null!;
     public virtual User? ProcessedByNavigation { get; set; }
 }

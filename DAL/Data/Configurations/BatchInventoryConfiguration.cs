@@ -22,9 +22,9 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
             .IsRequired()
             .HasColumnName("product_id");
 
-        builder.Property(e => e.VendorProfileId)
+        builder.Property(e => e.VendorId)
             .HasColumnType("bigint unsigned")
-            .HasColumnName("vendor_profile_id");
+            .HasColumnName("vendor_id");
 
         builder.Property(e => e.QualityCheckedBy)
             .HasColumnType("bigint unsigned")
@@ -100,12 +100,12 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
         builder.HasOne(d => d.Product)
             .WithMany(p => p.BatchInventories)
             .HasForeignKey(d => d.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(d => d.VendorProfile)
-            .WithMany(p => p.BatchInventories)
-            .HasForeignKey(d => d.VendorProfileId)
-            .OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne(d => d.Vendor)
+            .WithMany(p => p.BatchInventoriesAsVendor)
+            .HasForeignKey(d => d.VendorId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.QualityCheckedByNavigation)
             .WithMany(p => p.BatchInventoriesQualityChecked)
@@ -119,7 +119,7 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
         builder.HasIndex(e => e.Sku)
             .HasDatabaseName("idx_sku");
 
-        builder.HasIndex(e => e.VendorProfileId)
+        builder.HasIndex(e => e.VendorId)
             .HasDatabaseName("idx_vendor");
 
         builder.HasIndex(e => e.ExpiryDate)

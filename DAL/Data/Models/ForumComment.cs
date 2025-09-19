@@ -9,7 +9,7 @@ public partial class ForumComment
 {
     public ulong Id { get; set; }
 
-    public ulong PostId { get; set; }
+    public ulong ForumPostId { get; set; }
 
     public ulong UserId { get; set; }
 
@@ -32,7 +32,7 @@ public partial class ForumComment
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual ForumPost Post { get; set; } = null!;
+    public virtual ForumPost ForumPost { get; set; } = null!;
     public virtual User User { get; set; } = null!;
     public virtual ForumComment? Parent { get; set; }
     public virtual ICollection<ForumComment> InverseParent { get; set; } = new List<ForumComment>();

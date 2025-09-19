@@ -26,27 +26,14 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasColumnName("transaction_id")
             .HasColumnType("bigint unsigned");
 
+        builder.Property(e => e.BankAccountId)
+            .HasColumnName("bank_account_id")
+            .HasColumnType("bigint unsigned")
+            .IsRequired();
+
         builder.Property(e => e.Amount)
             .HasColumnName("amount")
             .HasColumnType("decimal(12,2)")
-            .IsRequired();
-
-        builder.Property(e => e.BankCode)
-            .HasColumnName("bank_code")
-            .HasColumnType("varchar(20)")
-            .HasMaxLength(20)
-            .IsRequired();
-
-        builder.Property(e => e.BankAccountNumber)
-            .HasColumnName("bank_account_number")
-            .HasColumnType("varchar(50)")
-            .HasMaxLength(50)
-            .IsRequired();
-
-        builder.Property(e => e.BankAccountHolder)
-            .HasColumnName("bank_account_holder")
-            .HasColumnType("varchar(255)")
-            .HasMaxLength(255)
             .IsRequired();
 
         builder.Property(e => e.Status)
@@ -57,18 +44,10 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasColumnType("enum('pending','processing','completed','failed','cancelled')")
             .HasDefaultValue(CashoutStatus.Pending);
 
-        builder.Property(e => e.CashoutType)
-            .HasConversion(
-                v => v.ToString()
-                    .ToLowerInvariant()
-                    .Replace("commissionpayout", "commission_payout")
-                    .Replace("vendorpayment", "vendor_payment"),
-                v => Enum.Parse<CashoutType>(v
-                    .Replace("commission_payout", "CommissionPayout")
-                    .Replace("vendor_payment", "VendorPayment"), true))
-            .HasColumnName("cashout_type")
-            .HasColumnType("enum('commission_payout','vendor_payment','expense','refund')")
-            .HasDefaultValue(CashoutType.CommissionPayout);
+        builder.Property(e => e.Reason)
+            .HasColumnName("reason")
+            .HasColumnType("varchar(255)")
+            .HasMaxLength(255);
 
         builder.Property(e => e.GatewayTransactionId)
             .HasColumnName("gateway_transaction_id")
@@ -109,8 +88,13 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
 
         // Foreign keys
         builder.HasOne(e => e.Vendor)
-            .WithMany(v => v.Cashouts)
+            .WithMany(v => v.CashoutsAsVendor)
             .HasForeignKey(e => e.VendorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.BankAccount)
+            .WithMany(b => b.Cashouts)
+            .HasForeignKey(e => e.BankAccountId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.Transaction)
@@ -131,7 +115,7 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
         builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
         builder.HasIndex(e => e.TransactionId).HasDatabaseName("idx_transaction");
         builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
-        builder.HasIndex(e => e.CashoutType).HasDatabaseName("idx_type");
+        builder.HasIndex(e => e.TransactionId).HasDatabaseName("idx_transaction");
         builder.HasIndex(e => e.ProcessedAt).HasDatabaseName("idx_processed");
         builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId }).HasDatabaseName("idx_reference");
     }

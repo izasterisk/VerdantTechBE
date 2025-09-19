@@ -19,7 +19,7 @@ public partial class Product
 
     [Required]
     [StringLength(255)]
-    public string Name { get; set; } = null!;
+    public string ProductName { get; set; } = null!;
 
     [Required]
     [StringLength(255)]
@@ -27,9 +27,7 @@ public partial class Product
 
     public string? Description { get; set; }
 
-    public decimal Price { get; set; }
-
-    public decimal CostPrice { get; set; } = 0.00m;
+    public decimal UnitPrice { get; set; }
 
     public decimal CommissionRate { get; set; } = 0.00m;
 
@@ -74,15 +72,13 @@ public partial class Product
 
     public decimal RatingAverage { get; set; } = 0.00m;
 
-    public int TotalReviews { get; set; } = 0;
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
     public virtual ProductCategory Category { get; set; } = null!;
-    public virtual VendorProfile Vendor { get; set; } = null!;
+    public virtual User Vendor { get; set; } = null!;
     public virtual ICollection<BatchInventory> BatchInventories { get; set; } = new List<BatchInventory>();
     public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();

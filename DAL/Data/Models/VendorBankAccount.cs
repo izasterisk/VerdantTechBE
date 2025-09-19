@@ -30,7 +30,8 @@ public partial class VendorBankAccount
     public DateTime UpdatedAt { get; set; }
 
     // Navigation
-    public virtual VendorProfile VendorProfile { get; set; } = null!;
+    public virtual User Vendor { get; set; } = null!;
+    public virtual ICollection<Cashout> Cashouts { get; set; } = new List<Cashout>();
 }
 
 

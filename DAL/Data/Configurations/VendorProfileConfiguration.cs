@@ -74,7 +74,7 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
         builder.HasOne(d => d.User)
             .WithOne(p => p.VendorProfile)
             .HasForeignKey<VendorProfile>(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
             
         builder.HasOne(d => d.VerifiedByNavigation)
             .WithMany(p => p.VerifiedVendorProfiles)

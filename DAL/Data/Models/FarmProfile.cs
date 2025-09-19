@@ -17,18 +17,7 @@ public partial class FarmProfile
 
     public decimal? FarmSizeHectares { get; set; }
 
-    public string? LocationAddress { get; set; }
-
-    [StringLength(100)]
-    public string? Province { get; set; }
-
-    [StringLength(100)]
-    public string? District { get; set; }
-
-    [StringLength(100)]
-    public string? Commune { get; set; }
-    public decimal? Latitude { get; set; }
-    public decimal? Longitude { get; set; }
+    public ulong? AddressId { get; set; }
     [StringLength(500)]
     public string? PrimaryCrops { get; set; }
 
@@ -40,5 +29,6 @@ public partial class FarmProfile
 
     // Navigation Properties
     public virtual User User { get; set; } = null!;
+    public virtual Address? Address { get; set; }
     public virtual ICollection<EnvironmentalDatum> EnvironmentalData { get; set; } = new List<EnvironmentalDatum>();
 }

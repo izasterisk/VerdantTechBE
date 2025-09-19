@@ -11,7 +11,7 @@ public partial class EnvironmentalDatum
 
     public ulong FarmProfileId { get; set; }
 
-    public ulong UserId { get; set; }
+    public ulong CustomerId { get; set; }
 
     public DateOnly MeasurementDate { get; set; }
 
@@ -38,7 +38,7 @@ public partial class EnvironmentalDatum
 
     // Navigation Properties
     public virtual FarmProfile FarmProfile { get; set; } = null!;
-    public virtual User User { get; set; } = null!;
+    public virtual User Customer { get; set; } = null!;
     public virtual ICollection<Fertilizer> Fertilizers { get; set; } = new List<Fertilizer>();
     public virtual ICollection<EnergyUsage> EnergyUsages { get; set; } = new List<EnergyUsage>();
 }

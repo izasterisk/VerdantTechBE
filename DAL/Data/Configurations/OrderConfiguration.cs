@@ -16,23 +16,31 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
+            .HasColumnName("id")
             .ValueGeneratedOnAdd();
         
-        // Foreign Key
-        builder.Property(e => e.UserId)
+        // Foreign Keys
+        builder.Property(e => e.CustomerId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
-            .HasColumnName("user_id");
+            .HasColumnName("customer_id");
+            
+        builder.Property(e => e.AddressId)
+            .HasColumnType("bigint unsigned")
+            .IsRequired()
+            .HasColumnName("address_id");
         
         // Enum conversion for status
         builder.Property(e => e.Status)
             .HasConversion<string>()
             .HasColumnType("enum('pending','confirmed','processing','shipped','delivered','cancelled','refunded')")
+            .HasColumnName("status")
             .HasDefaultValue(OrderStatus.Pending);
         
         // Decimal fields with precision
         builder.Property(e => e.Subtotal)
             .HasPrecision(12, 2)
+            .HasColumnName("subtotal")
             .IsRequired();
             
         builder.Property(e => e.TaxAmount)
@@ -55,13 +63,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasColumnName("total_amount");
         
-        // JSON field for shipping address using JsonHelpers
-        builder.Property(e => e.ShippingAddress)
-            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
-            .HasColumnType("json")
-            .IsRequired()
-            .HasColumnName("shipping_address")
-            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
             
         // Optional string fields
         builder.Property(e => e.ShippingMethod)
@@ -115,19 +116,27 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnName("updated_at");
         
         // Foreign Key Relationships
-        builder.HasOne(d => d.User)
+        builder.HasOne(d => d.Customer)
             .WithMany(p => p.Orders)
-            .HasForeignKey(d => d.UserId)
+            .HasForeignKey(d => d.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        builder.HasOne(d => d.Address)
+            .WithMany(p => p.Orders)
+            .HasForeignKey(d => d.AddressId)
             .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
-        builder.HasIndex(e => e.UserId)
-            .HasDatabaseName("idx_user");
+        builder.HasIndex(e => e.CustomerId)
+            .HasDatabaseName("idx_customer");
+            
+        builder.HasIndex(e => e.AddressId)
+            .HasDatabaseName("idx_address");
             
         builder.HasIndex(e => e.Status)
             .HasDatabaseName("idx_status");
             
         builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("idx_created_at");
+            .HasDatabaseName("idx_created");
     }
 }

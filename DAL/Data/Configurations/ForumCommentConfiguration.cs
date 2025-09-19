@@ -18,10 +18,10 @@ public class ForumCommentConfiguration : IEntityTypeConfiguration<ForumComment>
             .ValueGeneratedOnAdd();
         
         // Foreign Keys
-        builder.Property(e => e.PostId)
+        builder.Property(e => e.ForumPostId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
-            .HasColumnName("post_id");
+            .HasColumnName("forum_post_id");
             
         builder.Property(e => e.UserId)
             .HasColumnType("bigint unsigned")
@@ -70,26 +70,26 @@ public class ForumCommentConfiguration : IEntityTypeConfiguration<ForumComment>
         // Foreign Key Relationships
         
         // Relationship with ForumPost
-        builder.HasOne(d => d.Post)
+        builder.HasOne(d => d.ForumPost)
             .WithMany(p => p.ForumComments)
-            .HasForeignKey(d => d.PostId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(d => d.ForumPostId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Relationship with User (commenter)
         builder.HasOne(d => d.User)
             .WithMany(p => p.ForumComments)
             .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Self-referencing relationship (Parent-Child comments)
         builder.HasOne(d => d.Parent)
             .WithMany(p => p.InverseParent)
             .HasForeignKey(d => d.ParentId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         
         
         // Indexes
-        builder.HasIndex(e => e.PostId)
+        builder.HasIndex(e => e.ForumPostId)
             .HasDatabaseName("idx_post");
             
         builder.HasIndex(e => e.UserId)

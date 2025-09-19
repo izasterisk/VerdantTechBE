@@ -9,7 +9,7 @@ public partial class ChatbotConversation
 {
     public ulong Id { get; set; }
 
-    public ulong UserId { get; set; }
+    public ulong CustomerId { get; set; }
 
     [Required]
     [StringLength(255)]
@@ -30,6 +30,6 @@ public partial class ChatbotConversation
     public DateTime? EndedAt { get; set; }
 
     // Navigation Properties
-    public virtual User User { get; set; } = null!;
+    public virtual User Customer { get; set; } = null!;
     public virtual ICollection<ChatbotMessage> ChatbotMessages { get; set; } = new List<ChatbotMessage>();
 }

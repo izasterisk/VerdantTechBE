@@ -13,6 +13,7 @@ public class VendorBankAccountConfiguration : IEntityTypeConfiguration<VendorBan
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
+            .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
         builder.Property(e => e.VendorId)
@@ -55,10 +56,10 @@ public class VendorBankAccountConfiguration : IEntityTypeConfiguration<VendorBan
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
             .HasColumnName("updated_at");
 
-        builder.HasOne(d => d.VendorProfile)
+        builder.HasOne(d => d.Vendor)
             .WithMany(p => p.VendorBankAccounts)
             .HasForeignKey(d => d.VendorId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
 
         builder.HasIndex(e => new { e.VendorId, e.AccountNumber })

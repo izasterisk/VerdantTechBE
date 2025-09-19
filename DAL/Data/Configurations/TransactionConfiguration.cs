@@ -44,31 +44,14 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasMaxLength(3)
             .HasDefaultValue("VND");
 
-        // Core references
         builder.Property(e => e.OrderId)
             .HasColumnName("order_id")
             .HasColumnType("bigint unsigned");
 
-        builder.Property(e => e.CustomerId)
-            .HasColumnName("customer_id")
-            .HasColumnType("bigint unsigned");
-
-        builder.Property(e => e.VendorId)
-            .HasColumnName("vendor_id")
-            .HasColumnType("bigint unsigned");
-
-        // Wallet related fields
-        builder.Property(e => e.WalletId)
-            .HasColumnName("wallet_id")
-            .HasColumnType("bigint unsigned");
-
-        builder.Property(e => e.BalanceBefore)
-            .HasColumnName("balance_before")
-            .HasColumnType("decimal(12,2)");
-
-        builder.Property(e => e.BalanceAfter)
-            .HasColumnName("balance_after")
-            .HasColumnType("decimal(12,2)");
+        builder.Property(e => e.UserId)
+            .HasColumnName("user_id")
+            .HasColumnType("bigint unsigned")
+            .IsRequired();
 
         // Status and metadata
         builder.Property(e => e.Status)
@@ -79,27 +62,16 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasColumnType("enum('pending','completed','failed','cancelled')")
             .HasDefaultValue(TransactionStatus.Pending);
 
-        builder.Property(e => e.Description)
-            .HasColumnName("description")
+        builder.Property(e => e.Note)
+            .HasColumnName("note")
             .HasColumnType("varchar(255)")
             .HasMaxLength(255)
             .IsRequired();
 
-        builder.Property(e => e.Metadata)
-            .HasConversion(JsonHelpers.DictionaryStringObjectConverter())
-            .HasColumnType("json")
-            .HasColumnName("metadata")
-            .Metadata.SetValueComparer(JsonHelpers.DictionaryStringObjectComparer());
-
-        // Reference to domain-specific tables
-        builder.Property(e => e.ReferenceType)
-            .HasColumnName("reference_type")
-            .HasColumnType("varchar(50)")
-            .HasMaxLength(50);
-
-        builder.Property(e => e.ReferenceId)
-            .HasColumnName("reference_id")
-            .HasColumnType("bigint unsigned");
+        builder.Property(e => e.GatewayPaymentId)
+            .HasColumnName("gateway_payment_id")
+            .HasColumnType("varchar(255)")
+            .HasMaxLength(255);
 
         // Audit fields
         builder.Property(e => e.CreatedBy)
@@ -130,19 +102,9 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasForeignKey(e => e.OrderId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.Customer)
-            .WithMany()
-            .HasForeignKey(e => e.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.Vendor)
-            .WithMany(v => v.Transactions)
-            .HasForeignKey(e => e.VendorId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.Wallet)
-            .WithMany(w => w.Transactions)
-            .HasForeignKey(e => e.WalletId)
+        builder.HasOne(e => e.User)
+            .WithMany(u => u.TransactionsAsUser)
+            .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.CreatedByNavigation)
@@ -156,15 +118,10 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
+        builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
         builder.HasIndex(e => new { e.TransactionType, e.Status }).HasDatabaseName("idx_type_status");
         builder.HasIndex(e => e.OrderId).HasDatabaseName("idx_order");
-        builder.HasIndex(e => e.CustomerId).HasDatabaseName("idx_customer");
-        builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
-        builder.HasIndex(e => e.WalletId).HasDatabaseName("idx_wallet");
-        builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created_at");
-        builder.HasIndex(e => e.CompletedAt).HasDatabaseName("idx_completed_at");
-        builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId }).HasDatabaseName("idx_reference");
-        builder.HasIndex(e => e.Amount).HasDatabaseName("idx_amount");
-        builder.HasIndex(e => e.CreatedBy).HasDatabaseName("idx_created_by");
+        builder.HasIndex(e => e.GatewayPaymentId).HasDatabaseName("idx_gateway_payment");
+        builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created");
     }
 }

@@ -25,10 +25,13 @@ public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
             .HasDefaultValue(0.00m)
             .HasColumnName("balance");
 
-        builder.Property(e => e.PendingWithdraw)
-            .HasPrecision(12, 2)
-            .HasDefaultValue(0.00m)
-            .HasColumnName("pending_withdraw");
+        builder.Property(e => e.LastTransactionId)
+            .HasColumnType("bigint unsigned")
+            .HasColumnName("last_transaction_id");
+
+        builder.Property(e => e.LastUpdatedBy)
+            .HasColumnType("bigint unsigned")
+            .HasColumnName("last_updated_by");
 
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
@@ -40,13 +43,23 @@ public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
             .HasColumnName("updated_at");
 
-        builder.HasOne(d => d.VendorProfile)
-            .WithOne(p => p.Wallet)
+        builder.HasOne(d => d.Vendor)
+            .WithOne(p => p.WalletAsVendor)
             .HasForeignKey<Wallet>(d => d.VendorId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(d => d.LastTransaction)
+            .WithMany(t => t.WalletsAsLastTransaction)
+            .HasForeignKey(d => d.LastTransactionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(d => d.LastUpdatedByNavigation)
+            .WithMany()
+            .HasForeignKey(d => d.LastUpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => e.VendorId)
-            .IsUnique();
+            .HasDatabaseName("idx_vendor");
     }
 }
 

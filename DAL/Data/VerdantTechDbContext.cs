@@ -9,6 +9,7 @@ public class VerdantTechDbContext : DbContext
     public VerdantTechDbContext(DbContextOptions<VerdantTechDbContext> options) : base(options) { }
     
     // User Management DbSets
+    public DbSet<Address> Addresses { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<FarmProfile> FarmProfiles { get; set; }
     public DbSet<VendorProfile> VendorProfiles { get; set; }
@@ -56,6 +57,7 @@ public class VerdantTechDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Apply all configurations
+        modelBuilder.ApplyConfiguration(new AddressConfiguration());
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new FarmProfileConfiguration());
         modelBuilder.ApplyConfiguration(new VendorProfileConfiguration());

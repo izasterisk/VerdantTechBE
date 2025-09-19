@@ -52,7 +52,7 @@ public class EnergyUsageConfiguration : IEntityTypeConfiguration<EnergyUsage>
         builder.HasOne(e => e.EnvironmentalData)
             .WithMany(ed => ed.EnergyUsages)
             .HasForeignKey(e => e.EnvironmentalDataId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
         builder.HasIndex(e => e.EnvironmentalDataId)

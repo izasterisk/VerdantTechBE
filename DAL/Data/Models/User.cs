@@ -26,6 +26,11 @@ public partial class User
     [StringLength(20)]
     public string? PhoneNumber { get; set; }
 
+    [StringLength(100)]
+    public string? TaxCode { get; set; }
+
+    public ulong? AddressId { get; set; }
+
     public bool IsVerified { get; set; } = false;
 
     [StringLength(255)]
@@ -52,6 +57,7 @@ public partial class User
     public DateTime? DeletedAt { get; set; }
 
     // Navigation Properties
+    public virtual Address? Address { get; set; }
     public virtual ICollection<FarmProfile> FarmProfiles { get; set; } = new List<FarmProfile>();
     public virtual VendorProfile? VendorProfile { get; set; }
     
@@ -61,15 +67,24 @@ public partial class User
     public virtual ICollection<ForumPost> ForumPosts { get; set; } = new List<ForumPost>();
     public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
     public virtual ICollection<ChatbotConversation> ChatbotConversations { get; set; } = new List<ChatbotConversation>();
-    public virtual ICollection<EnvironmentalDatum> EnvironmentalData { get; set; } = new List<EnvironmentalDatum>();
+    public virtual ICollection<EnvironmentalDatum> EnvironmentalDataAsCustomer { get; set; } = new List<EnvironmentalDatum>();
     public virtual ICollection<BatchInventory> BatchInventoriesQualityChecked { get; set; } = new List<BatchInventory>();
     public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
     public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
     public virtual ICollection<Transaction> TransactionsCreated { get; set; } = new List<Transaction>();
     public virtual ICollection<Transaction> TransactionsProcessed { get; set; } = new List<Transaction>();
-    public virtual ICollection<Transaction> TransactionsCustomer { get; set; } = new List<Transaction>();
+    public virtual ICollection<Transaction> TransactionsAsUser { get; set; } = new List<Transaction>();
     public virtual ICollection<Cashout> CashoutsProcessed { get; set; } = new List<Cashout>();
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
+    
+    // Vendor-related relationships (when user is vendor)
+    public virtual ICollection<Product> ProductsAsVendor { get; set; } = new List<Product>();
+    public virtual ICollection<ProductRegistration> ProductRegistrationsAsVendor { get; set; } = new List<ProductRegistration>();
+    public virtual ICollection<VendorBankAccount> VendorBankAccounts { get; set; } = new List<VendorBankAccount>();
+    public virtual ICollection<VendorCertificate> VendorCertificates { get; set; } = new List<VendorCertificate>();
+    public virtual ICollection<BatchInventory> BatchInventoriesAsVendor { get; set; } = new List<BatchInventory>();
+    public virtual ICollection<Cashout> CashoutsAsVendor { get; set; } = new List<Cashout>();
+    public virtual Wallet? WalletAsVendor { get; set; }
     
     // Verification relationships
     public virtual ICollection<VendorProfile> VerifiedVendorProfiles { get; set; } = new List<VendorProfile>();

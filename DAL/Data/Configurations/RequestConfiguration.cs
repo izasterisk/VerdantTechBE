@@ -28,14 +28,18 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
                     .Replace("refundrequest", "refund_request")
                     .Replace("payoutrequest", "payout_request")
                     .Replace("supportrequest", "support_request")
-                    .Replace("vendorregister", "vendor_register"),
+                    .Replace("vendorregister", "vendor_register")
+                    .Replace("productregistration", "product_registration")
+                    .Replace("productcertification", "product_certification"),
                 v => Enum.Parse<RequestType>(v
                     .Replace("refund_request", "RefundRequest")
                     .Replace("payout_request", "PayoutRequest")
                     .Replace("support_request", "SupportRequest")
-                    .Replace("vendor_register", "VendorRegister"), true))
+                    .Replace("vendor_register", "VendorRegister")
+                    .Replace("product_registration", "ProductRegistration")
+                    .Replace("product_certification", "ProductCertification"), true))
             .HasColumnName("request_type")
-            .HasColumnType("enum('refund_request','payout_request','support_request','vendor_register')")
+            .HasColumnType("enum('refund_request','payout_request','support_request','vendor_register','product_registration','product_certification')")
             .IsRequired();
 
         builder.Property(e => e.Title)
@@ -60,22 +64,13 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasColumnType("enum('pending','in_review','approved','rejected','completed','cancelled')")
             .HasDefaultValue(RequestStatus.Pending);
 
-        builder.Property(e => e.Amount)
-            .HasColumnName("amount")
-            .HasColumnType("decimal(12,2)");
+        builder.Property(e => e.ReplyNotes)
+            .HasColumnName("reply_notes")
+            .HasColumnType("text");
 
         builder.Property(e => e.ProcessedBy)
             .HasColumnName("processed_by")
             .HasColumnType("bigint unsigned");
-
-        builder.Property(e => e.AdminNotes)
-            .HasColumnName("admin_notes")
-            .HasColumnType("text");
-
-        builder.Property(e => e.RejectionReason)
-            .HasColumnName("rejection_reason")
-            .HasColumnType("varchar(500)")
-            .HasMaxLength(500);
 
         builder.Property(e => e.ProcessedAt)
             .HasColumnName("processed_at")
@@ -95,7 +90,7 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
         builder.HasOne(e => e.User)
             .WithMany(u => u.Requests)
             .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
             
         builder.HasOne(e => e.ProcessedByNavigation)
             .WithMany(u => u.RequestsProcessed)

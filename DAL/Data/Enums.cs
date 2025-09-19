@@ -103,7 +103,9 @@ public enum RequestType
     RefundRequest,
     PayoutRequest,
     SupportRequest,
-    VendorRegister
+    VendorRegister,
+    ProductRegistration,
+    ProductCertification
 }
 
 public enum RequestStatus
@@ -215,7 +217,7 @@ public enum CashoutType
 public enum MovementType
 {
     Sale,
-    Return,
+    ReturnToVendor,
     Damage,
     Loss,
     Adjustment

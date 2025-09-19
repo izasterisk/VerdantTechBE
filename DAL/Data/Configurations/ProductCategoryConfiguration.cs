@@ -14,6 +14,7 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
+            .HasColumnName("id")
             .ValueGeneratedOnAdd();
         
         // Foreign Key to self (parent_id)
@@ -26,19 +27,22 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
             .HasMaxLength(255)
             .IsRequired()
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("name");
             
         builder.Property(e => e.Slug)
             .HasMaxLength(255)
             .IsRequired()
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("slug");
         
         // Optional fields
         builder.Property(e => e.Description)
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("description");
             
         builder.Property(e => e.IconUrl)
             .HasMaxLength(500)
@@ -66,7 +70,7 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
         builder.HasOne(d => d.Parent)
             .WithMany(p => p.InverseParent)
             .HasForeignKey(d => d.ParentId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
         builder.HasIndex(e => e.ParentId)

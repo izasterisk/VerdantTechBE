@@ -30,10 +30,10 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .ValueGeneratedOnAdd();
 
         // Foreign Keys
-        builder.Property(e => e.CategoryId)
+        builder.Property(e => e.ForumCategoryId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
-            .HasColumnName("category_id");
+            .HasColumnName("forum_category_id");
 
         builder.Property(e => e.UserId)
             .HasColumnType("bigint unsigned")
@@ -94,10 +94,6 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .HasDefaultValue(ForumPostStatus.Visible);
 
         // DateTime fields
-        builder.Property(e => e.LastActivityAt)
-            .HasColumnType("timestamp")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP")
-            .HasColumnName("last_activity_at");
 
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
@@ -112,20 +108,20 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
         // Foreign Key Relationships
 
         // Relationship with ForumCategory
-        builder.HasOne(d => d.Category)
+        builder.HasOne(d => d.ForumCategory)
             .WithMany(p => p.ForumPosts)
-            .HasForeignKey(d => d.CategoryId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(d => d.ForumCategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Relationship with User (post author)
         builder.HasOne(d => d.User)
             .WithMany(p => p.ForumPosts)
             .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
 
         // Indexes
-        builder.HasIndex(e => e.CategoryId)
+        builder.HasIndex(e => e.ForumCategoryId)
             .HasDatabaseName("idx_category");
 
         builder.HasIndex(e => e.UserId)
@@ -138,8 +134,6 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
         builder.HasIndex(e => new { e.Status, e.IsPinned })
             .HasDatabaseName("idx_status_pinned");
 
-        builder.HasIndex(e => e.LastActivityAt)
-            .HasDatabaseName("idx_last_activity");
 
         // Full-text search index - chỉ search title theo schema mới
         builder.HasIndex(e => e.Title)

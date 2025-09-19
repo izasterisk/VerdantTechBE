@@ -1,59 +1,65 @@
--- SEEDER DATA FOR VERDANTTECH DATABASE v7.0
+-- SEEDER DATA FOR VERDANTTECH DATABASE v7.1
 -- All passwords are: $2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS
--- Updated for schema v7: Added vendor role users, updated table names and structure
+-- Updated for schema v7.1: Added addresses table, updated foreign key references, structural changes
 -- Dates adjusted to be recent as of 2025-09-15, ensured foreign key consistency
 
+-- Insert Addresses (new table in v7.1 for centralized address management)
+INSERT INTO `addresses` (`id`, `location_address`, `province`, `district`, `commune`, `latitude`, `longitude`, `created_at`, `updated_at`) VALUES
+(1, 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', 'TP.HCM', 'Quận 7', 'Phường Tân Phong', 10.72890000, 106.71940000, '2025-09-08 08:00:00', '2025-09-08 08:00:00'),
+(2, 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', 'TP.HCM', 'Quận Tân Bình', 'Phường 15', 10.80150000, 106.65340000, '2025-09-08 08:30:00', '2025-09-08 08:30:00'),
+(3, 'Số 123 Đường Nông Nghiệp, Tân Phong', 'Đồng Nai', 'Biên Hòa', 'Tân Phong', 10.94740000, 106.82420000, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(4, 'Số 456 Đường Nông Thôn, Đức Hòa Thượng', 'Long An', 'Đức Hòa', 'Đức Hòa Thượng', 10.88080000, 106.39220000, '2025-09-08 10:30:00', '2025-09-08 10:30:00');
+
 -- Insert Users (with gmail.com emails, consistent password, and vendor role users)
-INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `RefreshToken`, `RefreshTokenExpiresAt`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'admin@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'admin', 'Quản trị viên hệ thống', '0901234567', 1, NULL, NULL, NULL, 'active', '2025-09-09 08:00:00', NULL, NULL, '2025-09-08 07:00:00', '2025-09-09 08:00:00', NULL),
-(2, 'staff1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Nguyễn Văn Nhân Viên 1', '0901234568', 1, NULL, NULL, NULL, 'active', '2025-09-09 07:30:00', NULL, NULL, '2025-09-08 07:00:00', '2025-09-09 07:30:00', NULL),
-(3, 'staff2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Trần Thị Nhân Viên 2', '0901234569', 1, NULL, NULL, NULL, 'active', '2025-09-09 07:00:00', NULL, NULL, '2025-09-08 08:00:00', '2025-09-09 07:00:00', NULL),
-(4, 'staff3@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Lê Văn Nhân Viên 3', '0901234570', 1, NULL, NULL, NULL, 'active', '2025-09-09 06:30:00', NULL, NULL, '2025-09-08 08:30:00', '2025-09-09 06:30:00', NULL),
+INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `tax_code`, `address_id`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `RefreshToken`, `RefreshTokenExpiresAt`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'admin@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'admin', 'Quản trị viên hệ thống', '0901234567', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:00:00', NULL, NULL, '2025-09-08 07:00:00', '2025-09-09 08:00:00', NULL),
+(2, 'staff1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Nguyễn Văn Nhân Viên 1', '0901234568', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 07:30:00', NULL, NULL, '2025-09-08 07:00:00', '2025-09-09 07:30:00', NULL),
+(3, 'staff2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Trần Thị Nhân Viên 2', '0901234569', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 07:00:00', NULL, NULL, '2025-09-08 08:00:00', '2025-09-09 07:00:00', NULL),
+(4, 'staff3@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Lê Văn Nhân Viên 3', '0901234570', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 06:30:00', NULL, NULL, '2025-09-08 08:30:00', '2025-09-09 06:30:00', NULL),
 -- Vendor users (NEW in v7)
-(5, 'vendor1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Thiết Bị Nông Nghiệp Xanh', '0901234571', 1, NULL, NULL, NULL, 'active', '2025-09-09 08:15:00', NULL, NULL, '2025-09-08 09:00:00', '2025-09-09 08:15:00', NULL),
-(6, 'vendor2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Cửa Hàng Nông Sản Sạch VerdantTech', '0901234572', 1, NULL, NULL, NULL, 'active', '2025-09-09 08:10:00', NULL, NULL, '2025-09-08 09:30:00', '2025-09-09 08:10:00', NULL),
+(5, 'vendor1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Thiết Bị Nông Nghiệp Xanh', '0901234571', 'MST123456789', 1, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:15:00', NULL, NULL, '2025-09-08 09:00:00', '2025-09-09 08:15:00', NULL),
+(6, 'vendor2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Cửa Hàng Nông Sản Sạch VerdantTech', '0901234572', 'MST987654321', 2, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:10:00', NULL, NULL, '2025-09-08 09:30:00', '2025-09-09 08:10:00', NULL),
 -- Customer users
-(7, 'customer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Phạm Văn Khách Hàng 1', '0901234573', 1, NULL, NULL, NULL, 'active', '2025-09-09 08:15:00', NULL, NULL, '2025-09-08 09:00:00', '2025-09-09 08:15:00', NULL),
-(8, 'customer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Hoàng Thị Khách Hàng 2', '0901234574', 1, NULL, NULL, NULL, 'active', '2025-09-09 08:10:00', NULL, NULL, '2025-09-08 09:30:00', '2025-09-09 08:10:00', NULL),
-(9, 'farmer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Nguyễn Văn Nông Dân 1', '0901234575', 1, NULL, NULL, NULL, 'active', '2025-09-09 06:00:00', NULL, NULL, '2025-09-08 10:00:00', '2025-09-09 06:00:00', NULL),
-(10, 'farmer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Trần Thị Nông Dân 2', '0901234576', 1, NULL, NULL, NULL, 'active', '2025-09-09 05:30:00', NULL, NULL, '2025-09-08 10:30:00', '2025-09-09 05:30:00', NULL),
-(11, 'testuser@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Test', '0901234577', 0, 'test-token-123', '2025-09-09 07:00:00', NULL, 'active', NULL, NULL, NULL, '2025-09-09 07:00:00', '2025-09-09 07:00:00', NULL),
-(12, 'inactive@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Không Hoạt Động', '0901234578', 1, NULL, NULL, NULL, 'inactive', '2025-09-08 15:00:00', NULL, NULL, '2025-09-08 11:00:00', '2025-09-08 15:00:00', NULL);
+(7, 'customer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Phạm Văn Khách Hàng 1', '0901234573', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:15:00', NULL, NULL, '2025-09-08 09:00:00', '2025-09-09 08:15:00', NULL),
+(8, 'customer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Hoàng Thị Khách Hàng 2', '0901234574', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:10:00', NULL, NULL, '2025-09-08 09:30:00', '2025-09-09 08:10:00', NULL),
+(9, 'farmer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Nguyễn Văn Nông Dân 1', '0901234575', NULL, 3, 1, NULL, NULL, NULL, 'active', '2025-09-09 06:00:00', NULL, NULL, '2025-09-08 10:00:00', '2025-09-09 06:00:00', NULL),
+(10, 'farmer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Trần Thị Nông Dân 2', '0901234576', NULL, 4, 1, NULL, NULL, NULL, 'active', '2025-09-09 05:30:00', NULL, NULL, '2025-09-08 10:30:00', '2025-09-09 05:30:00', NULL),
+(11, 'testuser@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Test', '0901234577', NULL, NULL, 0, 'test-token-123', '2025-09-09 07:00:00', NULL, 'active', NULL, NULL, NULL, '2025-09-09 07:00:00', '2025-09-09 07:00:00', NULL),
+(12, 'inactive@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Không Hoạt Động', '0901234578', NULL, NULL, 1, NULL, NULL, NULL, 'inactive', '2025-09-08 15:00:00', NULL, NULL, '2025-09-08 11:00:00', '2025-09-08 15:00:00', NULL);
 
 -- Insert Vendor Profiles (for vendor users)
-INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `company_address`, `province`, `district`, `commune`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
-(1, 5, 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'cong-ty-thiet-bi-nong-nghiep-xanh', 'BRN123456789', 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', 'TP.HCM', 'Quận 7', 'Phường Tân Phong', '2025-09-09 07:00:00', 1, '2025-09-08 08:00:00', '2025-09-09 07:00:00'),
-(2, 6, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', 'TP.HCM', 'Quận Tân Bình', 'Phường 15', '2025-09-09 06:30:00', 1, '2025-09-08 08:30:00', '2025-09-09 06:30:00');
+INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
+(1, 5, 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'cong-ty-thiet-bi-nong-nghiep-xanh', 'BRN123456789', '2025-09-09 07:00:00', 1, '2025-09-08 08:00:00', '2025-09-09 07:00:00'),
+(2, 6, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', '2025-09-09 06:30:00', 1, '2025-09-08 08:30:00', '2025-09-09 06:30:00');
 
--- Insert Vendor Bank Accounts (v7 structure with direct bank_code)
+-- Insert Vendor Bank Accounts (v7.1 structure with direct bank_code and vendor_id referencing users table)
 INSERT INTO `vendor_bank_accounts` (`id`, `vendor_id`, `bank_code`, `account_number`, `account_holder`, `is_default`, `created_at`, `updated_at`) VALUES
-(1, 1, 'VCB', '1234567890', 'Công Ty Thiết Bị Nông Nghiệp Xanh', 1, '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
-(2, 2, 'ACB', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', 1, '2025-09-09 06:35:00', '2025-09-09 06:35:00');
+(1, 5, 'VCB', '1234567890', 'Công Ty Thiết Bị Nông Nghiệp Xanh', 1, '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
+(2, 6, 'ACB', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', 1, '2025-09-09 06:35:00', '2025-09-09 06:35:00');
 
 -- Insert Wallets
 INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `pending_withdraw`, `created_at`, `updated_at`) VALUES
-(1, 1, 10000000.00, 0.00, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
-(2, 2, 2500000.00, 0.00, '2025-09-09 08:00:00', '2025-09-09 08:00:00');
+(1, 5, 10000000.00, 0.00, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
+(2, 6, 2500000.00, 0.00, '2025-09-09 08:00:00', '2025-09-09 08:00:00');
 
--- Insert Vendor Certificates (v7 structure - renamed from vendor_sustainability_credentials)
+-- Insert Vendor Certificates (v7.1 structure - renamed from vendor_sustainability_credentials)
 INSERT INTO `vendor_certificates` (`id`, `vendor_id`, `certification_code`, `certification_name`, `certificate_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
 -- Vendor 1 (Công Ty Thiết Bị Nông Nghiệp Xanh) certificates
-(1, 1, 'ISO14001', 'ISO 14001 Environmental Management', 'https://example.com/certificates/vendor1_iso14001.pdf', 'verified', NULL, '2025-09-08 09:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:00:00', '2025-09-09 07:00:00'),
-(2, 1, 'ISO50001', 'ISO 50001 Energy Management', 'https://example.com/certificates/vendor1_iso50001.pdf', 'verified', NULL, '2025-09-08 09:15:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:15:00', '2025-09-09 07:00:00'),
-(3, 1, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'https://example.com/certificates/vendor1_carbon_neutral.pdf', 'verified', NULL, '2025-09-08 09:30:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:30:00', '2025-09-09 07:00:00'),
-(4, 1, 'HACCP', 'HACCP - Hazard Analysis Critical Control Points', 'https://example.com/certificates/vendor1_haccp.pdf', 'pending', NULL, '2025-09-09 08:00:00', NULL, NULL, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
+(1, 5, 'ISO14001', 'ISO 14001 Environmental Management', 'https://example.com/certificates/vendor1_iso14001.pdf', 'verified', NULL, '2025-09-08 09:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:00:00', '2025-09-09 07:00:00'),
+(2, 5, 'ISO50001', 'ISO 50001 Energy Management', 'https://example.com/certificates/vendor1_iso50001.pdf', 'verified', NULL, '2025-09-08 09:15:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:15:00', '2025-09-09 07:00:00'),
+(3, 5, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'https://example.com/certificates/vendor1_carbon_neutral.pdf', 'verified', NULL, '2025-09-08 09:30:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:30:00', '2025-09-09 07:00:00'),
+(4, 5, 'HACCP', 'HACCP - Hazard Analysis Critical Control Points', 'https://example.com/certificates/vendor1_haccp.pdf', 'pending', NULL, '2025-09-09 08:00:00', NULL, NULL, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
 
 -- Vendor 2 (Cửa Hàng Nông Sản Sạch VerdantTech) certificates  
-(5, 2, 'USDA_ORGANIC', 'USDA Organic Certification', 'https://example.com/certificates/vendor2_usda_organic.pdf', 'verified', NULL, '2025-09-08 10:00:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:00:00', '2025-09-09 06:30:00'),
-(6, 2, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'https://example.com/certificates/vendor2_vietgap.pdf', 'verified', NULL, '2025-09-08 10:15:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:15:00', '2025-09-09 06:30:00'),
-(7, 2, 'FAIRTRADE', 'Fairtrade International Certification', 'https://example.com/certificates/vendor2_fairtrade.pdf', 'verified', NULL, '2025-09-08 10:30:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:30:00', '2025-09-09 06:30:00'),
-(8, 2, 'NON_GMO', 'Non-GMO Project Verified', 'https://example.com/certificates/vendor2_non_gmo.pdf', 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-09-09 09:00:00', '2025-09-09 10:00:00', 1, '2025-09-09 09:00:00', '2025-09-09 10:00:00');
+(5, 6, 'USDA_ORGANIC', 'USDA Organic Certification', 'https://example.com/certificates/vendor2_usda_organic.pdf', 'verified', NULL, '2025-09-08 10:00:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:00:00', '2025-09-09 06:30:00'),
+(6, 6, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'https://example.com/certificates/vendor2_vietgap.pdf', 'verified', NULL, '2025-09-08 10:15:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:15:00', '2025-09-09 06:30:00'),
+(7, 6, 'FAIRTRADE', 'Fairtrade International Certification', 'https://example.com/certificates/vendor2_fairtrade.pdf', 'verified', NULL, '2025-09-08 10:30:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:30:00', '2025-09-09 06:30:00'),
+(8, 6, 'NON_GMO', 'Non-GMO Project Verified', 'https://example.com/certificates/vendor2_non_gmo.pdf', 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-09-09 09:00:00', '2025-09-09 10:00:00', 1, '2025-09-09 09:00:00', '2025-09-09 10:00:00');
 
 -- Insert Farm Profiles
--- Insert Farm Profiles
-INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `location_address`, `province`, `district`, `commune`, `latitude`, `longitude`, `primary_crops`, `status`, `created_at`, `updated_at`) VALUES
-(1, 9, 'Trang trại Xanh Sạch Đồng Nai', 5.50, 'Số 123 Đường Nông Nghiệp, Tân Phong', 'Đồng Nai', 'Biên Hòa', 'Tân Phong', 10.94740000, 106.82420000, 'Lúa, Rau xanh, Cà chua', 'Active', '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
-(2, 10, 'Trang trại Hữu Cơ Long An', 8.25, 'Số 456 Đường Nông Thôn, Đức Hòa Thượng', 'Long An', 'Đức Hòa', 'Đức Hòa Thượng', 10.88080000, 106.39220000, 'Rau củ, Trái cây, Thảo dược', 'Active', '2025-09-08 10:30:00', '2025-09-09 05:30:00');
+INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `primary_crops`, `status`, `created_at`, `updated_at`) VALUES
+(1, 9, 'Trang trại Xanh Sạch Đồng Nai', 5.50, 3, 'Lúa, Rau xanh, Cà chua', 'Active', '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
+(2, 10, 'Trang trại Hữu Cơ Long An', 8.25, 4, 'Rau củ, Trái cây, Thảo dược', 'Active', '2025-09-08 10:30:00', '2025-09-09 05:30:00');
 
 -- Insert Product Categories
 INSERT INTO `product_categories` (`id`, `parent_id`, `name`, `slug`, `description`, `icon_url`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -64,13 +70,13 @@ INSERT INTO `product_categories` (`id`, `parent_id`, `name`, `slug`, `descriptio
 (5, 4, 'Hạt Giống Rau', 'hat-giong-rau', 'Hạt giống rau củ hữu cơ', NULL, 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
 (6, NULL, 'Phân Bón', 'phan-bon', 'Phân bón hữu cơ và hóa học', NULL, 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00');
 
--- Insert Products (v7 structure - added vendor_id, removed name_en, description_en, is_featured)
-INSERT INTO `products` (`id`, `category_id`, `vendor_id`, `product_code`, `name`, `slug`, `description`, `price`, `cost_price`, `commission_rate`, `discount_percentage`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `images`, `warranty_months`, `stock_quantity`, `weight_kg`, `dimensions_cm`, `is_active`, `view_count`, `sold_count`, `rating_average`, `total_reviews`, `created_at`, `updated_at`) VALUES
-(1, 2, 1, 'TC001', 'Máy Cày Mini Điện VerdantTech V1', 'may-cay-mini-dien-verdanttech-v1', 'Máy cày mini sử dụng năng lượng điện, thân thiện với môi trường, phù hợp cho nông trại nhỏ.', 25000000.00, 20000000.00, 10.00, 10.00, 'A++', '{"power": "10kW", "battery": "48V 100Ah"}', 'manual_tc001.pdf', 'tc001_1.jpg,tc001_2.jpg', 24, 50, 500.000, '{"length": 250, "width": 120, "height": 150}', 1, 120, 5, 4.60, 25, '2025-09-08 07:00:00', '2025-09-09 07:00:00'),
-(2, 3, 1, 'HV002', 'Máy Gặt Lúa Tự Động VerdantTech H2', 'may-gat-lua-tu-dong-verdanttech-h2', 'Máy gặt lúa tự động với công nghệ AI, tiết kiệm thời gian và công sức.', 150000000.00, 120000000.00, 8.00, 5.00, 'A+', '{"engine": "Diesel 50HP", "capacity": "2 tons/hour"}', 'manual_hv002.pdf', 'hv002_1.jpg,hv002_2.jpg', 36, 10, 2500.000, '{"length": 450, "width": 200, "height": 250}', 1, 85, 3, 4.80, 15, '2025-09-08 07:15:00', '2025-09-09 07:15:00'),
-(3, 5, 2, 'SD003', 'Hạt Giống Rau Cải Xanh Hữu Cơ', 'hat-giong-rau-cai-xanh-huu-co', 'Hạt giống rau cải xanh hữu cơ, tỷ lệ nảy mầm cao, kháng bệnh tốt.', 50000.00, 30000.00, 5.00, 0.00, NULL, '{"germination_rate": "95%", "pack_size": "100g"}', 'manual_sd003.pdf', 'sd003_1.jpg', 0, 200, 0.100, '{"length": 10, "width": 5, "height": 2}', 1, 200, 50, 4.50, 30, '2025-09-08 07:30:00', '2025-09-09 07:30:00'),
-(4, 6, 2, 'FT004', 'Phân Bón Hữu Cơ Compost Premium', 'phan-bon-huu-co-compost-premium', 'Phân bón hữu cơ từ compost, giàu dinh dưỡng, an toàn cho đất và cây trồng.', 100000.00, 70000.00, 7.00, 10.00, NULL, '{"npk": "5-5-5", "weight": "25kg"}', 'manual_ft004.pdf', 'ft004_1.jpg,ft004_2.jpg', 0, 100, 25.000, '{"length": 50, "width": 30, "height": 10}', 1, 150, 20, 4.70, 18, '2025-09-08 07:45:00', '2025-09-09 07:45:00'),
-(5, 1, 1, 'DR005', 'Drone Phun Thuốc Thông Minh VerdantTech D3', 'drone-phun-thuoc-thong-minh-verdanttech-d3', 'Drone phun thuốc tự động với AI, chính xác cao, tiết kiệm thuốc.', 30000000.00, 25000000.00, 12.00, 15.00, 'A', '{"flight_time": "30min", "capacity": "10L"}', 'manual_dr005.pdf', 'dr005_1.jpg,dr005_2.jpg', 12, 15, 5.000, '{"length": 100, "width": 100, "height": 50}', 1, 90, 7, 4.40, 12, '2025-09-08 08:00:00', '2025-09-09 08:00:00');
+-- Insert Products (v7.1 structure - updated column names and vendor_id referencing users table)
+INSERT INTO `products` (`id`, `category_id`, `vendor_id`, `product_code`, `product_name`, `slug`, `description`, `unit_price`, `commission_rate`, `discount_percentage`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `images`, `warranty_months`, `stock_quantity`, `weight_kg`, `dimensions_cm`, `is_active`, `view_count`, `sold_count`, `rating_average`, `created_at`, `updated_at`) VALUES
+(1, 2, 5, 'TC001', 'Máy Cày Mini Điện VerdantTech V1', 'may-cay-mini-dien-verdanttech-v1', 'Máy cày mini sử dụng năng lượng điện, thân thiện với môi trường, phù hợp cho nông trại nhỏ.', 25000000.00, 10.00, 10.00, 'A++', '{"power": "10kW", "battery": "48V 100Ah"}', 'manual_tc001.pdf', 'tc001_1.jpg,tc001_2.jpg', 24, 50, 500.000, '{"length": 250, "width": 120, "height": 150}', 1, 120, 5, 4.60, '2025-09-08 07:00:00', '2025-09-09 07:00:00'),
+(2, 3, 5, 'HV002', 'Máy Gặt Lúa Tự Động VerdantTech H2', 'may-gat-lua-tu-dong-verdanttech-h2', 'Máy gặt lúa tự động với công nghệ AI, tiết kiệm thời gian và công sức.', 150000000.00, 8.00, 5.00, 'A+', '{"engine": "Diesel 50HP", "capacity": "2 tons/hour"}', 'manual_hv002.pdf', 'hv002_1.jpg,hv002_2.jpg', 36, 10, 2500.000, '{"length": 450, "width": 200, "height": 250}', 1, 85, 3, 4.80, '2025-09-08 07:15:00', '2025-09-09 07:15:00'),
+(3, 5, 6, 'SD003', 'Hạt Giống Rau Cải Xanh Hữu Cơ', 'hat-giong-rau-cai-xanh-huu-co', 'Hạt giống rau cải xanh hữu cơ, tỷ lệ nảy mầm cao, kháng bệnh tốt.', 50000.00, 5.00, 0.00, NULL, '{"germination_rate": "95%", "pack_size": "100g"}', 'manual_sd003.pdf', 'sd003_1.jpg', 0, 200, 0.100, '{"length": 10, "width": 5, "height": 2}', 1, 200, 50, 4.50, '2025-09-08 07:30:00', '2025-09-09 07:30:00'),
+(4, 6, 6, 'FT004', 'Phân Bón Hữu Cơ Compost Premium', 'phan-bon-huu-co-compost-premium', 'Phân bón hữu cơ từ compost, giàu dinh dưỡng, an toàn cho đất và cây trồng.', 100000.00, 7.00, 10.00, NULL, '{"npk": "5-5-5", "weight": "25kg"}', 'manual_ft004.pdf', 'ft004_1.jpg,ft004_2.jpg', 0, 100, 25.000, '{"length": 50, "width": 30, "height": 10}', 1, 150, 20, 4.70, '2025-09-08 07:45:00', '2025-09-09 07:45:00'),
+(5, 1, 5, 'DR005', 'Drone Phun Thuốc Thông Minh VerdantTech D3', 'drone-phun-thuoc-thong-minh-verdanttech-d3', 'Drone phun thuốc tự động với AI, chính xác cao, tiết kiệm thuốc.', 30000000.00, 12.00, 15.00, 'A', '{"flight_time": "30min", "capacity": "10L"}', 'manual_dr005.pdf', 'dr005_1.jpg,dr005_2.jpg', 12, 15, 5.000, '{"length": 100, "width": 100, "height": 50}', 1, 90, 7, 4.40, '2025-09-08 08:00:00', '2025-09-09 08:00:00');
 
 -- Insert Product Certificates (v7 structure - renamed from product_sustainability_credentials)
 INSERT INTO `product_certificates` (`id`, `product_id`, `certification_code`, `certification_name`, `certificate_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
@@ -96,7 +102,7 @@ INSERT INTO `cart` (`id`, `user_id`, `created_at`, `updated_at`) VALUES
 (2, 8, '2025-09-15 09:00:00', '2025-09-15 09:15:00'),
 (3, 9, '2025-09-15 10:00:00', '2025-09-15 10:00:00');
 
--- Insert Cart Items (new table in v7)
+-- Insert Cart Items (new table in v7.1)
 INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `quantity`, `unit_price`, `created_at`, `updated_at`) VALUES
 (1, 1, 3, 5, 50000.00, '2025-09-15 08:00:00', '2025-09-15 08:00:00'),
 (2, 1, 4, 2, 100000.00, '2025-09-15 08:15:00', '2025-09-15 08:15:00'),
@@ -104,11 +110,11 @@ INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `quantity`, `unit_price
 (4, 2, 5, 1, 30000000.00, '2025-09-15 09:10:00', '2025-09-15 09:10:00'),
 (5, 3, 3, 10, 50000.00, '2025-09-15 10:00:00', '2025-09-15 10:00:00');
 
--- Insert Product Registrations (new table in v7)
+-- Insert Product Registrations (new table in v7.1)
 INSERT INTO `product_registrations` (`id`, `vendor_id`, `category_id`, `product_code`, `name`, `description`, `price`, `commission_rate`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `images`, `warranty_months`, `weight_kg`, `dimensions_cm`, `status`, `rejection_reason`, `approved_by`, `created_at`, `reviewed_at`) VALUES
-(1, 1, 2, 'TC002', 'Máy Cày Điện Eco V2', 'Phiên bản cải tiến của máy cày điện với pin lớn hơn', 28000000.00, 10.00, 'A++', '{"power": "12kW", "battery": "48V 120Ah", "working_time": "6 hours"}', 'manual_eco_v2.pdf', 'eco_v2_1.jpg,eco_v2_2.jpg', 24, 520.000, '{"length": 260, "width": 125, "height": 155}', 'pending', NULL, NULL, '2025-09-15 07:00:00', NULL),
-(2, 2, 5, 'SD004', 'Hạt Giống Rau Spinach Premium', 'Hạt giống rau spinach hữu cơ cao cấp', 60000.00, 5.00, NULL, '{"germination_rate": "98%", "pack_size": "50g", "origin": "Netherlands"}', 'manual_spinach.pdf', 'spinach_1.jpg', 0, 0.050, '{"length": 8, "width": 4, "height": 2}', 'approved', NULL, 1, '2025-09-14 14:00:00', '2025-09-15 08:00:00'),
-(3, 1, 1, 'IR001', 'Hệ Thống Tưới Thông Minh AI', 'Hệ thống tưới tự động với AI để tối ưu hóa nước', 15000000.00, 12.00, 'A', '{"coverage": "1 hectare", "sensors": "soil moisture, weather", "connectivity": "WiFi, 4G"}', 'manual_smart_irrigation.pdf', 'smart_irrigation_1.jpg,smart_irrigation_2.jpg', 36, 50.000, '{"length": 200, "width": 150, "height": 100}', 'rejected', 'Cần bổ sung thông tin kỹ thuật về cảm biến', 2, '2025-09-13 10:00:00', '2025-09-14 16:00:00');
+(1, 5, 2, 'TC002', 'Máy Cày Điện Eco V2', 'Phiên bản cải tiến của máy cày điện với pin lớn hơn', 28000000.00, 10.00, 'A++', '{"power": "12kW", "battery": "48V 120Ah", "working_time": "6 hours"}', 'manual_eco_v2.pdf', 'eco_v2_1.jpg,eco_v2_2.jpg', 24, 520.000, '{"length": 260, "width": 125, "height": 155}', 'pending', NULL, NULL, '2025-09-15 07:00:00', NULL),
+(2, 6, 5, 'SD004', 'Hạt Giống Rau Spinach Premium', 'Hạt giống rau spinach hữu cơ cao cấp', 60000.00, 5.00, NULL, '{"germination_rate": "98%", "pack_size": "50g", "origin": "Netherlands"}', 'manual_spinach.pdf', 'spinach_1.jpg', 0, 0.050, '{"length": 8, "width": 4, "height": 2}', 'approved', NULL, 1, '2025-09-14 14:00:00', '2025-09-15 08:00:00'),
+(3, 5, 1, 'IR001', 'Hệ Thống Tưới Thông Minh AI', 'Hệ thống tưới tự động với AI để tối ưu hóa nước', 15000000.00, 12.00, 'A', '{"coverage": "1 hectare", "sensors": "soil moisture, weather", "connectivity": "WiFi, 4G"}', 'manual_smart_irrigation.pdf', 'smart_irrigation_1.jpg,smart_irrigation_2.jpg', 36, 50.000, '{"length": 200, "width": 150, "height": 100}', 'rejected', 'Cần bổ sung thông tin kỹ thuật về cảm biến', 2, '2025-09-13 10:00:00', '2025-09-14 16:00:00');
 
 -- Insert Forum Categories
 INSERT INTO `forum_categories` (`id`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES

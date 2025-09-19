@@ -23,10 +23,10 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
             .IsRequired()
             .HasColumnName("farm_profile_id");
             
-        builder.Property(e => e.UserId)
+        builder.Property(e => e.CustomerId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
-            .HasColumnName("user_id");
+            .HasColumnName("customer_id");
         
         // Date field
         builder.Property(e => e.MeasurementDate)
@@ -75,19 +75,19 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
         builder.HasOne(d => d.FarmProfile)
             .WithMany(p => p.EnvironmentalData)
             .HasForeignKey(d => d.FarmProfileId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
             
-        builder.HasOne(d => d.User)
-            .WithMany(p => p.EnvironmentalData)
-            .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(d => d.Customer)
+            .WithMany(p => p.EnvironmentalDataAsCustomer)
+            .HasForeignKey(d => d.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
         builder.HasIndex(e => new { e.FarmProfileId, e.MeasurementDate })
             .HasDatabaseName("idx_farm_date");
             
-        builder.HasIndex(e => e.UserId)
-            .HasDatabaseName("idx_user");
+        builder.HasIndex(e => e.CustomerId)
+            .HasDatabaseName("idx_customer");
             
         builder.HasIndex(e => e.MeasurementDate)
             .HasDatabaseName("idx_date");

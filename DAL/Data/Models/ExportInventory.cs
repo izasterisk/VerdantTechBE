@@ -15,7 +15,6 @@ public partial class ExportInventory
 
     public int Quantity { get; set; }
 
-    public decimal UnitSalePrice { get; set; }
 
     public int BalanceAfter { get; set; }
 
@@ -28,6 +27,8 @@ public partial class ExportInventory
     public ulong CreatedBy { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
     public virtual Product Product { get; set; } = null!;

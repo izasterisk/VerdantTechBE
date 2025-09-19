@@ -36,37 +36,10 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .HasPrecision(10, 2)
             .HasColumnName("farm_size_hectares");
             
-        builder.Property(e => e.LocationAddress)
-            .HasColumnType("text")
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("location_address");
-            
-        builder.Property(e => e.Province)
-            .HasMaxLength(100)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
-            
-        builder.Property(e => e.District)
-            .HasMaxLength(100)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
-            
-        builder.Property(e => e.Commune)
-            .HasMaxLength(100)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+        builder.Property(e => e.AddressId)
+            .HasColumnType("bigint unsigned")
+            .HasColumnName("address_id");
         
-        // Coordinates
-        builder.Property(e => e.Latitude)
-            .HasPrecision(10, 8)
-            .HasComment("Farm latitude coordinate")
-            .HasColumnName("latitude");
-            
-        builder.Property(e => e.Longitude)
-            .HasPrecision(11, 8)
-            .HasComment("Farm longitude coordinate")
-            .HasColumnName("longitude");
         
         
         // Simple text fields
@@ -94,24 +67,22 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
             .HasColumnName("updated_at");
         
-        // Foreign Key Relationship (1 User -> Many FarmProfiles)
+        // Foreign Key Relationships
         builder.HasOne(d => d.User)
             .WithMany(p => p.FarmProfiles)
             .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        builder.HasOne(d => d.Address)
+            .WithMany(p => p.FarmProfiles)
+            .HasForeignKey(d => d.AddressId)
+            .OnDelete(DeleteBehavior.Restrict);
         
-        // Indexes (removed unique constraint on UserId)
-        builder.HasIndex(e => e.UserId)
-            .HasDatabaseName("idx_user_id");
-            
         // Indexes
-        builder.HasIndex(e => new { e.Province, e.District })
-            .HasDatabaseName("idx_location");
+        builder.HasIndex(e => e.UserId)
+            .HasDatabaseName("idx_user");
             
-        builder.HasIndex(e => e.FarmSizeHectares)
-            .HasDatabaseName("idx_farm_size");
-            
-        builder.HasIndex(e => e.Status)
-            .HasDatabaseName("idx_status");
+        builder.HasIndex(e => e.AddressId)
+            .HasDatabaseName("idx_address");
     }
 }

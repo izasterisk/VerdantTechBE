@@ -41,6 +41,6 @@ public partial class VendorCertificate
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual VendorProfile Vendor { get; set; } = null!;
+    public virtual User Vendor { get; set; } = null!;
     public virtual User? VerifiedByNavigation { get; set; }
 }

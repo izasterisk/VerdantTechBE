@@ -9,7 +9,7 @@ public partial class ForumPost
 {
     public ulong Id { get; set; }
 
-    public ulong CategoryId { get; set; }
+    public ulong ForumCategoryId { get; set; }
 
     public ulong UserId { get; set; }
 
@@ -43,14 +43,13 @@ public partial class ForumPost
 
     public ForumPostStatus Status { get; set; } = ForumPostStatus.Visible;
 
-    public DateTime LastActivityAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual ForumCategory Category { get; set; } = null!;
+    public virtual ForumCategory ForumCategory { get; set; } = null!;
     public virtual User User { get; set; } = null!;
     public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
 }

@@ -16,31 +16,17 @@ public partial class Transaction
     [StringLength(3)]
     public string Currency { get; set; } = "VND";
 
-    // Core references
     public ulong? OrderId { get; set; }
-    public ulong? CustomerId { get; set; }
-    public ulong? VendorId { get; set; }
-
-    // Wallet related fields
-    public ulong? WalletId { get; set; }
-    public decimal? BalanceBefore { get; set; }
-    public decimal? BalanceAfter { get; set; }
+    public ulong UserId { get; set; }
 
     // Status and metadata
     public TransactionStatus Status { get; set; } = TransactionStatus.Pending;
 
     [StringLength(255)]
-    public string Description { get; set; } = null!;
+    public string Note { get; set; } = null!;
 
-    /// <summary>
-    /// Additional transaction metadata (JSON)
-    /// </summary>
-    public Dictionary<string, object> Metadata { get; set; } = new();
-
-    // Reference to domain-specific tables
-    [StringLength(50)]
-    public string? ReferenceType { get; set; }
-    public ulong? ReferenceId { get; set; }
+    [StringLength(255)]
+    public string? GatewayPaymentId { get; set; }
 
     // Audit fields
     public ulong? CreatedBy { get; set; }
@@ -51,11 +37,9 @@ public partial class Transaction
 
     // Navigation Properties
     public virtual Order? Order { get; set; }
-    public virtual User? Customer { get; set; }
-    public virtual VendorProfile? Vendor { get; set; }
-    public virtual Wallet? Wallet { get; set; }
+    public virtual User User { get; set; } = null!;
     public virtual User? CreatedByNavigation { get; set; }
     public virtual User? ProcessedByNavigation { get; set; }
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public virtual ICollection<Cashout> Cashouts { get; set; } = new List<Cashout>();
+    public virtual ICollection<Wallet> WalletsAsLastTransaction { get; set; } = new List<Wallet>();
 }

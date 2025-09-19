@@ -16,8 +16,8 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
             
-        builder.Property(c => c.UserId)
-            .HasColumnName("user_id")
+        builder.Property(c => c.CustomerId)
+            .HasColumnName("customer_id")
             .HasColumnType("bigint unsigned")
             .IsRequired();
             
@@ -32,13 +32,13 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
         
         // Foreign Key constraints
-        builder.HasOne(c => c.User)
+        builder.HasOne(c => c.Customer)
             .WithMany(u => u.Carts)
-            .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(c => c.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Index
-        builder.HasIndex(c => c.UserId)
-            .HasDatabaseName("idx_user");
+        builder.HasIndex(c => c.CustomerId)
+            .HasDatabaseName("idx_customer");
     }
 }

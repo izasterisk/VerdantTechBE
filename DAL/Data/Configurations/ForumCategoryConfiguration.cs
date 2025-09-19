@@ -15,6 +15,7 @@ public class ForumCategoryConfiguration : IEntityTypeConfiguration<ForumCategory
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
+            .HasColumnName("id")
             .ValueGeneratedOnAdd();
         
         // Required string fields
@@ -22,12 +23,14 @@ public class ForumCategoryConfiguration : IEntityTypeConfiguration<ForumCategory
             .HasMaxLength(255)
             .IsRequired()
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("name");
             
         builder.Property(e => e.Description)
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("description");
         
         // Boolean default
         builder.Property(e => e.IsActive)

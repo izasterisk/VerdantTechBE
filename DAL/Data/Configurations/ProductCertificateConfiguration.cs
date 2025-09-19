@@ -84,7 +84,7 @@ public class ProductCertificateConfiguration : IEntityTypeConfiguration<ProductC
         builder.HasOne(d => d.Product)
             .WithMany(p => p.ProductCertificates)
             .HasForeignKey(d => d.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.VerifiedByNavigation)
             .WithMany(p => p.VerifiedProductCertificates)

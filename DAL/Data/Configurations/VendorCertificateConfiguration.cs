@@ -85,7 +85,7 @@ public class VendorCertificateConfiguration : IEntityTypeConfiguration<VendorCer
         builder.HasOne(d => d.Vendor)
             .WithMany(p => p.VendorCertificates)
             .HasForeignKey(d => d.VendorId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.VerifiedByNavigation)
             .WithMany(p => p.VerifiedVendorCertificates)

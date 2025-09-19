@@ -16,7 +16,7 @@ public partial class BatchInventory
     [StringLength(100)]
     public string Sku { get; set; } = null!;
 
-    public ulong? VendorProfileId { get; set; }
+    public ulong? VendorId { get; set; }
 
     [StringLength(100)]
     public string? BatchNumber { get; set; }
@@ -47,6 +47,6 @@ public partial class BatchInventory
 
     // Navigation Properties
     public virtual Product Product { get; set; } = null!;
-    public virtual VendorProfile? VendorProfile { get; set; }
+    public virtual User? Vendor { get; set; }
     public virtual User? QualityCheckedByNavigation { get; set; }
 }

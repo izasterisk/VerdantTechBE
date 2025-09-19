@@ -15,6 +15,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
+            .HasColumnName("id")
             .ValueGeneratedOnAdd();
         
         // Required fields
@@ -22,7 +23,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(255)
             .IsRequired()
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("email");
             
         builder.Property(e => e.PasswordHash)
             .HasMaxLength(255)
@@ -42,11 +44,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(e => e.Role)
             .HasConversion<string>()
             .HasColumnType("enum('customer','staff','vendor','admin')")
+            .HasColumnName("role")
             .HasDefaultValue(UserRole.Customer);
         
         builder.Property(e => e.Status)
             .HasConversion<string>()
             .HasColumnType("enum('active','inactive','suspended','deleted')")
+            .HasColumnName("status")
             .HasDefaultValue(UserStatus.Active);
         
         // Optional fields
@@ -55,6 +59,15 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("phone_number");
+            
+        builder.Property(e => e.TaxCode)
+            .HasMaxLength(100)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("tax_code");
+            
+        builder.Property(e => e.AddressId)
+            .HasColumnName("address_id");
             
         builder.Property(e => e.AvatarUrl)
             .HasMaxLength(500)
@@ -118,5 +131,19 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         
         builder.HasIndex(e => e.CreatedAt)
             .HasDatabaseName("idx_created_at");
+            
+        builder.HasIndex(e => e.AddressId)
+            .HasDatabaseName("idx_address");
+            
+        builder.HasIndex(e => e.TaxCode)
+            .IsUnique()
+            .HasDatabaseName("idx_tax_code");
+
+        // Foreign Key Relationships
+        builder.HasOne(e => e.Address)
+            .WithMany(a => a.Users)
+            .HasForeignKey(e => e.AddressId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .HasConstraintName("fk_users_address_id_addresses_id");
     }
 }

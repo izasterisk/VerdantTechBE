@@ -53,7 +53,7 @@ public class ChatbotMessageConfiguration : IEntityTypeConfiguration<ChatbotMessa
             .WithMany()
             .HasForeignKey(e => e.ConversationId)
             .HasConstraintName("fk_chatbot_messages_conversation_id")
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
         builder.HasIndex(e => e.ConversationId)

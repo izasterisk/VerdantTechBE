@@ -52,12 +52,12 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
         builder.HasOne(d => d.Cart)
             .WithMany(p => p.CartItems)
             .HasForeignKey(d => d.CartId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.Product)
             .WithMany(p => p.CartItems)
             .HasForeignKey(d => d.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Unique constraint
         builder.HasIndex(e => new { e.CartId, e.ProductId })

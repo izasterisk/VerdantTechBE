@@ -24,10 +24,6 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnName("order_id")
             .IsRequired();
             
-        // Foreign Key to Transaction
-        builder.Property(e => e.TransactionId)
-            .HasColumnType("bigint unsigned")
-            .HasColumnName("transaction_id");
         
         // Enum conversions
         builder.Property(e => e.PaymentMethod)
@@ -63,12 +59,12 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnType("enum('pending','processing','completed','failed','refunded','partially_refunded')")
             .HasDefaultValue(PaymentStatus.Pending);
         
-        // Gateway transaction ID
-        builder.Property(e => e.GatewayTransactionId)
+        // Gateway payment ID
+        builder.Property(e => e.GatewayPaymentId)
             .HasMaxLength(255)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("gateway_transaction_id");
+            .HasColumnName("gateway_payment_id");
         
         // Amount field
         builder.Property(e => e.Amount)
@@ -76,26 +72,6 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .IsRequired();
             
         // Refund fields
-        builder.Property(e => e.RefundAmount)
-            .HasPrecision(12, 2)
-            .HasDefaultValue(0.00m)
-            .HasColumnName("refund_amount");
-            
-        builder.Property(e => e.RefundReason)
-            .HasMaxLength(500)
-            .HasColumnName("refund_reason");
-            
-        builder.Property(e => e.RefundedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("refunded_at");
-            
-        builder.Property(e => e.PaidAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("paid_at");
-            
-        builder.Property(e => e.FailedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("failed_at");
         
         // JSON field for gateway response using JsonHelpers
         builder.Property(e => e.GatewayResponse)
@@ -118,27 +94,17 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasForeignKey(d => d.OrderId)
             .OnDelete(DeleteBehavior.Restrict);
             
-        builder.HasOne(d => d.Transaction)
-            .WithMany(p => p.Payments)
-            .HasForeignKey(d => d.TransactionId)
-            .OnDelete(DeleteBehavior.Restrict);
         
-        // Unique constraint for gateway transaction ID
-        builder.HasIndex(e => e.GatewayTransactionId)
+        // Unique constraint for gateway payment ID
+        builder.HasIndex(e => e.GatewayPaymentId)
             .IsUnique()
-            .HasDatabaseName("idx_unique_gateway_transaction");
+            .HasDatabaseName("idx_gateway_payment");
         
         // Indexes
         builder.HasIndex(e => e.OrderId)
             .HasDatabaseName("idx_order");
             
-        builder.HasIndex(e => e.TransactionId)
-            .HasDatabaseName("idx_transaction");
-            
         builder.HasIndex(e => e.Status)
             .HasDatabaseName("idx_status");
-            
-        builder.HasIndex(e => e.PaymentMethod)
-            .HasDatabaseName("idx_payment_method");
     }
 }

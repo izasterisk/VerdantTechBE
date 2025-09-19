@@ -9,7 +9,7 @@ public partial class Order
 {
     public ulong Id { get; set; }
 
-    public ulong UserId { get; set; }
+    public ulong CustomerId { get; set; }
 
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
@@ -23,10 +23,7 @@ public partial class Order
 
     public decimal TotalAmount { get; set; }
 
-    /// <summary>
-    /// Shipping address (JSON)
-    /// </summary>
-    public Dictionary<string, object> ShippingAddress { get; set; } = new();
+    public ulong AddressId { get; set; }
 
     [StringLength(100)]
     public string? ShippingMethod { get; set; }
@@ -53,7 +50,8 @@ public partial class Order
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual User User { get; set; } = null!;
+    public virtual User Customer { get; set; } = null!;
+    public virtual Address Address { get; set; } = null!;
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();

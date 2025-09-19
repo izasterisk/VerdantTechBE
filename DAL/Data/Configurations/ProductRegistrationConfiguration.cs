@@ -27,17 +27,18 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasColumnName("category_id")
             .IsRequired();
             
-        builder.Property(e => e.ProductCode)
+        builder.Property(e => e.ProposedProductCode)
             .HasMaxLength(100)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("product_code")
+            .HasColumnName("proposed_product_code")
             .IsRequired();
             
-        builder.Property(e => e.Name)
+        builder.Property(e => e.ProposedProductName)
             .HasMaxLength(255)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("proposed_product_name")
             .IsRequired();
             
         builder.Property(e => e.Description)
@@ -45,16 +46,12 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
             
-        builder.Property(e => e.Price)
+        builder.Property(e => e.UnitPrice)
             .HasPrecision(12, 2)
             .HasColumnType("decimal(12,2)")
+            .HasColumnName("unit_price")
             .IsRequired();
             
-        builder.Property(e => e.CommissionRate)
-            .HasPrecision(5, 2)
-            .HasColumnType("decimal(5,2)")
-            .HasColumnName("commission_rate")
-            .HasDefaultValue(0.00m);
             
         builder.Property(e => e.EnergyEfficiencyRating)
             .HasMaxLength(10)
@@ -114,9 +111,9 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .HasColumnName("created_at");
             
-        builder.Property(e => e.ReviewedAt)
+        builder.Property(e => e.ApprovedAt)
             .HasColumnType("timestamp")
-            .HasColumnName("reviewed_at");
+            .HasColumnName("approved_at");
         
         // Indexes
         builder.HasIndex(e => new { e.VendorId, e.Status })
@@ -129,7 +126,7 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
         builder.HasOne(e => e.Vendor)
             .WithMany()
             .HasForeignKey(e => e.VendorId)
-            .OnDelete(DeleteBehavior.Cascade)
+            .OnDelete(DeleteBehavior.Restrict)
             .HasConstraintName("fk_product_registrations__vendor_id__vendor_profiles__id");
             
         builder.HasOne(e => e.Category)

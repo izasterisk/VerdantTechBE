@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Text.Json;
 using DAL.Data.Models;
-using DAL.Data;
 
 namespace DAL.Data.Configurations;
 
@@ -19,10 +17,10 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
             .ValueGeneratedOnAdd();
         
         // Foreign Keys
-        builder.Property(e => e.UserId)
+        builder.Property(e => e.CustomerId)
             .HasColumnType("bigint unsigned")
             .IsRequired()
-            .HasColumnName("user_id");
+            .HasColumnName("customer_id");
         
         // Required string fields
         builder.Property(e => e.SessionId)
@@ -61,19 +59,16 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
             .HasColumnName("ended_at");
         
         // Foreign Key Relationships
-        builder.HasOne(d => d.User)
+        builder.HasOne(d => d.Customer)
             .WithMany(p => p.ChatbotConversations)
-            .HasForeignKey(d => d.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasForeignKey(d => d.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
-        builder.HasIndex(e => new { e.UserId, e.SessionId })
-            .HasDatabaseName("idx_user_session");
+        builder.HasIndex(e => e.CustomerId)
+            .HasDatabaseName("idx_customer");
             
-        builder.HasIndex(e => e.IsActive)
-            .HasDatabaseName("idx_active");
-            
-        builder.HasIndex(e => e.StartedAt)
-            .HasDatabaseName("idx_started");
+        builder.HasIndex(e => e.SessionId)
+            .HasDatabaseName("idx_session");
     }
 }

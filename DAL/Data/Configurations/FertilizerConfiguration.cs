@@ -58,7 +58,7 @@ public class FertilizerConfiguration : IEntityTypeConfiguration<Fertilizer>
         builder.HasOne(f => f.EnvironmentalData)
             .WithMany(e => e.Fertilizers)
             .HasForeignKey(f => f.EnvironmentalDataId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
         builder.HasIndex(f => f.EnvironmentalDataId)

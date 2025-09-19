@@ -35,10 +35,6 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
         builder.Property(e => e.Quantity)
             .IsRequired();
 
-        builder.Property(e => e.UnitSalePrice)
-            .HasColumnType("decimal(12,2)")
-            .IsRequired()
-            .HasColumnName("unit_sale_price");
 
         builder.Property(e => e.BalanceAfter)
             .IsRequired()
@@ -46,8 +42,13 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
 
         // Enum conversion for movement type
         builder.Property(e => e.MovementType)
-            .HasConversion<string>()
-            .HasColumnType("enum('sale','return','damage','loss','adjustment')")
+            .HasConversion(
+                v => v.ToString()
+                    .ToLowerInvariant()
+                    .Replace("returntovendor", "return to vendor"),
+                v => Enum.Parse<MovementType>(v
+                    .Replace("return to vendor", "ReturnToVendor"), true))
+            .HasColumnType("enum('sale','return to vendor','damage','loss','adjustment')")
             .HasDefaultValue(MovementType.Sale)
             .HasColumnName("movement_type");
 
@@ -62,12 +63,17 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .HasColumnName("created_at");
+            
+        builder.Property(e => e.UpdatedAt)
+            .HasColumnType("timestamp")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+            .HasColumnName("updated_at");
 
         // Foreign Key Relationships
         builder.HasOne(d => d.Product)
             .WithMany(p => p.ExportInventories)
             .HasForeignKey(d => d.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.Order)
             .WithMany(p => p.ExportInventories)

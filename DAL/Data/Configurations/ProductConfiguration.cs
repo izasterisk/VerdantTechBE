@@ -15,6 +15,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
+            .HasColumnName("id")
             .ValueGeneratedOnAdd();
         
         // Foreign Keys
@@ -36,23 +37,26 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("product_code");
             
-        builder.Property(e => e.Name)
+        builder.Property(e => e.ProductName)
             .HasMaxLength(255)
             .IsRequired()
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("product_name");
         
         // Optional string fields
         builder.Property(e => e.Slug)
             .HasMaxLength(255)
             .IsRequired()
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("slug");
             
         builder.Property(e => e.Description)
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("description");
             
         builder.Property(e => e.EnergyEfficiencyRating)
             .HasMaxLength(10)
@@ -61,14 +65,10 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("energy_efficiency_rating");
         
         // Decimal fields with precision
-        builder.Property(e => e.Price)
+        builder.Property(e => e.UnitPrice)
             .HasPrecision(12, 2)
-            .IsRequired();
-            
-        builder.Property(e => e.CostPrice)
-            .HasPrecision(12, 2)
-            .HasDefaultValue(0.00m)
-            .HasColumnName("cost_price");
+            .IsRequired()
+            .HasColumnName("unit_price");
             
         builder.Property(e => e.CommissionRate)
             .HasPrecision(5, 2)
@@ -97,6 +97,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             
         builder.Property(e => e.Images)
             .HasMaxLength(1000)
+            .HasColumnName("images")
             .IsRequired(false);
         
         // JSON fields - Using JsonHelpers for converter and comparer
@@ -115,9 +116,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(0)
             .HasColumnName("stock_quantity");
             
-        builder.Property(e => e.TotalReviews)
-            .HasDefaultValue(0)
-            .HasColumnName("total_reviews");
         
         // Big integer fields
         builder.Property(e => e.ViewCount)
@@ -153,7 +151,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.Vendor)
-            .WithMany(p => p.Products)
+            .WithMany(p => p.ProductsAsVendor)
             .HasForeignKey(d => d.VendorId)
             .OnDelete(DeleteBehavior.Restrict);
         
@@ -170,14 +168,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(e => e.CategoryId)
             .HasDatabaseName("idx_category");
             
-        builder.HasIndex(e => e.Price)
-            .HasDatabaseName("idx_price");
-            
-        builder.HasIndex(e => e.IsActive)
-            .HasDatabaseName("idx_active");
-        
-        // Full text index (only name and description in v7)
-        builder.HasIndex(e => new { e.Name, e.Description })
+        // Full text index (updated for v7.1)
+        builder.HasIndex(e => new { e.ProductName, e.Description })
             .HasAnnotation("MySql:FullTextIndex", true)
             .HasDatabaseName("idx_search");
     }

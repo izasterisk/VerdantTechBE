@@ -11,15 +11,18 @@ public partial class Wallet
 
     public decimal Balance { get; set; } = 0.00m;
 
-    public decimal PendingWithdraw { get; set; } = 0.00m;
+    public ulong? LastTransactionId { get; set; }
+
+    public ulong? LastUpdatedBy { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
     // Navigation
-    public virtual VendorProfile VendorProfile { get; set; } = null!;
-    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+    public virtual User Vendor { get; set; } = null!;
+    public virtual Transaction? LastTransaction { get; set; }
+    public virtual User? LastUpdatedByNavigation { get; set; }
 }
 
 

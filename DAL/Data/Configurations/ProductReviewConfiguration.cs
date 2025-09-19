@@ -70,19 +70,19 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
         builder.HasOne(d => d.Product)
             .WithMany(p => p.ProductReviews)
             .HasForeignKey(d => d.ProductId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Relationship with Order
         builder.HasOne(d => d.Order)
             .WithMany(p => p.ProductReviews)
             .HasForeignKey(d => d.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Relationship with User (customer/reviewer)
         builder.HasOne(d => d.Customer)
             .WithMany(p => p.ProductReviews)
             .HasForeignKey(d => d.CustomerId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
         
         // Unique constraint - one review per product per order per customer
         builder.HasIndex(e => new { e.ProductId, e.OrderId, e.CustomerId })
