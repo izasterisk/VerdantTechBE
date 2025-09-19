@@ -61,7 +61,6 @@ builder.Services.AddScoped<IRepository<Address>, Repository<Address>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IVendorProfilesRepository, VendorProfilesRepository>();
 builder.Services.AddScoped<IFarmProfileRepository, FarmProfileRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 // builder.Services.AddScoped<ISupportedBanksRepository, SupportedBanksRepository>();
@@ -69,7 +68,6 @@ builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFarmProfileService, FarmProfileService>();
-builder.Services.AddScoped<IVendorProfilesService, VendorProfilesService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
