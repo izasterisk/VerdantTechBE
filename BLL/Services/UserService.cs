@@ -21,7 +21,7 @@ public class UserService : IUserService
         _userRepository = userRepository;
     }
 
-    public async Task<UserReadOnlyDTO> CreateUserAsync(UserCreateDTO dto, CancellationToken cancellationToken = default)
+    public async Task<UserResponseDTO> CreateUserAsync(UserCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         
@@ -38,23 +38,23 @@ public class UserService : IUserService
         user.PasswordHash = AuthUtils.HashPassword(dto.Password);
         user.IsVerified = false;
         var createdUser = await _userRepository.CreateUserWithTransactionAsync(user, cancellationToken);
-        return _mapper.Map<UserReadOnlyDTO>(createdUser);
+        return _mapper.Map<UserResponseDTO>(createdUser);
     }
 
-    public async Task<UserReadOnlyDTO?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    public async Task<UserResponseDTO?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
-        return user == null ? null : _mapper.Map<UserReadOnlyDTO>(user);
+        return user == null ? null : _mapper.Map<UserResponseDTO>(user);
     }
 
-    public async Task<PagedResponse<UserReadOnlyDTO>> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)
+    public async Task<PagedResponse<UserResponseDTO>> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)
     {
         var (users, totalCount) = await _userRepository.GetAllUsersAsync(page, pageSize, role, cancellationToken);
-        var userDtos = _mapper.Map<List<UserReadOnlyDTO>>(users);
+        var userDtos = _mapper.Map<List<UserResponseDTO>>(users);
         
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
         
-        return new PagedResponse<UserReadOnlyDTO>
+        return new PagedResponse<UserResponseDTO>
         {
             Data = userDtos,
             CurrentPage = page,
@@ -66,7 +66,7 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<UserReadOnlyDTO> UpdateUserAsync(ulong userId, UserUpdateDTO dto, CancellationToken cancellationToken = default)
+    public async Task<UserResponseDTO> UpdateUserAsync(ulong userId, UserUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         
@@ -91,6 +91,6 @@ public class UserService : IUserService
         }
         _mapper.Map(dto, existingUser);
         var updatedUser = await _userRepository.UpdateUserWithTransactionAsync(existingUser, cancellationToken);
-        return _mapper.Map<UserReadOnlyDTO>(updatedUser);
+        return _mapper.Map<UserResponseDTO>(updatedUser);
     }
 }

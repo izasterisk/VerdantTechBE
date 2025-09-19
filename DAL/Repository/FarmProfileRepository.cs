@@ -1,30 +1,96 @@
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repository;
 
 public class FarmProfileRepository : IFarmProfileRepository
 {
     private readonly IRepository<FarmProfile> _farmProfileRepository;
-    private readonly VerdantTechDbContext _context;
-
-    public FarmProfileRepository(IRepository<FarmProfile> farmProfileRepository, VerdantTechDbContext context)
+    private readonly VerdantTechDbContext _dbContext;
+    private readonly IAddressRepository _addressRepository;
+    
+    public FarmProfileRepository(IRepository<FarmProfile> farmProfileRepository, VerdantTechDbContext dbContext, IAddressRepository addressRepository)
     {
         _farmProfileRepository = farmProfileRepository;
-        _context = context;
+        _dbContext = dbContext;
+        _addressRepository = addressRepository;
     }
 
     public async Task<FarmProfile?> GetFarmProfileByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
-        => await _farmProfileRepository.GetAsync(f => f.Id == farmId, useNoTracking, cancellationToken);
+    {
+        return await _farmProfileRepository.GetWithRelationsAsync(
+            f => f.Id == farmId && f.Status != FarmProfileStatus.Deleted,
+            useNoTracking,
+            query => query.Include(f => f.User).Include(f => f.Address),
+            cancellationToken);
+    }
 
     public async Task<List<FarmProfile>> GetAllFarmProfilesByUserIdAsync(ulong userId, bool useNoTracking = true, CancellationToken cancellationToken = default)
-        => await _farmProfileRepository.GetAllByFilterAsync
-            (f => f.UserId == userId && f.Status != FarmProfileStatus.Deleted, useNoTracking, cancellationToken);
+    {
+        return await _farmProfileRepository.GetAllWithRelationsByFilterAsync(
+            f => f.UserId == userId && f.Status != FarmProfileStatus.Deleted,
+            useNoTracking,
+            query => query.Include(f => f.User).Include(f => f.Address),
+            cancellationToken);
+    }
     
-    public Task<FarmProfile> CreateAsync(FarmProfile entity, CancellationToken cancellationToken = default) => _farmProfileRepository.CreateAsync(entity, cancellationToken);
+    public async Task<FarmProfile> CreateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            address.CreatedAt = DateTime.Now;
+            address.UpdatedAt = DateTime.Now;
+            var createdAddress = await _addressRepository.CreateAddressWithTransactionAsync(address, cancellationToken);
+            
+            farmProfile.AddressId = createdAddress.Id;
+            farmProfile.CreatedAt = DateTime.Now;
+            farmProfile.UpdatedAt = DateTime.Now;
+            farmProfile.Status = FarmProfileStatus.Active;
+            
+            var createdFarmProfile = await _farmProfileRepository.CreateAsync(farmProfile, cancellationToken);
+            
+            var farmProfileWithRelations = await _dbContext.FarmProfiles
+                .Include(f => f.User)
+                .Include(f => f.Address)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Id == createdFarmProfile.Id, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            
+            return farmProfileWithRelations ?? createdFarmProfile;
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 
-    public Task<FarmProfile> UpdateAsync(FarmProfile entity, CancellationToken cancellationToken = default) => _farmProfileRepository.UpdateAsync(entity, cancellationToken);
-
-    public Task<bool> DeleteAsync(FarmProfile entity, CancellationToken cancellationToken = default) => _farmProfileRepository.DeleteAsync(entity, cancellationToken);
+    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            address.UpdatedAt = DateTime.Now;
+            await _addressRepository.UpdateAddressWithTransactionAsync(address, cancellationToken);
+            
+            farmProfile.UpdatedAt = DateTime.Now;
+            var updatedFarmProfile = await _farmProfileRepository.UpdateAsync(farmProfile, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            
+            var farmProfileWithRelations = await _dbContext.FarmProfiles
+                .Include(f => f.User)
+                .Include(f => f.Address)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Id == updatedFarmProfile.Id, cancellationToken);
+            return farmProfileWithRelations ?? updatedFarmProfile;
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 }

@@ -17,7 +17,7 @@ public partial class FarmProfile
 
     public decimal? FarmSizeHectares { get; set; }
 
-    public ulong? AddressId { get; set; }
+    public ulong AddressId { get; set; }
     [StringLength(500)]
     public string? PrimaryCrops { get; set; }
 

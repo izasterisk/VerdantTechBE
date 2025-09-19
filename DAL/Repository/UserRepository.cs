@@ -60,10 +60,8 @@ public class UserRepository : IUserRepository
         }
     }
     
-    public async Task<User?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
-    {
-        return await _userRepository.GetAsync(u =>u.Id == userId && u.Status == UserStatus.Active, useNoTracking: true, cancellationToken);
-    }
+    public async Task<User?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default) =>
+        await _userRepository.GetAsync(u => u.Id == userId && u.Status == UserStatus.Active, useNoTracking: true, cancellationToken);
     
     public async Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)
     {
@@ -93,8 +91,6 @@ public class UserRepository : IUserRepository
         );
     }
     
-    public async Task<bool> CheckEmailExistsAsync(string username, CancellationToken cancellationToken = default)
-    {
-        return await _userRepository.AnyAsync(u => u.Email.ToUpper() == username.ToUpper(), cancellationToken);
-    }
+    public async Task<bool> CheckEmailExistsAsync(string username, CancellationToken cancellationToken = default) =>
+        await _userRepository.AnyAsync(u => u.Email.ToUpper() == username.ToUpper(), cancellationToken);
 }

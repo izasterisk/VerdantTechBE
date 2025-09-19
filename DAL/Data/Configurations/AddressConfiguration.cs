@@ -42,10 +42,12 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
             
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
+            .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
             
         builder.Property(e => e.UpdatedAt)
             .HasColumnName("updated_at")
+            .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
         // Indexes

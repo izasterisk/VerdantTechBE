@@ -11,6 +11,7 @@ public class FarmProfileUpdateDTO
     [Range(0.01, double.MaxValue, ErrorMessage = "Diện tích trang trại phải lớn hơn 0")]
     public decimal? FarmSizeHectares { get; set; }
 
+    [MaxLength(500, ErrorMessage = "Địa chỉ cụ thể không được vượt quá 500 ký tự")]
     public string? LocationAddress { get; set; }
 
     [StringLength(100, ErrorMessage = "Tỉnh/Thành phố không được vượt quá 100 ký tự")]

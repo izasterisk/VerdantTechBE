@@ -1,12 +1,9 @@
 using BLL.DTO;
 using BLL.DTO.FarmProfile;
 using BLL.Interfaces;
-using DAL.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Sprache;
 using System.Net;
-using System.Security.Claims;
 
 namespace Controller.Controllers
 {
@@ -15,25 +12,31 @@ namespace Controller.Controllers
     [Authorize]
     public class FarmProfileController : BaseController
     {
-        private readonly IFarmProfileService _service;
+        private readonly IFarmProfileService _farmProfileService;
 
-        public FarmProfileController(IFarmProfileService service)
+        public FarmProfileController(IFarmProfileService farmProfileService)
         {
-            _service = service;
+            _farmProfileService = farmProfileService;
         }
 
-        /// <summary>Create a farm profile for current user</summary>
+        /// <summary>
+        /// Tạo hồ sơ trang trại cho người dùng hiện tại
+        /// </summary>
+        /// <param name="dto">Thông tin hồ sơ trang trại cần tạo</param>
+        /// <returns>Thông tin hồ sơ trang trại đã tạo</returns>
         [HttpPost]
         [EndpointSummary("Create Farm Profile")]
-        public async Task<ActionResult<APIResponse>> Create([FromBody] FarmProfileCreateDto dto)
+        [EndpointDescription("Tạo hồ sơ trang trại mới cho người dùng hiện tại")]
+        public async Task<ActionResult<APIResponse>> CreateFarmProfile([FromBody] FarmProfileCreateDto dto)
         {
             var validationResult = ValidateModel();
             if (validationResult != null) return validationResult;
+
             try
             {
                 var userId = GetCurrentUserId();
-                var result = await _service.CreateAsync(userId, dto, GetCancellationToken());
-                return SuccessResponse(result);
+                var result = await _farmProfileService.CreateFarmProfileAsync(userId, dto, GetCancellationToken());
+                return SuccessResponse(result, HttpStatusCode.Created);
             }
             catch (Exception ex)
             {
@@ -41,15 +44,23 @@ namespace Controller.Controllers
             }
         }
 
-        /// <summary>Get a farm profile by id (must be owned by current user)</summary>
-        [HttpGet("{id}")] // removed :ulong
-        [EndpointSummary("Get Farm Profile By Farm Id")]
-        public async Task<ActionResult<APIResponse>> GetById([FromRoute] ulong id)
+        /// <summary>
+        /// Lấy thông tin hồ sơ trang trại theo ID
+        /// </summary>
+        /// <param name="id">ID của hồ sơ trang trại</param>
+        /// <returns>Thông tin hồ sơ trang trại</returns>
+        [HttpGet("{id}")]
+        [EndpointSummary("Get Farm Profile By ID")]
+        [EndpointDescription("Lấy thông tin hồ sơ trang trại theo ID.")]
+        public async Task<ActionResult<APIResponse>> GetFarmProfileById([FromRoute] ulong id)
         {
             try
             {
-                var result = await _service.GetAsync(id, GetCancellationToken());
-                if (result == null) return ErrorResponse("Farm profile not found", HttpStatusCode.NotFound);
+                var result = await _farmProfileService.GetFarmProfileByFarmIdAsync(id, GetCancellationToken());
+                
+                if (result == null) 
+                    return ErrorResponse($"Không tìm thấy hồ sơ trang trại với ID {id}", HttpStatusCode.NotFound);
+                
                 return SuccessResponse(result);
             }
             catch (Exception ex)
@@ -58,15 +69,19 @@ namespace Controller.Controllers
             }
         }
 
-        /// <summary>Get all farm profiles of current user</summary>
-        [HttpGet("User")]
+        /// <summary>
+        /// Lấy danh sách tất cả hồ sơ trang trại theo User ID
+        /// </summary>
+        /// <param name="userId">ID của người dùng</param>
+        /// <returns>Danh sách hồ sơ trang trại của người dùng</returns>
+        [HttpGet("User/{userId}")]
         [EndpointSummary("Get Farm Profiles By User ID")]
-        public async Task<ActionResult<APIResponse>> GetAllFarmByUserId()
+        [EndpointDescription("Lấy danh sách tất cả hồ sơ trang trại theo User ID")]
+        public async Task<ActionResult<APIResponse>> GetAllFarmProfilesByUserId([FromRoute] ulong userId)
         {
             try
             {
-                var userId = GetCurrentUserId();
-                var list = await _service.GetAllByUserIdAsync(userId, GetCancellationToken());
+                var list = await _farmProfileService.GetAllFarmProfileByUserIdAsync(userId, GetCancellationToken());
                 return SuccessResponse(list);
             }
             catch (Exception ex)
@@ -75,45 +90,33 @@ namespace Controller.Controllers
             }
         }
 
-        /// <summary>Update a farm profile (must be owned by current user)</summary>
+        /// <summary>
+        /// Cập nhật thông tin hồ sơ trang trại
+        /// </summary>
+        /// <param name="id">ID của hồ sơ trang trại</param>
+        /// <param name="dto">Thông tin hồ sơ trang trại cần cập nhật</param>
+        /// <returns>Thông tin hồ sơ trang trại đã cập nhật</returns>
         [HttpPut("{id}")]
         [EndpointSummary("Update Farm Profile")]
-        public async Task<ActionResult<APIResponse>> Update([FromRoute] ulong id, [FromBody] FarmProfileUpdateDTO dto)
+        [EndpointDescription("Cập nhật thông tin hồ sơ trang trại.")]
+        public async Task<ActionResult<APIResponse>> UpdateFarmProfile([FromRoute] ulong id, [FromBody] FarmProfileUpdateDTO dto)
         {
             var validationResult = ValidateModel();
             if (validationResult != null) return validationResult;
+            
             try
             {
-                var userId = GetCurrentUserId();
-                var result = await _service.UpdateAsync(id, userId, dto, GetCancellationToken());
+                var result = await _farmProfileService.UpdateFarmProfileAsync(id, dto, GetCancellationToken());
                 return SuccessResponse(result);
             }
             catch (KeyNotFoundException)
             {
-                return ErrorResponse("Farm profile not found or access denied.", HttpStatusCode.NotFound);
+                return ErrorResponse("Không tìm thấy hồ sơ trang trại", HttpStatusCode.NotFound);
             }
             catch (Exception ex)
             {
                 return HandleException(ex);
             }
         }
-
-        /// <summary>Delete a farm profile (hard delete) owned by current user</summary>
-        // [HttpDelete("{id}")]
-        // [EndpointSummary("Delete Farm Profile (Hard)")]
-        // public async Task<ActionResult<APIResponse>> Delete([FromRoute] ulong id)
-        // {
-        //     try
-        //     {
-        //         var userId = GetCurrentUserId();
-        //         var ok = await _service.DeleteAsync(id, userId);
-        //         if (!ok) return ErrorResponse("Farm profile not found", HttpStatusCode.NotFound);
-        //         return SuccessResponse("Deleted");
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return HandleException(ex);
-        //     }
-        // }
     }
 }

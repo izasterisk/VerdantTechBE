@@ -1,5 +1,7 @@
 using AutoMapper;
+using BLL.DTO.Address;
 using BLL.DTO.FarmProfile;
+using BLL.DTO.User;
 using BLL.Helpers;
 using BLL.Interfaces;
 using DAL.Data;
@@ -13,47 +15,90 @@ namespace BLL.Services
         private readonly IFarmProfileRepository _farmRepo;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
-
+        
         public FarmProfileService(IFarmProfileRepository farmRepo, IUserService userService, IMapper mapper)
         {
             _farmRepo = farmRepo;
             _userService = userService;
             _mapper = mapper;
         }
-
-        public async Task<FarmProfileResponseDTO> CreateAsync(ulong currentUserId, FarmProfileCreateDto dto, CancellationToken cancellationToken = default)
+        public async Task<FarmProfileResponseDTO> CreateFarmProfileAsync(ulong currentUserId, FarmProfileCreateDto dto, CancellationToken cancellationToken = default)
         {
-            var entity = _mapper.Map<FarmProfile>(dto);
-            entity.UserId = currentUserId;
-            entity.Status = FarmProfileStatus.Active;
-            entity.CreatedAt = DateTime.UtcNow;
-            entity.UpdatedAt = DateTime.UtcNow;
+            var address = _mapper.Map<Address>(dto);
+            var farmProfile = _mapper.Map<FarmProfile>(dto);
+            farmProfile.UserId = currentUserId;
 
-            var created = await _farmRepo.CreateAsync(entity, cancellationToken);
-            var response = _mapper.Map<FarmProfileResponseDTO>(created);
-            var user = await _userService.GetUserByIdAsync(created.UserId, cancellationToken);
-            if (user != null)
+            var createdFarmProfile = await _farmRepo.CreateFarmProfileWithTransactionAsync(farmProfile, address, cancellationToken);
+            var response = _mapper.Map<FarmProfileResponseDTO>(createdFarmProfile);
+            
+            if (createdFarmProfile.User != null)
             {
-                response.User = user;
+                var userDto = _mapper.Map<UserResponseDTO>(createdFarmProfile.User);
+                response.User = userDto;
+            }
+            if (createdFarmProfile.Address != null)
+            {
+                var addressDto = _mapper.Map<AddressResponseDTO>(createdFarmProfile.Address);
+                response.Address = addressDto;
             }
             return response;
         }
 
-        public async Task<FarmProfileResponseDTO?> GetAsync(ulong id, CancellationToken cancellationToken = default)
+        public async Task<FarmProfileResponseDTO> UpdateFarmProfileAsync(ulong id, FarmProfileUpdateDTO dto, CancellationToken cancellationToken = default)
+        {
+            var farmProfile = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false, cancellationToken);
+            if (farmProfile == null)
+                throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
+            
+            // Xử lý Status nếu có
+            if (!string.IsNullOrWhiteSpace(dto.Status))
+            {
+                var newStatus = Utils.ParseEnum<FarmProfileStatus>(dto.Status, "trạng thái trang trại");
+                farmProfile.Status = newStatus;
+            }
+            
+            _mapper.Map(dto, farmProfile);
+            
+            var address = _mapper.Map<Address>(dto);
+            address.Id = farmProfile.AddressId;
+            
+            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, address, cancellationToken);
+            var response = _mapper.Map<FarmProfileResponseDTO>(updatedFarmProfile);
+            
+            if (updatedFarmProfile.User != null)
+            {
+                var userDto = _mapper.Map<UserResponseDTO>(updatedFarmProfile.User);
+                response.User = userDto;
+            }
+            if (updatedFarmProfile.Address != null)
+            {
+                var addressDto = _mapper.Map<AddressResponseDTO>(updatedFarmProfile.Address);
+                response.Address = addressDto;
+            }
+            return response;
+        }
+        
+        public async Task<FarmProfileResponseDTO?> GetFarmProfileByFarmIdAsync(ulong id, CancellationToken cancellationToken = default)
         {
             var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: true, cancellationToken);
             if (entity == null) return null;
             
             var response = _mapper.Map<FarmProfileResponseDTO>(entity);
-            var user = await _userService.GetUserByIdAsync(entity.UserId, cancellationToken);
-            if (user != null)
+            
+            if (entity.User != null)
             {
-                response.User = user;
+                var userDto = _mapper.Map<UserResponseDTO>(entity.User);
+                response.User = userDto;
+            }
+            if (entity.Address != null)
+            {
+                var addressDto = _mapper.Map<AddressResponseDTO>(entity.Address);
+                response.Address = addressDto;
             }
             return response;
         }
 
-        public async Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllFarmProfileByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
         {
             var list = await _farmRepo.GetAllFarmProfilesByUserIdAsync(userId, useNoTracking: true, cancellationToken);
             if (list.Count == 0)
@@ -62,49 +107,21 @@ namespace BLL.Services
             }
             list = list.OrderByDescending(x => x.UpdatedAt).ToList();
             var responses = _mapper.Map<List<FarmProfileResponseDTO>>(list);
-            var user = await _userService.GetUserByIdAsync(userId, cancellationToken);
-            if (user != null)
+            
+            foreach (var i in Enumerable.Range(0, responses.Count))
             {
-                foreach (var response in responses)
+                if (list[i].User != null)
                 {
-                    response.User = user;
+                    var userDto = _mapper.Map<UserResponseDTO>(list[i].User);
+                    responses[i].User = userDto;
+                }
+                if (list[i].Address != null)
+                {
+                    var addressDto = _mapper.Map<AddressResponseDTO>(list[i].Address);
+                    responses[i].Address = addressDto;
                 }
             }
             return responses.AsReadOnly();
-        }
-
-
-        public async Task<FarmProfileResponseDTO> UpdateAsync(ulong id, ulong currentUserId, FarmProfileUpdateDTO dto, CancellationToken cancellationToken = default)
-        {
-            var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false, cancellationToken);
-            if (entity == null || entity.UserId != currentUserId)
-                throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại hoặc không có quyền truy cập.");
-            
-            // Xử lý Status nếu có
-            if (!string.IsNullOrWhiteSpace(dto.Status))
-            {
-                var newStatus = Utils.ParseEnum<FarmProfileStatus>(dto.Status, "trạng thái trang trại");
-                entity.Status = newStatus;
-            }
-            
-            // Map những trường có giá trị từ DTO vào entity (đã cấu hình Condition)
-            _mapper.Map(dto, entity);
-            entity.UpdatedAt = DateTime.UtcNow;
-            var updated = await _farmRepo.UpdateAsync(entity, cancellationToken);
-            var response = _mapper.Map<FarmProfileResponseDTO>(updated);
-            var user = await _userService.GetUserByIdAsync(updated.UserId, cancellationToken);
-            if (user != null)
-            {
-                response.User = user;
-            }
-            return response;
-        }
-
-        public async Task<bool> DeleteAsync(ulong id, ulong currentUserId, CancellationToken cancellationToken = default)
-        {
-            var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false, cancellationToken);
-            if (entity == null || entity.UserId != currentUserId) return false;
-            return await _farmRepo.DeleteAsync(entity, cancellationToken);
         }
     }
 }

@@ -1,4 +1,5 @@
 using AutoMapper;
+using BLL.DTO.Address;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.SupportedBanks;
 // using BLL.DTO.SustainabilityCertifications;
@@ -22,7 +23,7 @@ public class AutoMapperConfig : Profile
         //.ForMember(n => n.Address, opt => opt.MapFrom(n => string.IsNullOrEmpty(n.Address) ? "No value found" : n.Address));
         
         CreateMap<UserCreateDTO, User>().ReverseMap();
-        CreateMap<UserReadOnlyDTO, User>().ReverseMap();
+        CreateMap<UserResponseDTO, User>().ReverseMap();
         CreateMap<UserUpdateDTO, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
@@ -30,6 +31,12 @@ public class AutoMapperConfig : Profile
         CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();
         CreateMap<FarmProfile, FarmProfileResponseDTO>().ReverseMap();
         CreateMap<FarmProfileUpdateDTO, FarmProfile>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        
+        // Address mappings
+        CreateMap<Address, AddressResponseDTO>().ReverseMap();
+        CreateMap<FarmProfileCreateDto, Address>().ReverseMap();
+        CreateMap<FarmProfileUpdateDTO, Address>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
     }

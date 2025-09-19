@@ -1,6 +1,6 @@
 namespace BLL.DTO.User;
 
-public class UserReadOnlyDTO
+public class UserResponseDTO
 {
     public ulong Id { get; set; }
 

@@ -37,10 +37,10 @@ INSERT INTO `vendor_bank_accounts` (`id`, `vendor_id`, `bank_code`, `account_num
 (1, 5, 'VCB', '1234567890', 'Công Ty Thiết Bị Nông Nghiệp Xanh', 1, '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
 (2, 6, 'ACB', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', 1, '2025-09-09 06:35:00', '2025-09-09 06:35:00');
 
--- Insert Wallets
-INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `pending_withdraw`, `created_at`, `updated_at`) VALUES
-(1, 5, 10000000.00, 0.00, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
-(2, 6, 2500000.00, 0.00, '2025-09-09 08:00:00', '2025-09-09 08:00:00');
+-- Insert Wallets (v7.1 structure - removed pending_withdraw, added last_transaction_id and last_updated_by)
+INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `last_transaction_id`, `last_updated_by`, `created_at`, `updated_at`) VALUES
+(1, 5, 10000000.00, NULL, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
+(2, 6, 2500000.00, NULL, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00');
 
 -- Insert Vendor Certificates (v7.1 structure - renamed from vendor_sustainability_credentials)
 INSERT INTO `vendor_certificates` (`id`, `vendor_id`, `certification_code`, `certification_name`, `certificate_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
@@ -96,8 +96,8 @@ INSERT INTO `product_certificates` (`id`, `product_id`, `certification_code`, `c
 (9, 5, 'RAINFOREST_ALLIANCE', 'Rainforest Alliance Certification', 'https://example.com/certificates/product5_rainforest_alliance.pdf', 'verified', NULL, '2025-09-08 11:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 11:00:00', '2025-09-09 07:00:00'),
 (10, 5, 'CARBON_NEUTRAL_2', 'Carbon Neutral Certification', 'https://example.com/certificates/product5_carbon_neutral.pdf', 'pending', NULL, '2025-09-09 08:30:00', NULL, NULL, '2025-09-09 08:30:00', '2025-09-09 08:30:00');
 
--- Insert Cart (v7 structure - separate cart and cart_items tables)
-INSERT INTO `cart` (`id`, `user_id`, `created_at`, `updated_at`) VALUES
+-- Insert Cart (v7.1 structure - changed user_id to customer_id)
+INSERT INTO `cart` (`id`, `customer_id`, `created_at`, `updated_at`) VALUES
 (1, 7, '2025-09-15 08:00:00', '2025-09-15 08:30:00'),
 (2, 8, '2025-09-15 09:00:00', '2025-09-15 09:15:00'),
 (3, 9, '2025-09-15 10:00:00', '2025-09-15 10:00:00');
@@ -110,11 +110,11 @@ INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `quantity`, `unit_price
 (4, 2, 5, 1, 30000000.00, '2025-09-15 09:10:00', '2025-09-15 09:10:00'),
 (5, 3, 3, 10, 50000.00, '2025-09-15 10:00:00', '2025-09-15 10:00:00');
 
--- Insert Product Registrations (new table in v7.1)
-INSERT INTO `product_registrations` (`id`, `vendor_id`, `category_id`, `product_code`, `name`, `description`, `price`, `commission_rate`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `images`, `warranty_months`, `weight_kg`, `dimensions_cm`, `status`, `rejection_reason`, `approved_by`, `created_at`, `reviewed_at`) VALUES
-(1, 5, 2, 'TC002', 'Máy Cày Điện Eco V2', 'Phiên bản cải tiến của máy cày điện với pin lớn hơn', 28000000.00, 10.00, 'A++', '{"power": "12kW", "battery": "48V 120Ah", "working_time": "6 hours"}', 'manual_eco_v2.pdf', 'eco_v2_1.jpg,eco_v2_2.jpg', 24, 520.000, '{"length": 260, "width": 125, "height": 155}', 'pending', NULL, NULL, '2025-09-15 07:00:00', NULL),
-(2, 6, 5, 'SD004', 'Hạt Giống Rau Spinach Premium', 'Hạt giống rau spinach hữu cơ cao cấp', 60000.00, 5.00, NULL, '{"germination_rate": "98%", "pack_size": "50g", "origin": "Netherlands"}', 'manual_spinach.pdf', 'spinach_1.jpg', 0, 0.050, '{"length": 8, "width": 4, "height": 2}', 'approved', NULL, 1, '2025-09-14 14:00:00', '2025-09-15 08:00:00'),
-(3, 5, 1, 'IR001', 'Hệ Thống Tưới Thông Minh AI', 'Hệ thống tưới tự động với AI để tối ưu hóa nước', 15000000.00, 12.00, 'A', '{"coverage": "1 hectare", "sensors": "soil moisture, weather", "connectivity": "WiFi, 4G"}', 'manual_smart_irrigation.pdf', 'smart_irrigation_1.jpg,smart_irrigation_2.jpg', 36, 50.000, '{"length": 200, "width": 150, "height": 100}', 'rejected', 'Cần bổ sung thông tin kỹ thuật về cảm biến', 2, '2025-09-13 10:00:00', '2025-09-14 16:00:00');
+-- Insert Product Registrations (v7.1 structure - updated column names: product_code→proposed_product_code, name→proposed_product_name, price→unit_price, removed commission_rate, added approved_at)
+-- INSERT INTO `product_registrations` (`id`, `vendor_id`, `category_id`, `proposed_product_code`, `proposed_product_name`, `description`, `unit_price`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `images`, `warranty_months`, `weight_kg`, `dimensions_cm`, `status`, `rejection_reason`, `approved_by`, `approved_at`, `created_at`) VALUES
+-- (1, 5, 2, 'TC002', 'Máy Cày Điện Eco V2', 'Phiên bản cải tiến của máy cày điện với pin lớn hơn', 28000000.00, 'A++', '{"power": "12kW", "battery": "48V 120Ah", "working_time": "6 hours"}', 'manual_eco_v2.pdf', 'eco_v2_1.jpg,eco_v2_2.jpg', 24, 520.000, '{"length": 260, "width": 125, "height": 155}', 'pending', NULL, NULL, NULL, '2025-09-15 07:00:00'),
+-- (2, 6, 5, 'SD004', 'Hạt Giống Rau Spinach Premium', 'Hạt giống rau spinach hữu cơ cao cấp', 60000.00, NULL, '{"germination_rate": "98%", "pack_size": "50g", "origin": "Netherlands"}', 'manual_spinach.pdf', 'spinach_1.jpg', 0, 0.050, '{"length": 8, "width": 4, "height": 2}', 'approved', NULL, 1, '2025-09-15 08:00:00', '2025-09-14 14:00:00'),
+-- (3, 5, 1, 'IR001', 'Hệ Thống Tưới Thông Minh AI', 'Hệ thống tưới tự động với AI để tối ưu hóa nước', 15000000.00, 'A', '{"coverage": "1 hectare", "sensors": "soil moisture, weather", "connectivity": "WiFi, 4G"}', 'manual_smart_irrigation.pdf', 'smart_irrigation_1.jpg,smart_irrigation_2.jpg', 36, 50.000, '{"length": 200, "width": 150, "height": 100}', 'rejected', 'Cần bổ sung thông tin kỹ thuật về cảm biến', 2, NULL, '2025-09-13 10:00:00');
 
 -- Insert Forum Categories
 INSERT INTO `forum_categories` (`id`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -122,14 +122,14 @@ INSERT INTO `forum_categories` (`id`, `name`, `description`, `is_active`, `creat
 (2, 'Thiết Bị Nông Nghiệp', 'Chia sẻ kinh nghiệm sử dụng máy móc và thiết bị nông nghiệp xanh', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
 (3, 'Phòng Trừ Sâu Bệnh', 'Các biện pháp phòng trừ sâu bệnh thân thiện với môi trường', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00');
 
--- Insert Forum Posts
-INSERT INTO `forum_posts` (`id`, `category_id`, `user_id`, `title`, `slug`, `content`, `tags`, `view_count`, `like_count`, `dislike_count`, `is_pinned`, `status`, `last_activity_at`, `created_at`, `updated_at`) VALUES
-(1, 1, 9, 'Kinh nghiệm trồng lúa hữu cơ tại Đồng Nai', 'kinh-nghiem-trong-lua-huu-co-tai-dong-nai', '[{"order": 1, "type": "text", "content": "Chào mọi người, mình đang trồng lúa hữu cơ tại Đồng Nai. Ai có kinh nghiệm chia sẻ nhé!"}, {"order": 2, "type": "image", "content": "https://example.com/images/lua-huu-co.jpg"}]', 'lúa, hữu cơ, đồng nai', 150, 20, 2, 1, 'visible', '2025-09-09 10:00:00', '2025-09-08 14:00:00', '2025-09-09 10:00:00'),
-(2, 2, 7, 'Review máy cày mini điện VerdantTech V1', 'review-may-cay-mini-dien-verdanttech-v1', '[{"order": 1, "type": "text", "content": "Mình mới mua máy cày mini điện V1, chạy rất êm và tiết kiệm. Có ai dùng chưa?"}]', 'máy cày, điện, verdanttech', 80, 15, 1, 0, 'visible', '2025-09-09 06:00:00', '2025-09-08 15:00:00', '2025-09-09 06:00:00'),
-(3, 3, 10, 'Biện pháp phòng sâu bệnh tự nhiên cho rau củ', 'bien-phap-phong-sau-benh-tu-nhien-cho-rau-cu', '[{"order": 1, "type": "text", "content": "Mọi người thường dùng gì để phòng sâu bệnh cho rau mà không dùng thuốc hóa học?"}]', 'sâu bệnh, rau củ, tự nhiên', 120, 18, 0, 0, 'visible', '2025-09-09 10:00:00', '2025-09-08 16:00:00', '2025-09-09 10:00:00');
+-- Insert Forum Posts (v7.1 structure - changed category_id to forum_category_id, removed last_activity_at column)
+INSERT INTO `forum_posts` (`id`, `forum_category_id`, `user_id`, `title`, `slug`, `content`, `tags`, `view_count`, `like_count`, `dislike_count`, `is_pinned`, `status`, `created_at`, `updated_at`) VALUES
+(1, 1, 9, 'Kinh nghiệm trồng lúa hữu cơ tại Đồng Nai', 'kinh-nghiem-trong-lua-huu-co-tai-dong-nai', '[{"order": 1, "type": "text", "content": "Chào mọi người, mình đang trồng lúa hữu cơ tại Đồng Nai. Ai có kinh nghiệm chia sẻ nhé!"}, {"order": 2, "type": "image", "content": "https://example.com/images/lua-huu-co.jpg"}]', 'lúa, hữu cơ, đồng nai', 150, 20, 2, 1, 'visible', '2025-09-08 14:00:00', '2025-09-09 10:00:00'),
+(2, 2, 7, 'Review máy cày mini điện VerdantTech V1', 'review-may-cay-mini-dien-verdanttech-v1', '[{"order": 1, "type": "text", "content": "Mình mới mua máy cày mini điện V1, chạy rất êm và tiết kiệm. Có ai dùng chưa?"}]', 'máy cày, điện, verdanttech', 80, 15, 1, 0, 'visible', '2025-09-08 15:00:00', '2025-09-09 06:00:00'),
+(3, 3, 10, 'Biện pháp phòng sâu bệnh tự nhiên cho rau củ', 'bien-phap-phong-sau-benh-tu-nhien-cho-rau-cu', '[{"order": 1, "type": "text", "content": "Mọi người thường dùng gì để phòng sâu bệnh cho rau mà không dùng thuốc hóa học?"}]', 'sâu bệnh, rau củ, tự nhiên', 120, 18, 0, 0, 'visible', '2025-09-08 16:00:00', '2025-09-09 10:00:00');
 
--- Insert Forum Comments
-INSERT INTO `forum_comments` (`id`, `post_id`, `user_id`, `parent_id`, `content`, `like_count`, `dislike_count`, `status`, `created_at`, `updated_at`) VALUES
+-- Insert Forum Comments (v7.1 structure - changed post_id to forum_post_id)
+INSERT INTO `forum_comments` (`id`, `forum_post_id`, `user_id`, `parent_id`, `content`, `like_count`, `dislike_count`, `status`, `created_at`, `updated_at`) VALUES
 (1, 1, 10, NULL, 'Mình ở Long An cũng trồng lúa hữu cơ. Quan trọng là chọn giống lúa phù hợp không?', 3, 0, 'visible', '2025-09-08 15:00:00', '2025-09-08 15:00:00'),
 (2, 1, 9, 1, 'Mình thường chọn giống lúa ST24 hoặc ST25 vì phù hợp với đất phù sa và có chất lượng gạo tốt. Bạn nên tham khảo thêm ý kiến kỹ thuật viên địa phương nhé!', 5, 0, 'visible', '2025-09-08 16:30:00', '2025-09-08 16:30:00'),
 (3, 1, 7, NULL, 'Bài viết rất hữu ích! Mình đang cân nhắc chuyển từ canh tác truyền thống sang hữu cơ.', 2, 0, 'visible', '2025-09-09 07:00:00', '2025-09-09 07:00:00'),
@@ -137,8 +137,8 @@ INSERT INTO `forum_comments` (`id`, `post_id`, `user_id`, `parent_id`, `content`
 (5, 2, 10, 4, 'Máy chạy rất ổn, chỉ có điều pin hơi nhanh hết khi làm đất cứng. Các bạn có kế hoạch nâng cấp dung lượng pin không?', 1, 0, 'visible', '2025-09-09 06:00:00', '2025-09-09 06:00:00'),
 (6, 3, 9, NULL, 'Bạn có thể thử dùng dung dịch tỏi ớt để xịt phòng trừ sâu bệnh. Mình dùng hiệu quả lắm!', 6, 0, 'visible', '2025-09-09 10:00:00', '2025-09-09 10:00:00');
 
--- Insert Chatbot Conversations
-INSERT INTO `chatbot_conversations` (`id`, `user_id`, `session_id`, `title`, `context`, `is_active`, `started_at`, `ended_at`) VALUES
+-- Insert Chatbot Conversations (v7.1 structure - changed user_id to customer_id)
+INSERT INTO `chatbot_conversations` (`id`, `customer_id`, `session_id`, `title`, `context`, `is_active`, `started_at`, `ended_at`) VALUES
 (1, 7, 'session_20250908_001', 'Tư vấn chọn máy cày', '{"topic": "equipment_consultation", "products_discussed": ["TC001"], "user_preferences": {"budget": "under_30m", "farm_size": "small"}}', 0, '2025-09-08 14:00:00', '2025-09-08 14:30:00'),
 (2, 9, 'session_20250909_001', 'Hỗ trợ kỹ thuật canh tác', '{"topic": "farming_techniques", "crop_type": "rice", "farming_method": "organic"}', 1, '2025-09-09 06:00:00', NULL),
 (3, 8, 'session_20250909_002', 'Tư vấn phân bón hữu cơ', '{"topic": "fertilizer_consultation", "crop_type": "vegetables", "soil_type": "sandy"}', 0, '2025-09-09 08:00:00', '2025-09-09 08:45:00');
@@ -156,8 +156,8 @@ INSERT INTO `chatbot_messages` (`id`, `conversation_id`, `message_type`, `messag
 (9, 3, 'user', 'Cảm ơn bạn! Tôi sẽ đặt mua ngay.', NULL, '2025-09-09 08:44:00'),
 (10, 3, 'bot', 'Rất vui được hỗ trợ bạn! Chúc bạn canh tác thành công. Nếu có thắc mắc gì khác, đừng ngần ngại liên hệ nhé!', NULL, '2025-09-09 08:44:30');
 
--- Insert Environmental Data (added for completeness)
-INSERT INTO `environmental_data` (`id`, `farm_profile_id`, `user_id`, `measurement_date`, `soil_ph`, `co2_footprint`, `soil_moisture_percentage`, `soil_type`, `notes`, `created_at`, `updated_at`) VALUES
+-- Insert Environmental Data (v7.1 structure - changed user_id to customer_id)
+INSERT INTO `environmental_data` (`id`, `farm_profile_id`, `customer_id`, `measurement_date`, `soil_ph`, `co2_footprint`, `soil_moisture_percentage`, `soil_type`, `notes`, `created_at`, `updated_at`) VALUES
 (1, 1, 9, '2025-09-09', 6.5, 120.50, 45.20, 'DatPhuSa', 'Đo lường sau mưa', '2025-09-09 06:00:00', '2025-09-09 06:00:00'),
 (2, 2, 10, '2025-09-09', 7.0, 85.30, 38.50, 'DatDoBazan', 'Kiểm tra hàng tuần', '2025-09-09 05:30:00', '2025-09-09 05:30:00');
 
@@ -171,16 +171,16 @@ INSERT INTO `energy_usage` (`id`, `environmental_data_id`, `electricity_kwh`, `g
 (1, 1, 100.00, 20.00, 30.00, '2025-09-09 06:00:00', '2025-09-09 06:00:00'),
 (2, 2, 80.00, 15.00, 25.00, '2025-09-09 05:30:00', '2025-09-09 05:30:00');
 
--- Insert Requests (v7 structure - changed requester_id to user_id)
-INSERT INTO `requests` (`id`, `user_id`, `request_type`, `title`, `description`, `status`, `amount`, `admin_notes`, `rejection_reason`, `processed_by`, `processed_at`, `created_at`, `updated_at`) VALUES
-(1, 5, 'payout_request', 'Yêu cầu thanh toán hoa hồng tháng 9', 'Yêu cầu thanh toán hoa hồng từ bán hàng tháng 9', 'pending', 2000000.00, NULL, NULL, NULL, NULL, '2025-09-09 07:00:00', '2025-09-09 07:00:00'),
-(2, 7, 'refund_request', 'Yêu cầu hoàn tiền đơn hàng #1', 'Sản phẩm bị hỏng', 'in_review', 22500000.00, 'Kiểm tra sản phẩm', NULL, NULL, NULL, '2025-09-09 08:15:00', '2025-09-09 08:15:00');
+-- Insert Requests (v7.1 structure - removed amount, admin_notes, rejection_reason columns, changed requester_id to user_id)
+INSERT INTO `requests` (`id`, `user_id`, `request_type`, `title`, `description`, `status`, `reply_notes`, `processed_by`, `processed_at`, `created_at`, `updated_at`) VALUES
+(1, 5, 'payout_request', 'Yêu cầu thanh toán hoa hồng tháng 9', 'Yêu cầu thanh toán hoa hồng từ bán hàng tháng 9', 'pending', NULL, NULL, NULL, '2025-09-09 07:00:00', '2025-09-09 07:00:00'),
+(2, 7, 'refund_request', 'Yêu cầu hoàn tiền đơn hàng #1', 'Sản phẩm bị hỏng', 'in_review', 'Kiểm tra sản phẩm', NULL, NULL, '2025-09-09 08:15:00', '2025-09-09 08:15:00');
 
--- Insert Orders (v7 structure - changed customer_id to user_id)
-INSERT INTO `orders` (`id`, `user_id`, `status`, `subtotal`, `tax_amount`, `shipping_fee`, `discount_amount`, `total_amount`, `shipping_address`, `shipping_method`, `tracking_number`, `notes`, `cancelled_reason`, `cancelled_at`, `confirmed_at`, `shipped_at`, `delivered_at`, `created_at`, `updated_at`) VALUES
-(1, 7, 'delivered', 25000000.00, 500000.00, 300000.00, 2500000.00, 23000000.00, '{"street": "123 Đường ABC", "district": "Quận 1", "city": "TP.HCM", "country": "Vietnam"}', 'express', 'EXP20250908001', NULL, NULL, NULL, '2025-09-08 12:00:00', '2025-09-08 15:00:00', '2025-09-09 10:00:00', '2025-09-08 10:00:00', '2025-09-09 10:00:00'),
-(2, 8, 'shipped', 1716750.00, 0.00, 50000.00, 383250.00, 1483500.00, '{"street": "456 Đường DEF", "district": "Quận 2", "city": "TP.HCM", "country": "Vietnam"}', 'standard', 'STD20250909001', NULL, NULL, NULL, '2025-09-09 10:00:00', NULL, NULL, '2025-09-09 09:00:00', '2025-09-09 10:00:00'),
-(3, 9, 'processing', 12000000.00, 800000.00, 200000.00, 960000.00, 11240000.00, '{"street": "789 Đường GHI", "district": "Quận 3", "city": "TP.HCM", "country": "Vietnam"}', 'express', NULL, 'Cần hỗ trợ lắp đặt', NULL, NULL, NULL, NULL, NULL, '2025-09-09 11:00:00', '2025-09-09 11:30:00');
+-- Insert Orders (v7.1 structure - changed user_id to customer_id, shipping_address JSON to address_id FK)
+INSERT INTO `orders` (`id`, `customer_id`, `status`, `subtotal`, `tax_amount`, `shipping_fee`, `discount_amount`, `total_amount`, `address_id`, `shipping_method`, `tracking_number`, `notes`, `cancelled_reason`, `cancelled_at`, `confirmed_at`, `shipped_at`, `delivered_at`, `created_at`, `updated_at`) VALUES
+(1, 7, 'delivered', 25000000.00, 500000.00, 300000.00, 2500000.00, 23000000.00, 1, 'express', 'EXP20250908001', NULL, NULL, NULL, '2025-09-08 12:00:00', '2025-09-08 15:00:00', '2025-09-09 10:00:00', '2025-09-08 10:00:00', '2025-09-09 10:00:00'),
+(2, 8, 'shipped', 1716750.00, 0.00, 50000.00, 383250.00, 1483500.00, 2, 'standard', 'STD20250909001', NULL, NULL, NULL, '2025-09-09 10:00:00', NULL, NULL, '2025-09-09 09:00:00', '2025-09-09 10:00:00'),
+(3, 9, 'processing', 12000000.00, 800000.00, 200000.00, 960000.00, 11240000.00, 3, 'express', NULL, 'Cần hỗ trợ lắp đặt', NULL, NULL, NULL, NULL, NULL, '2025-09-09 11:00:00', '2025-09-09 11:30:00');
 
 -- Insert Order Details
 INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `unit_price`, `discount_amount`, `subtotal`, `created_at`) VALUES
@@ -189,39 +189,39 @@ INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `unit_p
 (3, 2, 4, 3, 85000.00, 38250.00, 216750.00, '2025-09-09 09:00:00'),
 (4, 3, 5, 1, 12000000.00, 960000.00, 11040000.00, '2025-09-09 11:00:00');
 
--- Insert Transactions (adjusted to match schema v7)
-INSERT INTO `transactions` (`id`, `transaction_type`, `amount`, `currency`, `order_id`, `customer_id`, `vendor_id`, `wallet_id`, `balance_before`, `balance_after`, `status`, `description`, `metadata`, `reference_type`, `reference_id`, `created_by`, `processed_by`, `created_at`, `completed_at`, `updated_at`) VALUES
-(1, 'payment_in', 23000000.00, 'VND', 1, 7, NULL, NULL, NULL, NULL, 'completed', 'Payment for order #1 - Máy cày', '{"gateway": "vnpay", "reference": "VNP20250908001"}', 'order', 1, 7, 1, '2025-09-08 11:30:00', '2025-09-08 11:30:00', '2025-09-08 11:30:00'),
-(2, 'payment_in', 1483500.00, 'VND', 2, 8, NULL, NULL, NULL, NULL, 'completed', 'Payment for order #2 - Hạt giống và phân bón', '{"gateway": "momo", "reference": "MOMO20250909001"}', 'order', 2, 8, 1, '2025-09-09 09:15:00', '2025-09-09 09:15:00', '2025-09-09 09:15:00'),
-(3, 'payment_in', 11240000.00, 'VND', 3, 9, NULL, NULL, NULL, NULL, 'pending', 'Payment for order #3 - Drone phun thuốc', '{"gateway": "bank", "account": "VCB123456789"}', 'order', 3, 9, NULL, '2025-09-09 11:00:00', NULL, '2025-09-09 11:00:00'),
-(4, 'commission', 2000000.00, 'VND', 1, NULL, 1, 1, 8000000.00, 10000000.00, 'completed', 'Commission from sale of product #1', '{"commission_rate": 8, "product_id": 1, "sale_amount": 25000000}', 'product', 1, 1, 2, '2025-09-09 15:00:00', '2025-09-09 15:00:00', '2025-09-09 15:00:00'),
-(5, 'commission', 147000.00, 'VND', 2, NULL, 2, 2, 2353000.00, 2500000.00, 'completed', 'Commission from sale of products #3 and #4', '{"commission_rate": 5.5, "products": [3,4], "sale_amount": 2490000}', 'product', 3, 1, 2, '2025-09-09 16:00:00', '2025-09-09 16:00:00', '2025-09-09 16:00:00');
+-- Insert Transactions (v7.1 structure - completely restructured)
+INSERT INTO `transactions` (`id`, `transaction_type`, `amount`, `currency`, `order_id`, `user_id`, `status`, `note`, `gateway_payment_id`, `created_by`, `processed_by`, `created_at`, `completed_at`, `updated_at`) VALUES
+(1, 'payment_in', 23000000.00, 'VND', 1, 7, 'completed', 'Payment for order #1 - Máy cày', 'VNP20250908001', 7, 1, '2025-09-08 11:30:00', '2025-09-08 11:30:00', '2025-09-08 11:30:00'),
+(2, 'payment_in', 1483500.00, 'VND', 2, 8, 'completed', 'Payment for order #2 - Hạt giống và phân bón', 'MOMO20250909001', 8, 1, '2025-09-09 09:15:00', '2025-09-09 09:15:00', '2025-09-09 09:15:00'),
+(3, 'payment_in', 11240000.00, 'VND', 3, 9, 'pending', 'Payment for order #3 - Drone phun thuốc', 'COD2025090911001', 9, NULL, '2025-09-09 11:00:00', NULL, '2025-09-09 11:00:00'),
+(4, 'commission', 2000000.00, 'VND', 1, 5, 'completed', 'Commission from sale of product #1', NULL, 1, 2, '2025-09-09 15:00:00', '2025-09-09 15:00:00', '2025-09-09 15:00:00'),
+(5, 'commission', 147000.00, 'VND', 2, 6, 'completed', 'Commission from sale of products #3 and #4', NULL, 1, 2, '2025-09-09 16:00:00', '2025-09-09 16:00:00', '2025-09-09 16:00:00');
 
--- Insert Payments (adjusted to match schema v7)
-INSERT INTO `payments` (`id`, `order_id`, `transaction_id`, `payment_method`, `payment_gateway`, `gateway_transaction_id`, `amount`, `status`, `gateway_response`, `refund_amount`, `refund_reason`, `refunded_at`, `paid_at`, `failed_at`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 'bank_transfer', 'vnpay', 'VNP2025090801234567', 23000000.00, 'completed', '{"code": "00", "message": "Success", "bank": "VCB"}', 0.00, NULL, NULL, '2025-09-08 11:30:00', NULL, '2025-09-08 10:00:00', '2025-09-08 11:30:00'),
-(2, 2, 2, 'credit_card', 'stripe', 'STR_2025090909876543', 1483500.00, 'completed', '{"id": "ch_abc123", "status": "succeeded"}', 0.00, NULL, NULL, '2025-09-09 09:15:00', NULL, '2025-09-09 09:00:00', '2025-09-09 09:15:00'),
-(3, 3, 3, 'cod', 'manual', 'COD2025090911001', 11240000.00, 'pending', '{}', 0.00, NULL, NULL, NULL, NULL, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
+-- Insert Payments (v7.1 structure - removed old columns, added gateway_payment_id)
+INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `payment_gateway`, `gateway_payment_id`, `amount`, `status`, `gateway_response`, `created_at`, `updated_at`) VALUES
+(1, 1, 'bank_transfer', 'vnpay', 'VNP2025090801234567', 23000000.00, 'completed', '{"code": "00", "message": "Success", "bank": "VCB"}', '2025-09-08 10:00:00', '2025-09-08 11:30:00'),
+(2, 2, 'credit_card', 'stripe', 'STR_2025090909876543', 1483500.00, 'completed', '{"id": "ch_abc123", "status": "succeeded"}', '2025-09-09 09:00:00', '2025-09-09 09:15:00'),
+(3, 3, 'cod', 'manual', 'COD2025090911001', 11240000.00, 'pending', '{}', '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
--- Insert Cashouts (adjusted to match schema v7)
-INSERT INTO `cashouts` (`id`, `vendor_id`, `transaction_id`, `amount`, `bank_code`, `bank_account_number`, `bank_account_holder`, `status`, `cashout_type`, `gateway_transaction_id`, `reference_type`, `reference_id`, `notes`, `processed_by`, `created_at`, `processed_at`, `updated_at`) VALUES
-(1, 1, 4, 2000000.00, 'VCB', '1234567890', 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'pending', 'commission_payout', NULL, 'order', 1, 'Hoa hồng từ đơn hàng #1', NULL, '2025-09-09 15:30:00', NULL, '2025-09-09 15:30:00'),
-(2, 2, 5, 147000.00, 'ACB', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', 'completed', 'commission_payout', 'CASHOUT2025090916001', 'order', 2, 'Hoa hồng từ đơn hàng #2', 2, '2025-09-09 16:30:00', '2025-09-09 16:30:00', '2025-09-09 16:30:00');
+-- Insert Cashouts (v7.1 structure - removed bank details, added bank_account_id and reason)
+INSERT INTO `cashouts` (`id`, `vendor_id`, `transaction_id`, `bank_account_id`, `amount`, `status`, `reason`, `gateway_transaction_id`, `reference_type`, `reference_id`, `notes`, `processed_by`, `created_at`, `processed_at`, `updated_at`) VALUES
+(1, 5, 4, 1, 2000000.00, 'pending', 'Commission payout', NULL, 'order', 1, 'Hoa hồng từ đơn hàng #1', NULL, '2025-09-09 15:30:00', NULL, '2025-09-09 15:30:00'),
+(2, 6, 5, 2, 147000.00, 'completed', 'Commission payout', 'CASHOUT2025090916001', 'order', 2, 'Hoa hồng từ đơn hàng #2', 2, '2025-09-09 16:30:00', '2025-09-09 16:30:00', '2025-09-09 16:30:00');
 
--- Insert Batch Inventory (v7 structure - renamed from purchase_inventory)
-INSERT INTO `batch_inventory` (`id`, `product_id`, `sku`, `vendor_profile_id`, `batch_number`, `lot_number`, `quantity`, `unit_cost_price`, `expiry_date`, `manufacturing_date`, `quality_check_status`, `quality_checked_by`, `quality_checked_at`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 1, 'SKU_TC001_001', 1, 'BATCH001', 'LOT001', 5, 18000000.00, NULL, '2025-08-01', 'passed', 2, '2025-09-08 10:00:00', 'Máy cày đầu tiên nhập kho', '2025-09-08 09:00:00', '2025-09-08 10:00:00'),
-(2, 2, 'SKU_HV002_001', 1, 'BATCH002', 'LOT002', 10, 70000000.00, NULL, '2025-07-15', 'passed', 2, '2025-09-08 15:00:00', 'Máy gặt lúa nhập kho', '2025-09-08 14:00:00', '2025-09-09 16:00:00'),
-(3, 3, 'SKU_SD003_001', 2, 'BATCH003', 'LOT003', 200, 25000.00, '2026-09-08', '2025-06-01', 'passed', 2, '2025-09-08 12:00:00', 'Hạt giống nhập kho', '2025-09-08 11:00:00', '2025-09-09 15:00:00'),
-(4, 4, 'SKU_FT004_001', 2, 'BATCH004', 'LOT004', 100, 60000.00, '2026-03-01', '2025-05-01', 'passed', 2, '2025-09-08 09:00:00', 'Phân bón nhập kho', '2025-09-08 08:00:00', '2025-09-08 08:00:00'),
-(5, 5, 'SKU_DR005_001', 1, 'BATCH005', 'LOT005', 15, 20000000.00, NULL, '2025-08-15', 'passed', 2, '2025-09-08 11:00:00', 'Drone phun thuốc nhập kho', '2025-09-08 10:00:00', '2025-09-09 09:00:00');
+-- Insert Batch Inventory (v7.1 structure - changed vendor_profile_id to vendor_id)
+INSERT INTO `batch_inventory` (`id`, `product_id`, `sku`, `vendor_id`, `batch_number`, `lot_number`, `quantity`, `unit_cost_price`, `expiry_date`, `manufacturing_date`, `quality_check_status`, `quality_checked_by`, `quality_checked_at`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 1, 'SKU_TC001_001', 5, 'BATCH001', 'LOT001', 5, 18000000.00, NULL, '2025-08-01', 'passed', 2, '2025-09-08 10:00:00', 'Máy cày đầu tiên nhập kho', '2025-09-08 09:00:00', '2025-09-08 10:00:00'),
+(2, 2, 'SKU_HV002_001', 5, 'BATCH002', 'LOT002', 10, 70000000.00, NULL, '2025-07-15', 'passed', 2, '2025-09-08 15:00:00', 'Máy gặt lúa nhập kho', '2025-09-08 14:00:00', '2025-09-09 16:00:00'),
+(3, 3, 'SKU_SD003_001', 6, 'BATCH003', 'LOT003', 200, 25000.00, '2026-09-08', '2025-06-01', 'passed', 2, '2025-09-08 12:00:00', 'Hạt giống nhập kho', '2025-09-08 11:00:00', '2025-09-09 15:00:00'),
+(4, 4, 'SKU_FT004_001', 6, 'BATCH004', 'LOT004', 100, 60000.00, '2026-03-01', '2025-05-01', 'passed', 2, '2025-09-08 09:00:00', 'Phân bón nhập kho', '2025-09-08 08:00:00', '2025-09-08 08:00:00'),
+(5, 5, 'SKU_DR005_001', 5, 'BATCH005', 'LOT005', 15, 20000000.00, NULL, '2025-08-15', 'passed', 2, '2025-09-08 11:00:00', 'Drone phun thuốc nhập kho', '2025-09-08 10:00:00', '2025-09-09 09:00:00');
 
--- Insert Export Inventory (v7 structure - renamed from sales_inventory)
-INSERT INTO `export_inventory` (`id`, `product_id`, `order_id`, `quantity`, `unit_sale_price`, `balance_after`, `movement_type`, `notes`, `created_by`, `created_at`) VALUES
-(1, 1, 1, 1, 25000000.00, 4, 'sale', 'Máy cày bán cho khách hàng 1', 5, '2025-09-08 10:00:00'),
-(2, 3, 2, 10, 50000.00, 190, 'sale', 'Hạt giống bán cho khách hàng 2', 6, '2025-09-09 09:00:00'),
-(3, 4, 2, 3, 100000.00, 97, 'sale', 'Phân bón bán kèm hạt giống', 6, '2025-09-09 09:00:00'),
-(4, 5, 3, 1, 30000000.00, 14, 'sale', 'Drone phun thuốc cho nông dân 1', 5, '2025-09-09 11:00:00');
+-- Insert Export Inventory (v7.1 structure - removed unit_sale_price column, added updated_at)
+INSERT INTO `export_inventory` (`id`, `product_id`, `order_id`, `quantity`, `balance_after`, `movement_type`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 1, 4, 'sale', 'Máy cày bán cho khách hàng 1', 5, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(2, 3, 2, 10, 190, 'sale', 'Hạt giống bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(3, 4, 2, 3, 97, 'sale', 'Phân bón bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(4, 5, 3, 1, 14, 'sale', 'Drone phun thuốc cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
 -- Insert Product Reviews
 INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `rating`, `title`, `comment`, `images`, `created_at`, `updated_at`) VALUES
