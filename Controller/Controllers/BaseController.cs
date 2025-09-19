@@ -38,7 +38,7 @@ public abstract class BaseController : ControllerBase
         return ex switch
         {
             UnauthorizedAccessException => Unauthorized(APIResponse.Error("Truy cập bị từ chối", HttpStatusCode.Unauthorized)),
-            ArgumentException => BadRequest(APIResponse.Error("Yêu cầu không hợp lệ", HttpStatusCode.BadRequest)),
+            ArgumentException => BadRequest(APIResponse.Error(ex.Message, HttpStatusCode.BadRequest)),
             InvalidOperationException when ex.Message.Contains("Email chưa được xác minh") => 
                 StatusCode(403, APIResponse.Error("Email chưa được xác minh", HttpStatusCode.Forbidden)),
             InvalidOperationException => 
