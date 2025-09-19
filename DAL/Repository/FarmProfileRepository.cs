@@ -43,7 +43,7 @@ public class FarmProfileRepository : IFarmProfileRepository
         {
             address.CreatedAt = DateTime.Now;
             address.UpdatedAt = DateTime.Now;
-            var createdAddress = await _addressRepository.CreateAddressWithTransactionAsync(address, cancellationToken);
+            var createdAddress = await _addressRepository.CreateAsync(address, cancellationToken);
             
             farmProfile.AddressId = createdAddress.Id;
             farmProfile.CreatedAt = DateTime.Now;
@@ -74,7 +74,7 @@ public class FarmProfileRepository : IFarmProfileRepository
         try
         {
             address.UpdatedAt = DateTime.Now;
-            await _addressRepository.UpdateAddressWithTransactionAsync(address, cancellationToken);
+            await _addressRepository.UpdateAsync(address, cancellationToken);
             
             farmProfile.UpdatedAt = DateTime.Now;
             var updatedFarmProfile = await _farmProfileRepository.UpdateAsync(farmProfile, cancellationToken);

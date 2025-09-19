@@ -13,13 +13,11 @@ namespace BLL.Services
     public class FarmProfileService : IFarmProfileService
     {
         private readonly IFarmProfileRepository _farmRepo;
-        private readonly IUserService _userService;
         private readonly IMapper _mapper;
         
-        public FarmProfileService(IFarmProfileRepository farmRepo, IUserService userService, IMapper mapper)
+        public FarmProfileService(IFarmProfileRepository farmRepo, IMapper mapper)
         {
             _farmRepo = farmRepo;
-            _userService = userService;
             _mapper = mapper;
         }
         public async Task<FarmProfileResponseDTO> CreateFarmProfileAsync(ulong currentUserId, FarmProfileCreateDto dto, CancellationToken cancellationToken = default)
@@ -31,11 +29,8 @@ namespace BLL.Services
             var createdFarmProfile = await _farmRepo.CreateFarmProfileWithTransactionAsync(farmProfile, address, cancellationToken);
             var response = _mapper.Map<FarmProfileResponseDTO>(createdFarmProfile);
             
-            if (createdFarmProfile.User != null)
-            {
-                var userDto = _mapper.Map<UserResponseDTO>(createdFarmProfile.User);
-                response.User = userDto;
-            }
+            var userDto = _mapper.Map<UserResponseDTO>(createdFarmProfile.User);
+            response.User = userDto;
             if (createdFarmProfile.Address != null)
             {
                 var addressDto = _mapper.Map<AddressResponseDTO>(createdFarmProfile.Address);
@@ -50,6 +45,9 @@ namespace BLL.Services
             if (farmProfile == null)
                 throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
             
+            if (farmProfile.Address == null)
+                throw new InvalidOperationException("Địa chỉ của trang trại không tồn tại");
+            
             // Xử lý Status nếu có
             if (!string.IsNullOrWhiteSpace(dto.Status))
             {
@@ -58,22 +56,17 @@ namespace BLL.Services
             }
             
             _mapper.Map(dto, farmProfile);
+            _mapper.Map(dto, farmProfile.Address);
             
-            var address = _mapper.Map<Address>(dto);
-            address.Id = farmProfile.AddressId;
-            
-            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, address, cancellationToken);
+            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, farmProfile.Address, cancellationToken);
             var response = _mapper.Map<FarmProfileResponseDTO>(updatedFarmProfile);
             
-            if (updatedFarmProfile.User != null)
-            {
-                var userDto = _mapper.Map<UserResponseDTO>(updatedFarmProfile.User);
-                response.User = userDto;
-            }
+            var userDto = _mapper.Map<UserResponseDTO>(updatedFarmProfile.User);
+            response.User = userDto;
             if (updatedFarmProfile.Address != null)
             {
-                var addressDto = _mapper.Map<AddressResponseDTO>(updatedFarmProfile.Address);
-                response.Address = addressDto;
+                var updatedAddressDto = _mapper.Map<AddressResponseDTO>(updatedFarmProfile.Address);
+                response.Address = updatedAddressDto;
             }
             return response;
         }
@@ -85,11 +78,8 @@ namespace BLL.Services
             
             var response = _mapper.Map<FarmProfileResponseDTO>(entity);
             
-            if (entity.User != null)
-            {
-                var userDto = _mapper.Map<UserResponseDTO>(entity.User);
-                response.User = userDto;
-            }
+            var userDto = _mapper.Map<UserResponseDTO>(entity.User);
+            response.User = userDto;
             if (entity.Address != null)
             {
                 var addressDto = _mapper.Map<AddressResponseDTO>(entity.Address);
@@ -110,11 +100,8 @@ namespace BLL.Services
             
             foreach (var i in Enumerable.Range(0, responses.Count))
             {
-                if (list[i].User != null)
-                {
-                    var userDto = _mapper.Map<UserResponseDTO>(list[i].User);
-                    responses[i].User = userDto;
-                }
+                var userDto = _mapper.Map<UserResponseDTO>(list[i].User);
+                responses[i].User = userDto;
                 if (list[i].Address != null)
                 {
                     var addressDto = _mapper.Map<AddressResponseDTO>(list[i].Address);

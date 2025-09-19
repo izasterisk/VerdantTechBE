@@ -15,39 +15,17 @@ public class AddressRepository : IAddressRepository
         _dbContext = context;
     }
     
-    public async Task<Address> CreateAddressWithTransactionAsync(Address address, CancellationToken cancellationToken = default)
+    public async Task<Address> CreateAsync(Address address, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            address.CreatedAt = DateTime.Now;
-            address.UpdatedAt = DateTime.Now;
-            var createdAddress = await _addressRepository.CreateAsync(address, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return createdAddress;
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        address.CreatedAt = DateTime.Now;
+        address.UpdatedAt = DateTime.Now;
+        return await _addressRepository.CreateAsync(address, cancellationToken);
     }
     
-    public async Task<Address> UpdateAddressWithTransactionAsync(Address address, CancellationToken cancellationToken = default)
+    public async Task<Address> UpdateAsync(Address address, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            address.UpdatedAt = DateTime.Now;
-            var updatedAddress = await _addressRepository.UpdateAsync(address, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return updatedAddress;
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        address.UpdatedAt = DateTime.Now;
+        return await _addressRepository.UpdateAsync(address, cancellationToken);
     }
     
     public async Task<Address?> GetAddressByIdAsync(ulong Id, CancellationToken cancellationToken = default)
