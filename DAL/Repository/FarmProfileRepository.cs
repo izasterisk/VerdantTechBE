@@ -41,13 +41,13 @@ public class FarmProfileRepository : IFarmProfileRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            address.CreatedAt = DateTime.Now;
-            address.UpdatedAt = DateTime.Now;
+            address.CreatedAt = DateTime.UtcNow;
+            address.UpdatedAt = DateTime.UtcNow;
             var createdAddress = await _addressRepository.CreateAsync(address, cancellationToken);
             
             farmProfile.AddressId = createdAddress.Id;
-            farmProfile.CreatedAt = DateTime.Now;
-            farmProfile.UpdatedAt = DateTime.Now;
+            farmProfile.CreatedAt = DateTime.UtcNow;
+            farmProfile.UpdatedAt = DateTime.UtcNow;
             farmProfile.Status = FarmProfileStatus.Active;
             
             var createdFarmProfile = await _farmProfileRepository.CreateAsync(farmProfile, cancellationToken);
@@ -73,10 +73,10 @@ public class FarmProfileRepository : IFarmProfileRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            address.UpdatedAt = DateTime.Now;
+            address.UpdatedAt = DateTime.UtcNow;
             await _addressRepository.UpdateAsync(address, cancellationToken);
             
-            farmProfile.UpdatedAt = DateTime.Now;
+            farmProfile.UpdatedAt = DateTime.UtcNow;
             var updatedFarmProfile = await _farmProfileRepository.UpdateAsync(farmProfile, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             

@@ -4,6 +4,10 @@
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
+-- Set timezone to UTC for all database operations
+SET time_zone = '+00:00';
+SET GLOBAL time_zone = '+00:00';
+
 -- Tạo cơ sở dữ liệu
 CREATE DATABASE IF NOT EXISTS verdanttech_db
     CHARACTER SET utf8mb4

@@ -17,14 +17,14 @@ public class AddressRepository : IAddressRepository
     
     public async Task<Address> CreateAsync(Address address, CancellationToken cancellationToken = default)
     {
-        address.CreatedAt = DateTime.Now;
-        address.UpdatedAt = DateTime.Now;
+        address.CreatedAt = DateTime.UtcNow;
+        address.UpdatedAt = DateTime.UtcNow;
         return await _addressRepository.CreateAsync(address, cancellationToken);
     }
     
     public async Task<Address> UpdateAsync(Address address, CancellationToken cancellationToken = default)
     {
-        address.UpdatedAt = DateTime.Now;
+        address.UpdatedAt = DateTime.UtcNow;
         return await _addressRepository.UpdateAsync(address, cancellationToken);
     }
     

@@ -22,9 +22,9 @@ public class UserRepository : IUserRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            user.LastLoginAt = DateTime.Now;
-            user.CreatedAt = DateTime.Now;
-            user.UpdatedAt = DateTime.Now;
+            user.LastLoginAt = DateTime.UtcNow;
+            user.CreatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
             user.Status = UserStatus.Active;
             
             if(user.Role == UserRole.Admin || user.Role == UserRole.Staff)
@@ -48,7 +48,7 @@ public class UserRepository : IUserRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            user.UpdatedAt = DateTime.Now;
+            user.UpdatedAt = DateTime.UtcNow;
             var updatedUser = await _userRepository.UpdateAsync(user, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return updatedUser;

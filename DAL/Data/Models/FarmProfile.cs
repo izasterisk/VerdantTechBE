@@ -23,9 +23,9 @@ public partial class FarmProfile
 
     public FarmProfileStatus Status { get; set; } = FarmProfileStatus.Active;
 
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation Properties
     public virtual User User { get; set; } = null!;
