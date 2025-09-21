@@ -68,6 +68,7 @@ builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFarmProfileService, FarmProfileService>();
+builder.Services.AddScoped<IWeatherService, WeatherService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
