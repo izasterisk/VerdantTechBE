@@ -21,7 +21,7 @@ public class FarmProfileRepository : IFarmProfileRepository
     public async Task<FarmProfile?> GetFarmProfileByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {
         return await _farmProfileRepository.GetWithRelationsAsync(
-            f => f.Id == farmId && f.Status != FarmProfileStatus.Deleted,
+            f => f.Id == farmId,
             useNoTracking,
             query => query.Include(f => f.User).Include(f => f.Address),
             cancellationToken);
@@ -30,7 +30,7 @@ public class FarmProfileRepository : IFarmProfileRepository
     public async Task<List<FarmProfile>> GetAllFarmProfilesByUserIdAsync(ulong userId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {
         return await _farmProfileRepository.GetAllWithRelationsByFilterAsync(
-            f => f.UserId == userId && f.Status != FarmProfileStatus.Deleted,
+            f => f.UserId == userId,
             useNoTracking,
             query => query.Include(f => f.User).Include(f => f.Address),
             cancellationToken);

@@ -61,7 +61,7 @@ public class UserRepository : IUserRepository
     }
     
     public async Task<User?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default) =>
-        await _userRepository.GetAsync(u => u.Id == userId && u.Status == UserStatus.Active, useNoTracking: true, cancellationToken);
+        await _userRepository.GetAsync(u => u.Id == userId, useNoTracking: true, cancellationToken);
     
     public async Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)
     {
@@ -72,13 +72,13 @@ public class UserRepository : IUserRepository
         {
             if (Enum.TryParse<UserRole>(role, true, out var userRole))
             {
-                filter = u => u.Status == UserStatus.Active && u.Role == userRole;
+                filter = u => u.Role == userRole;
             }
         }
         else
         {
             // Default filter: only customers if no role specified
-            filter = u => u.Status == UserStatus.Active && u.Role == UserRole.Customer;
+            filter = u => u.Role == UserRole.Customer;
         }
 
         return await _userRepository.GetPaginatedAsync(
