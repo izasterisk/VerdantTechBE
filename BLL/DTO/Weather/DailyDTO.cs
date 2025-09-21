@@ -2,16 +2,16 @@
 
 public class DailyWeatherResponseDto
 {
-    public string Latitude { get; set; }
-    public string Longitude { get; set; }
-    public string GenerationTimeMs { get; set; }
-    public string UtcOffsetSeconds { get; set; }
-    public string Timezone { get; set; }
-    public string TimezoneAbbreviation { get; set; }
-    public string Elevation { get; set; }
+    public string Latitude { get; set; } = string.Empty;
+    public string Longitude { get; set; } = string.Empty;
+    public string GenerationTimeMs { get; set; } = string.Empty;
+    public string UtcOffsetSeconds { get; set; } = string.Empty;
+    public string Timezone { get; set; } = string.Empty;
+    public string TimezoneAbbreviation { get; set; } = string.Empty;
+    public string Elevation { get; set; } = string.Empty;
 
-    public DailyUnitsDto Daily_Units { get; set; }
-    public List<DailyDataDto> Daily { get; set; }
+    public DailyUnitsDto Daily_Units { get; set; } = new();
+    public List<DailyDataDto> Daily { get; set; } = new();
 }
 
 public class DailyUnitsDto

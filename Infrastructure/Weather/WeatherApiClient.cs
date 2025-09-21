@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using BLL.DTO.Weather;
 using BLL.Interfaces.Infrastructure;
+using Infrastructure.Weather.Models;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Weather;
@@ -37,12 +38,19 @@ public class WeatherApiClient : IWeatherApiClient
             response.EnsureSuccessStatusCode();
             
             var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var weatherData = JsonSerializer.Deserialize<HourlyWeatherResponseDto>(jsonContent, new JsonSerializerOptions
+            
+            var rawWeatherData = JsonSerializer.Deserialize<WeatherHourly>(jsonContent, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
             
-            return weatherData ?? throw new InvalidOperationException("Failed to deserialize weather data");
+            if (rawWeatherData == null)
+            {
+                throw new InvalidOperationException("Failed to deserialize weather data");
+            }
+            
+            var transformedData = WeatherResponseTransformer.TransformHourlyResponse(rawWeatherData);
+            return transformedData;
         }
         catch (TaskCanceledException)
         {
@@ -51,6 +59,10 @@ public class WeatherApiClient : IWeatherApiClient
         catch (HttpRequestException)
         {
             throw new InvalidOperationException("Server thời tiết hiện đang quá tải, vui lòng thử lại sau.");
+        }
+        catch (JsonException)
+        {
+            throw new InvalidOperationException("Dữ liệu thời tiết không hợp lệ.");
         }
     }
 
@@ -66,12 +78,19 @@ public class WeatherApiClient : IWeatherApiClient
             response.EnsureSuccessStatusCode();
             
             var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var weatherData = JsonSerializer.Deserialize<DailyWeatherResponseDto>(jsonContent, new JsonSerializerOptions
+            
+            var rawWeatherData = JsonSerializer.Deserialize<WeatherDaily>(jsonContent, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
             
-            return weatherData ?? throw new InvalidOperationException("Failed to deserialize weather data");
+            if (rawWeatherData == null)
+            {
+                throw new InvalidOperationException("Failed to deserialize weather data");
+            }
+            
+            var transformedData = WeatherResponseTransformer.TransformDailyResponse(rawWeatherData);
+            return transformedData;
         }
         catch (TaskCanceledException)
         {
@@ -80,6 +99,10 @@ public class WeatherApiClient : IWeatherApiClient
         catch (HttpRequestException)
         {
             throw new InvalidOperationException("Server thời tiết hiện đang quá tải, vui lòng thử lại sau.");
+        }
+        catch (JsonException)
+        {
+            throw new InvalidOperationException("Dữ liệu thời tiết không hợp lệ.");
         }
     }
 }
