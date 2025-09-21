@@ -27,6 +27,15 @@ public class FarmProfileRepository : IFarmProfileRepository
             cancellationToken);
     }
 
+    public async Task<FarmProfile?> GetCoordinateByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
+    {
+        return await _farmProfileRepository.GetWithRelationsAsync(
+            f => f.Id == farmId,
+            useNoTracking,
+            query => query.Include(f => f.Address),
+            cancellationToken);
+    }
+    
     public async Task<List<FarmProfile>> GetAllFarmProfilesByUserIdAsync(ulong userId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {
         return await _farmProfileRepository.GetAllWithRelationsByFilterAsync(
