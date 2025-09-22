@@ -66,9 +66,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("tax_code");
             
-        builder.Property(e => e.AddressId)
-            .HasColumnName("address_id");
-            
         builder.Property(e => e.AvatarUrl)
             .HasMaxLength(500)
             .HasCharSet("utf8mb4")
@@ -132,18 +129,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(e => e.CreatedAt)
             .HasDatabaseName("idx_created_at");
             
-        builder.HasIndex(e => e.AddressId)
-            .HasDatabaseName("idx_address");
-            
         builder.HasIndex(e => e.TaxCode)
             .IsUnique()
             .HasDatabaseName("idx_tax_code");
-
-        // Foreign Key Relationships
-        builder.HasOne(e => e.Address)
-            .WithMany(a => a.Users)
-            .HasForeignKey(e => e.AddressId)
-            .OnDelete(DeleteBehavior.Restrict)
-            .HasConstraintName("fk_users_address_id_addresses_id");
     }
 }

@@ -41,7 +41,7 @@ public class Address
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
+    public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
     public virtual ICollection<FarmProfile> FarmProfiles { get; set; } = new List<FarmProfile>();
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }
