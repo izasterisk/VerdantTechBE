@@ -105,4 +105,42 @@ public class WeatherApiClient : IWeatherApiClient
             throw new InvalidOperationException("Dữ liệu thời tiết không hợp lệ.");
         }
     }
+
+    public async Task<CurrentWeatherResponseDto> GetCurrentWeatherAsync(decimal latitude, decimal longitude, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var url = WeatherHelper.BuildCurrentWeatherUrl(_baseUrl, latitude, longitude, _defaultTimeZone);
+            
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            
+            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            var rawWeatherData = JsonSerializer.Deserialize<WeatherCurrent>(jsonContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            if (rawWeatherData == null)
+            {
+                throw new InvalidOperationException("Failed to deserialize weather data");
+            }
+            
+            var transformedData = WeatherResponseTransformer.TransformCurrentResponse(rawWeatherData);
+            return transformedData;
+        }
+        catch (TaskCanceledException)
+        {
+            throw new TimeoutException("Server thời tiết hiện đang quá tải, vui lòng thử lại sau.");
+        }
+        catch (HttpRequestException)
+        {
+            throw new InvalidOperationException("Server thời tiết hiện đang quá tải, vui lòng thử lại sau.");
+        }
+        catch (JsonException)
+        {
+            throw new InvalidOperationException("Dữ liệu thời tiết không hợp lệ.");
+        }
+    }
 }
