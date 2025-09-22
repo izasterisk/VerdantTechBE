@@ -67,4 +67,24 @@ public static class WeatherHelper
                $"start_date={startDate}&" +
                $"end_date={endDate}";
     }
+
+    /// <summary>
+    /// Build URL for Open-Meteo current weather API
+    /// </summary>
+    /// <param name="baseUrl">Base API URL</param>
+    /// <param name="latitude">Latitude coordinate</param>
+    /// <param name="longitude">Longitude coordinate</param>
+    /// <param name="timezone">Timezone for the API</param>
+    /// <returns>Complete current weather API URL</returns>
+    public static string BuildCurrentWeatherUrl(string baseUrl, decimal latitude, decimal longitude, string timezone)
+    {
+        var lat = latitude.ToString(CultureInfo.InvariantCulture);
+        var lon = longitude.ToString(CultureInfo.InvariantCulture);
+        
+        return $"{baseUrl}forecast?" +
+               $"latitude={lat}&" +
+               $"longitude={lon}&" +
+               $"current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_temperature_0cm&" +
+               $"timezone={timezone}";
+    }
 }

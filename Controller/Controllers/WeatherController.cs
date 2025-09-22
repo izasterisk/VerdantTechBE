@@ -59,4 +59,25 @@ public class WeatherController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Lấy thông tin thời tiết hiện tại của nông trại
+    /// </summary>
+    /// <param name="farmId">ID của nông trại</param>
+    /// <returns>Thông tin thời tiết hiện tại</returns>
+    [HttpGet("current/{farmId}")]
+    [EndpointSummary("Get Current Weather Details By Farm ID")]
+    [EndpointDescription("Lấy thông tin thời tiết hiện tại của nông trại dựa trên tọa độ địa chỉ nông trại.")]
+    public async Task<ActionResult<APIResponse>> GetCurrentWeatherDetailsByFarmId(ulong farmId)
+    {
+        try
+        {
+            var weatherData = await _weatherService.GetCurrentWeatherDetailsByFarmIdAsync(farmId, GetCancellationToken());
+            return SuccessResponse(weatherData, HttpStatusCode.OK);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

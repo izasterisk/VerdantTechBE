@@ -124,4 +124,55 @@ public static class WeatherResponseTransformer
 
         return result;
     }
+
+    /// <summary>
+    /// Transform raw current response từ API thành custom CurrentWeatherResponseDto
+    /// </summary>
+    public static CurrentWeatherResponseDto TransformCurrentResponse(WeatherCurrent raw)
+    {
+        var result = new CurrentWeatherResponseDto
+        {
+            Latitude = raw.Latitude.ToString(CultureInfo.InvariantCulture),
+            Longitude = raw.Longitude.ToString(CultureInfo.InvariantCulture),
+            GenerationTimeMs = raw.Generationtime_ms.ToString(CultureInfo.InvariantCulture),
+            UtcOffsetSeconds = raw.Utc_offset_seconds.ToString(),
+            Timezone = raw.Timezone,
+            TimezoneAbbreviation = raw.Timezone_abbreviation,
+            Elevation = raw.Elevation.ToString(CultureInfo.InvariantCulture),
+            
+            Current_Units = new CurrentUnitsDto
+            {
+                Time = raw.Current_units.Time,
+                Interval = raw.Current_units.Interval,
+                Temperature_2m = raw.Current_units.Temperature_2m,
+                Apparent_Temperature = raw.Current_units.Apparent_temperature,
+                Relative_Humidity_2m = raw.Current_units.Relative_humidity_2m,
+                Precipitation = raw.Current_units.Precipitation,
+                Wind_Speed_10m = raw.Current_units.Wind_speed_10m,
+                Wind_Gusts_10m = raw.Current_units.Wind_gusts_10m,
+                Uv_Index = raw.Current_units.Uv_index,
+                Soil_Moisture_0_to_1cm = raw.Current_units.Soil_moisture_0_to_1cm,
+                Soil_Moisture_3_to_9cm = raw.Current_units.Soil_moisture_3_to_9cm,
+                Soil_Temperature_0cm = raw.Current_units.Soil_temperature_0cm
+            },
+            
+            Current = new CurrentDataDto
+            {
+                Time = raw.Current.Time,
+                Interval = raw.Current.Interval.ToString(),
+                Temperature_2m = raw.Current.Temperature_2m.ToString(CultureInfo.InvariantCulture),
+                Apparent_Temperature = raw.Current.Apparent_temperature.ToString(CultureInfo.InvariantCulture),
+                Relative_Humidity_2m = raw.Current.Relative_humidity_2m.ToString(),
+                Precipitation = raw.Current.Precipitation.ToString(CultureInfo.InvariantCulture),
+                Wind_Speed_10m = raw.Current.Wind_speed_10m.ToString(CultureInfo.InvariantCulture),
+                Wind_Gusts_10m = raw.Current.Wind_gusts_10m.ToString(CultureInfo.InvariantCulture),
+                Uv_Index = raw.Current.Uv_index.ToString(CultureInfo.InvariantCulture),
+                Soil_Moisture_0_to_1cm = raw.Current.Soil_moisture_0_to_1cm.ToString(CultureInfo.InvariantCulture),
+                Soil_Moisture_3_to_9cm = raw.Current.Soil_moisture_3_to_9cm.ToString(CultureInfo.InvariantCulture),
+                Soil_Temperature_0cm = raw.Current.Soil_temperature_0cm.ToString(CultureInfo.InvariantCulture)
+            }
+        };
+
+        return result;
+    }
 }

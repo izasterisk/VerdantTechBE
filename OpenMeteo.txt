@@ -1,3 +1,44 @@
+URL (Now): https://api.open-meteo.com/v1/forecast?latitude=10.7970&longitude=106.7132&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_temperature_0cm&timezone=Asia/Ho_Chi_Minh
+{
+  "latitude": 10.75,
+  "longitude": 106.75,
+  "generationtime_ms": 0.100016593933105,
+  "utc_offset_seconds": 25200,
+  "timezone": "Asia/Ho_Chi_Minh",
+  "timezone_abbreviation": "GMT+7",
+  "elevation": 8,
+  "current_units": {
+    "time": "iso8601",
+    "interval": "seconds",
+    "temperature_2m": "°C",
+    "apparent_temperature": "°C",
+    "relative_humidity_2m": "%",
+    "precipitation": "mm",
+    "wind_speed_10m": "km/h",
+    "wind_gusts_10m": "km/h",
+    "uv_index": "",
+    "soil_moisture_0_to_1cm": "m³/m³",
+    "soil_moisture_3_to_9cm": "m³/m³",
+    "soil_temperature_0cm": "°C"
+  },
+  "current": {
+    "time": "2025-09-22T11:45",
+    "interval": 900,
+    "temperature_2m": 28.5,
+    "apparent_temperature": 32.5,
+    "relative_humidity_2m": 80,
+    "precipitation": 0,
+    "wind_speed_10m": 16.9,
+    "wind_gusts_10m": 29.9,
+    "uv_index": 1.2,
+    "soil_moisture_0_to_1cm": 0.375,
+    "soil_moisture_3_to_9cm": 0.383,
+    "soil_temperature_0cm": 30.2
+  }
+}
+
+====================================================================================
+
 URL (hourly): https://api.open-meteo.com/v1/forecast?latitude=10.7970&longitude=106.7132&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_temperature_0cm&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia/Ho_Chi_Minh&start_date=2025-09-18&end_date=2025-09-18
 Response:
 {

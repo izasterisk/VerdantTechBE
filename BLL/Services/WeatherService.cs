@@ -67,4 +67,30 @@ public class WeatherService : IWeatherService
             throw new InvalidOperationException("Server thời tiết hiện đang quá tải, vui lòng thử lại sau.");
         }
     }
+
+    public async Task<CurrentWeatherResponseDto> GetCurrentWeatherDetailsByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
+    {
+        // Get farm profile with address coordinates
+        var farmProfile = await _farmProfileRepository.GetCoordinateByFarmIdAsync(farmId, true, cancellationToken);
+        
+        if (farmProfile?.Address?.Latitude == null || farmProfile.Address.Longitude == null)
+        {
+            throw new InvalidOperationException("Nông trại của bạn chưa có địa chỉ, không thể tìm được thông tin thời tiết tương ứng!");
+        }
+        try
+        {
+            return await _weatherApiClient.GetCurrentWeatherAsync(
+                farmProfile.Address.Latitude.Value, 
+                farmProfile.Address.Longitude.Value, 
+                cancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            throw new InvalidOperationException("Server thời tiết hiện đang quá tải, vui lòng thử lại sau.");
+        }
+    }
 }
