@@ -1,31 +1,44 @@
--- SEEDER DATA FOR VERDANTTECH DATABASE v7.1
+-- SEEDER DATA FOR VERDANTTECH DATABASE v7.2
 -- All passwords are: $2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS
--- Updated for schema v7.1: Added addresses table, updated foreign key references, structural changes
--- Dates adjusted to be recent as of 2025-09-15, ensured foreign key consistency
+-- Updated for schema v7.2: Removed address_id from users, added user_addresses junction table for many-to-many relationship
+-- Dates adjusted to be recent as of 2025-09-22, ensured foreign key consistency
 
 -- Insert Addresses (new table in v7.1 for centralized address management)
 INSERT INTO `addresses` (`id`, `location_address`, `province`, `district`, `commune`, `latitude`, `longitude`, `created_at`, `updated_at`) VALUES
-(1, 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', 'TP.HCM', 'Quận 7', 'Phường Tân Phong', 10.72890000, 106.71940000, '2025-09-08 08:00:00', '2025-09-08 08:00:00'),
-(2, 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', 'TP.HCM', 'Quận Tân Bình', 'Phường 15', 10.80150000, 106.65340000, '2025-09-08 08:30:00', '2025-09-08 08:30:00'),
-(3, 'Số 123 Đường Nông Nghiệp, Tân Phong', 'Đồng Nai', 'Biên Hòa', 'Tân Phong', 10.94740000, 106.82420000, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(4, 'Số 456 Đường Nông Thôn, Đức Hòa Thượng', 'Long An', 'Đức Hòa', 'Đức Hòa Thượng', 10.88080000, 106.39220000, '2025-09-08 10:30:00', '2025-09-08 10:30:00');
+(1, 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', 'TP.HCM', 'Quận 7', 'Phường Tân Phong', 10.72890000, 106.71940000, '2025-09-22 08:00:00', '2025-09-22 08:00:00'),
+(2, 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', 'TP.HCM', 'Quận Tân Bình', 'Phường 15', 10.80150000, 106.65340000, '2025-09-22 08:30:00', '2025-09-22 08:30:00'),
+(3, 'Số 123 Đường Nông Nghiệp, Tân Phong', 'Đồng Nai', 'Biên Hòa', 'Tân Phong', 10.94740000, 106.82420000, '2025-09-22 10:00:00', '2025-09-22 10:00:00'),
+(4, 'Số 456 Đường Nông Thôn, Đức Hòa Thượng', 'Long An', 'Đức Hòa', 'Đức Hòa Thượng', 10.88080000, 106.39220000, '2025-09-22 10:30:00', '2025-09-22 10:30:00');
 
 -- Insert Users (with gmail.com emails, consistent password, and vendor role users)
-INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `tax_code`, `address_id`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `RefreshToken`, `RefreshTokenExpiresAt`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'admin@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'admin', 'Quản trị viên hệ thống', '0901234567', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:00:00', NULL, NULL, '2025-09-08 07:00:00', '2025-09-09 08:00:00', NULL),
-(2, 'staff1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Nguyễn Văn Nhân Viên 1', '0901234568', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 07:30:00', NULL, NULL, '2025-09-08 07:00:00', '2025-09-09 07:30:00', NULL),
-(3, 'staff2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Trần Thị Nhân Viên 2', '0901234569', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 07:00:00', NULL, NULL, '2025-09-08 08:00:00', '2025-09-09 07:00:00', NULL),
-(4, 'staff3@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Lê Văn Nhân Viên 3', '0901234570', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 06:30:00', NULL, NULL, '2025-09-08 08:30:00', '2025-09-09 06:30:00', NULL),
+INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `tax_code`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `RefreshToken`, `RefreshTokenExpiresAt`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'admin@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'admin', 'Quản trị viên hệ thống', '0901234567', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 08:00:00', NULL, NULL, '2025-09-22 07:00:00', '2025-09-22 08:00:00', NULL),
+(2, 'staff1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Nguyễn Văn Nhân Viên 1', '0901234568', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 07:30:00', NULL, NULL, '2025-09-22 07:00:00', '2025-09-22 07:30:00', NULL),
+(3, 'staff2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Trần Thị Nhân Viên 2', '0901234569', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 07:00:00', NULL, NULL, '2025-09-22 08:00:00', '2025-09-22 07:00:00', NULL),
+(4, 'staff3@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Lê Văn Nhân Viên 3', '0901234570', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 06:30:00', NULL, NULL, '2025-09-22 08:30:00', '2025-09-22 06:30:00', NULL),
 -- Vendor users (NEW in v7)
-(5, 'vendor1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Thiết Bị Nông Nghiệp Xanh', '0901234571', 'MST123456789', 1, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:15:00', NULL, NULL, '2025-09-08 09:00:00', '2025-09-09 08:15:00', NULL),
-(6, 'vendor2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Cửa Hàng Nông Sản Sạch VerdantTech', '0901234572', 'MST987654321', 2, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:10:00', NULL, NULL, '2025-09-08 09:30:00', '2025-09-09 08:10:00', NULL),
+(5, 'vendor1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Thiết Bị Nông Nghiệp Xanh', '0901234571', 'MST123456789', 1, NULL, NULL, NULL, 'active', '2025-09-22 08:15:00', NULL, NULL, '2025-09-22 09:00:00', '2025-09-22 08:15:00', NULL),
+(6, 'vendor2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Cửa Hàng Nông Sản Sạch VerdantTech', '0901234572', 'MST987654321', 1, NULL, NULL, NULL, 'active', '2025-09-22 08:10:00', NULL, NULL, '2025-09-22 09:30:00', '2025-09-22 08:10:00', NULL),
 -- Customer users
-(7, 'customer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Phạm Văn Khách Hàng 1', '0901234573', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:15:00', NULL, NULL, '2025-09-08 09:00:00', '2025-09-09 08:15:00', NULL),
-(8, 'customer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Hoàng Thị Khách Hàng 2', '0901234574', NULL, NULL, 1, NULL, NULL, NULL, 'active', '2025-09-09 08:10:00', NULL, NULL, '2025-09-08 09:30:00', '2025-09-09 08:10:00', NULL),
-(9, 'farmer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Nguyễn Văn Nông Dân 1', '0901234575', NULL, 3, 1, NULL, NULL, NULL, 'active', '2025-09-09 06:00:00', NULL, NULL, '2025-09-08 10:00:00', '2025-09-09 06:00:00', NULL),
-(10, 'farmer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Trần Thị Nông Dân 2', '0901234576', NULL, 4, 1, NULL, NULL, NULL, 'active', '2025-09-09 05:30:00', NULL, NULL, '2025-09-08 10:30:00', '2025-09-09 05:30:00', NULL),
-(11, 'testuser@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Test', '0901234577', NULL, NULL, 0, 'test-token-123', '2025-09-09 07:00:00', NULL, 'active', NULL, NULL, NULL, '2025-09-09 07:00:00', '2025-09-09 07:00:00', NULL),
-(12, 'inactive@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Không Hoạt Động', '0901234578', NULL, NULL, 1, NULL, NULL, NULL, 'inactive', '2025-09-08 15:00:00', NULL, NULL, '2025-09-08 11:00:00', '2025-09-08 15:00:00', NULL);
+(7, 'customer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Phạm Văn Khách Hàng 1', '0901234573', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 08:15:00', NULL, NULL, '2025-09-22 09:00:00', '2025-09-22 08:15:00', NULL),
+(8, 'customer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Hoàng Thị Khách Hàng 2', '0901234574', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 08:10:00', NULL, NULL, '2025-09-22 09:30:00', '2025-09-22 08:10:00', NULL),
+(9, 'farmer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Nguyễn Văn Nông Dân 1', '0901234575', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 06:00:00', NULL, NULL, '2025-09-22 10:00:00', '2025-09-22 06:00:00', NULL),
+(10, 'farmer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Trần Thị Nông Dân 2', '0901234576', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 05:30:00', NULL, NULL, '2025-09-22 10:30:00', '2025-09-22 05:30:00', NULL),
+(11, 'testuser@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Test', '0901234577', NULL, 0, 'test-token-123', '2025-09-22 07:00:00', NULL, 'active', NULL, NULL, NULL, '2025-09-22 07:00:00', '2025-09-22 07:00:00', NULL),
+(12, 'inactive@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Không Hoạt Động', '0901234578', NULL, 1, NULL, NULL, NULL, 'inactive', '2025-09-22 15:00:00', NULL, NULL, '2025-09-22 11:00:00', '2025-09-22 15:00:00', NULL);
+
+-- Insert User Addresses (NEW in v7.2 - junction table for many-to-many relationship between users and addresses)
+INSERT INTO `user_addresses` (`id`, `user_id`, `address_id`, `is_deleted`, `created_at`, `updated_at`, `deleted_at`) VALUES
+-- Vendor addresses
+(1, 5, 1, 0, '2025-09-22 09:00:00', '2025-09-22 09:00:00', NULL), -- Vendor 1 -> Address 1
+(2, 6, 2, 0, '2025-09-22 09:30:00', '2025-09-22 09:30:00', NULL), -- Vendor 2 -> Address 2
+-- Farmer addresses
+(3, 9, 3, 0, '2025-09-22 10:00:00', '2025-09-22 10:00:00', NULL), -- Farmer 1 -> Address 3
+(4, 10, 4, 0, '2025-09-22 10:30:00', '2025-09-22 10:30:00', NULL), -- Farmer 2 -> Address 4
+-- Example of multiple addresses for one user (demonstrating many-to-many capability)
+(5, 7, 1, 0, '2025-09-22 11:00:00', '2025-09-22 11:00:00', NULL), -- Customer 1 also has Address 1
+(6, 8, 2, 0, '2025-09-22 11:30:00', '2025-09-22 11:30:00', NULL), -- Customer 2 also has Address 2
+(7, 8, 3, 0, '2025-09-22 12:00:00', '2025-09-22 12:00:00', NULL); -- Customer 2 also has Address 3 (multiple addresses for same user)
 
 -- Insert Vendor Profiles (for vendor users)
 INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES

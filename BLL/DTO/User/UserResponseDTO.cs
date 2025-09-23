@@ -1,3 +1,5 @@
+using BLL.DTO.Address;
+
 namespace BLL.DTO.User;
 
 public class UserResponseDTO
@@ -31,4 +33,7 @@ public class UserResponseDTO
     public DateTime UpdatedAt { get; set; }
 
     public DateTime? DeletedAt { get; set; }
+
+    // Danh sách địa chỉ của người dùng
+    public List<AddressResponseDTO> Addresses { get; set; } = new List<AddressResponseDTO>();
 }

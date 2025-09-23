@@ -29,8 +29,6 @@ public partial class User
     [StringLength(100)]
     public string? TaxCode { get; set; }
 
-    public ulong? AddressId { get; set; }
-
     public bool IsVerified { get; set; } = false;
 
     [StringLength(255)]
@@ -57,7 +55,7 @@ public partial class User
     public DateTime? DeletedAt { get; set; }
 
     // Navigation Properties
-    public virtual Address? Address { get; set; }
+    public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
     public virtual ICollection<FarmProfile> FarmProfiles { get; set; } = new List<FarmProfile>();
     public virtual VendorProfile? VendorProfile { get; set; }
     
