@@ -52,7 +52,7 @@ public class FarmProfileRepository : IFarmProfileRepository
         {
             address.CreatedAt = DateTime.UtcNow;
             address.UpdatedAt = DateTime.UtcNow;
-            var createdAddress = await _addressRepository.CreateAsync(address, cancellationToken);
+            var createdAddress = await _addressRepository.CreateAddressAsync(address, cancellationToken);
             
             farmProfile.AddressId = createdAddress.Id;
             farmProfile.CreatedAt = DateTime.UtcNow;
@@ -61,11 +61,11 @@ public class FarmProfileRepository : IFarmProfileRepository
             
             var createdFarmProfile = await _farmProfileRepository.CreateAsync(farmProfile, cancellationToken);
             
-            var farmProfileWithRelations = await _dbContext.FarmProfiles
-                .Include(f => f.User)
-                .Include(f => f.Address)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(f => f.Id == createdFarmProfile.Id, cancellationToken);
+            var farmProfileWithRelations = await _farmProfileRepository.GetWithRelationsAsync(
+                f => f.Id == createdFarmProfile.Id,
+                useNoTracking: true,
+                query => query.Include(f => f.User).Include(f => f.Address),
+                cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             
             return farmProfileWithRelations ?? createdFarmProfile;
@@ -83,17 +83,17 @@ public class FarmProfileRepository : IFarmProfileRepository
         try
         {
             address.UpdatedAt = DateTime.UtcNow;
-            await _addressRepository.UpdateAsync(address, cancellationToken);
+            await _addressRepository.UpdateAddressAsync(address, cancellationToken);
             
             farmProfile.UpdatedAt = DateTime.UtcNow;
             var updatedFarmProfile = await _farmProfileRepository.UpdateAsync(farmProfile, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             
-            var farmProfileWithRelations = await _dbContext.FarmProfiles
-                .Include(f => f.User)
-                .Include(f => f.Address)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(f => f.Id == updatedFarmProfile.Id, cancellationToken);
+            var farmProfileWithRelations = await _farmProfileRepository.GetWithRelationsAsync(
+                f => f.Id == updatedFarmProfile.Id,
+                useNoTracking: true,
+                query => query.Include(f => f.User).Include(f => f.Address),
+                cancellationToken);
             return farmProfileWithRelations ?? updatedFarmProfile;
         }
         catch (Exception)

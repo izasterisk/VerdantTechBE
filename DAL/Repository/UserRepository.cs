@@ -61,7 +61,11 @@ public class UserRepository : IUserRepository
     }
     
     public async Task<User?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default) =>
-        await _userRepository.GetAsync(u => u.Id == userId, useNoTracking: true, cancellationToken);
+        await _userRepository.GetWithRelationsAsync(
+            u => u.Id == userId,
+            useNoTracking: true,
+            query => query.Include(u => u.UserAddresses).ThenInclude(ua => ua.Address),
+            cancellationToken);
     
     public async Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)
     {
@@ -81,16 +85,17 @@ public class UserRepository : IUserRepository
             filter = u => u.Role == UserRole.Customer;
         }
 
-        return await _userRepository.GetPaginatedAsync(
+        return await _userRepository.GetPaginatedWithRelationsAsync(
             page, 
             pageSize, 
             filter, 
             useNoTracking: true, 
             orderBy: query => query.OrderByDescending(u => u.UpdatedAt),
+            includeFunc: query => query.Include(u => u.UserAddresses).ThenInclude(ua => ua.Address),
             cancellationToken
         );
     }
     
-    public async Task<bool> CheckEmailExistsAsync(string username, CancellationToken cancellationToken = default) =>
-        await _userRepository.AnyAsync(u => u.Email.ToUpper() == username.ToUpper(), cancellationToken);
+    public async Task<bool> CheckEmailExistsAsync(string email, CancellationToken cancellationToken = default) =>
+        await _userRepository.AnyAsync(u => u.Email.ToUpper() == email.ToUpper(), cancellationToken);
 }

@@ -57,13 +57,12 @@ builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>>();
 builder.Services.AddScoped<IRepository<FarmProfile>, Repository<FarmProfile>>();
 builder.Services.AddScoped<IRepository<Address>, Repository<Address>>();
-// builder.Services.AddScoped<IRepository<SupportedBank>, Repository<SupportedBank>>();
+builder.Services.AddScoped<IRepository<UserAddress>, Repository<UserAddress>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IFarmProfileRepository, FarmProfileRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
-// builder.Services.AddScoped<ISupportedBanksRepository, SupportedBanksRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();

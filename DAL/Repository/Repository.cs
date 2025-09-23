@@ -154,5 +154,38 @@ namespace DAL.Repository
 
             return (items, totalCount);
         }
+
+        public async Task<(List<T> items, int totalCount)> GetPaginatedWithRelationsAsync(int page, int pageSize, Expression<Func<T, bool>>? filter = null, bool useNoTracking = false, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null, CancellationToken cancellationToken = default)
+        {
+            IQueryable<T> query = _dbSet;
+            
+            if (useNoTracking)
+            {
+                query = query.AsNoTracking();
+            }
+            
+            if (includeFunc != null)
+            {
+                query = includeFunc(query);
+            }
+            
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+            
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+            
+            var totalCount = await query.CountAsync(cancellationToken);
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return (items, totalCount);
+        }
     }
 }

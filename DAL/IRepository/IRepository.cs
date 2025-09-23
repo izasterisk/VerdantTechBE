@@ -22,5 +22,6 @@ namespace DAL.IRepository
         Task<int> CountAsync(Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default);
         Task<bool> AnyAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);
         Task<(List<T> items, int totalCount)> GetPaginatedAsync(int page, int pageSize, Expression<Func<T, bool>>? filter = null, bool useNoTracking = false, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, CancellationToken cancellationToken = default);
+        Task<(List<T> items, int totalCount)> GetPaginatedWithRelationsAsync(int page, int pageSize, Expression<Func<T, bool>>? filter = null, bool useNoTracking = false, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null, CancellationToken cancellationToken = default);
     }
 }
