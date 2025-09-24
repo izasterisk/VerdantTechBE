@@ -13,21 +13,55 @@ public partial class EnvironmentalDatum
 
     public ulong CustomerId { get; set; }
 
+    /// <summary>
+    /// Ngày ghi nhận dữ liệu
+    /// </summary>
     public DateOnly MeasurementDate { get; set; }
 
     /// <summary>
-    /// pH range 0-14
+    /// Sand (%) 0–30 cm
     /// </summary>
-    public decimal? SoilPh { get; set; }
+    public decimal? SandPct { get; set; }
+
+    /// <summary>
+    /// Silt (%) 0–30 cm
+    /// </summary>
+    public decimal? SiltPct { get; set; }
+
+    /// <summary>
+    /// Clay (%) 0–30 cm
+    /// </summary>
+    public decimal? ClayPct { get; set; }
+
+    /// <summary>
+    /// pH (H2O) 0–30 cm
+    /// </summary>
+    public decimal? Phh2o { get; set; }
+
+    /// <summary>
+    /// Độ ẩm đất (%) 0–30 cm
+    /// </summary>
+    public decimal? SoilMoisturePct { get; set; }
+
+    /// <summary>
+    /// Nhiệt độ đất (°C) 0–30 cm
+    /// </summary>
+    public decimal? SoilTemperatureC { get; set; }
+
+    /// <summary>
+    /// Tổng lượng mưa (mm)
+    /// </summary>
+    public decimal? PrecipitationSum { get; set; }
+
+    /// <summary>
+    /// ET0 FAO (mm)
+    /// </summary>
+    public decimal? Et0FaoEvapotranspiration { get; set; }
 
     /// <summary>
     /// CO2 emissions in kg
     /// </summary>
     public decimal? Co2Footprint { get; set; }
-
-    public decimal? SoilMoisturePercentage { get; set; }
-
-    public SoilType SoilType { get; set; }
 
     [StringLength(500)]
     public string? Notes { get; set; }

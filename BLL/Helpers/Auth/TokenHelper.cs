@@ -82,10 +82,7 @@ public static class TokenHelper
         return new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Name, user.FullName),
-            new(ClaimTypes.Role, user.Role.ToString()),
-            new("verified", user.IsVerified.ToString().ToLower())
+            new(ClaimTypes.Role, user.Role.ToString())
         };
     }
 }

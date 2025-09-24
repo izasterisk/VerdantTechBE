@@ -11,10 +11,12 @@ namespace Controller.Controllers;
 public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
-
-    public AuthController(IAuthService authService)
+    private readonly IUserService _userService;
+    
+    public AuthController(IAuthService authService, IUserService userService)
     {
         _authService = authService;
+        _userService = userService;
     }
 
     /// <summary>
@@ -144,17 +146,22 @@ public class AuthController : BaseController
     [HttpGet("profile")]
     [Authorize]
     [EndpointSummary("Get User Profile")]
-    public ActionResult<APIResponse> GetProfile()
+    public async Task<ActionResult<APIResponse>> GetProfile()
     {
-        var profileInfo = new
+        try
         {
-            UserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
-            Email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
-            Name = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value,
-            Role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value,
-            Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
-        };
-        return SuccessResponse(profileInfo);
+            var userId = GetCurrentUserId();
+            var user = await _userService.GetUserByIdAsync(userId, GetCancellationToken());
+            
+            if (user == null)
+                return ErrorResponse($"Không tìm thấy người dùng với ID {userId}", HttpStatusCode.NotFound);
+
+            return SuccessResponse(user);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
     }
 
     /// <summary>
