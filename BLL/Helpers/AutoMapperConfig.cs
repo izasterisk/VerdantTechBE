@@ -1,5 +1,6 @@
 using AutoMapper;
 using BLL.DTO.Address;
+using BLL.DTO.CO2;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.User;
 using DAL.Data.Models;
@@ -42,5 +43,14 @@ public class AutoMapperConfig : Profile
         CreateMap<FarmProfileUpdateDTO, Address>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
+        // CO2Footprint mappings
+        CreateMap<Fertilizer, CO2FootprintCreateDTO>().ReverseMap();
+        CreateMap<EnvironmentalDatum, CO2FootprintCreateDTO>().ReverseMap();
+        CreateMap<EnergyUsage, CO2FootprintCreateDTO>().ReverseMap();
+        CreateMap<EnvironmentalDatum, CO2FootprintResponseDTO>()
+            .ForMember(dest => dest.EnergyUsage, opt => opt.MapFrom(src => src.EnergyUsage))
+            .ForMember(dest => dest.Fertilizer, opt => opt.MapFrom(src => src.Fertilizer));
+        CreateMap<EnergyUsageDTO, EnergyUsage>().ReverseMap();
+        CreateMap<FertilizerDTO, Fertilizer>().ReverseMap();
     }
 }

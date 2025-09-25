@@ -4,7 +4,9 @@ namespace DAL.IRepository;
 
 public interface IEnvironmentalDataRepository
 {
-    Task<EnvironmentalDatum> CreateEnvironmentalDataWithSoilDataAsync(ulong farmProfileId, ulong customerId, DateOnly measurementStartDate, DateOnly measurementEndDate, decimal sandPct, decimal siltPct, decimal clayPct, decimal phh2o, string? notes = null, CancellationToken cancellationToken = default);
-    Task<EnvironmentalDatum> CreateEnvironmentalDataWithSoilAndWeatherDataAsync(ulong farmProfileId, ulong customerId, DateOnly measurementStartDate, DateOnly measurementEndDate, decimal sandPct, decimal siltPct, decimal clayPct, decimal phh2o, decimal precipitationSum, decimal et0FaoEvapotranspiration, string? notes = null, CancellationToken cancellationToken = default);
-    Task<bool> GetByFarmAndDateRangeAsync(ulong farmProfileId, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default);
+    Task<bool> GetEnvironmentDataByFarmIdAndDateRangeAsync(ulong farmProfileId, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default);
+    Task<List<EnvironmentalDatum>> GetAllEnvironmentDataByFarmId(ulong id, CancellationToken cancellationToken = default);
+    Task<EnvironmentalDatum?> GetEnvironmentDataById(ulong id, CancellationToken cancellationToken = default);
+    Task<EnvironmentalDatum> CreateEnvironmentalDataWithTransactionAsync(EnvironmentalDatum environmentalDatum, Fertilizer fertilizer, EnergyUsage energyUsage, CancellationToken cancellationToken = default);
+    Task<bool> DeleteEnvironmentalDataByIdWithTransactionAsync(ulong id, CancellationToken cancellationToken = default);
 }

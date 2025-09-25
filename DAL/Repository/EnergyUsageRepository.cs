@@ -19,9 +19,14 @@ public class EnergyUsageRepository : IEnergyUsageRepository
         return await _energyUsageRepository.CreateAsync(energyUsage, cancellationToken);
     }
     
-    public async Task<EnergyUsage> UpdateEnergyUsageAsync(EnergyUsage energyUsage, CancellationToken cancellationToken = default)
+    // public async Task<EnergyUsage> UpdateEnergyUsageAsync(EnergyUsage energyUsage, CancellationToken cancellationToken = default)
+    // {
+    //     energyUsage.UpdatedAt = DateTime.UtcNow;
+    //     return await _energyUsageRepository.UpdateAsync(energyUsage, cancellationToken);
+    // }
+    
+    public async Task<bool> DeleteEnergyUsageAsync(EnergyUsage energyUsage, CancellationToken cancellationToken = default)
     {
-        energyUsage.UpdatedAt = DateTime.UtcNow;
-        return await _energyUsageRepository.UpdateAsync(energyUsage, cancellationToken);
+        return await _energyUsageRepository.DeleteAsync(energyUsage, cancellationToken);
     }
 }

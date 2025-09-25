@@ -169,13 +169,13 @@ CREATE TABLE environmental_data (
     FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_farm_dates (farm_profile_id, measurement_start_date, measurement_end_date),
-    INDEX idx_customer (customer_id)
+    INDEX idx_farm_profile (farm_profile_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu môi trường do nông dân nhập thủ công';
 
 -- Theo dõi việc sử dụng phân bón
 CREATE TABLE fertilizers (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    environmental_data_id BIGINT UNSIGNED NOT NULL,
+    environmental_data_id BIGINT UNSIGNED NOT NULL UNIQUE,
     organic_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân hữu cơ (kg)',
     npk_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân NPK tổng hợp (kg)',
     urea_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân urê (kg)', 
@@ -184,13 +184,13 @@ CREATE TABLE fertilizers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (environmental_data_id) REFERENCES environmental_data(id) ON DELETE RESTRICT,
-    INDEX idx_environmental_data (environmental_data_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng phân bón để tính toán lượng khí thải CO2';
+    UNIQUE KEY uk_fertilizers_environmental_data (environmental_data_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng phân bón để tính toán lượng khí thải CO2 (quan hệ 1-1 với environmental_data)';
 
 -- Theo dõi việc sử dụng năng lượng
 CREATE TABLE energy_usage (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    environmental_data_id BIGINT UNSIGNED NOT NULL,
+    environmental_data_id BIGINT UNSIGNED NOT NULL UNIQUE,
     electricity_kwh DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Điện tiêu thụ (kWh)',
     gasoline_liters DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Xăng sử dụng (lít)',
     diesel_liters DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Dầu diesel sử dụng (lít)',
@@ -198,8 +198,8 @@ CREATE TABLE energy_usage (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  
 
     FOREIGN KEY (environmental_data_id) REFERENCES environmental_data(id) ON DELETE RESTRICT,
-    INDEX idx_environmental_data (environmental_data_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng năng lượng để tính toán lượng khí thải CO2';
+    UNIQUE KEY uk_energy_usage_environmental_data (environmental_data_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng năng lượng để tính toán lượng khí thải CO2 (quan hệ 1-1 với environmental_data)';
 
 -- =====================================================
 -- CÁC BẢNG CHATBOT AI

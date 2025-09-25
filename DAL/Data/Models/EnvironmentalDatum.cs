@@ -68,6 +68,6 @@ public partial class EnvironmentalDatum
     // Navigation Properties
     public virtual FarmProfile FarmProfile { get; set; } = null!;
     public virtual User Customer { get; set; } = null!;
-    public virtual ICollection<Fertilizer> Fertilizers { get; set; } = new List<Fertilizer>();
-    public virtual ICollection<EnergyUsage> EnergyUsages { get; set; } = new List<EnergyUsage>();
+    public virtual Fertilizer? Fertilizer { get; set; }
+    public virtual EnergyUsage? EnergyUsage { get; set; }
 }

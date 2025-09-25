@@ -112,7 +112,7 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
         builder.HasIndex(e => new { e.FarmProfileId, e.MeasurementStartDate, e.MeasurementEndDate })
             .HasDatabaseName("idx_farm_dates");
             
-        builder.HasIndex(e => e.CustomerId)
-            .HasDatabaseName("idx_customer");
+        builder.HasIndex(e => e.FarmProfileId)
+            .HasDatabaseName("idx_farm_profile");
     }
 }

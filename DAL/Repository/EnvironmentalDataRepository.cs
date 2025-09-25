@@ -8,75 +8,108 @@ namespace DAL.Repository;
 public class EnvironmentalDataRepository : IEnvironmentalDataRepository
 {
     private readonly IRepository<EnvironmentalDatum> _environmentalDataRepository;
+    private readonly IRepository<FarmProfile> _farmProfileRepository;
     private readonly VerdantTechDbContext _dbContext;
+    private readonly IFertilizerRepository _fertilizerRepository;
+    private readonly IEnergyUsageRepository _energyUsageRepository;
     
-    public EnvironmentalDataRepository(VerdantTechDbContext context)
+    public EnvironmentalDataRepository(
+        IRepository<EnvironmentalDatum> environmentalDataRepository, 
+        IRepository<FarmProfile> farmProfileRepository, 
+        VerdantTechDbContext dbContext,
+        IFertilizerRepository fertilizerRepository,
+        IEnergyUsageRepository energyUsageRepository)
     {
-        _environmentalDataRepository = new Repository<EnvironmentalDatum>(context);
-        _dbContext = context;
+        _environmentalDataRepository = environmentalDataRepository;
+        _farmProfileRepository = farmProfileRepository;
+        _dbContext = dbContext;
+        _fertilizerRepository = fertilizerRepository;
+        _energyUsageRepository = energyUsageRepository;
     }
 
-    public async Task<EnvironmentalDatum> CreateEnvironmentalDataWithTransactionAsync(EnvironmentalDatum environmentalData, CancellationToken cancellationToken = default)
+    public async Task<bool> GetEnvironmentDataByFarmIdAndDateRangeAsync(ulong farmProfileId, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default)
+    {
+        return await _environmentalDataRepository.AnyAsync(
+            x => x.FarmProfileId == farmProfileId 
+                 && x.MeasurementStartDate == startDate && x.MeasurementEndDate == endDate, cancellationToken);
+    }
+    
+    public async Task<List<EnvironmentalDatum>> GetAllEnvironmentDataByFarmId(ulong id, CancellationToken cancellationToken = default)
+    {
+        return await _environmentalDataRepository.GetAllWithRelationsByFilterAsync(
+            e => e.FarmProfileId == id,
+            true,
+            query => query.Include(e => e.Fertilizer)
+                .Include(e => e.EnergyUsage),
+            cancellationToken);
+    }
+    
+    public async Task<EnvironmentalDatum?> GetEnvironmentDataById(ulong id, CancellationToken cancellationToken = default)
+    {
+        return await _environmentalDataRepository.GetWithRelationsAsync(
+            e => e.Id == id,
+            true,
+            query => query.Include(e => e.Fertilizer)
+                .Include(e => e.EnergyUsage),
+            cancellationToken);
+    }
+    
+    public async Task<EnvironmentalDatum> CreateEnvironmentalDataWithTransactionAsync(EnvironmentalDatum environmentalDatum, Fertilizer fertilizer, EnergyUsage energyUsage, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            environmentalData.CreatedAt = DateTime.UtcNow;
-            environmentalData.UpdatedAt = DateTime.UtcNow;
+            environmentalDatum.CreatedAt = DateTime.UtcNow;
+            environmentalDatum.UpdatedAt = DateTime.UtcNow;
+            var createdEnvironmentalData = await _environmentalDataRepository.CreateAsync(environmentalDatum, cancellationToken);
             
-            var createdData = await _environmentalDataRepository.CreateAsync(environmentalData, cancellationToken);
+            fertilizer.EnvironmentalDataId = createdEnvironmentalData.Id;
+            fertilizer.CreatedAt = DateTime.UtcNow;
+            fertilizer.UpdatedAt = DateTime.UtcNow;
+            await _fertilizerRepository.CreateFertilizerAsync(fertilizer, cancellationToken);
+            
+            energyUsage.EnvironmentalDataId = createdEnvironmentalData.Id;
+            energyUsage.CreatedAt = DateTime.UtcNow;
+            energyUsage.UpdatedAt = DateTime.UtcNow;
+            await _energyUsageRepository.CreateEnergyUsageAsync(energyUsage, cancellationToken);
+            
+            var completeEnvironmentalData = await GetEnvironmentDataById(createdEnvironmentalData.Id, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
-            return createdData;
+            return completeEnvironmentalData!;
         }
-        catch (Exception)
+        catch
         {
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
     }
-
-    public async Task<EnvironmentalDatum> CreateEnvironmentalDataWithSoilDataAsync(ulong farmProfileId, ulong customerId, DateOnly measurementStartDate, DateOnly measurementEndDate, decimal sandPct, decimal siltPct, decimal clayPct, decimal phh2o, string? notes = null, CancellationToken cancellationToken = default)
+    
+    public async Task<bool> DeleteEnvironmentalDataByIdWithTransactionAsync(ulong id, CancellationToken cancellationToken = default)
     {
-        var environmentalData = new EnvironmentalDatum
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
         {
-            FarmProfileId = farmProfileId,
-            CustomerId = customerId,
-            MeasurementStartDate = measurementStartDate,
-            MeasurementEndDate = measurementEndDate,
-            SandPct = sandPct,
-            SiltPct = siltPct,
-            ClayPct = clayPct,
-            Phh2o = phh2o,
-            Notes = notes
-        };
-        
-        return await CreateEnvironmentalDataWithTransactionAsync(environmentalData, cancellationToken);
-    }
-
-    public async Task<EnvironmentalDatum> CreateEnvironmentalDataWithSoilAndWeatherDataAsync(ulong farmProfileId, ulong customerId, DateOnly measurementStartDate, DateOnly measurementEndDate, decimal sandPct, decimal siltPct, decimal clayPct, decimal phh2o, decimal precipitationSum, decimal et0FaoEvapotranspiration, string? notes = null, CancellationToken cancellationToken = default)
-    {
-        var environmentalData = new EnvironmentalDatum
+            var environmentalDatum = await GetEnvironmentDataById(id, cancellationToken);
+            if (environmentalDatum == null)
+            {
+                return false;
+            }
+            if (environmentalDatum.Fertilizer != null)
+            {
+                await _fertilizerRepository.DeleteFertilizerAsync(environmentalDatum.Fertilizer, cancellationToken);
+            }
+            if (environmentalDatum.EnergyUsage != null)
+            {
+                await _energyUsageRepository.DeleteEnergyUsageAsync(environmentalDatum.EnergyUsage, cancellationToken);
+            }
+            var result = await _environmentalDataRepository.DeleteAsync(environmentalDatum, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
+        }
+        catch
         {
-            FarmProfileId = farmProfileId,
-            CustomerId = customerId,
-            MeasurementStartDate = measurementStartDate,
-            MeasurementEndDate = measurementEndDate,
-            SandPct = sandPct,
-            SiltPct = siltPct,
-            ClayPct = clayPct,
-            Phh2o = phh2o,
-            PrecipitationSum = precipitationSum,
-            Et0FaoEvapotranspiration = et0FaoEvapotranspiration,
-            Notes = notes
-        };
-        
-        return await CreateEnvironmentalDataWithTransactionAsync(environmentalData, cancellationToken);
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
-
-    public async Task<bool> GetByFarmAndDateRangeAsync(ulong farmProfileId, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default) =>
-        await _environmentalDataRepository.AnyAsync(
-            x => x.FarmProfileId == farmProfileId 
-                 && x.MeasurementStartDate == startDate 
-                 && x.MeasurementEndDate == endDate,
-            cancellationToken);
 }
