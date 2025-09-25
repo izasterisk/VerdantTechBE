@@ -63,17 +63,6 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
             .HasColumnName("phh2o")
             .HasComment("pH (H2O) 0–30 cm");
 
-        // Soil physical properties
-        builder.Property(e => e.SoilMoisturePct)
-            .HasPrecision(5, 2)
-            .HasColumnName("soil_moisture_pct")
-            .HasComment("Độ ẩm đất (%) 0–30 cm");
-
-        builder.Property(e => e.SoilTemperatureC)
-            .HasPrecision(5, 2)
-            .HasColumnName("soil_temperature_c")
-            .HasComment("Nhiệt độ đất (°C) 0–30 cm");
-
         // Hydrology data
         builder.Property(e => e.PrecipitationSum)
             .HasPrecision(7, 2)

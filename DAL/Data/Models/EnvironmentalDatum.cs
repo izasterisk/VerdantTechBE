@@ -44,16 +44,6 @@ public partial class EnvironmentalDatum
     public decimal? Phh2o { get; set; }
 
     /// <summary>
-    /// Độ ẩm đất (%) 0–30 cm
-    /// </summary>
-    public decimal? SoilMoisturePct { get; set; }
-
-    /// <summary>
-    /// Nhiệt độ đất (°C) 0–30 cm
-    /// </summary>
-    public decimal? SoilTemperatureC { get; set; }
-
-    /// <summary>
     /// Tổng lượng mưa (mm)
     /// </summary>
     public decimal? PrecipitationSum { get; set; }

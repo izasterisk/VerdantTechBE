@@ -1,7 +1,7 @@
 -- SEEDER DATA FOR VERDANTTECH DATABASE v7.2
 -- All passwords are: $2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS
 -- Updated for schema v7.2: Removed address_id from users, added user_addresses junction table for many-to-many relationship
--- Updated environmental_data table: renamed soil_ph to phh2o, soil_moisture_percentage to soil_moisture_pct, removed soil_type enum, added new environmental measurement fields
+-- Updated environmental_data table: renamed soil_ph to phh2o, removed soil_type enum, added new environmental measurement fields
 -- Dates adjusted to be recent as of 2025-09-22, ensured foreign key consistency
 
 -- Insert Addresses (new table in v7.1 for centralized address management)
@@ -171,9 +171,9 @@ INSERT INTO `chatbot_messages` (`id`, `conversation_id`, `message_type`, `messag
 (10, 3, 'bot', 'Rất vui được hỗ trợ bạn! Chúc bạn canh tác thành công. Nếu có thắc mắc gì khác, đừng ngần ngại liên hệ nhé!', NULL, '2025-09-09 08:44:30');
 
 -- Insert Environmental Data (v7.2 structure - updated column names and added new environmental measurement fields)
-INSERT INTO `environmental_data` (`id`, `farm_profile_id`, `customer_id`, `measurement_start_date`, `measurement_end_date`, `sand_pct`, `silt_pct`, `clay_pct`, `phh2o`, `soil_moisture_pct`, `soil_temperature_c`, `precipitation_sum`, `et0_fao_evapotranspiration`, `co2_footprint`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 1, 9, '2025-09-09', '2025-09-09', 35.50, 45.20, 19.30, 6.50, 45.20, 24.50, 85.40, 4.20, 120.50, 'Đo lường sau mưa', '2025-09-09 06:00:00', '2025-09-09 06:00:00'),
-(2, 2, 10, '2025-09-09', '2025-09-09', 28.70, 41.80, 29.50, 7.00, 38.50, 26.20, 92.60, 4.80, 85.30, 'Kiểm tra hàng tuần', '2025-09-09 05:30:00', '2025-09-09 05:30:00');
+INSERT INTO `environmental_data` (`id`, `farm_profile_id`, `customer_id`, `measurement_start_date`, `measurement_end_date`, `sand_pct`, `silt_pct`, `clay_pct`, `phh2o`, `precipitation_sum`, `et0_fao_evapotranspiration`, `co2_footprint`, `notes`, `created_at`, `updated_at`) VALUES
+(1, 1, 9, '2025-09-09', '2025-09-09', 35.50, 45.20, 19.30, 6.50, 85.40, 4.20, 120.50, 'Đo lường sau mưa', '2025-09-09 06:00:00', '2025-09-09 06:00:00'),
+(2, 2, 10, '2025-09-09', '2025-09-09', 28.70, 41.80, 29.50, 7.00, 92.60, 4.80, 85.30, 'Kiểm tra hàng tuần', '2025-09-09 05:30:00', '2025-09-09 05:30:00');
 
 -- Insert Fertilizers (added for completeness)
 INSERT INTO `fertilizers` (`id`, `environmental_data_id`, `organic_fertilizer`, `npk_fertilizer`, `urea_fertilizer`, `phosphate_fertilizer`, `created_at`, `updated_at`) VALUES

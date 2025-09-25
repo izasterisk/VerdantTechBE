@@ -1,187 +1,26 @@
-URL (Now): https://api.open-meteo.com/v1/forecast?latitude=10.7970&longitude=106.7132&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_temperature_0cm&timezone=Asia/Ho_Chi_Minh
+URL (Now): https://archive-api.open-meteo.com/v1/era5?latitude=10.81&longitude=106.71&start_date=2025-09-20&end_date=2025-09-24&daily=precipitation_sum,et0_fao_evapotranspiration&timezone=auto
 {
-  "latitude": 10.75,
-  "longitude": 106.75,
-  "generationtime_ms": 0.100016593933105,
+  "latitude": 10.790861,
+  "longitude": 106.71088,
+  "generationtime_ms": 8.83996486663818,
   "utc_offset_seconds": 25200,
   "timezone": "Asia/Ho_Chi_Minh",
   "timezone_abbreviation": "GMT+7",
-  "elevation": 8,
-  "current_units": {
-    "time": "iso8601",
-    "interval": "seconds",
-    "temperature_2m": "°C",
-    "apparent_temperature": "°C",
-    "relative_humidity_2m": "%",
-    "precipitation": "mm",
-    "wind_speed_10m": "km/h",
-    "wind_gusts_10m": "km/h",
-    "uv_index": "",
-    "soil_moisture_0_to_1cm": "m³/m³",
-    "soil_moisture_3_to_9cm": "m³/m³",
-    "soil_temperature_0cm": "°C"
-  },
-  "current": {
-    "time": "2025-09-22T11:45",
-    "interval": 900,
-    "temperature_2m": 28.5,
-    "apparent_temperature": 32.5,
-    "relative_humidity_2m": 80,
-    "precipitation": 0,
-    "wind_speed_10m": 16.9,
-    "wind_gusts_10m": 29.9,
-    "uv_index": 1.2,
-    "soil_moisture_0_to_1cm": 0.375,
-    "soil_moisture_3_to_9cm": 0.383,
-    "soil_temperature_0cm": 30.2
-  }
-}
-
-====================================================================================
-
-URL (hourly): https://api.open-meteo.com/v1/forecast?latitude=10.7970&longitude=106.7132&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_temperature_0cm&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia/Ho_Chi_Minh&start_date=2025-09-18&end_date=2025-09-18
-Response:
-{
-  "latitude": 10.75,
-  "longitude": 106.75,
-  "generationtime_ms": 6.04319572448731,
-  "utc_offset_seconds": 25200,
-  "timezone": "Asia/Ho_Chi_Minh",
-  "timezone_abbreviation": "GMT+7",
-  "elevation": 8,
-  "hourly_units": {
-    "time": "iso8601",
-    "temperature_2m": "°C",
-    "apparent_temperature": "°C",
-    "relative_humidity_2m": "%",
-    "precipitation": "mm",
-    "wind_speed_10m": "km/h",
-    "wind_gusts_10m": "km/h",
-    "uv_index": "",
-    "soil_moisture_0_to_1cm": "m³/m³",
-    "soil_moisture_3_to_9cm": "m³/m³",
-    "soil_temperature_0cm": "°C"
-  },
-  "hourly": {
-    "time": [
-      "2025-09-18T00:00",
-      "2025-09-18T01:00",
-      "2025-09-18T02:00",
-      "2025-09-18T03:00",
-      "2025-09-18T04:00",
-      "2025-09-18T05:00",
-      "2025-09-18T06:00",
-      "2025-09-18T07:00",
-      "2025-09-18T08:00",
-      "2025-09-18T09:00",
-      "2025-09-18T10:00",
-      "2025-09-18T11:00",
-      "2025-09-18T12:00",
-      "2025-09-18T13:00",
-      "2025-09-18T14:00",
-      "2025-09-18T15:00",
-      "2025-09-18T16:00",
-      "2025-09-18T17:00",
-      "2025-09-18T18:00",
-      "2025-09-18T19:00",
-      "2025-09-18T20:00",
-      "2025-09-18T21:00",
-      "2025-09-18T22:00",
-      "2025-09-18T23:00"
-    ],
-    "temperature_2m": [25.7, 25.4, 25.3, 25.3, 25.3, 25.3, 25.3, 25.9, 26.6, 27.5, 28.4, 29.2, 30, 31.4, 31.6, 30.8, 30.1, 29.2, 27.7, 26.2, 26, 25.7, 25.6, 25.6],
-    "apparent_temperature": [31.1, 30.8, 30.8, 31.1, 31.2, 31.3, 31.3, 32, 32.5, 33.4, 34.5, 35.2, 35.9, 36.4, 37, 36.4, 35.9, 34.9, 33.4, 31.6, 31.3, 31.1, 31, 30.8],
-    "relative_humidity_2m": [95, 95, 96, 96, 96, 96, 96, 95, 92, 89, 86, 81, 77, 68, 69, 72, 75, 79, 88, 93, 93, 94, 94, 95],
-    "precipitation": [0.5, 0.4, 0.9, 0.4, 0.1, 0.2, 0.3, 0.2, 0.3, 0.6, 0.5, 0.1, 0.1, 0.3, 0.1, 0.4, 1.8, 6, 5.9, 1.2, 0, 0, 0, 0],
-    "wind_speed_10m": [7.8, 7.6, 6.8, 5.1, 4, 3.6, 3.4, 4, 7, 8, 8, 9.6, 10.8, 11, 10.4, 8.4, 6.6, 7.3, 9.7, 8.7, 8.6, 7.6, 6.7, 8.7],
-    "wind_gusts_10m": [14.4, 14, 13.7, 12.2, 9.4, 8.3, 8.6, 13, 16.6, 17.6, 18.4, 24.5, 28.8, 28.8, 26.3, 25.9, 22.7, 19.8, 18, 18, 16.2, 15.5, 13.3, 15.5],
-    "uv_index": [0, 0, 0, 0, 0, 0, 0, 0.65, 2.2, 4.4, 6.4, 7.25, 8.45, 8.1, 7.3, 5.3, 3.1, 0.95, 0.15, 0, 0, 0, 0, 0],
-    "soil_moisture_0_to_1cm": [0.388, 0.39, 0.397, 0.387, 0.384, 0.385, 0.385, 0.386, 0.386, 0.39, 0.386, 0.376, 0.371, 0.363, 0.36, 0.373, 0.401, 0.434, 0.434, 0.398, 0.391, 0.387, 0.384, 0.381],
-    "soil_moisture_3_to_9cm": [0.385, 0.385, 0.387, 0.39, 0.389, 0.387, 0.386, 0.391, 0.389, 0.389, 0.389, 0.386, 0.383, 0.378, 0.375, 0.372, 0.376, 0.401, 0.43, 0.406, 0.403, 0.398, 0.394, 0.391],
-    "soil_temperature_0cm": [25.8, 25.6, 25.5, 25.4, 25.4, 25.4, 25.5, 27.4, 28.7, 30.2, 31.8, 32.4, 32.4, 34.8, 34.9, 31.8, 30.9, 28.4, 27.6, 26.3, 26, 25.8, 25.7, 25.5]
-  },
+  "elevation": 7,
   "daily_units": {
     "time": "iso8601",
-    "temperature_2m_max": "°C",
-    "temperature_2m_min": "°C",
-    "precipitation_sum": "mm"
-  },
-  "daily": {
-    "time": [
-      "2025-09-18"
-    ],
-    "temperature_2m_max": [31.6],
-    "temperature_2m_min": [25.3],
-    "precipitation_sum": [20.3]
-  }
-}
-
-==================================================================================================
-
-URL (daily): https://api.open-meteo.com/v1/forecast?latitude=10.797&longitude=106.7132&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_sum,precipitation_hours,sunshine_duration,uv_index_max,wind_speed_10m_max,wind_gusts_10m_max,et0_fao_evapotranspiration,sunrise,sunset&timezone=Asia/Ho_Chi_Minh&start_date=2025-09-21&end_date=2025-09-27
-Response: 
-{
-  "latitude": 10.75,
-  "longitude": 106.75,
-  "generationtime_ms": 0.145792961120605,
-  "utc_offset_seconds": 25200,
-  "timezone": "Asia/Ho_Chi_Minh",
-  "timezone_abbreviation": "GMT+7",
-  "elevation": 8,
-  "daily_units": {
-    "time": "iso8601",
-    "temperature_2m_max": "°C",
-    "temperature_2m_min": "°C",
-    "apparent_temperature_max": "°C",
-    "apparent_temperature_min": "°C",
     "precipitation_sum": "mm",
-    "precipitation_hours": "h",
-    "sunshine_duration": "s",
-    "uv_index_max": "",
-    "wind_speed_10m_max": "km/h",
-    "wind_gusts_10m_max": "km/h",
-    "et0_fao_evapotranspiration": "mm",
-    "sunrise": "iso8601",
-    "sunset": "iso8601"
+    "et0_fao_evapotranspiration": "mm"
   },
   "daily": {
     "time": [
+      "2025-09-20",
       "2025-09-21",
       "2025-09-22",
       "2025-09-23",
-      "2025-09-24",
-      "2025-09-25",
-      "2025-09-26",
-      "2025-09-27"
+      "2025-09-24"
     ],
-    "temperature_2m_max": [32.8, 28.3, 31, 31.8, 32.2, 32.1, 28.1],
-    "temperature_2m_min": [24.9, 25.5, 24.8, 25.2, 25.3, 25, 25.4],
-    "apparent_temperature_max": [37.4, 33.1, 35.2, 35.1, 37, 38.3, 33],
-    "apparent_temperature_min": [30.5, 31.2, 29.4, 29.9, 30.2, 30.4, 30.6],
-    "precipitation_sum": [15, 19.2, 1.7, 1.6, 7.5, 16.9, 26.9],
-    "precipitation_hours": [10, 17, 4, 4, 9, 13, 21],
-    "sunshine_duration": [32067.18, 0, 14400, 2082.59, 22620.02, 37266.34, 1025.03],
-    "uv_index_max": [7.75, 5.2, 8.2, 8.95, 8.05, 6.05, 5.8],
-    "wind_speed_10m_max": [16.2, 14, 18.4, 18, 16.6, 13, 11.8],
-    "wind_gusts_10m_max": [35.3, 31.7, 41, 44.3, 43.2, 33.1, 36],
-    "et0_fao_evapotranspiration": [3.89, 1.74, 3.11, 3.19, 3.5, 3.84, 1.92],
-    "sunrise": [
-      "2025-09-21T05:42",
-      "2025-09-22T05:42",
-      "2025-09-23T05:42",
-      "2025-09-24T05:42",
-      "2025-09-25T05:42",
-      "2025-09-26T05:42",
-      "2025-09-27T05:41"
-    ],
-    "sunset": [
-      "2025-09-21T17:49",
-      "2025-09-22T17:49",
-      "2025-09-23T17:48",
-      "2025-09-24T17:48",
-      "2025-09-25T17:47",
-      "2025-09-26T17:46",
-      "2025-09-27T17:46"
-    ]
+    "precipitation_sum": [4.6, 15.7, 18.6, 2.8, null],
+    "et0_fao_evapotranspiration": [4.6, 3.94, 1.59, 2.31, null]
   }
-} 
+}
