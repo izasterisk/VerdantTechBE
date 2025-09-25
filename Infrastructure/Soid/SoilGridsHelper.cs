@@ -1,4 +1,5 @@
 using BLL.Interfaces.Infrastructure;
+using System.Globalization;
 
 namespace Infrastructure.CO2;
 
@@ -7,13 +8,14 @@ public static class SoilGridsHelper
     /// <summary>
     /// Build URL for SoilGrids API query
     /// </summary>
-    public static string BuildSoilGridsUrl(string baseUrl, decimal longitude, decimal latitude)
+    public static string BuildSoilGridsUrl(string baseUrl, decimal latitude, decimal longitude)
     {
         var properties = "property=phh2o&property=sand&property=silt&property=clay";
         var depths = "depth=0-5cm&depth=5-15cm&depth=15-30cm";
         var value = "value=mean";
         
-        return $"{baseUrl}query?lon={longitude:F4}&lat={latitude:F4}&{properties}&{depths}&{value}";
+        // Use InvariantCulture to ensure dot (.) as decimal separator, not comma (,)
+        return $"{baseUrl}query?lon={longitude.ToString("F4", CultureInfo.InvariantCulture)}&lat={latitude.ToString("F4", CultureInfo.InvariantCulture)}&{properties}&{depths}&{value}";
     }
     
     /// <summary>

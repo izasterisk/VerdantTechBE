@@ -41,10 +41,12 @@ public abstract class BaseController : ControllerBase
             ArgumentException => BadRequest(APIResponse.Error(ex.Message, HttpStatusCode.BadRequest)),
             InvalidOperationException when ex.Message.Contains("Email chưa được xác minh") => 
                 StatusCode(403, APIResponse.Error("Email chưa được xác minh", HttpStatusCode.Forbidden)),
+            InvalidOperationException when ex.Message.Contains("Không tìm thấy người dùng") => 
+                NotFound(APIResponse.Error("Không tìm thấy người dùng", HttpStatusCode.NotFound)),
             InvalidOperationException => 
-                ex.Message.Contains("Không tìm thấy người dùng") 
-                    ? NotFound(APIResponse.Error("Không tìm thấy người dùng", HttpStatusCode.NotFound))
-                    : BadRequest(APIResponse.Error("Yêu cầu không hợp lệ", HttpStatusCode.BadRequest)),
+                BadRequest(APIResponse.Error(
+                    string.IsNullOrEmpty(ex.Message) ? "Yêu cầu không hợp lệ" : ex.Message, 
+                    HttpStatusCode.BadRequest)),
             _ => StatusCode(500, APIResponse.Error("Lỗi máy chủ nội bộ", HttpStatusCode.InternalServerError))
         };
     }
