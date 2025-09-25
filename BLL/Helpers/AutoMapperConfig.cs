@@ -1,6 +1,7 @@
 using AutoMapper;
 using BLL.DTO.Address;
 using BLL.DTO.FarmProfile;
+using BLL.DTO.ProductCategory;
 using BLL.DTO.User;
 using DAL.Data.Models;
 
@@ -41,6 +42,12 @@ public class AutoMapperConfig : Profile
         CreateMap<FarmProfileCreateDto, Address>().ReverseMap();
         CreateMap<FarmProfileUpdateDTO, Address>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        // ProductCategory mappings
+        CreateMap<ProductCategoryCreateDTO, ProductCategory>().ReverseMap();
+        CreateMap<ProductCategoryUpdateDTO, ProductCategory>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        CreateMap<ProductCategory, ProductCategoryResponseDTO>().ReverseMap();
+
 
     }
 }
