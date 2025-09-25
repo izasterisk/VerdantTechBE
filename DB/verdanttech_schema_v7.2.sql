@@ -154,7 +154,8 @@ CREATE TABLE environmental_data (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     farm_profile_id BIGINT UNSIGNED NOT NULL,
     customer_id BIGINT UNSIGNED NOT NULL,
-    measurement_date DATE NOT NULL COMMENT 'Ngày ghi nhận dữ liệu',
+    measurement_start_date DATE NOT NULL COMMENT 'Ngày bắt đầu ghi nhận dữ liệu',
+    measurement_end_date DATE NOT NULL COMMENT 'Ngày kết thúc ghi nhận dữ liệu',
     sand_pct   DECIMAL(5,2) NULL COMMENT 'Sand (%) 0–30 cm',
     silt_pct   DECIMAL(5,2) NULL COMMENT 'Silt (%) 0–30 cm',
     clay_pct   DECIMAL(5,2) NULL COMMENT 'Clay (%) 0–30 cm',
@@ -169,7 +170,7 @@ CREATE TABLE environmental_data (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_farm_date (farm_profile_id, measurement_date),
+    INDEX idx_farm_dates (farm_profile_id, measurement_start_date, measurement_end_date),
     INDEX idx_customer (customer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu môi trường do nông dân nhập thủ công';
 

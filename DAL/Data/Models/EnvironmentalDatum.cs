@@ -14,9 +14,14 @@ public partial class EnvironmentalDatum
     public ulong CustomerId { get; set; }
 
     /// <summary>
-    /// Ngày ghi nhận dữ liệu
+    /// Ngày bắt đầu ghi nhận dữ liệu
     /// </summary>
-    public DateOnly MeasurementDate { get; set; }
+    public DateOnly MeasurementStartDate { get; set; }
+
+    /// <summary>
+    /// Ngày kết thúc ghi nhận dữ liệu
+    /// </summary>
+    public DateOnly MeasurementEndDate { get; set; }
 
     /// <summary>
     /// Sand (%) 0–30 cm

@@ -28,12 +28,18 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
             .IsRequired()
             .HasColumnName("customer_id");
         
-        // Date field
-        builder.Property(e => e.MeasurementDate)
+        // Date fields
+        builder.Property(e => e.MeasurementStartDate)
             .HasColumnType("date")
             .IsRequired()
-            .HasColumnName("measurement_date")
-            .HasComment("Ngày ghi nhận dữ liệu");
+            .HasColumnName("measurement_start_date")
+            .HasComment("Ngày bắt đầu ghi nhận dữ liệu");
+
+        builder.Property(e => e.MeasurementEndDate)
+            .HasColumnType("date")
+            .IsRequired()
+            .HasColumnName("measurement_end_date")
+            .HasComment("Ngày kết thúc ghi nhận dữ liệu");
 
         // Soil composition (0–30 cm depth)
         builder.Property(e => e.SandPct)
@@ -114,8 +120,8 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
             .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
-        builder.HasIndex(e => new { e.FarmProfileId, e.MeasurementDate })
-            .HasDatabaseName("idx_farm_date");
+        builder.HasIndex(e => new { e.FarmProfileId, e.MeasurementStartDate, e.MeasurementEndDate })
+            .HasDatabaseName("idx_farm_dates");
             
         builder.HasIndex(e => e.CustomerId)
             .HasDatabaseName("idx_customer");
