@@ -58,16 +58,19 @@ builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>
 builder.Services.AddScoped<IRepository<FarmProfile>, Repository<FarmProfile>>();
 builder.Services.AddScoped<IRepository<Address>, Repository<Address>>();
 builder.Services.AddScoped<IRepository<UserAddress>, Repository<UserAddress>>();
+builder.Services.AddScoped<IRepository<ProductCategory>, Repository<ProductCategory>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IFarmProfileRepository, FarmProfileRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+builder.Services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFarmProfileService, FarmProfileService>();
 builder.Services.AddScoped<IWeatherService, WeatherService>();
+builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
