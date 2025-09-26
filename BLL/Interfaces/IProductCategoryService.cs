@@ -10,7 +10,7 @@ namespace BLL.Interfaces
     public interface IProductCategoryService
     {
         Task<ProductCategoryResponseDTO> CreateProductCategoryAsync( ProductCategoryCreateDTO dto, CancellationToken cancellationToken = default);
-        Task<ProductCategoryResponseDTO?> GetProductCategoryByFarmIdAsync(ulong id, CancellationToken cancellationToken = default);
+        Task<ProductCategoryResponseDTO?> GetProductCategoryByIdAsync(ulong id, CancellationToken cancellationToken = default);
         Task<IReadOnlyList<ProductCategoryResponseDTO>> GetAllProductCategoryAsync( CancellationToken cancellationToken = default);
         Task<ProductCategoryResponseDTO> UpdateProductCategoryAsync(ulong id, ProductCategoryUpdateDTO dto, CancellationToken cancellationToken = default);
     }

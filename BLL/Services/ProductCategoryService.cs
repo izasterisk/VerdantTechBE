@@ -44,7 +44,7 @@ namespace BLL.Services
         }
 
 
-        public async Task<ProductCategoryResponseDTO?> GetProductCategoryByFarmIdAsync(ulong id, CancellationToken cancellationToken = default)
+        public async Task<ProductCategoryResponseDTO?> GetProductCategoryByIdAsync(ulong id, CancellationToken cancellationToken = default)
         {
             var productCategory = await _productCategoryRepository.GetProductCategoryByIdAsync(id, useNoTracking: true, cancellationToken);
             if (productCategory == null)
