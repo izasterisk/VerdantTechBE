@@ -26,7 +26,6 @@ public class CO2Controller : BaseController
     [HttpPost("farm/{farmId}")]
     [Authorize]
     [EndpointSummary("Create CO2 Footprint for Farm")]
-    [EndpointDescription("Tạo dữ liệu CO2 footprint cho trang trại trong khoảng thời gian xác định")]
     public async Task<ActionResult<APIResponse>> CreateCO2Footprint(ulong farmId, [FromBody] CO2FootprintCreateDTO dto)
     {
         var validationResult = ValidateModel();
@@ -51,7 +50,6 @@ public class CO2Controller : BaseController
     [HttpGet("farm/{farmId}")]
     [Authorize]
     [EndpointSummary("Get All Environmental Data by Farm ID")]
-    [EndpointDescription("Lấy tất cả dữ liệu môi trường của một trang trại")]
     public async Task<ActionResult<APIResponse>> GetAllEnvironmentDataByFarmId(ulong farmId)
     {
         try
@@ -73,7 +71,6 @@ public class CO2Controller : BaseController
     [HttpGet("{id}")]
     [Authorize]
     [EndpointSummary("Get Environmental Data By ID")]
-    [EndpointDescription("Lấy thông tin chi tiết của một bản ghi dữ liệu môi trường")]
     public async Task<ActionResult<APIResponse>> GetEnvironmentDataById(ulong id)
     {
         try
@@ -99,7 +96,7 @@ public class CO2Controller : BaseController
     [HttpDelete("{id}")]
     [Authorize]
     [EndpointSummary("Delete Environmental Data")]
-    [EndpointDescription("Xóa một bản ghi dữ liệu môi trường và các dữ liệu liên quan")]
+    [EndpointDescription("Đây là HARD DELETE, xóa là mất luôn.")]
     public async Task<ActionResult<APIResponse>> DeleteEnvironmentalData(ulong id)
     {
         try

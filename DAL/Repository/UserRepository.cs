@@ -26,11 +26,7 @@ public class UserRepository : IUserRepository
             user.CreatedAt = DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
             user.Status = UserStatus.Active;
-            
-            if(user.Role == UserRole.Admin || user.Role == UserRole.Staff)
-            {
-                user.IsVerified = true;
-            }
+            user.Role = UserRole.Customer;
             
             var createdUser = await _userRepository.CreateAsync(user, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -52,6 +48,29 @@ public class UserRepository : IUserRepository
             var updatedUser = await _userRepository.UpdateAsync(user, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return updatedUser;
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+    
+    public async Task<User> CreateStaffWithTransactionAsync(User user, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            user.LastLoginAt = DateTime.UtcNow;
+            user.CreatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+            user.Status = UserStatus.Active;
+            user.Role = UserRole.Staff;
+            user.IsVerified = true;
+            
+            var createdUser = await _userRepository.CreateAsync(user, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return createdUser;
         }
         catch (Exception)
         {

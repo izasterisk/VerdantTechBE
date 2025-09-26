@@ -41,6 +41,9 @@ public class AuthService : IAuthService
 
         var (token, refreshToken, refreshTokenExpiry) = await GenerateTokensAndUpdateUserAsync(user!, cancellationToken);
 
+        user.LastLoginAt = DateTime.UtcNow;
+        await _userRepository.UpdateUserWithTransactionAsync(user, cancellationToken);
+        
         return new LoginResponseDTO
         {
             Token = token,
@@ -77,6 +80,8 @@ public class AuthService : IAuthService
         else
         {
             AuthValidationHelper.ValidateUserStatus(user);
+            user.LastLoginAt = DateTime.UtcNow;
+            await _userRepository.UpdateUserWithTransactionAsync(user, cancellationToken);
         }
         
         // Generate tokens and update user

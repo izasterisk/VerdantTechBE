@@ -24,6 +24,7 @@ public class AutoMapperConfig : Profile
         
         // User mappings
         CreateMap<UserCreateDTO, User>().ReverseMap();
+        CreateMap<StaffCreateDTO, User>().ReverseMap();
         CreateMap<UserUpdateDTO, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<UserResponseDTO, User>().ReverseMap()
