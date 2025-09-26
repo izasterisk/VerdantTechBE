@@ -26,6 +26,7 @@ public static class AuthUtils
 
         return new string(result);
     }
+    
     /// <summary>
     /// Hash password using BCrypt
     /// </summary>

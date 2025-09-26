@@ -1,5 +1,6 @@
 using AutoMapper;
 using BLL.DTO.Address;
+using BLL.DTO.CO2;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.ProductCategory;
 using BLL.DTO.User;
@@ -23,6 +24,7 @@ public class AutoMapperConfig : Profile
         
         // User mappings
         CreateMap<UserCreateDTO, User>().ReverseMap();
+        CreateMap<StaffCreateDTO, User>().ReverseMap();
         CreateMap<UserUpdateDTO, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<UserResponseDTO, User>().ReverseMap()
@@ -42,6 +44,17 @@ public class AutoMapperConfig : Profile
         CreateMap<FarmProfileCreateDto, Address>().ReverseMap();
         CreateMap<FarmProfileUpdateDTO, Address>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            
+        // CO2Footprint mappings
+        CreateMap<Fertilizer, CO2FootprintCreateDTO>().ReverseMap();
+        CreateMap<EnvironmentalDatum, CO2FootprintCreateDTO>().ReverseMap();
+        CreateMap<EnergyUsage, CO2FootprintCreateDTO>().ReverseMap();
+        CreateMap<EnvironmentalDatum, CO2FootprintResponseDTO>()
+            .ForMember(dest => dest.EnergyUsage, opt => opt.MapFrom(src => src.EnergyUsage))
+            .ForMember(dest => dest.Fertilizer, opt => opt.MapFrom(src => src.Fertilizer));
+        CreateMap<EnergyUsageDTO, EnergyUsage>().ReverseMap();
+        CreateMap<FertilizerDTO, Fertilizer>().ReverseMap();
+        
         // ProductCategory mappings
         CreateMap<ProductCategoryCreateDTO, ProductCategory>().ReverseMap();
         CreateMap<ProductCategoryUpdateDTO, ProductCategory>()

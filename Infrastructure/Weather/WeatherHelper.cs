@@ -19,6 +19,68 @@ public static class WeatherHelper
     }
 
     /// <summary>
+    /// Get current Vietnam date as DateOnly
+    /// </summary>
+    /// <returns>Current date in Vietnam timezone</returns>
+    public static DateOnly GetVietnamDateOnly()
+    {
+        var vietnamTime = DateTime.UtcNow.AddHours(7);
+        return DateOnly.FromDateTime(vietnamTime);
+    }
+
+    /// <summary>
+    /// Validate date range for weather data requests
+    /// </summary>
+    /// <param name="startDate">Start date</param>
+    /// <param name="endDate">End date</param>
+    /// <exception cref="ArgumentException">Thrown when date validation fails</exception>
+    public static void ValidateDateRange(DateOnly startDate, DateOnly endDate)
+    {
+        var today = GetVietnamDateOnly();
+        
+        if (startDate >= endDate)
+        {
+            throw new ArgumentException("Ngày bắt đầu phải nhỏ hơn ngày kết thúc.");
+        }
+        
+        if (endDate > today)
+        {
+            throw new ArgumentException("Ngày kết thúc không thể lớn hơn ngày hiện tại.");
+        }
+        
+        var daysDifference = endDate.DayNumber - startDate.DayNumber;
+        if (daysDifference > 366)
+        {
+            throw new ArgumentException("Khoảng thời gian không thể vượt quá 366 ngày.");
+        }
+    }
+
+    /// <summary>
+    /// Build URL for Open-Meteo Archive API (ERA5 historical data)
+    /// </summary>
+    /// <param name="archiveBaseUrl">Archive API base URL</param>
+    /// <param name="latitude">Latitude coordinate</param>
+    /// <param name="longitude">Longitude coordinate</param>
+    /// <param name="startDate">Start date (yyyy-MM-dd)</param>
+    /// <param name="endDate">End date (yyyy-MM-dd)</param>
+    /// <param name="timezone">Timezone for the API</param>
+    /// <returns>Complete historical weather API URL</returns>
+    public static string BuildHistoricalWeatherUrl(string archiveBaseUrl, decimal latitude, decimal longitude, 
+        string startDate, string endDate, string timezone)
+    {
+        var lat = latitude.ToString(CultureInfo.InvariantCulture);
+        var lon = longitude.ToString(CultureInfo.InvariantCulture);
+        
+        return $"{archiveBaseUrl}era5?" +
+               $"latitude={lat}&" +
+               $"longitude={lon}&" +
+               $"start_date={startDate}&" +
+               $"end_date={endDate}&" +
+               $"daily=precipitation_sum,et0_fao_evapotranspiration&" +
+               $"timezone={timezone}";
+    }
+
+    /// <summary>
     /// Build URL for Open-Meteo hourly weather API
     /// </summary>
     /// <param name="baseUrl">Base API URL</param>

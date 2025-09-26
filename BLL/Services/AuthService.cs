@@ -33,11 +33,17 @@ public class AuthService : IAuthService
         ArgumentNullException.ThrowIfNull(loginDto);
         
         var user = await _authRepository.GetUserByEmailAsync(loginDto.Email, cancellationToken);
+        if(user == null)
+            throw new InvalidOperationException(AuthConstants.USER_NOT_FOUND);
+        
         AuthValidationHelper.ValidateUserStatus(user);
         AuthValidationHelper.ValidateLoginCredentials(user, loginDto.Password);
 
         var (token, refreshToken, refreshTokenExpiry) = await GenerateTokensAndUpdateUserAsync(user!, cancellationToken);
 
+        user.LastLoginAt = DateTime.UtcNow;
+        await _userRepository.UpdateUserWithTransactionAsync(user, cancellationToken);
+        
         return new LoginResponseDTO
         {
             Token = token,
@@ -74,6 +80,8 @@ public class AuthService : IAuthService
         else
         {
             AuthValidationHelper.ValidateUserStatus(user);
+            user.LastLoginAt = DateTime.UtcNow;
+            await _userRepository.UpdateUserWithTransactionAsync(user, cancellationToken);
         }
         
         // Generate tokens and update user

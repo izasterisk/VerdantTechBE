@@ -26,7 +26,6 @@ namespace Controller.Controllers
         /// <returns>Thông tin danh mục sản phẩm đã tạo</returns>
         [HttpPost]
         [EndpointSummary("Create Product Category")]
-        [EndpointDescription("Tạo danh mục sản phẩm mới cho người dùng hiện tại.")]
         public async Task<ActionResult<APIResponse>> CreateProductCategory([FromBody] ProductCategoryCreateDTO dto)
         {
             var validationResult = ValidateModel();
@@ -50,7 +49,6 @@ namespace Controller.Controllers
         /// <returns>Thông tin danh mục sản phẩm</returns>
         [HttpGet("{id}")]
         [EndpointSummary("Get Product Category By ID")]
-        [EndpointDescription("Lấy thông tin danh mục sản phẩm theo ID.")]
         public async Task<ActionResult<APIResponse>> GetProductCategoryById([FromRoute] ulong id)
         {
             try
@@ -74,7 +72,6 @@ namespace Controller.Controllers
         /// <returns>Danh sách danh mục sản phẩm</returns>
         [HttpGet]
         [EndpointSummary("Get All Product Categories")]
-        [EndpointDescription("Lấy danh sách tất cả danh mục sản phẩm.")]
         public async Task<ActionResult<APIResponse>> GetAllProductCategories()
         {
             try
@@ -96,7 +93,7 @@ namespace Controller.Controllers
         /// <returns>Thông tin danh mục sản phẩm đã cập nhật</returns>
         [HttpPut("{id}")]
         [EndpointSummary("Update Product Category")]
-        [EndpointDescription("Cập nhật thông tin danh mục sản phẩm.")]
+        [EndpointDescription("Nếu đã là Category cha (tức có một category khác có ParentId là Id của cái này thì không thể làm category con của 1 cái khác.")]
         public async Task<ActionResult<APIResponse>> UpdateProductCategory([FromRoute] ulong id, [FromBody] ProductCategoryUpdateDTO dto)
         {
             var validationResult = ValidateModel();

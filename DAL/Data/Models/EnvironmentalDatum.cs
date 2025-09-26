@@ -14,9 +14,14 @@ public partial class EnvironmentalDatum
     public ulong CustomerId { get; set; }
 
     /// <summary>
-    /// Ngày ghi nhận dữ liệu
+    /// Ngày bắt đầu ghi nhận dữ liệu
     /// </summary>
-    public DateOnly MeasurementDate { get; set; }
+    public DateOnly MeasurementStartDate { get; set; }
+
+    /// <summary>
+    /// Ngày kết thúc ghi nhận dữ liệu
+    /// </summary>
+    public DateOnly MeasurementEndDate { get; set; }
 
     /// <summary>
     /// Sand (%) 0–30 cm
@@ -37,16 +42,6 @@ public partial class EnvironmentalDatum
     /// pH (H2O) 0–30 cm
     /// </summary>
     public decimal? Phh2o { get; set; }
-
-    /// <summary>
-    /// Độ ẩm đất (%) 0–30 cm
-    /// </summary>
-    public decimal? SoilMoisturePct { get; set; }
-
-    /// <summary>
-    /// Nhiệt độ đất (°C) 0–30 cm
-    /// </summary>
-    public decimal? SoilTemperatureC { get; set; }
 
     /// <summary>
     /// Tổng lượng mưa (mm)
@@ -73,6 +68,6 @@ public partial class EnvironmentalDatum
     // Navigation Properties
     public virtual FarmProfile FarmProfile { get; set; } = null!;
     public virtual User Customer { get; set; } = null!;
-    public virtual ICollection<Fertilizer> Fertilizers { get; set; } = new List<Fertilizer>();
-    public virtual ICollection<EnergyUsage> EnergyUsages { get; set; } = new List<EnergyUsage>();
+    public virtual Fertilizer? Fertilizer { get; set; }
+    public virtual EnergyUsage? EnergyUsage { get; set; }
 }

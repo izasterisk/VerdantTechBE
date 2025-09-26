@@ -94,7 +94,6 @@ public enum RequestType
     PayoutRequest,
     SupportRequest,
     VendorRegister,
-    ProductRegistration,
     ProductCertification
 }
 

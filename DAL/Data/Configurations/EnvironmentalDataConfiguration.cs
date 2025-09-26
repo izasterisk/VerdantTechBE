@@ -28,12 +28,18 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
             .IsRequired()
             .HasColumnName("customer_id");
         
-        // Date field
-        builder.Property(e => e.MeasurementDate)
+        // Date fields
+        builder.Property(e => e.MeasurementStartDate)
             .HasColumnType("date")
             .IsRequired()
-            .HasColumnName("measurement_date")
-            .HasComment("Ngày ghi nhận dữ liệu");
+            .HasColumnName("measurement_start_date")
+            .HasComment("Ngày bắt đầu ghi nhận dữ liệu");
+
+        builder.Property(e => e.MeasurementEndDate)
+            .HasColumnType("date")
+            .IsRequired()
+            .HasColumnName("measurement_end_date")
+            .HasComment("Ngày kết thúc ghi nhận dữ liệu");
 
         // Soil composition (0–30 cm depth)
         builder.Property(e => e.SandPct)
@@ -56,17 +62,6 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
             .HasPrecision(4, 2)
             .HasColumnName("phh2o")
             .HasComment("pH (H2O) 0–30 cm");
-
-        // Soil physical properties
-        builder.Property(e => e.SoilMoisturePct)
-            .HasPrecision(5, 2)
-            .HasColumnName("soil_moisture_pct")
-            .HasComment("Độ ẩm đất (%) 0–30 cm");
-
-        builder.Property(e => e.SoilTemperatureC)
-            .HasPrecision(5, 2)
-            .HasColumnName("soil_temperature_c")
-            .HasComment("Nhiệt độ đất (°C) 0–30 cm");
 
         // Hydrology data
         builder.Property(e => e.PrecipitationSum)
@@ -114,10 +109,10 @@ public class EnvironmentalDataConfiguration : IEntityTypeConfiguration<Environme
             .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
-        builder.HasIndex(e => new { e.FarmProfileId, e.MeasurementDate })
-            .HasDatabaseName("idx_farm_date");
+        builder.HasIndex(e => new { e.FarmProfileId, e.MeasurementStartDate, e.MeasurementEndDate })
+            .HasDatabaseName("idx_farm_dates");
             
-        builder.HasIndex(e => e.CustomerId)
-            .HasDatabaseName("idx_customer");
+        builder.HasIndex(e => e.FarmProfileId)
+            .HasDatabaseName("idx_farm_profile");
     }
 }

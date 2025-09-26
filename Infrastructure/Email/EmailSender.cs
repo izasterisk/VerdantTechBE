@@ -62,6 +62,31 @@ public class EmailSender : IEmailSender
             cancellationToken);
     }
 
+    public async Task SendStaffAccountCreatedEmailAsync(string toEmail, string fullName, string password, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(toEmail);
+        ArgumentException.ThrowIfNullOrEmpty(password);
+
+        // Load staff account created templates from embedded resources
+        string htmlTemplate = GetEmbeddedResourceString("Email.Templates.staff-account-created.html") ?? "";
+        string textTemplate = GetEmbeddedResourceString("Email.Templates.staff-account-created.txt") ?? "";
+
+        string fullNameValue = string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName;
+
+        string htmlBody = ReplaceStaffAccountPlaceholders(htmlTemplate, fullNameValue, toEmail, password);
+        string textBody = ReplaceStaffAccountPlaceholders(textTemplate, fullNameValue, toEmail, password);
+
+        await SendEmailAsync(
+            toEmail, 
+            "Tài khoản nội bộ được cấp riêng cho nhân viên của Verdant Tech", 
+            htmlBody, 
+            textBody, 
+            fullNameValue, 
+            password, 
+            "staff-account-created",
+            cancellationToken);
+    }
+
     private async Task SendEmailAsync(string toEmail, string subject, string htmlBody, string textBody, 
         string fullName, string code, string emailType, CancellationToken cancellationToken = default)
     {
@@ -181,6 +206,15 @@ public class EmailSender : IEmailSender
         return template
             .Replace("{{FULL_NAME}}", fullName)
             .Replace("{{VERIFICATION_TOKEN}}", code);
+    }
+
+    private static string ReplaceStaffAccountPlaceholders(string template, string fullName, string email, string password)
+    {
+        if (string.IsNullOrEmpty(template)) return template;
+        return template
+            .Replace("{{fullName}}", fullName)
+            .Replace("{{email}}", email)
+            .Replace("{{password}}", password);
     }
 
     private static string? GetEmbeddedResourceString(string resourcePathTail)
