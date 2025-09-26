@@ -60,5 +60,11 @@ public class AutoMapperConfig : Profile
         CreateMap<ProductCategoryUpdateDTO, ProductCategory>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<ProductCategory, ProductCategoryResponseDTO>().ReverseMap();
+        // Product mappings
+        CreateMap<BLL.DTO.Product.ProductCreateDTO, Product>().ReverseMap();
+        CreateMap<BLL.DTO.Product.ProductUpdateDTO, Product>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        CreateMap<Product, BLL.DTO.Product.ProductResponseDTO>().ReverseMap();
+
     }
 }
