@@ -580,7 +580,7 @@ CREATE TABLE export_inventory (
 CREATE TABLE requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
-    request_type ENUM('refund_request', 'payout_request', 'support_request', 'vendor_register', 'product_registration', 'product_certification') NOT NULL,
+    request_type ENUM('refund_request', 'payout_request', 'support_request', 'vendor_register', 'product_certification') NOT NULL,
     title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề/chủ đề yêu cầu',
     description TEXT NOT NULL COMMENT 'Mô tả chi tiết về yêu cầu',
     status ENUM('pending', 'in_review', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',

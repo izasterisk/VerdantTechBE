@@ -29,17 +29,15 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
                     .Replace("payoutrequest", "payout_request")
                     .Replace("supportrequest", "support_request")
                     .Replace("vendorregister", "vendor_register")
-                    .Replace("productregistration", "product_registration")
                     .Replace("productcertification", "product_certification"),
                 v => Enum.Parse<RequestType>(v
                     .Replace("refund_request", "RefundRequest")
                     .Replace("payout_request", "PayoutRequest")
                     .Replace("support_request", "SupportRequest")
                     .Replace("vendor_register", "VendorRegister")
-                    .Replace("product_registration", "ProductRegistration")
                     .Replace("product_certification", "ProductCertification"), true))
             .HasColumnName("request_type")
-            .HasColumnType("enum('refund_request','payout_request','support_request','vendor_register','product_registration','product_certification')")
+            .HasColumnType("enum('refund_request','payout_request','support_request','vendor_register','product_certification')")
             .IsRequired();
 
         builder.Property(e => e.Title)
