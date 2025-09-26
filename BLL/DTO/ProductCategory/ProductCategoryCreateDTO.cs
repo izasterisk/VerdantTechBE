@@ -12,13 +12,14 @@ namespace BLL.DTO.ProductCategory
         [Required(ErrorMessage ="Tên category không được để trống")]
         [StringLength(255, ErrorMessage ="Tên không được vượt quá 255 ký tự")]
         public string Name { get; set; } = null!;
+        
+        [Range(1, ulong.MaxValue, ErrorMessage = "ParentId phải lớn hơn 0")]
+        public ulong? ParentId { get; set; }
 
         [StringLength(255, ErrorMessage = "Mô tả không được vượt quá 255 ký tự")]
         public string? Description { get; set; }
 
         [StringLength(500, ErrorMessage = "IconUrl không được vượt quá 500 ký tự")]
         public string? IconUrl { get; set; }
-
-
     }
 }

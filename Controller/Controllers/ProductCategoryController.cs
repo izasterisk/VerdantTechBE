@@ -55,7 +55,7 @@ namespace Controller.Controllers
         {
             try
             {
-                var result = await _productCategoryService.GetProductCategoryByFarmIdAsync(id, GetCancellationToken());
+                var result = await _productCategoryService.GetProductCategoryByIdAsync(id, GetCancellationToken());
 
                 if (result == null)
                     return ErrorResponse($"Không tìm thấy danh mục sản phẩm với ID {id}", HttpStatusCode.NotFound);

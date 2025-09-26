@@ -42,12 +42,11 @@ public class AutoMapperConfig : Profile
         CreateMap<FarmProfileCreateDto, Address>().ReverseMap();
         CreateMap<FarmProfileUpdateDTO, Address>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        
         // ProductCategory mappings
         CreateMap<ProductCategoryCreateDTO, ProductCategory>().ReverseMap();
         CreateMap<ProductCategoryUpdateDTO, ProductCategory>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<ProductCategory, ProductCategoryResponseDTO>().ReverseMap();
-
-
     }
 }
