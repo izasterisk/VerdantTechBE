@@ -33,6 +33,9 @@ public class AuthService : IAuthService
         ArgumentNullException.ThrowIfNull(loginDto);
         
         var user = await _authRepository.GetUserByEmailAsync(loginDto.Email, cancellationToken);
+        if(user == null)
+            throw new InvalidOperationException(AuthConstants.USER_NOT_FOUND);
+        
         AuthValidationHelper.ValidateUserStatus(user);
         AuthValidationHelper.ValidateLoginCredentials(user, loginDto.Password);
 

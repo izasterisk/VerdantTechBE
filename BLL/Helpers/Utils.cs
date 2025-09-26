@@ -38,7 +38,7 @@ public static class Utils
 
         return s;
     }
-    
+  
     /// <summary>
     /// Chuyển đổi string thành enum với validation và error handling
     /// </summary>

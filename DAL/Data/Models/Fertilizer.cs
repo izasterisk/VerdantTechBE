@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Data.Models;
 
+[Index(nameof(EnvironmentalDataId), IsUnique = true)]
 public class Fertilizer
 {
     [Key]

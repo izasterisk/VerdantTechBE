@@ -12,6 +12,7 @@ public class WeatherApiClient : IWeatherApiClient
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly string _baseUrl;
+    private readonly string _archiveBaseUrl;
     private readonly string _defaultTimeZone;
     private readonly int _timeoutSeconds;
 
@@ -20,6 +21,7 @@ public class WeatherApiClient : IWeatherApiClient
         _httpClient = httpClient;
         _configuration = configuration;
         _baseUrl = _configuration["OPEN_METEO_URL"] ?? "https://api.open-meteo.com/v1/";
+        _archiveBaseUrl = _configuration["OPEN_METEO_ARCHIVE_URL"] ?? "https://archive-api.open-meteo.com/v1/";
         _defaultTimeZone = _configuration["DEFAULT_TIME_ZONE"] ?? "Asia/Ho_Chi_Minh";
         _timeoutSeconds = int.Parse(_configuration["TIME_OUT_SECONDS"] ?? "10");
         
@@ -141,6 +143,55 @@ public class WeatherApiClient : IWeatherApiClient
         catch (JsonException)
         {
             throw new InvalidOperationException("Dữ liệu thời tiết không hợp lệ.");
+        }
+    }
+
+    public async Task<(decimal?[] precipitationData, decimal?[] et0Data)> GetHistoricalWeatherDataAsync(decimal latitude, decimal longitude, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            WeatherHelper.ValidateDateRange(startDate, endDate);
+            
+            var startDateStr = startDate.ToString("yyyy-MM-dd");
+            var endDateStr = endDate.ToString("yyyy-MM-dd");
+            var url = WeatherHelper.BuildHistoricalWeatherUrl(_archiveBaseUrl, latitude, longitude, startDateStr, endDateStr, _defaultTimeZone);
+            
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            
+            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            var rawWeatherData = JsonSerializer.Deserialize<WeatherHistorical>(jsonContent, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            
+            if (rawWeatherData == null)
+            {
+                throw new InvalidOperationException("Failed to deserialize historical weather data");
+            }
+            
+            // Return simple arrays like SoilGrids approach
+            var precipitationData = rawWeatherData.Daily?.Precipitation_sum?.ToArray() ?? Array.Empty<decimal?>();
+            var et0Data = rawWeatherData.Daily?.Et0_fao_evapotranspiration?.ToArray() ?? Array.Empty<decimal?>();
+            
+            return (precipitationData, et0Data);
+        }
+        catch (TaskCanceledException)
+        {
+            throw new TimeoutException("Server thời tiết hiện đang quá tải, vui lòng thử lại sau.");
+        }
+        catch (HttpRequestException)
+        {
+            throw new InvalidOperationException("Server thời tiết hiện đang quá tải, vui lòng thử lại sau.");
+        }
+        catch (JsonException)
+        {
+            throw new InvalidOperationException("Dữ liệu thời tiết không hợp lệ.");
+        }
+        catch (ArgumentException)
+        {
+            throw; // Re-throw validation errors as-is
         }
     }
 }

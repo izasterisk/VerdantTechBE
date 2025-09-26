@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using DAL.Data;
 
 namespace BLL.DTO.FarmProfile;
     public class FarmProfileCreateDto
@@ -14,19 +13,19 @@ namespace BLL.DTO.FarmProfile;
 
         [Required(ErrorMessage = "Địa chỉ cụ thể không được để trống")]
         [MaxLength(500, ErrorMessage = "Địa chỉ cụ thể không được vượt quá 500 ký tự")]
-        public string LocationAddress { get; set; }
+        public string LocationAddress { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Tên tỉnh/thành phố không được để trống")]
         [StringLength(100, ErrorMessage = "Tên tỉnh/thành phố không được vượt quá 100 ký tự")]
-        public string Province { get; set; }
+        public string Province { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Tên quận/huyện không được để trống")]
         [StringLength(100, ErrorMessage = "Tên quận/huyện không được vượt quá 100 ký tự")]
-        public string District { get; set; }
+        public string District { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Tên xã/phường không được để trống")]
         [StringLength(100, ErrorMessage = "Tên xã/phường không được vượt quá 100 ký tự")]
-        public string Commune { get; set; }
+        public string Commune { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Vĩ độ không được để trống")]
         [Range(-90, 90, ErrorMessage = "Vĩ độ phải nằm trong khoảng -90 đến 90")]
