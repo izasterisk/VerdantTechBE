@@ -27,9 +27,12 @@ namespace BLL.Services
             ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
             if (await _productCategoryRepository.IsCategoryNameNotUniqueAsync(dto.Name, cancellationToken))
                 throw new ArgumentException("Tên danh mục sản phẩm đã tồn tại");
-            if (dto.ParentId.HasValue && !await _productCategoryRepository.IsParentIdExistsAsync(dto.ParentId.Value, cancellationToken))
-                throw new ArgumentException("Parent Category không tồn tại");
-            
+            if (dto.ParentId != null)
+            {
+                var productCategoryParent = await _productCategoryRepository.GetProductCategoryByIdAsync(dto.ParentId.Value, useNoTracking: false, cancellationToken);
+                if (productCategoryParent == null || productCategoryParent.IsActive == false)
+                    throw new KeyNotFoundException("Không tìm thấy danh mục cha hoặc đã bị xóa.");
+            }
             string slug = Utils.GenerateSlug(dto.Name);
             var productCategory = _mapper.Map<ProductCategory>(dto);
             productCategory.Slug = slug;
@@ -59,8 +62,8 @@ namespace BLL.Services
         public async Task<ProductCategoryResponseDTO> UpdateProductCategoryAsync(ulong id, ProductCategoryUpdateDTO dto, CancellationToken cancellationToken = default)
         {
             var productCategory = await _productCategoryRepository.GetProductCategoryByIdAsync(id, useNoTracking: false, cancellationToken);
-            if (productCategory == null)
-                throw new KeyNotFoundException("Không tìm thấy danh mục sản phẩm");
+            if (productCategory == null || productCategory.IsActive == false)
+                throw new KeyNotFoundException("Không tìm thấy danh mục hoặc đã bị xóa.");
             if (dto.Name != null)
             {
                 if(await _productCategoryRepository.IsCategoryNameNotUniqueAsync(dto.Name, cancellationToken))
