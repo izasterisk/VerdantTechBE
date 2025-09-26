@@ -16,7 +16,7 @@ public class SoilGridsApiClient : ISoilGridsApiClient
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _baseUrl = _configuration["SOID_GRIDS_URL"] ?? "https://rest.isric.org/soilgrids/v2.0/properties/";
+        _baseUrl = _configuration["SOIL_GRIDS_URL"] ?? "https://rest.isric.org/soilgrids/v2.0/properties/";
         _timeoutSeconds = int.Parse(_configuration["TIME_OUT_SECONDS"] ?? "10");
         
         // Configure HttpClient timeout
