@@ -20,6 +20,8 @@
     <EmbeddedResource Include="Email\Templates\verification.txt" />
     <EmbeddedResource Include="Email\Templates\forgot-password.html" />
     <EmbeddedResource Include="Email\Templates\forgot-password.txt" />
+    <EmbeddedResource Include="Email\Templates\staff-account-created.html" />
+    <EmbeddedResource Include="Email\Templates\staff-account-created.txt" />
   </ItemGroup>
 
 </Project>

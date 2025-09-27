@@ -45,6 +45,32 @@ public class UserController : BaseController
     }
 
     /// <summary>
+    /// Tạo tài khoản nhân viên mới
+    /// </summary>
+    /// <param name="dto">Thông tin nhân viên cần tạo</param>
+    /// <returns>Thông tin nhân viên đã tạo</returns>
+    [HttpPost("staff")]
+    [Authorize(Roles = "Admin")]
+    [EndpointSummary("Create New Staff Account")]
+    [EndpointDescription("Tạo tài khoản nhân viên mới với mật khẩu tự động được tạo và gửi qua email. " +
+                         "Chỉ Admin mới có quyền thực hiện. Nhân viên sẽ nhận được email chứa thông tin đăng nhập.")]
+    public async Task<ActionResult<APIResponse>> CreateStaff([FromBody] StaffCreateDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var staff = await _userService.CreateStaffAsync(dto, GetCancellationToken());
+            return SuccessResponse(staff, HttpStatusCode.Created);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Lấy thông tin người dùng theo ID
     /// </summary>
     /// <param name="id">ID của người dùng</param>

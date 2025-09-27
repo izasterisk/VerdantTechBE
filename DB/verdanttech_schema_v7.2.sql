@@ -154,29 +154,28 @@ CREATE TABLE environmental_data (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     farm_profile_id BIGINT UNSIGNED NOT NULL,
     customer_id BIGINT UNSIGNED NOT NULL,
-    measurement_date DATE NOT NULL COMMENT 'Ngày ghi nhận dữ liệu',
+    measurement_start_date DATE NOT NULL COMMENT 'Ngày bắt đầu ghi nhận dữ liệu',
+    measurement_end_date DATE NOT NULL COMMENT 'Ngày kết thúc ghi nhận dữ liệu',
     sand_pct   DECIMAL(5,2) NULL COMMENT 'Sand (%) 0–30 cm',
     silt_pct   DECIMAL(5,2) NULL COMMENT 'Silt (%) 0–30 cm',
     clay_pct   DECIMAL(5,2) NULL COMMENT 'Clay (%) 0–30 cm',
     phh2o      DECIMAL(4,2) NULL CHECK (phh2o >= 0 AND phh2o <= 14) COMMENT 'pH (H2O) 0–30 cm',    
-    soil_moisture_pct DECIMAL(5,2) NULL COMMENT 'Độ ẩm đất (%) 0–30 cm',
-    soil_temperature_c DECIMAL(5,2) NULL COMMENT 'Nhiệt độ đất (°C) 0–30 cm',
     precipitation_sum DECIMAL(7,2) NULL COMMENT 'Tổng lượng mưa (mm)',
-    et0_fao_evapotranspiration DECIMAL(7,2) NULL COMMENT 'ET0 FAO (mm)',
+    et0_fao_evapotranspiration DECIMAL(7,2) NULL COMMENT 'Lượng thoát hơi nước/bốc hơi(mm)',
     co2_footprint DECIMAL(10,2) COMMENT 'Lượng khí thải CO2 tính bằng kg',
     notes VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_farm_date (farm_profile_id, measurement_date),
-    INDEX idx_customer (customer_id)
+    INDEX idx_farm_dates (farm_profile_id, measurement_start_date, measurement_end_date),
+    INDEX idx_farm_profile (farm_profile_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu môi trường do nông dân nhập thủ công';
 
 -- Theo dõi việc sử dụng phân bón
 CREATE TABLE fertilizers (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    environmental_data_id BIGINT UNSIGNED NOT NULL,
+    environmental_data_id BIGINT UNSIGNED NOT NULL UNIQUE,
     organic_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân hữu cơ (kg)',
     npk_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân NPK tổng hợp (kg)',
     urea_fertilizer DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Phân urê (kg)', 
@@ -185,13 +184,13 @@ CREATE TABLE fertilizers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (environmental_data_id) REFERENCES environmental_data(id) ON DELETE RESTRICT,
-    INDEX idx_environmental_data (environmental_data_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng phân bón để tính toán lượng khí thải CO2';
+    UNIQUE KEY uk_fertilizers_environmental_data (environmental_data_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng phân bón để tính toán lượng khí thải CO2 (quan hệ 1-1 với environmental_data)';
 
 -- Theo dõi việc sử dụng năng lượng
 CREATE TABLE energy_usage (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    environmental_data_id BIGINT UNSIGNED NOT NULL,
+    environmental_data_id BIGINT UNSIGNED NOT NULL UNIQUE,
     electricity_kwh DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Điện tiêu thụ (kWh)',
     gasoline_liters DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Xăng sử dụng (lít)',
     diesel_liters DECIMAL(10,2) DEFAULT 0.00 COMMENT 'Dầu diesel sử dụng (lít)',
@@ -199,8 +198,8 @@ CREATE TABLE energy_usage (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,  
 
     FOREIGN KEY (environmental_data_id) REFERENCES environmental_data(id) ON DELETE RESTRICT,
-    INDEX idx_environmental_data (environmental_data_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng năng lượng để tính toán lượng khí thải CO2';
+    UNIQUE KEY uk_energy_usage_environmental_data (environmental_data_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng năng lượng để tính toán lượng khí thải CO2 (quan hệ 1-1 với environmental_data)';
 
 -- =====================================================
 -- CÁC BẢNG CHATBOT AI
@@ -581,7 +580,7 @@ CREATE TABLE export_inventory (
 CREATE TABLE requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
-    request_type ENUM('refund_request', 'payout_request', 'support_request', 'vendor_register', 'product_registration', 'product_certification') NOT NULL,
+    request_type ENUM('refund_request', 'payout_request', 'support_request', 'vendor_register', 'product_certification') NOT NULL,
     title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề/chủ đề yêu cầu',
     description TEXT NOT NULL COMMENT 'Mô tả chi tiết về yêu cầu',
     status ENUM('pending', 'in_review', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',

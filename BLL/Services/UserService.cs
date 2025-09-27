@@ -7,6 +7,7 @@ using BLL.Helpers;
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
+using BLL.Interfaces.Infrastructure;
 
 namespace BLL.Services;
 
@@ -15,12 +16,14 @@ public class UserService : IUserService
     private readonly IMapper _mapper;
     private readonly IUserRepository _userRepository;
     private readonly IAddressRepository _addressRepository;
+    private readonly IEmailSender _emailSender;
     
-    public UserService(IMapper mapper, IUserRepository userRepository, IAddressRepository addressRepository)
+    public UserService(IMapper mapper, IUserRepository userRepository, IAddressRepository addressRepository, IEmailSender emailSender)
     {
         _mapper = mapper;
         _userRepository = userRepository;
         _addressRepository = addressRepository;
+        _emailSender = emailSender;
     }
 
     public async Task<UserResponseDTO> CreateUserAsync(UserCreateDTO dto, CancellationToken cancellationToken = default)
@@ -32,15 +35,36 @@ public class UserService : IUserService
         {
             throw new Exception($"Email {dto.Email} already exists.");
         }
-        if(dto.Role == null)
-        {
-            dto.Role = "customer";
-        }
         User user = _mapper.Map<User>(dto);
         user.PasswordHash = AuthUtils.HashPassword(dto.Password);
         user.IsVerified = false;
         var createdUser = await _userRepository.CreateUserWithTransactionAsync(user, cancellationToken);
         return _mapper.Map<UserResponseDTO>(createdUser);
+    }
+    
+    public async Task<UserResponseDTO> CreateStaffAsync(StaffCreateDTO dto, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        
+        var emailExists = await _userRepository.CheckEmailExistsAsync(dto.Email, cancellationToken);
+        if (emailExists)
+        {
+            throw new Exception($"Email {dto.Email} already exists.");
+        }
+        
+        var generatedPassword = AuthUtils.GenerateNumericCode();
+        User user = _mapper.Map<User>(dto);
+        user.PasswordHash = AuthUtils.HashPassword(generatedPassword);
+        try
+        {
+            await _emailSender.SendStaffAccountCreatedEmailAsync(dto.Email, dto.FullName, generatedPassword, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Failed to send staff creation email to {dto.Email}: {ex.Message}");
+        }
+        var createdStaff = await _userRepository.CreateStaffWithTransactionAsync(user, cancellationToken);
+        return _mapper.Map<UserResponseDTO>(createdStaff);
     }
     
     public async Task<UserResponseDTO> UpdateUserAsync(ulong userId, UserUpdateDTO dto, CancellationToken cancellationToken = default)

@@ -1,4 +1,5 @@
 using BLL.Interfaces.Infrastructure;
+using Infrastructure.CO2;
 using Infrastructure.Email;
 using Infrastructure.Weather;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,10 +21,18 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    public static IServiceCollection AddSoilGrids(this IServiceCollection services)
+    {
+        services.AddScoped<HttpClient>();
+        services.AddScoped<ISoilGridsApiClient, SoilGridsApiClient>();
+        return services;
+    }
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddEmail();
         services.AddWeather();
+        services.AddSoilGrids();
         return services;
     }
 }

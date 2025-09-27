@@ -16,9 +16,9 @@ public class UserCreateDTO
     public string Password { get; set; } = null!;
 
     // [Required(ErrorMessage = "Vai trò là bắt buộc")]
-    [RegularExpression("^(customer|seller|admin|manager)$", 
-        ErrorMessage = "Vai trò phải là một trong: customer, seller, admin, manager")]
-    public string? Role { get; set; }
+    // [RegularExpression("^(customer|seller|admin|manager)$", 
+    //     ErrorMessage = "Vai trò phải là một trong: customer, seller, admin, manager")]
+    // public string? Role { get; set; }
 
     [Required(ErrorMessage = "Họ tên là bắt buộc")]
     [StringLength(255, MinimumLength = 2, ErrorMessage = "Họ tên phải từ 2 đến 255 ký tự")]

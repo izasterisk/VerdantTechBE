@@ -56,12 +56,13 @@ public class FertilizerConfiguration : IEntityTypeConfiguration<Fertilizer>
         
         // Foreign Key constraints
         builder.HasOne(f => f.EnvironmentalData)
-            .WithMany(e => e.Fertilizers)
-            .HasForeignKey(f => f.EnvironmentalDataId)
+            .WithOne(e => e.Fertilizer)
+            .HasForeignKey<Fertilizer>(f => f.EnvironmentalDataId)
             .OnDelete(DeleteBehavior.Restrict);
         
-        // Indexes
+        // Unique index for 1-1 relationship
         builder.HasIndex(f => f.EnvironmentalDataId)
-            .HasDatabaseName("idx_environmental_data");
+            .IsUnique()
+            .HasDatabaseName("uk_fertilizers_environmental_data");
     }
 }

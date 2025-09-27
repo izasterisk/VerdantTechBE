@@ -50,12 +50,13 @@ public class EnergyUsageConfiguration : IEntityTypeConfiguration<EnergyUsage>
         
         // Foreign Key constraints
         builder.HasOne(e => e.EnvironmentalData)
-            .WithMany(ed => ed.EnergyUsages)
-            .HasForeignKey(e => e.EnvironmentalDataId)
+            .WithOne(ed => ed.EnergyUsage)
+            .HasForeignKey<EnergyUsage>(e => e.EnvironmentalDataId)
             .OnDelete(DeleteBehavior.Restrict);
         
-        // Indexes
+        // Unique index for 1-1 relationship
         builder.HasIndex(e => e.EnvironmentalDataId)
-            .HasDatabaseName("idx_environmental_data");
+            .IsUnique()
+            .HasDatabaseName("uk_energy_usage_environmental_data");
     }
 }

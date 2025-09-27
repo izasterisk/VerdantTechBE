@@ -1,0 +1,22 @@
+Tài khoản nội bộ được cấp riêng cho nhân viên của Verdant Tech
+
+Chào mừng {{fullName}},
+
+Xin chúc mừng bạn đã trở thành nhân viên của Verdant Tech! 
+Chúng tôi đã tạo cho bạn một tài khoản nhân viên với thông tin đăng nhập như sau:
+
+Tên tài khoản (Email): {{email}}
+Mật khẩu: {{password}}
+
+LƯU Ý QUAN TRỌNG: 
+Vui lòng không chia sẻ tài khoản này cho bất kì ai khác. 
+Bạn có thể thay đổi mật khẩu bất cứ lúc nào trong phần cài đặt tài khoản.
+
+Chào mừng bạn đến với đại gia đình Verdant Tech! 
+Chúng tôi rất vui mừng được làm việc cùng bạn.
+
+Trân trọng,
+Đội ngũ Verdant Tech
+
+---
+© 2025 Verdant Tech Solution. All rights reserved.

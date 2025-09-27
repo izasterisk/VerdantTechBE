@@ -175,4 +175,13 @@ public static class WeatherResponseTransformer
 
         return result;
     }
+
+    /// <summary>
+    /// Transform raw historical weather data to structured format (no calculations here)
+    /// </summary>
+    public static WeatherHistorical TransformHistoricalWeatherData(WeatherHistorical raw)
+    {
+        // Infrastructure layer only transforms data structure, no business calculations
+        return raw;
+    }
 }
