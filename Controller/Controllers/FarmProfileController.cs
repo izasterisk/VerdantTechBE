@@ -82,6 +82,10 @@ namespace Controller.Controllers
             try
             {
                 var list = await _farmProfileService.GetAllFarmProfileByUserIdAsync(userId, GetCancellationToken());
+                if (list == null)
+                    return ErrorResponse($"Không tìm thấy hồ sơ trang trại cho người dùng với ID {userId}", HttpStatusCode.NotFound);
+                if (list.Count == 0)
+                    return ErrorResponse($"Người dùng với ID {userId} chưa có hồ sơ trang trại nào", HttpStatusCode.NotFound);
                 return SuccessResponse(list);
             }
             catch (Exception ex)
@@ -107,6 +111,26 @@ namespace Controller.Controllers
             try
             {
                 var result = await _farmProfileService.UpdateFarmProfileAsync(id, dto, GetCancellationToken());
+                return SuccessResponse(result);
+            }
+            catch (KeyNotFoundException)
+            {
+                return ErrorResponse("Không tìm thấy hồ sơ trang trại", HttpStatusCode.NotFound);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        [HttpPatch("{id}/status")]
+        [EndpointSummary("Delete Farm Profile Status")]
+        [EndpointDescription("Xoá trạng thái hồ sơ trang trại, chuyển trạng thái Deleted.")]
+        public async Task<ActionResult<APIResponse>> DeleteFarmProfileStatus([FromRoute] ulong id)
+        {
+            try
+            {
+                var result = await _farmProfileService.DeleteByChangeStatusFarmProfileAsync(id, GetCancellationToken());
                 return SuccessResponse(result);
             }
             catch (KeyNotFoundException)
