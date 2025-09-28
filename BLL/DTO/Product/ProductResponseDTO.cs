@@ -10,6 +10,7 @@ namespace BLL.DTO.Product
     public class ProductResponseDTO
     {
         public ulong Id { get; set; }
+        
         public ulong CategoryId { get; set; }
 
         public ulong VendorId { get; set; }

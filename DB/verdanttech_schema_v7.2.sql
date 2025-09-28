@@ -410,7 +410,7 @@ CREATE TABLE product_certificates (
 -- Bảng giỏ hàng
 CREATE TABLE cart (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    customer_id BIGINT UNSIGNED NOT NULL,
+    customer_id BIGINT UNSIGNED NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -423,14 +423,14 @@ CREATE TABLE cart_items (
     cart_id BIGINT UNSIGNED NOT NULL,
     product_id BIGINT UNSIGNED NOT NULL,
     quantity INT NOT NULL DEFAULT 1 CHECK (quantity > 0),
-    unit_price DECIMAL(12,2) NOT NULL COMMENT 'đơn giá',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE RESTRICT,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     UNIQUE KEY unique_cart_product (cart_id, product_id),
-    INDEX idx_cart (cart_id)
+    INDEX idx_cart (cart_id),
+    INDEX idx_product (product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Cart items for customer shopping carts';
 
 -- Bảng đơn hàng
@@ -580,7 +580,7 @@ CREATE TABLE export_inventory (
 CREATE TABLE requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
-    request_type ENUM('refund_request', 'payout_request', 'support_request', 'vendor_register', 'product_certification') NOT NULL,
+    request_type ENUM('refund_request', 'support_request') NOT NULL,
     title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề/chủ đề yêu cầu',
     description TEXT NOT NULL COMMENT 'Mô tả chi tiết về yêu cầu',
     status ENUM('pending', 'in_review', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',

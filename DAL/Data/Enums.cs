@@ -91,10 +91,7 @@ public enum ForumCommentStatus
 public enum RequestType
 {
     RefundRequest,
-    PayoutRequest,
-    SupportRequest,
-    VendorRegister,
-    ProductCertification
+    SupportRequest
 }
 
 public enum RequestStatus

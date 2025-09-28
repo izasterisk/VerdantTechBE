@@ -16,8 +16,6 @@ public class CartItem
     [Required]
     public int Quantity { get; set; } = 1;
     
-    public decimal UnitPrice { get; set; }
-    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

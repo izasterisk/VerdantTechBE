@@ -33,12 +33,13 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
         
         // Foreign Key constraints
         builder.HasOne(c => c.Customer)
-            .WithMany(u => u.Carts)
-            .HasForeignKey(c => c.CustomerId)
+            .WithOne(u => u.Cart)
+            .HasForeignKey<Cart>(c => c.CustomerId)
             .OnDelete(DeleteBehavior.Restrict);
         
-        // Index
+        // Indexes
         builder.HasIndex(c => c.CustomerId)
-            .HasDatabaseName("idx_customer");
+            .HasDatabaseName("idx_customer")
+            .IsUnique();
     }
 }

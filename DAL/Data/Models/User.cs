@@ -58,6 +58,7 @@ public partial class User
     public virtual ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
     public virtual ICollection<FarmProfile> FarmProfiles { get; set; } = new List<FarmProfile>();
     public virtual VendorProfile? VendorProfile { get; set; }
+    public virtual Cart? Cart { get; set; }
     
     // One-to-many relationships
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
@@ -73,8 +74,7 @@ public partial class User
     public virtual ICollection<Transaction> TransactionsProcessed { get; set; } = new List<Transaction>();
     public virtual ICollection<Transaction> TransactionsAsUser { get; set; } = new List<Transaction>();
     public virtual ICollection<Cashout> CashoutsProcessed { get; set; } = new List<Cashout>();
-    public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
-    
+        
     // Vendor-related relationships (when user is vendor)
     public virtual ICollection<Product> ProductsAsVendor { get; set; } = new List<Product>();
     public virtual ICollection<ProductRegistration> ProductRegistrationsAsVendor { get; set; } = new List<ProductRegistration>();

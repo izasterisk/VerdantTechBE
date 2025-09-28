@@ -117,12 +117,12 @@ INSERT INTO `cart` (`id`, `customer_id`, `created_at`, `updated_at`) VALUES
 (3, 9, '2025-09-15 10:00:00', '2025-09-15 10:00:00');
 
 -- Insert Cart Items (new table in v7.1)
-INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `quantity`, `unit_price`, `created_at`, `updated_at`) VALUES
-(1, 1, 3, 5, 50000.00, '2025-09-15 08:00:00', '2025-09-15 08:00:00'),
-(2, 1, 4, 2, 100000.00, '2025-09-15 08:15:00', '2025-09-15 08:15:00'),
-(3, 2, 1, 1, 25000000.00, '2025-09-15 09:00:00', '2025-09-15 09:00:00'),
-(4, 2, 5, 1, 30000000.00, '2025-09-15 09:10:00', '2025-09-15 09:10:00'),
-(5, 3, 3, 10, 50000.00, '2025-09-15 10:00:00', '2025-09-15 10:00:00');
+INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `quantity`, `created_at`, `updated_at`) VALUES
+(1, 1, 3, 5, '2025-09-15 08:00:00', '2025-09-15 08:00:00'),
+(2, 1, 4, 2, '2025-09-15 08:15:00', '2025-09-15 08:15:00'),
+(3, 2, 1, 1, '2025-09-15 09:00:00', '2025-09-15 09:00:00'),
+(4, 2, 5, 1, '2025-09-15 09:10:00', '2025-09-15 09:10:00'),
+(5, 3, 3, 10, '2025-09-15 10:00:00', '2025-09-15 10:00:00');
 
 -- Insert Product Registrations (v7.1 structure - updated column names: product_code→proposed_product_code, name→proposed_product_name, price→unit_price, removed commission_rate, added approved_at)
 -- INSERT INTO `product_registrations` (`id`, `vendor_id`, `category_id`, `proposed_product_code`, `proposed_product_name`, `description`, `unit_price`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `images`, `warranty_months`, `weight_kg`, `dimensions_cm`, `status`, `rejection_reason`, `approved_by`, `approved_at`, `created_at`) VALUES
@@ -187,7 +187,7 @@ INSERT INTO `energy_usage` (`id`, `environmental_data_id`, `electricity_kwh`, `g
 
 -- Insert Requests (v7.1 structure - removed amount, admin_notes, rejection_reason columns, changed requester_id to user_id)
 INSERT INTO `requests` (`id`, `user_id`, `request_type`, `title`, `description`, `status`, `reply_notes`, `processed_by`, `processed_at`, `created_at`, `updated_at`) VALUES
-(1, 5, 'payout_request', 'Yêu cầu thanh toán hoa hồng tháng 9', 'Yêu cầu thanh toán hoa hồng từ bán hàng tháng 9', 'pending', NULL, NULL, NULL, '2025-09-09 07:00:00', '2025-09-09 07:00:00'),
+(1, 5, 'support_request', 'Yêu cầu thanh toán hoa hồng tháng 9', 'Yêu cầu thanh toán hoa hồng từ bán hàng tháng 9', 'pending', NULL, NULL, NULL, '2025-09-09 07:00:00', '2025-09-09 07:00:00'),
 (2, 7, 'refund_request', 'Yêu cầu hoàn tiền đơn hàng #1', 'Sản phẩm bị hỏng', 'in_review', 'Kiểm tra sản phẩm', NULL, NULL, '2025-09-09 08:15:00', '2025-09-09 08:15:00');
 
 -- Insert Orders (v7.1 structure - changed user_id to customer_id, shipping_address JSON to address_id FK)

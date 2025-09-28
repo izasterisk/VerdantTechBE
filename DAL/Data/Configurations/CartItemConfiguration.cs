@@ -32,11 +32,6 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
             .IsRequired()
             .HasDefaultValue(1);
 
-        builder.Property(e => e.UnitPrice)
-            .HasColumnType("decimal(12,2)")
-            .IsRequired()
-            .HasColumnName("unit_price");
-
         // DateTime fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
@@ -70,8 +65,5 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
 
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");
-
-        builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("idx_created_at");
     }
 }

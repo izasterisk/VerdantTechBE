@@ -18,9 +18,9 @@ public class UserResponseDTO
 
     public bool IsVerified { get; set; } = false;
 
-    public string? VerificationToken { get; set; }
+    // public string? VerificationToken { get; set; }
 
-    public DateTime? VerificationSentAt { get; set; }
+    // public DateTime? VerificationSentAt { get; set; }
 
     public string? AvatarUrl { get; set; }
 

@@ -1,5 +1,6 @@
 using AutoMapper;
 using BLL.DTO.Address;
+using BLL.DTO.Cart;
 using BLL.DTO.CO2;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.ProductCategory;
@@ -60,11 +61,26 @@ public class AutoMapperConfig : Profile
         CreateMap<ProductCategoryUpdateDTO, ProductCategory>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<ProductCategory, ProductCategoryResponseDTO>().ReverseMap();
+        
         // Product mappings
         CreateMap<BLL.DTO.Product.ProductCreateDTO, Product>().ReverseMap();
         CreateMap<BLL.DTO.Product.ProductUpdateDTO, Product>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<Product, BLL.DTO.Product.ProductResponseDTO>().ReverseMap();
+
+        // Cart mappings
+        CreateMap<CartAddDTO, CartItem>().ReverseMap();
+        CreateMap<CartItem, CartItemDTO>()
+            .ForMember(d => d.ProductId,     o => o.MapFrom(s => s.ProductId))
+            .ForMember(d => d.Quantity,      o => o.MapFrom(s => s.Quantity))
+            .ForMember(d => d.ProductName,   o => o.MapFrom(s => s.Product.ProductName))
+            .ForMember(d => d.Slug,          o => o.MapFrom(s => s.Product.Slug))
+            .ForMember(d => d.Description,   o => o.MapFrom(s => s.Product.Description))
+            .ForMember(d => d.UnitPrice,     o => o.MapFrom(s => s.Product.UnitPrice))
+            .ForMember(d => d.Images,        o => o.MapFrom(s => s.Product.Images))
+            .ForMember(d => d.IsActive,      o => o.MapFrom(s => s.Product.IsActive))
+            .ForMember(d => d.SoldCount,     o => o.MapFrom(s => s.Product.SoldCount))
+            .ForMember(d => d.RatingAverage, o => o.MapFrom(s => s.Product.RatingAverage));
 
     }
 }

@@ -63,7 +63,8 @@ builder.Services.AddScoped<IRepository<EnergyUsage>, Repository<EnergyUsage>>();
 builder.Services.AddScoped<IRepository<EnvironmentalDatum>, Repository<EnvironmentalDatum>>();
 builder.Services.AddScoped<IRepository<ProductCategory>, Repository<ProductCategory>>();
 builder.Services.AddScoped<IRepository<Product>, Repository<Product>>();
-
+builder.Services.AddScoped<IRepository<Cart>, Repository<Cart>>();
+builder.Services.AddScoped<IRepository<CartItem>, Repository<CartItem>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -74,6 +75,7 @@ builder.Services.AddScoped<IEnergyUsageRepository, EnergyUsageRepository>();
 builder.Services.AddScoped<IEnvironmentalDataRepository, EnvironmentalDataRepository>();
 builder.Services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -82,7 +84,7 @@ builder.Services.AddScoped<IWeatherService, WeatherService>();
 builder.Services.AddScoped<ICO2Service, CO2Service>();
 builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
-
+builder.Services.AddScoped<ICartService, CartService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
