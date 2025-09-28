@@ -7,7 +7,6 @@ using BLL.Interfaces;
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
-using Microsoft.EntityFrameworkCore;
 
 namespace BLL.Services
 {
@@ -89,33 +88,27 @@ namespace BLL.Services
             return response;
         }
 
-        public async Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllFarmProfileByUserIdAsync(
-        ulong userId,
-        CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<FarmProfileResponseDTO>> GetAllFarmProfileByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
         {
-            var farms = await _farmRepo.GetAllFarmProfilesByUserIdAsync(
-                userId, useNoTracking: true, cancellationToken);
-
-            if (farms.Count == 0)
+            var list = await _farmRepo.GetAllFarmProfilesByUserIdAsync(userId, useNoTracking: true, cancellationToken);
+            if (list.Count == 0)
+            {
                 return Array.Empty<FarmProfileResponseDTO>();
-
-            // Map toàn bộ list (đã Include User, Address)
-            var responses = _mapper.Map<List<FarmProfileResponseDTO>>(farms);
-
-            return responses.AsReadOnly();
-        }
-
-
-
-        public async Task<bool> DeleteByChangeStatusFarmProfileAsync(ulong id, CancellationToken cancellationToken = default)
-        {
-            var farmProfile = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false, cancellationToken);
-            if (farmProfile == null)
-                throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
+            }
+            list = list.OrderByDescending(x => x.UpdatedAt).ToList();
+            var responses = _mapper.Map<List<FarmProfileResponseDTO>>(list);
             
-            var deletedFarmProfile = await _farmRepo.DeleteByChangeStatusFarmProfileAsync(id, cancellationToken);
-            return deletedFarmProfile != null;
-
+            foreach (var i in Enumerable.Range(0, responses.Count))
+            {
+                var userDto = _mapper.Map<UserResponseDTO>(list[i].User);
+                responses[i].User = userDto;
+                if (list[i].Address != null)
+                {
+                    var addressDto = _mapper.Map<AddressResponseDTO>(list[i].Address);
+                    responses[i].Address = addressDto;
+                }
+            }
+            return responses.AsReadOnly();
         }
     }
 }

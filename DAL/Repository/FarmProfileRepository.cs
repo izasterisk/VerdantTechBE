@@ -1,4 +1,4 @@
-﻿using DAL.Data;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
@@ -35,24 +35,16 @@ public class FarmProfileRepository : IFarmProfileRepository
             query => query.Include(f => f.Address),
             cancellationToken);
     }
-
-    public async Task<IReadOnlyList<FarmProfile>> GetAllFarmProfilesByUserIdAsync(
-      ulong userId,
-      bool useNoTracking = true,
-      CancellationToken cancellationToken = default)
+    
+    public async Task<List<FarmProfile>> GetAllFarmProfilesByUserIdAsync(ulong userId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {
-        var list = await _farmProfileRepository.GetAllByFilterAsync(
-            f => f.UserId == userId && f.Status != FarmProfileStatus.Deleted,
+        return await _farmProfileRepository.GetAllWithRelationsByFilterAsync(
+            f => f.UserId == userId,
             useNoTracking,
+            query => query.Include(f => f.User).Include(f => f.Address),
             cancellationToken);
-        // Sắp xếp ở memory vì generic trả về List<T>
-        return list
-            .OrderByDescending(f => f.UpdatedAt)
-            .ToList()
-            .AsReadOnly();
     }
-
-
+    
     public async Task<FarmProfile> CreateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -110,21 +102,4 @@ public class FarmProfileRepository : IFarmProfileRepository
             throw;
         }
     }
-
-    public async Task<FarmProfile> DeleteByChangeStatusFarmProfileAsync(
-     ulong farmId, CancellationToken cancellationToken = default)
-    {
-        var farmProfile = await _farmProfileRepository.GetAsync(f => f.Id == farmId, useNoTracking: false, cancellationToken);
-        if (farmProfile == null)
-            throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
-        farmProfile.Status = FarmProfileStatus.Deleted;
-        farmProfile.UpdatedAt = DateTime.UtcNow;
-        return await _farmProfileRepository.UpdateAsync(farmProfile, cancellationToken);
-
-    }
-
-
-
-
-
 }
