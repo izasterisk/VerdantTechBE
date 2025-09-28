@@ -1,0 +1,636 @@
+https://maps.isric.org/mapserv?map=/map/sand.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=sand_0-5cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=sand_0-5cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "sand_0-5cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 330,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/sand.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=sand_5-15cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=sand_5-15cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "sand_5-15cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 335,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/sand.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=sand_15-30cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=sand_15-30cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "sand_15-30cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 315,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/silt.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=silt_0-5cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=silt_0-5cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "silt_0-5cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 331,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/silt.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=silt_5-15cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=silt_5-15cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "silt_5-15cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 329,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/silt.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=silt_15-30cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=silt_15-30cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "silt_15-30cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 302,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/clay.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=clay_0-5cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=clay_0-5cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "clay_0-5cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 339,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/clay.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=clay_5-15cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=clay_5-15cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "clay_5-15cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 336,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/clay.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=clay_15-30cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=clay_15-30cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "clay_15-30cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 383,
+        "unit": "g/kg"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/phh2o.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=phh2o_0-5cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=phh2o_0-5cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "phh2o_0-5cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 55,
+        "unit": "pH*10"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/phh2o.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=phh2o_5-15cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=phh2o_5-15cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "phh2o_5-15cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 55,
+        "unit": "pH*10"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================
+https://maps.isric.org/mapserv?map=/map/phh2o.map&REQUEST=GetFeatureInfo&QUERY_LAYERS=phh2o_15-30cm_mean&SERVICE=WMS&VERSION=1.3.0&FORMAT=image%2Fpng&STYLES=&TRANSPARENT=TRUE&LAYERS=phh2o_15-30cm_mean&INFO_FORMAT=application%2Fgeo%2Bjson&I=128&J=128&WIDTH=256&HEIGHT=256&CRS=CRS:84&BBOX=108.3000,11.7000,108.5000,11.9000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{
+  "type": "FeatureCollection",
+  "features": [
+    
+    {
+      "type": "Feature",
+      "id": "phh2o_15-30cm_mean",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          {
+            "type": "Point",
+            "coordinates": [108.40038, 11.800494]
+          }
+        ]
+      },
+      "properties": {
+        "pixel_value": 55,
+        "unit": "pH*10"
+      }}
+  ]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================================================================================

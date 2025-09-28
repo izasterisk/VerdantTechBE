@@ -1,4 +1,4 @@
-namespace Infrastructure.CO2.Models;
+namespace Infrastructure.Soid.Models;
 
 /// <summary>
 /// Raw response models để deserialize JSON từ SoilGrids API
