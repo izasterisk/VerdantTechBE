@@ -1,7 +1,7 @@
-using Infrastructure.CO2.Models;
-using BLL.Interfaces.Infrastructure;
+using Infrastructure.Soid.Models;
+using BLL.DTO.Soil;
 
-namespace Infrastructure.CO2;
+namespace Infrastructure.Soil;
 
 public static class SoilGridsResponseTransformer
 {
