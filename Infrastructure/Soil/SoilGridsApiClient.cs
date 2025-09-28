@@ -1,7 +1,7 @@
 using System.Text.Json;
 using BLL.Interfaces.Infrastructure;
 using BLL.DTO.Soil;
-using Infrastructure.Soid.Models;
+using Infrastructure.Soil.Models;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Soil;

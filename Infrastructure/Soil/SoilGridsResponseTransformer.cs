@@ -1,4 +1,4 @@
-using Infrastructure.Soid.Models;
+using Infrastructure.Soil.Models;
 using BLL.DTO.Soil;
 
 namespace Infrastructure.Soil;
