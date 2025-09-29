@@ -22,13 +22,21 @@ public class CartService : ICartService
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         if(dto.Quantity < 1)
         {
-            throw new Exception("Số lượng sản phẩm phải lớn hơn 1.");
+            throw new ArgumentOutOfRangeException(nameof(dto.Quantity), "Số lượng sản phẩm phải lớn hơn 1.");
         }
         
         var cart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
         if (cart == null)
         {
             cart = await _cartRepository.CreateCartByUserIdWithTransactionAsync(userId, cancellationToken);
+        }
+        else
+        {
+            var exists = await _cartRepository.CheckIfProductAlreadyInCart(cart.Id, dto.ProductId, cancellationToken);
+            if (exists)
+            {
+                throw new InvalidOperationException("Sản phẩm đã tồn tại trong giỏ hàng người dùng. Vui lòng sử dụng chức năng cập nhật.");
+            }
         }
         var cartItem = _mapper.Map<CartItem>(dto);
         cartItem.CartId = cart.Id;
@@ -44,12 +52,12 @@ public class CartService : ICartService
         var cart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
         if (cart == null)
         {
-            throw new Exception("Sản phẩm không tồn tại trong giỏ hàng người dùng.");
+            throw new InvalidOperationException("Giỏ hàng không tồn tại cho người dùng này.");
         }
         var item = await _cartRepository.FindItem(cart.Id, dto.ProductId, cancellationToken);
         if (item == null)
         {
-            throw new Exception("Sản phẩm không tồn tại trong giỏ hàng người dùng.");
+            throw new InvalidOperationException("Sản phẩm không tồn tại trong giỏ hàng người dùng.");
         }
 
         if (dto.Quantity == 0)
@@ -57,7 +65,7 @@ public class CartService : ICartService
             var response = await _cartRepository.RemoveItemFromCartWithTransactionAsync(item, cancellationToken);
             if (!response)
             {
-                throw new Exception("Xoá sản phẩm khỏi giỏ hàng thất bại.");
+                throw new InvalidOperationException("Xoá sản phẩm khỏi giỏ hàng thất bại.");
             }
         }
         else

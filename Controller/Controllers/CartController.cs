@@ -25,6 +25,8 @@ public class CartController : BaseController
     [HttpPost("add")]
     [Authorize]
     [EndpointSummary("Add Product to Cart")]
+    [EndpointDescription("Endpoint này sử dụng token để xác định người dùng nào đang đăng nhập " +
+                         "và áp dụng thay đổi lên cart của người dùng đó.")]
     public async Task<ActionResult<APIResponse>> AddToCart([FromBody] CartAddDTO dto)
     {
         var validationResult = ValidateModel();
@@ -50,7 +52,10 @@ public class CartController : BaseController
     [HttpPut("update")]
     [Authorize]
     [EndpointSummary("Update Cart Item Quantity")]
-    [EndpointDescription("Nếu quantity = 0, sản phẩm sẽ bị xóa khỏi giỏ hàng.")]
+    [EndpointDescription("Endpoint này sử dụng luôn để xác định người dùng nào đang đăng nhập" +
+                         " và áp dụng thay đổi lên cart của người dùng đó. " +
+                         "Nếu quantity = 0, sản phẩm sẽ bị xóa khỏi giỏ hàng. " +
+                         "LƯU Ý: Xóa này là HARD DELETE, xóa là mất luôn.")]
     public async Task<ActionResult<APIResponse>> UpdateCartItem([FromBody] CartAddDTO dto)
     {
         var validationResult = ValidateModel();
@@ -75,6 +80,8 @@ public class CartController : BaseController
     [HttpGet]
     [Authorize]
     [EndpointSummary("Get User Cart")]
+    [EndpointDescription("Endpoint này sử dụng token để xác định người dùng nào đang đăng nhập" +
+                         " và áp dụng thay đổi lên cart của người dùng đó.")]
     public async Task<ActionResult<APIResponse>> GetCart()
     {
         try

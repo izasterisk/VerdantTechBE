@@ -101,6 +101,11 @@ public class CartRepository : ICartRepository
             cancellationToken);
     }
 
+    public async Task<bool> CheckIfProductAlreadyInCart(ulong cartId, ulong productId, CancellationToken cancellationToken = default)
+    {
+        return await _cartItemsRepository.AnyAsync(c => c.CartId == cartId && c.ProductId == productId, cancellationToken);
+    }
+    
     public async Task<CartItem?> FindItem(ulong cartId, ulong productId, CancellationToken cancellationToken = default)
     {
         return await _cartItemsRepository.GetAsync(c => c.CartId == cartId && c.ProductId == productId, true, cancellationToken);
