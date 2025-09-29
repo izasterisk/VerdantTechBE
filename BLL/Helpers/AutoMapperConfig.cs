@@ -70,6 +70,9 @@ public class AutoMapperConfig : Profile
 
         // Cart mappings
         CreateMap<CartAddDTO, CartItem>().ReverseMap();
+        CreateMap<Cart, CartResponseDTO>()
+            .ForMember(d => d.UserInfoDTO, o => o.MapFrom(s => s.Customer))
+            .ForMember(d => d.CartItems,  o => o.MapFrom(s => s.CartItems));
         CreateMap<CartItem, CartItemDTO>()
             .ForMember(d => d.ProductId,     o => o.MapFrom(s => s.ProductId))
             .ForMember(d => d.Quantity,      o => o.MapFrom(s => s.Quantity))
