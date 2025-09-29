@@ -4,8 +4,8 @@ namespace BLL.DTO.Cart;
 
 public class CartResponseDTO
 {
-    public UserResponseDTO UserInfoDTO;
-    public List<CartItemDTO> CartItems;
+    public UserResponseDTO UserInfoDTO = null!;
+    public List<CartItemDTO> CartItems = new();
 }
 
 public class CartItemDTO
