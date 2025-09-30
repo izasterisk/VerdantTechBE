@@ -3,6 +3,7 @@ using BLL.DTO.Address;
 using BLL.DTO.Cart;
 using BLL.DTO.CO2;
 using BLL.DTO.FarmProfile;
+using BLL.DTO.Order;
 using BLL.DTO.ProductCategory;
 using BLL.DTO.User;
 using DAL.Data.Models;
@@ -71,7 +72,7 @@ public class AutoMapperConfig : Profile
         // Cart mappings
         CreateMap<CartAddDTO, CartItem>().ReverseMap();
         CreateMap<Cart, CartResponseDTO>()
-            .ForMember(d => d.UserInfoDTO, o => o.MapFrom(s => s.Customer))
+            .ForMember(d => d.UserInfo, o => o.MapFrom(s => s.Customer))
             .ForMember(d => d.CartItems,  o => o.MapFrom(s => s.CartItems));
         CreateMap<CartItem, CartItemDTO>()
             .ForMember(d => d.ProductId,     o => o.MapFrom(s => s.ProductId))
@@ -85,5 +86,12 @@ public class AutoMapperConfig : Profile
             .ForMember(d => d.SoldCount,     o => o.MapFrom(s => s.Product.SoldCount))
             .ForMember(d => d.RatingAverage, o => o.MapFrom(s => s.Product.RatingAverage));
 
+        // Order mappings
+        CreateMap<OrderCreateDTO, DAL.Data.Models.Order>().ReverseMap();
+        CreateMap<OrderDetailDTO, OrderDetail>().ReverseMap();
+        
+        CreateMap<DAL.Data.Models.Order, OrderResponseDTO>().ReverseMap();
+        CreateMap<OrderDetail, OrderDetailResponseDTO>().ReverseMap();
+        CreateMap<Product, ProductResponseDTO>().ReverseMap();
     }
 }

@@ -96,7 +96,7 @@ namespace Controller.Controllers
         /// <param name="id">ID của hồ sơ trang trại</param>
         /// <param name="dto">Thông tin hồ sơ trang trại cần cập nhật</param>
         /// <returns>Thông tin hồ sơ trang trại đã cập nhật</returns>
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         [EndpointSummary("Update Farm Profile")]
         [EndpointDescription("Cập nhật thông tin hồ sơ trang trại.")]
         public async Task<ActionResult<APIResponse>> UpdateFarmProfile([FromRoute] ulong id, [FromBody] FarmProfileUpdateDTO dto)

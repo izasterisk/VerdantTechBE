@@ -91,7 +91,7 @@ namespace Controller.Controllers
         /// <param name="id">ID của danh mục sản phẩm</param>
         /// <param name="dto">Thông tin danh mục sản phẩm cần cập nhật</param>
         /// <returns>Thông tin danh mục sản phẩm đã cập nhật</returns>
-        [HttpPut("{id}")]
+        [HttpPatch("{id}")]
         [EndpointSummary("Update Product Category")]
         [EndpointDescription("Nếu đã là Category cha (tức có một category khác có ParentId là Id của cái này thì không thể làm category con của 1 cái khác.")]
         public async Task<ActionResult<APIResponse>> UpdateProductCategory([FromRoute] ulong id, [FromBody] ProductCategoryUpdateDTO dto)

@@ -58,7 +58,7 @@ public class CartRepository : ICartRepository
         }
     }
 
-    public async Task<bool> RemoveItemFromCartWithTransactionAsync(CartItem item, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteItemFromCartWithTransactionAsync(CartItem item, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try

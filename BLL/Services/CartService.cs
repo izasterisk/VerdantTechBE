@@ -62,7 +62,7 @@ public class CartService : ICartService
 
         if (dto.Quantity == 0)
         {
-            var response = await _cartRepository.RemoveItemFromCartWithTransactionAsync(item, cancellationToken);
+            var response = await _cartRepository.DeleteItemFromCartWithTransactionAsync(item, cancellationToken);
             if (!response)
             {
                 throw new InvalidOperationException("Xoá sản phẩm khỏi giỏ hàng thất bại.");
@@ -80,6 +80,6 @@ public class CartService : ICartService
     public async Task<CartResponseDTO?> GetCartByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         var cart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
-        return _mapper.Map<CartResponseDTO>(cart);
+        return cart == null ? null : _mapper.Map<CartResponseDTO>(cart);
     }
 }

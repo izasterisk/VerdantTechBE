@@ -133,7 +133,7 @@ public class UserController : BaseController
     /// <param name="id">ID của người dùng</param>
     /// <param name="dto">Thông tin người dùng cần cập nhật</param>
     /// <returns>Thông tin người dùng đã cập nhật</returns>
-    [HttpPut("{id}")]
+    [HttpPatch("{id}")]
     [Authorize]
     [EndpointSummary("Update User")]
     [EndpointDescription("Cập nhật thông tin người dùng bao gồm cả status. Status có thể là: Active, Inactive, Suspended, Deleted")]
@@ -184,7 +184,7 @@ public class UserController : BaseController
     /// <param name="addressId">ID của địa chỉ</param>
     /// <param name="dto">Thông tin địa chỉ cần cập nhật</param>
     /// <returns>Thông tin người dùng đã cập nhật với địa chỉ mới</returns>
-    [HttpPut("address/{addressId}")]
+    [HttpPatch("address/{addressId}")]
     [Authorize]
     [EndpointSummary("Update User Address")]
     [EndpointDescription("Cập nhật địa chỉ người dùng theo ID địa chỉ")]
