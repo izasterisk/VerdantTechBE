@@ -9,4 +9,6 @@ public interface IOrderRepository
     Task<Order> UpdateOrderWithTransactionAsync(Order order, CancellationToken cancellationToken = default);
     Task<bool> DeleteOrderWithTransactionAsync(Order order, CancellationToken cancellationToken = default);
     Task<bool> FindUserExistAsync(ulong userId, CancellationToken cancellationToken = default);
+    Task<bool> ValidateAddressBelongsToUserAsync(ulong addressId, ulong userId, CancellationToken cancellationToken = default);
+    Task<List<Order>> GetAllOrdersByUserIdAsync(ulong userId, CancellationToken cancellationToken = default);
 }

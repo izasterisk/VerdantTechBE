@@ -11,12 +11,25 @@ public class OrderRepository : IOrderRepository
     private readonly IRepository<Order> _orderRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IRepository<User> _userRepository;
+    private readonly IRepository<Address> _addressRepository;
+    private readonly IRepository<UserAddress> _userAddressRepository;
+    private readonly IRepository<FarmProfile> _farmProfileRepository;
     
-    public OrderRepository(IRepository<Order> orderRepository, VerdantTechDbContext dbContext, IRepository<User> userRepository, IOrderDetailRepository orderDetailRepository)
+    public OrderRepository(
+        IRepository<Order> orderRepository, 
+        VerdantTechDbContext dbContext, 
+        IRepository<User> userRepository, 
+        IRepository<Address> addressRepository, 
+        IRepository<UserAddress> userAddressRepository,
+        IRepository<FarmProfile> farmProfileRepository,
+        IOrderDetailRepository orderDetailRepository)
     {
         _orderRepository = orderRepository;
         _dbContext = dbContext;
         _userRepository = userRepository;
+        _addressRepository = addressRepository;
+        _userAddressRepository = userAddressRepository;
+        _farmProfileRepository = farmProfileRepository;
         _orderDetailRepository = orderDetailRepository;
     }
     
@@ -90,8 +103,26 @@ public class OrderRepository : IOrderRepository
             cancellationToken);
     }
     
+    public async Task<List<Order>> GetAllOrdersByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    {
+        return await _orderRepository.GetAllWithRelationsByFilterAsync(
+            o => o.CustomerId == userId, 
+            true,
+            query => query.Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .Include(o => o.Address),
+            cancellationToken);
+    }
+    
     public async Task<bool> FindUserExistAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         return await _userRepository.AnyAsync(o => o.Id == userId, cancellationToken);
+    }
+    
+    public async Task<bool> ValidateAddressBelongsToUserAsync(ulong addressId, ulong userId, CancellationToken cancellationToken = default)
+    {
+        var farm = await _farmProfileRepository.AnyAsync(f => f.UserId == userId && f.AddressId == addressId, cancellationToken);
+        var user = await _userAddressRepository.AnyAsync(u => u.UserId == userId && u.AddressId == addressId, cancellationToken);
+        return farm || user;
     }
 }

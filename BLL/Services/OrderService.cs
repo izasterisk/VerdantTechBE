@@ -4,6 +4,7 @@ using BLL.Helpers.Order;
 using BLL.Interfaces;
 using DAL.Data.Models;
 using DAL.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace BLL.Services;
 
@@ -26,6 +27,10 @@ public class OrderService : IOrderService
         var userExists = await _orderRepository.FindUserExistAsync(userId, cancellationToken);
         if (!userExists)
             throw new KeyNotFoundException($"Người dùng với ID {userId} không tồn tại.");
+        
+        var addressBelongsToUser = await _orderRepository.ValidateAddressBelongsToUserAsync(dto.AddressId, userId, cancellationToken);
+        if (!addressBelongsToUser)
+            throw new ArgumentException($"Địa chỉ với ID {dto.AddressId} không thuộc về người dùng với ID {userId}. Vui lòng tạo địa chỉ mới.");
         
         Order order = _mapper.Map<Order>(dto);
         order.CustomerId = userId;
@@ -55,57 +60,90 @@ public class OrderService : IOrderService
         
         var existingOrder = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
         if (existingOrder == null)
-            throw new KeyNotFoundException($"Order with ID {orderId} not found.");
+            throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
+        if (dto.AddressId != null)
+        {
+            var addressBelongsToUser = await _orderRepository.ValidateAddressBelongsToUserAsync(dto.AddressId.Value, existingOrder.CustomerId, cancellationToken);
+            if (!addressBelongsToUser)
+                throw new ArgumentException($"Địa chỉ với ID {dto.AddressId} không thuộc về người dùng với ID {existingOrder.CustomerId}. Vui lòng tạo địa chỉ mới hoặc thử địa chỉ khác.");
+        }
         _mapper.Map(dto, existingOrder);
         
-        List<OrderDetailUpdateDTO> orderDetailUpdateDTOs = dto.OrderDetails.ToList();
-        decimal orderSubtotal = 0;
-        foreach (var orderDetailUpdateDTO in orderDetailUpdateDTOs)
+        if(dto.OrderDetails != null)
         {
-            var existingOrderDetail = await _orderDetailRepository.GetOrderDetailByIdAsync(orderDetailUpdateDTO.Id, cancellationToken);
-            var orderDetailUpdate = _mapper.Map<OrderDetail>(orderDetailUpdateDTO);
-            orderDetailUpdate.Subtotal = OrderHelper.ComputeSubtotalForOrderItem(orderDetailUpdate.Quantity, orderDetailUpdate.UnitPrice, orderDetailUpdate.DiscountAmount);
-            if(existingOrderDetail == null)
+            List<OrderDetailUpdateDTO> orderDetailUpdateDTOs = dto.OrderDetails.ToList();
+            foreach (var orderDetailUpdateDTO in orderDetailUpdateDTOs)
             {
-                orderDetailUpdate.OrderId = orderId;
-                await _orderDetailRepository.CreateOrderDetailAsync(orderDetailUpdate);
-            }
-            if (orderDetailUpdateDTO.Quantity == 0)
-            {
-                var check = await _orderDetailRepository.HasFewerThanTwoOrderDetailsAsync(orderId, cancellationToken);
-                var deletedOrderDetail = await _orderDetailRepository.DeleteOrderDetailAsync(existingOrderDetail);
-                if (!deletedOrderDetail)
-                    throw new Exception($"Xoá sản phầm trong đơn hàng với ID {orderDetailUpdateDTO.Id} không thành công.");
-                if (check)
+                if (orderDetailUpdateDTO.Id == 0)
                 {
-                    var deletedOrder = await _orderRepository.DeleteOrderWithTransactionAsync(existingOrder, cancellationToken);
-                    if (!deletedOrder)
-                        throw new Exception($"Xoá đơn hàng với ID {orderDetailUpdateDTO.Id} không thành công.");
-                    break;
+                    if (!orderDetailUpdateDTO.ProductId.HasValue || !orderDetailUpdateDTO.Quantity.HasValue || !orderDetailUpdateDTO.UnitPrice.HasValue)
+                        throw new ArgumentException($"ProductId, Quantity, UnitPrice là bắt buộc khi tạo mới OrderDetail với ID {orderDetailUpdateDTO.Id}.");
+                    var orderDetailUpdate = _mapper.Map<OrderDetail>(orderDetailUpdateDTO);
+                    orderDetailUpdate.Subtotal = OrderHelper.ComputeSubtotalForOrderItem(orderDetailUpdate.Quantity, orderDetailUpdate.UnitPrice, orderDetailUpdate.DiscountAmount);
+                    orderDetailUpdate.OrderId = orderId;
+                    await _orderDetailRepository.CreateOrderDetailAsync(orderDetailUpdate);
                 }
-            }
-            else
-            {
-                var existingOrderDetailDTO = _mapper.Map<OrderDetailUpdateDTO>(existingOrderDetail);
-                var check = OrderHelper.AreOrderDetailsEqual(orderDetailUpdateDTO, existingOrderDetailDTO);
-                if (!check)
+                else
                 {
-                    await _orderDetailRepository.UpdateOrderDetailAsync(orderDetailUpdate);
+                    var existingOrderDetail = await _orderDetailRepository.GetOrderDetailByIdAsync(orderDetailUpdateDTO.Id, cancellationToken);
+                    if(existingOrderDetail != null && existingOrderDetail.OrderId != orderId)
+                        throw new KeyNotFoundException($"Chi tiết đơn hàng với ID {orderDetailUpdateDTO.Id} không thuộc về đơn hàng với ID {orderId}.");
+                    if(existingOrderDetail == null)
+                        throw new KeyNotFoundException($"Chi tiết đơn hàng với ID {orderDetailUpdateDTO.Id} không tồn tại.");
+                    var temp = existingOrderDetail;
+                    _mapper.Map(orderDetailUpdateDTO, existingOrderDetail);
+                    existingOrderDetail.Subtotal = OrderHelper.ComputeSubtotalForOrderItem(existingOrderDetail.Quantity, existingOrderDetail.UnitPrice, existingOrderDetail.DiscountAmount);
+                
+                    if (orderDetailUpdateDTO.Quantity == 0)
+                    {
+                        var deletedOrderDetail = await _orderDetailRepository.DeleteOrderDetailAsync(temp);
+                        if (!deletedOrderDetail)
+                            throw new DbUpdateException($"Xoá sản phầm trong đơn hàng với ID {orderDetailUpdateDTO.Id} không thành công.");
+                        var check = await _orderDetailRepository.HasNoOrderDetailLeftAsync(orderId, cancellationToken);
+                        if (check)
+                        {
+                            var deletedOrder = await _orderRepository.DeleteOrderWithTransactionAsync(existingOrder, cancellationToken);
+                            if (!deletedOrder)
+                            {
+                                throw new DbUpdateException($"Xoá đơn hàng với ID {orderDetailUpdateDTO.Id} không thành công.");
+                            }
+                            throw new OrderHelper.OrderDeletedException(orderId);
+                        }
+                    }
+                    else
+                    {
+                        var existingOrderDetailDTO = _mapper.Map<OrderDetailUpdateDTO>(temp);
+                        var check = OrderHelper.AreOrderDetailsEqual(orderDetailUpdateDTO, existingOrderDetailDTO);
+                        if (!check)
+                        {
+                            await _orderDetailRepository.UpdateOrderDetailAsync(existingOrderDetail);
+                        }
+                    }
                 }
-                orderSubtotal += orderDetailUpdate.Subtotal;
             }
         }
         
-        existingOrder.Subtotal = orderSubtotal;
+        var count = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        existingOrder.Subtotal = 0;
+        foreach (var detail in count.OrderDetails)
+        {
+            existingOrder.Subtotal += detail.Subtotal;
+        }
         existingOrder.TotalAmount = OrderHelper.ComputeTotalAmountForOrder(existingOrder.Subtotal, existingOrder.TaxAmount, existingOrder.ShippingFee, existingOrder.DiscountAmount);
         var updatedOrder = await _orderRepository.UpdateOrderWithTransactionAsync(existingOrder, cancellationToken);
         var response = await _orderRepository.GetOrderByIdAsync(updatedOrder.Id, cancellationToken);
         return _mapper.Map<OrderResponseDTO>(response);
     }
     
-    public async Task<OrderResponseDTO?> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
+    public async Task<OrderResponseDTO?> GetOrderByOrderIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
         return order == null ? null : _mapper.Map<OrderResponseDTO>(order);
+    }
+    
+    public async Task<List<OrderResponseDTO>> GetAllOrdersByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    {
+        var orders = await _orderRepository.GetAllOrdersByUserIdAsync(userId, cancellationToken);
+        return _mapper.Map<List<OrderResponseDTO>>(orders);
     }
 }

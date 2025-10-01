@@ -104,9 +104,8 @@ public class UserService : IUserService
             throw new Exception($"User with ID {userId} not found.");
         }
         Address address = _mapper.Map<Address>(dto);
-        var createdUserAddress = await _addressRepository.CreateUserAddressAsync(existingUser.Id, address, cancellationToken);
-        
-        var updatedUser = await _userRepository.GetUserByIdAsync(existingUser.Id, cancellationToken);
+        await _addressRepository.CreateUserAddressAsync(existingUser.Id, address, cancellationToken);
+        var updatedUser = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
         return _mapper.Map<UserResponseDTO>(updatedUser);
     }
     

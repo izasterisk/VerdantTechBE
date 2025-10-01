@@ -33,9 +33,9 @@ public class OrderDetailRepository : IOrderDetailRepository
         return await _orderDetailRepository.GetAsync(o => o.Id == orderDetailId, true, cancellationToken);
     }
     
-    public async Task<bool> HasFewerThanTwoOrderDetailsAsync(ulong orderId, CancellationToken cancellationToken = default)
+    public async Task<bool> HasNoOrderDetailLeftAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         var count = await _orderDetailRepository.CountAsync(od => od.OrderId == orderId, cancellationToken);
-        return count < 2;
+        return count == 0;
     }
 }

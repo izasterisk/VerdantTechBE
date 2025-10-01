@@ -25,7 +25,8 @@ public class OrderDetailUpdateDTO
     public ulong Id { get; set; }
     
     // [Required(ErrorMessage = "ProductId là bắt buộc.")]
-    // public ulong ProductId { get; set; }
+    [Range(1, ulong.MaxValue, ErrorMessage = "ProductId ít nhất là 1.")]
+    public ulong? ProductId { get; set; }
 
     [Range(0, int.MaxValue, ErrorMessage = "Số lượng phải ít nhất là 0.")]
     public int? Quantity { get; set; }
