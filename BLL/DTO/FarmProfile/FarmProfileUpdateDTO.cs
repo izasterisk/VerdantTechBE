@@ -28,7 +28,9 @@ public class FarmProfileUpdateDTO
 
     [Range(-180, 180, ErrorMessage = "Kinh độ phải nằm trong khoảng -180 đến 180")]
     public decimal? Longitude { get; set; }
-    public string? Status { get; set; }
+    
+    [EnumDataType(typeof(FarmProfileStatus), ErrorMessage = "Trạng thái phải là Active, Maintenance hoặc Deleted")]
+    public FarmProfileStatus? Status { get; set; }
 
     [StringLength(500, ErrorMessage = "Thông tin cây trồng chính không được vượt quá 500 ký tự")]
     public string? PrimaryCrops { get; set; }

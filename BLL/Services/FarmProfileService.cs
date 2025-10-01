@@ -48,12 +48,6 @@ namespace BLL.Services
             if (farmProfile.Address == null)
                 throw new InvalidOperationException("Địa chỉ của trang trại không tồn tại");
             
-            // Xử lý Status nếu có
-            if (!string.IsNullOrWhiteSpace(dto.Status))
-            {
-                var newStatus = Utils.ParseEnum<FarmProfileStatus>(dto.Status, "trạng thái trang trại");
-                farmProfile.Status = newStatus;
-            }
             
             _mapper.Map(dto, farmProfile);
             _mapper.Map(dto, farmProfile.Address);

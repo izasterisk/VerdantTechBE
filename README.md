@@ -284,6 +284,7 @@ Tất cả API đặt dưới base `/api/{ControllerName}`.
 - **Validation từ Service**:
   - Kiểm tra order tồn tại theo orderId
   - Nếu có AddressId: kiểm tra address thuộc về customer của order
+  - Nếu có CancelledReason: Status bắt buộc phải truyền vào null hoặc Cancelled
   - Xử lý OrderDetails:
     - Nếu Id = 0: tạo mới (cần ProductId, Quantity, UnitPrice)
     - Nếu Id > 0: cập nhật existing (kiểm tra thuộc về order)
@@ -386,8 +387,6 @@ Tất cả API đặt dưới base `/api/{ControllerName}`.
 - **Validation từ Service**:
   - Kiểm tra farm có tọa độ địa lý
   - Gọi Weather API với error handling
-
-### 5) Xử lý lỗi và Exception
 
 ### 5) Xử lý lỗi và Exception
 

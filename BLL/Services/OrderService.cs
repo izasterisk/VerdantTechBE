@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using BLL.DTO.Order;
+using BLL.Helpers;
 using BLL.Helpers.Order;
 using BLL.Interfaces;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +68,15 @@ public class OrderService : IOrderService
             var addressBelongsToUser = await _orderRepository.ValidateAddressBelongsToUserAsync(dto.AddressId.Value, existingOrder.CustomerId, cancellationToken);
             if (!addressBelongsToUser)
                 throw new ArgumentException($"Địa chỉ với ID {dto.AddressId} không thuộc về người dùng với ID {existingOrder.CustomerId}. Vui lòng tạo địa chỉ mới hoặc thử địa chỉ khác.");
+        }
+        if (dto.CancelledReason != null)
+        {
+            if (dto.Status == null)
+                dto.Status = OrderStatus.Cancelled;
+            else
+            {
+                throw new ArgumentException("Khi đã có CancelledReason, trạng thái đơn hàng nhận vào phải là null hoặc Cancelled.");
+            }
         }
         _mapper.Map(dto, existingOrder);
         

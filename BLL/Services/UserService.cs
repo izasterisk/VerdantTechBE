@@ -76,17 +76,14 @@ public class UserService : IUserService
         {
             throw new Exception($"User with ID {userId} not found.");
         }
-        if (!string.IsNullOrWhiteSpace(dto.Status))
+        if (dto.Status != null)
         {
-            var newStatus = Utils.ParseEnum<UserStatus>(dto.Status, "trạng thái người dùng");
-
             if (existingUser.Status == UserStatus.Deleted)
                 throw new InvalidOperationException("Tài khoản này đã bị xóa.");
-
-            if (existingUser.Status != newStatus)
+            if (existingUser.Status != dto.Status)
             {
-                existingUser.Status = newStatus;
-                if (newStatus == UserStatus.Deleted)
+                existingUser.Status = dto.Status.Value;
+                if (dto.Status == UserStatus.Deleted)
                     existingUser.DeletedAt = DateTime.UtcNow;
             }
         }

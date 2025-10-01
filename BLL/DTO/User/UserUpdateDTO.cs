@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using DAL.Data;
 
 namespace BLL.DTO.User;
 
@@ -40,9 +41,8 @@ public class UserUpdateDTO
     [Url(ErrorMessage = "URL avatar không đúng định dạng")]
     public string? AvatarUrl { get; set; }
 
-    [RegularExpression("^(active|inactive|suspended|deleted)$", 
-        ErrorMessage = "Trạng thái phải là một trong các giá trị: active, inactive, suspended, deleted")]
-    public string? Status { get; set; }
+    [EnumDataType(typeof(UserStatus), ErrorMessage = "Trạng thái phải là Active, Inactive, Suspended hoặc Deleted")]
+    public UserStatus? Status { get; set; }
 
     // public DateTime? LastLoginAt { get; set; }
 
