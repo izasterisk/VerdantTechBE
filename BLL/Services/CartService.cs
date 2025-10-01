@@ -17,14 +17,13 @@ public class CartService : ICartService
         _cartRepository = cartRepository;
     }
     
-    public async Task<CartResponseDTO> AddToCartAsync(ulong userId, CartAddDTO dto, CancellationToken cancellationToken = default)
+    public async Task<CartResponseDTO> AddToCartAsync(ulong userId, CartDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         if(dto.Quantity < 1)
         {
             throw new ArgumentOutOfRangeException(nameof(dto.Quantity), "Số lượng sản phẩm phải lớn hơn 1.");
         }
-        
         var cart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
         if (cart == null)
         {
@@ -45,21 +44,20 @@ public class CartService : ICartService
         return _mapper.Map<CartResponseDTO>(updatedCart);
     }
     
-    public async Task<CartResponseDTO> UpdateCartItemAsync(ulong userId, CartAddDTO dto, CancellationToken cancellationToken = default)
+    public async Task<CartResponseDTO> UpdateCartItemQuantityAsync(ulong userId, CartDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         
         var cart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
         if (cart == null)
         {
-            throw new InvalidOperationException("Giỏ hàng không tồn tại cho người dùng này.");
+            throw new InvalidOperationException("Sản phẩm không tồn tại trong giỏ hàng người dùng.");
         }
         var item = await _cartRepository.FindItem(cart.Id, dto.ProductId, cancellationToken);
         if (item == null)
         {
             throw new InvalidOperationException("Sản phẩm không tồn tại trong giỏ hàng người dùng.");
         }
-
         if (dto.Quantity == 0)
         {
             var response = await _cartRepository.DeleteItemFromCartWithTransactionAsync(item, cancellationToken);

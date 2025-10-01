@@ -38,4 +38,9 @@ public class OrderDetailRepository : IOrderDetailRepository
         var count = await _orderDetailRepository.CountAsync(od => od.OrderId == orderId, cancellationToken);
         return count == 0;
     }
+    
+    public async Task<bool> ValidateProductAlreadyExistsInOrderAsync(ulong orderId, ulong productId, CancellationToken cancellationToken = default)
+    {
+        return await _orderDetailRepository.AnyAsync(od => od.OrderId == orderId && od.ProductId == productId, cancellationToken);
+    }
 }

@@ -79,6 +79,7 @@ public class CartRepository : ICartRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            cartItem.UpdatedAt = DateTime.UtcNow;
             var updatedCartItem = await _cartItemsRepository.UpdateAsync(cartItem, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return updatedCartItem;

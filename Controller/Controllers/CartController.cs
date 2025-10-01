@@ -27,7 +27,7 @@ public class CartController : BaseController
     [EndpointSummary("Add Product to Cart")]
     [EndpointDescription("Endpoint này sử dụng token để xác định người dùng nào đang đăng nhập " +
                          "và áp dụng thay đổi lên cart của người dùng đó.")]
-    public async Task<ActionResult<APIResponse>> AddToCart([FromBody] CartAddDTO dto)
+    public async Task<ActionResult<APIResponse>> AddToCart([FromBody] CartDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
@@ -56,7 +56,7 @@ public class CartController : BaseController
                          " và áp dụng thay đổi lên cart của người dùng đó. " +
                          "Nếu quantity = 0, sản phẩm sẽ bị xóa khỏi giỏ hàng. " +
                          "LƯU Ý: Xóa này là HARD DELETE, xóa là mất luôn.")]
-    public async Task<ActionResult<APIResponse>> UpdateCartItem([FromBody] CartAddDTO dto)
+    public async Task<ActionResult<APIResponse>> UpdateCartItem([FromBody] CartDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
@@ -64,7 +64,7 @@ public class CartController : BaseController
         try
         {
             var userId = GetCurrentUserId();
-            var cart = await _cartService.UpdateCartItemAsync(userId, dto, GetCancellationToken());
+            var cart = await _cartService.UpdateCartItemQuantityAsync(userId, dto, GetCancellationToken());
             return SuccessResponse(cart);
         }
         catch (Exception ex)

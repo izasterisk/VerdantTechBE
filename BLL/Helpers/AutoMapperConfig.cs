@@ -70,7 +70,7 @@ public class AutoMapperConfig : Profile
         CreateMap<Product, BLL.DTO.Product.ProductResponseDTO>().ReverseMap();
 
         // Cart mappings
-        CreateMap<CartAddDTO, CartItem>().ReverseMap();
+        CreateMap<CartDTO, CartItem>().ReverseMap();
         CreateMap<Cart, CartResponseDTO>()
             .ForMember(d => d.UserInfo, o => o.MapFrom(s => s.Customer))
             .ForMember(d => d.CartItems,  o => o.MapFrom(s => s.CartItems));
@@ -87,7 +87,8 @@ public class AutoMapperConfig : Profile
             .ForMember(d => d.RatingAverage, o => o.MapFrom(s => s.Product.RatingAverage));
 
         // Order mappings
-        CreateMap<OrderCreateDTO, DAL.Data.Models.Order>().ReverseMap();
+        CreateMap<OrderCreateDTO, DAL.Data.Models.Order>()
+            .ForMember(d => d.OrderDetails, opt => opt.Ignore());
         CreateMap<OrderDetailDTO, OrderDetail>().ReverseMap();
         CreateMap<OrderUpdateDTO, DAL.Data.Models.Order>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));;

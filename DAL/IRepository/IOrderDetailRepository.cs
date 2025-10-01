@@ -9,4 +9,5 @@ public interface IOrderDetailRepository
     Task<bool> DeleteOrderDetailAsync(OrderDetail orderDetail);
     Task<OrderDetail?> GetOrderDetailByIdAsync(ulong orderDetailId, CancellationToken cancellationToken = default);
     Task<bool> HasNoOrderDetailLeftAsync(ulong orderId, CancellationToken cancellationToken = default);
+    Task<bool> ValidateProductAlreadyExistsInOrderAsync(ulong orderId, ulong productId, CancellationToken cancellationToken = default);
 }

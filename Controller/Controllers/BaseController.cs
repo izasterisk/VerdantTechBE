@@ -2,19 +2,17 @@ using Microsoft.AspNetCore.Mvc;
 using BLL.DTO;
 using System.Net;
 using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using BLL.Helpers.Order;
+using System.Security;
 
 namespace Controller.Controllers;
 
-/// <summary>
-/// Base controller với common helpers cho tất cả controllers
-/// </summary>
 [ApiController]
 public abstract class BaseController : ControllerBase
 {
-    /// <summary>
-    /// Validate ModelState và return BadRequest nếu invalid
-    /// </summary>
-    /// <returns>BadRequest response nếu ModelState invalid, null nếu valid</returns>
     protected ActionResult<APIResponse>? ValidateModel()
     {
         if (!ModelState.IsValid)
@@ -28,83 +26,136 @@ public abstract class BaseController : ControllerBase
         return null;
     }
 
-    /// <summary>
-    /// Handle exceptions và return appropriate HTTP response
-    /// </summary>
-    /// <param name="ex">Exception to handle</param>
-    /// <returns>ActionResult với appropriate status code</returns>
+    // bóc tách message có ích từ inner exception (nếu có)
+    private static string GetRootMessage(Exception ex)
+    {
+        var e = ex;
+        while (e.InnerException != null) e = e.InnerException;
+
+        var msg = e.Message;
+
+        // gợi ý mapping nội dung thường gặp (FK/UK/duplicate)
+        if (msg.Contains("FOREIGN KEY", StringComparison.OrdinalIgnoreCase))
+            return "Vi phạm khóa ngoại.";
+        if (msg.Contains("UNIQUE", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("duplicate", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("Duplicate entry", StringComparison.OrdinalIgnoreCase))
+            return "Dữ liệu trùng lặp (vi phạm unique).";
+
+        return string.IsNullOrWhiteSpace(msg) ? ex.Message : msg;
+    }
+
     protected ActionResult<APIResponse> HandleException(Exception ex)
     {
+        string rootMsg = GetRootMessage(ex);
+        string safeMsg = string.IsNullOrWhiteSpace(ex.Message) ? rootMsg : ex.Message;
+
         return ex switch
         {
-            UnauthorizedAccessException => Unauthorized(APIResponse.Error("Truy cập bị từ chối", HttpStatusCode.Unauthorized)),
-            ArgumentException => BadRequest(APIResponse.Error(ex.Message, HttpStatusCode.BadRequest)),
-            InvalidOperationException when ex.Message.Contains("Email chưa được xác minh") => 
-                StatusCode(403, APIResponse.Error("Email chưa được xác minh", HttpStatusCode.Forbidden)),
-            InvalidOperationException when ex.Message.Contains("Không tìm thấy người dùng") => 
-                NotFound(APIResponse.Error("Không tìm thấy người dùng", HttpStatusCode.NotFound)),
-            InvalidOperationException => 
+            // 401
+            UnauthorizedAccessException =>
+                Unauthorized(APIResponse.Error("Truy cập bị từ chối", HttpStatusCode.Unauthorized)),
+
+            // 403
+            SecurityException =>
+                StatusCode(403, APIResponse.Error("Không có quyền truy cập tài nguyên này.", HttpStatusCode.Forbidden)),
+
+            // 404
+            KeyNotFoundException =>
+                NotFound(APIResponse.Error(safeMsg, HttpStatusCode.NotFound)),
+
+            // 409 (xung đột ghi/đồng bộ)
+            DbUpdateConcurrencyException =>
+                StatusCode(409, APIResponse.Error("Xung đột dữ liệu. Vui lòng tải lại và thử lại.", HttpStatusCode.Conflict)),
+
+            // 409/400 cho lỗi DB
+            DbUpdateException when rootMsg.Contains("Vi phạm khóa ngoại") ||
+                                   rootMsg.Contains("trùng lặp", StringComparison.OrdinalIgnoreCase) ||
+                                   rootMsg.Contains("unique", StringComparison.OrdinalIgnoreCase) ||
+                                   rootMsg.Contains("duplicate", StringComparison.OrdinalIgnoreCase) =>
+                StatusCode(409, APIResponse.Error(rootMsg, HttpStatusCode.Conflict)),
+
+            DbUpdateException =>
+                BadRequest(APIResponse.Error(rootMsg, HttpStatusCode.BadRequest)),
+
+            // 400 cho input/validation/mapping
+            ArgumentNullException =>
+                BadRequest(APIResponse.Error("Thiếu dữ liệu bắt buộc.", HttpStatusCode.BadRequest)),
+
+            ArgumentException =>
+                BadRequest(APIResponse.Error(safeMsg, HttpStatusCode.BadRequest)),
+
+            FormatException =>
+                BadRequest(APIResponse.Error("Định dạng dữ liệu không hợp lệ.", HttpStatusCode.BadRequest)),
+
+            ValidationException =>
+                BadRequest(APIResponse.Error(safeMsg, HttpStatusCode.BadRequest)),
+
+            AutoMapperMappingException =>
+                BadRequest(APIResponse.Error("Dữ liệu không thể map sang mô hình đích.", HttpStatusCode.BadRequest)),
+
+            InvalidOperationException invEx =>
                 BadRequest(APIResponse.Error(
-                    string.IsNullOrEmpty(ex.Message) ? "Yêu cầu không hợp lệ" : ex.Message, 
+                    string.IsNullOrWhiteSpace(invEx.Message) ? "Yêu cầu không hợp lệ." : invEx.Message,
                     HttpStatusCode.BadRequest)),
+
+            // 410: domain-case: đơn hàng đã bị xóa trong khi PATCH
+            OrderHelper.OrderDeletedException ode =>
+                StatusCode(410, APIResponse.Error(ode.Message, HttpStatusCode.Gone)),
+
+            // 499/408: request bị hủy/timeout
+            OperationCanceledException or TaskCanceledException =>
+                StatusCode(499, APIResponse.Error("Yêu cầu đã bị hủy.", (HttpStatusCode)499)),
+
+            HttpRequestException =>
+                StatusCode(503, APIResponse.Error("Dịch vụ phụ trợ không khả dụng.", HttpStatusCode.ServiceUnavailable)),
+
+            NotImplementedException =>
+                StatusCode(501, APIResponse.Error("Chức năng chưa được triển khai.", HttpStatusCode.NotImplemented)),
+
+            // 500 mặc định
             _ => StatusCode(500, APIResponse.Error("Lỗi máy chủ nội bộ", HttpStatusCode.InternalServerError))
         };
     }
 
-    /// <summary>
-    /// Create success response với data
-    /// </summary>
     protected ActionResult<APIResponse> SuccessResponse(object? data = null, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
         var response = APIResponse.Success(data ?? new object(), statusCode);
         return statusCode switch
         {
-            HttpStatusCode.Created => Created("", response),
+            HttpStatusCode.Created   => Created("", response),
             HttpStatusCode.NoContent => NoContent(),
-            _ => Ok(response)
+            _                        => Ok(response)
         };
     }
 
-    /// <summary>
-    /// Create error response với message và status code
-    /// </summary>
     protected ActionResult<APIResponse> ErrorResponse(string message, HttpStatusCode statusCode = HttpStatusCode.BadRequest)
     {
         var response = APIResponse.Error(message, statusCode);
         return statusCode switch
         {
-            HttpStatusCode.NotFound => NotFound(response),
-            HttpStatusCode.Unauthorized => Unauthorized(response),
-            HttpStatusCode.Forbidden => Forbid(),
-            HttpStatusCode.BadRequest => BadRequest(response),
-            _ => StatusCode((int)statusCode, response)
+            HttpStatusCode.NotFound      => NotFound(response),
+            HttpStatusCode.Unauthorized  => Unauthorized(response),
+            HttpStatusCode.Forbidden     => StatusCode(403, response),
+            HttpStatusCode.BadRequest    => BadRequest(response),
+            HttpStatusCode.Conflict      => StatusCode(409, response),
+            HttpStatusCode.Gone          => StatusCode(410, response),
+            HttpStatusCode.ServiceUnavailable => StatusCode(503, response),
+            _                             => StatusCode((int)statusCode, response)
         };
     }
 
-    /// <summary>
-/// Lấy ID người dùng hiện tại từ JWT token
-/// </summary>
-/// <returns>ID người dùng hoặc throw exception nếu chưa xác thực</returns>
-protected ulong GetCurrentUserId()
-{
-    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    
-    if (string.IsNullOrEmpty(userIdClaim))
-        throw new UnauthorizedAccessException("Người dùng chưa được xác thực");
-
-    if (!ulong.TryParse(userIdClaim, out ulong userId))
-        throw new ArgumentException("Định dạng ID người dùng không hợp lệ");
-
-    return userId;
-}
-
-
-    /// <summary>
-    /// Get CancellationToken from HttpContext
-    /// </summary>
-    /// <returns>CancellationToken from request context</returns>
-    protected CancellationToken GetCancellationToken()
+    protected ulong GetCurrentUserId()
     {
-        return HttpContext.RequestAborted;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim))
+            throw new UnauthorizedAccessException("Người dùng chưa được xác thực");
+
+        if (!ulong.TryParse(userIdClaim, out ulong userId))
+            throw new ArgumentException("Định dạng ID người dùng không hợp lệ");
+
+        return userId;
     }
+
+    protected CancellationToken GetCancellationToken() => HttpContext.RequestAborted;
 }

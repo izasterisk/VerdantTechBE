@@ -429,8 +429,6 @@ Tất cả API đặt dưới base `/api/{ControllerName}`.
 - **500 Internal Server Error**: Lỗi server hoặc external API
 
 ### 6) Phát triển tiếp theo (Roadmap rút gọn)
-
-### 6) Phát triển tiếp theo (Roadmap rút gọn)
 Theo `VerdantTech_Project_Info.txt`, các hạng mục lớn sẽ bổ sung dần:
 - Khách hàng (Web/Mobile): profile nông trại, nhập pH, CO₂, forum, blog, cảnh báo thời tiết, chatbot AI, upload ảnh bệnh.
 - Người bán (Web): hồ sơ nhà cung cấp, quản lý danh mục sản phẩm xanh, analytics, tài liệu kỹ thuật.

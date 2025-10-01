@@ -2,7 +2,7 @@
 
 namespace BLL.DTO.Cart;
 
-public class CartAddDTO
+public class CartDTO
 {
     [Required(ErrorMessage = "ProductId là bắt buộc.")]
     [Range(1, ulong.MaxValue, ErrorMessage = "ProductId phải lớn hơn 0.")]

@@ -78,6 +78,9 @@ public class OrderService : IOrderService
                 {
                     if (!orderDetailUpdateDTO.ProductId.HasValue || !orderDetailUpdateDTO.Quantity.HasValue || !orderDetailUpdateDTO.UnitPrice.HasValue)
                         throw new ArgumentException($"ProductId, Quantity, UnitPrice là bắt buộc khi tạo mới OrderDetail với ID {orderDetailUpdateDTO.Id}.");
+                    var validateProductExists = await _orderDetailRepository.ValidateProductAlreadyExistsInOrderAsync(orderId, orderDetailUpdateDTO.ProductId.Value, cancellationToken);
+                    if (validateProductExists)
+                        throw new ArgumentException($"Sản phẩm với ID {orderDetailUpdateDTO.ProductId} đã tồn tại trong đơn hàng với ID {orderId}. Vui lòng cập nhật số lượng thay vì thêm mới.");
                     var orderDetailUpdate = _mapper.Map<OrderDetail>(orderDetailUpdateDTO);
                     orderDetailUpdate.Subtotal = OrderHelper.ComputeSubtotalForOrderItem(orderDetailUpdate.Quantity, orderDetailUpdate.UnitPrice, orderDetailUpdate.DiscountAmount);
                     orderDetailUpdate.OrderId = orderId;
