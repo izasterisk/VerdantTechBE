@@ -26,6 +26,18 @@ namespace BLL.DTO.FarmProfile;
         [Required(ErrorMessage = "Tên xã/phường không được để trống")]
         [StringLength(100, ErrorMessage = "Tên xã/phường không được vượt quá 100 ký tự")]
         public string Commune { get; set; } = string.Empty;
+        
+        [Required(ErrorMessage = "Mã tỉnh/thành là bắt buộc")]
+        [StringLength(100, ErrorMessage = "Mã tỉnh/thành không được vượt quá 100 ký tự")]
+        public string ProvinceCode { get; set; } = null!;
+
+        [Required(ErrorMessage = "Mã quận/huyện là bắt buộc")]
+        [StringLength(100, ErrorMessage = "Mã quận/huyện không được vượt quá 100 ký tự")]
+        public string DistrictCode { get; set; } = null!;
+
+        [Required(ErrorMessage = "Mã xã/phường là bắt buộc")]
+        [StringLength(100, ErrorMessage = "Mã xã/phường không được vượt quá 100 ký tự")]
+        public string CommuneCode { get; set; } = null!;
 
         [Required(ErrorMessage = "Vĩ độ không được để trống")]
         [Range(-90, 90, ErrorMessage = "Vĩ độ phải nằm trong khoảng -90 đến 90")]

@@ -1,15 +1,20 @@
--- SEEDER DATA FOR VERDANTTECH DATABASE v7.2
+-- SEEDER DATA FOR VERDANTTECH DATABASE v8.0
 -- All passwords are: $2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS
--- Updated for schema v7.2: Removed address_id from users, added user_addresses junction table for many-to-many relationship
+-- Updated for schema v8.0: Removed address_id from users, added user_addresses junction table for many-to-many relationship
 -- Updated environmental_data table: renamed soil_ph to phh2o, removed soil_type enum, added new environmental measurement fields
 -- Dates adjusted to be recent as of 2025-09-22, ensured foreign key consistency
 
--- Insert Addresses (new table in v7.1 for centralized address management)
-INSERT INTO `addresses` (`id`, `location_address`, `province`, `district`, `commune`, `latitude`, `longitude`, `created_at`, `updated_at`) VALUES
-(1, 'Số 789 Đường Công Nghiệp, Quận 7, TP.HCM', 'TP.HCM', 'Quận 7', 'Phường Tân Phong', 10.72890000, 106.71940000, '2025-09-22 08:00:00', '2025-09-22 08:00:00'),
-(2, 'Số 321 Đường Nông Sản, Quận Tân Bình, TP.HCM', 'TP.HCM', 'Quận Tân Bình', 'Phường 15', 10.80150000, 106.65340000, '2025-09-22 08:30:00', '2025-09-22 08:30:00'),
-(3, 'Số 123 Đường Nông Nghiệp, Tân Phong', 'Đồng Nai', 'Biên Hòa', 'Tân Phong', 10.94740000, 106.82420000, '2025-09-22 10:00:00', '2025-09-22 10:00:00'),
-(4, 'Số 456 Đường Nông Thôn, Đức Hòa Thượng', 'Long An', 'Đức Hòa', 'Đức Hòa Thượng', 10.88080000, 106.39220000, '2025-09-22 10:30:00', '2025-09-22 10:30:00');
+-- Insert Addresses (updated with FPT University HCM address for admin and real Vietnamese address data)
+INSERT INTO `addresses` (`id`, `location_address`, `province`, `district`, `commune`, `province_code`, `district_code`, `commune_code`, `latitude`, `longitude`, `created_at`, `updated_at`) VALUES
+(1, 'Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Long Thạnh Mỹ', 'TP.HCM', 'Thành phố Thủ Đức', 'Phường Long Thạnh Mỹ', '700000', '720300', '720300', 10.84142000, 106.80986000, '2025-09-22 07:45:00', '2025-09-22 07:45:00'),
+(2, 'Số 789 Đường Công Nghiệp, Quận Hai Bà Trưng, Hà Nội', 'Hà Nội', 'Quận Hai Bà Trưng', 'Phường Bách Khoa', '100000', '100300', '10030001', 21.00650000, 105.84250000, '2025-09-22 08:00:00', '2025-09-22 08:00:00'),
+(3, 'Số 321 Đường Nông Sản, Quận 7, TP.HCM', 'Hồ Chí Minh', 'Quận 7', 'Phường Tân Phong', '700000', '700700', '70070001', 10.72890000, 106.71940000, '2025-09-22 08:30:00', '2025-09-22 08:30:00'),
+(4, 'Số 123 Đường Nông Nghiệp, Thành phố Biên Hòa, Đồng Nai', 'Đồng Nai', 'Thành phố Biên Hòa', 'Phường Tân Phong', '810000', '810001', '81000101', 10.94740000, 106.82420000, '2025-09-22 10:00:00', '2025-09-22 10:00:00'),
+(5, 'Số 456 Đường Nông Thôn, Huyện Đức Hòa, Long An', 'Long An', 'Huyện Đức Hòa', 'Xã Đức Hòa Thượng', '850000', '850300', '85030001', 10.88080000, 106.39220000, '2025-09-22 10:30:00', '2025-09-22 10:30:00'),
+(6, 'Số 555 Đường Quang Minh, Huyện Mê Linh, Hà Nội', 'Hà Nội', 'Huyện Mê Linh', 'Thị trấn Quang Minh', '100000', '102900', '272', 21.17890000, 105.69540000, '2025-09-22 11:00:00', '2025-09-22 11:00:00'),
+(7, 'Số 777 Đường Tân Phú, Quận Tân Bình, TP.HCM', 'Hồ Chí Minh', 'Quận Tân Bình', 'Phường 15', '700000', '700300', '70030015', 10.80150000, 106.65340000, '2025-09-22 11:30:00', '2025-09-22 11:30:00'),
+(8, 'Số 999 Đường Công Viên, Quận Hà Đông, Hà Nội', 'Hà Nội', 'Quận Hà Đông', 'Phường Hà Cầu', '100000', '101500', '10150001', 20.97240000, 105.78420000, '2025-09-22 12:00:00', '2025-09-22 12:00:00'),
+(9, 'Số 168 Đường Thạch Đà, Huyện Mê Linh, Hà Nội', 'Hà Nội', 'Huyện Mê Linh', 'Xã Thạch Đà', '100000', '102900', '266', 21.19750000, 105.71240000, '2025-09-22 12:30:00', '2025-09-22 12:30:00');
 
 -- Insert Users (with gmail.com emails, consistent password, and vendor role users)
 INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `tax_code`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `RefreshToken`, `RefreshTokenExpiresAt`, `created_at`, `updated_at`, `deleted_at`) VALUES
@@ -30,16 +35,20 @@ INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone
 
 -- Insert User Addresses (NEW in v7.2 - junction table for many-to-many relationship between users and addresses)
 INSERT INTO `user_addresses` (`id`, `user_id`, `address_id`, `is_deleted`, `created_at`, `updated_at`, `deleted_at`) VALUES
+-- Admin address (FPT University HCM)
+(1, 1, 1, 0, '2025-09-22 07:45:00', '2025-09-22 07:45:00', NULL), -- Admin -> Address 1 (FPT University HCM)
 -- Vendor addresses
-(1, 5, 1, 0, '2025-09-22 09:00:00', '2025-09-22 09:00:00', NULL), -- Vendor 1 -> Address 1
-(2, 6, 2, 0, '2025-09-22 09:30:00', '2025-09-22 09:30:00', NULL), -- Vendor 2 -> Address 2
+(2, 5, 2, 0, '2025-09-22 09:00:00', '2025-09-22 09:00:00', NULL), -- Vendor 1 -> Address 2 (Hà Nội)
+(3, 6, 3, 0, '2025-09-22 09:30:00', '2025-09-22 09:30:00', NULL), -- Vendor 2 -> Address 3 (TP.HCM)
 -- Farmer addresses
-(3, 9, 3, 0, '2025-09-22 10:00:00', '2025-09-22 10:00:00', NULL), -- Farmer 1 -> Address 3
-(4, 10, 4, 0, '2025-09-22 10:30:00', '2025-09-22 10:30:00', NULL), -- Farmer 2 -> Address 4
--- Example of multiple addresses for one user (demonstrating many-to-many capability)
-(5, 7, 1, 0, '2025-09-22 11:00:00', '2025-09-22 11:00:00', NULL), -- Customer 1 also has Address 1
-(6, 8, 2, 0, '2025-09-22 11:30:00', '2025-09-22 11:30:00', NULL), -- Customer 2 also has Address 2
-(7, 8, 3, 0, '2025-09-22 12:00:00', '2025-09-22 12:00:00', NULL); -- Customer 2 also has Address 3 (multiple addresses for same user)
+(4, 9, 4, 0, '2025-09-22 10:00:00', '2025-09-22 10:00:00', NULL), -- Farmer 1 -> Address 4 (Đồng Nai)
+(5, 10, 5, 0, '2025-09-22 10:30:00', '2025-09-22 10:30:00', NULL), -- Farmer 2 -> Address 5 (Long An)
+-- Additional addresses for users (demonstrating many-to-many capability)
+(6, 7, 6, 0, '2025-09-22 11:00:00', '2025-09-22 11:00:00', NULL), -- Customer 1 -> Address 6 (Mê Linh, Hà Nội)
+(7, 8, 7, 0, '2025-09-22 11:30:00', '2025-09-22 11:30:00', NULL), -- Customer 2 -> Address 7 (Tân Bình, TP.HCM)
+(8, 8, 8, 0, '2025-09-22 12:00:00', '2025-09-22 12:00:00', NULL), -- Customer 2 also has Address 8 (Hà Đông, Hà Nội)
+(9, 9, 9, 0, '2025-09-22 12:30:00', '2025-09-22 12:30:00', NULL), -- Farmer 1 also has Address 9 (Thạch Đà, Mê Linh)
+(10, 2, 3, 0, '2025-09-22 13:30:00', '2025-09-22 13:30:00', NULL); -- Staff 1 -> Address 3 (TP.HCM)
 
 -- Insert Vendor Profiles (for vendor users)
 INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
@@ -72,8 +81,9 @@ INSERT INTO `vendor_certificates` (`id`, `vendor_id`, `certification_code`, `cer
 
 -- Insert Farm Profiles
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `primary_crops`, `status`, `created_at`, `updated_at`) VALUES
-(1, 9, 'Trang trại Xanh Sạch Đồng Nai', 5.50, 3, 'Lúa, Rau xanh, Cà chua', 'Active', '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
-(2, 10, 'Trang trại Hữu Cơ Long An', 8.25, 4, 'Rau củ, Trái cây, Thảo dược', 'Active', '2025-09-08 10:30:00', '2025-09-09 05:30:00');
+(1, 9, 'Trang trại Xanh Sạch Đồng Nai', 5.50, 4, 'Lúa, Rau xanh, Cà chua', 'Active', '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
+(2, 10, 'Trang trại Hữu Cơ Long An', 8.25, 5, 'Rau củ, Trái cây, Thảo dược', 'Active', '2025-09-08 10:30:00', '2025-09-09 05:30:00'),
+(3, 9, 'Trang trại Thực nghiệm Mê Linh', 3.75, 9, 'Rau sạch, Hoa màu', 'Active', '2025-09-08 11:00:00', '2025-09-09 06:30:00');
 
 -- Insert Product Categories
 INSERT INTO `product_categories` (`id`, `parent_id`, `name`, `slug`, `description`, `icon_url`, `is_active`, `created_at`, `updated_at`) VALUES
@@ -192,16 +202,19 @@ INSERT INTO `requests` (`id`, `user_id`, `request_type`, `title`, `description`,
 
 -- Insert Orders (v7.1 structure - changed user_id to customer_id, shipping_address JSON to address_id FK)
 INSERT INTO `orders` (`id`, `customer_id`, `status`, `subtotal`, `tax_amount`, `shipping_fee`, `discount_amount`, `total_amount`, `address_id`, `shipping_method`, `tracking_number`, `notes`, `cancelled_reason`, `cancelled_at`, `confirmed_at`, `shipped_at`, `delivered_at`, `created_at`, `updated_at`) VALUES
-(1, 7, 'delivered', 25000000.00, 500000.00, 300000.00, 2500000.00, 23000000.00, 1, 'express', 'EXP20250908001', NULL, NULL, NULL, '2025-09-08 12:00:00', '2025-09-08 15:00:00', '2025-09-09 10:00:00', '2025-09-08 10:00:00', '2025-09-09 10:00:00'),
-(2, 8, 'shipped', 1716750.00, 0.00, 50000.00, 383250.00, 1483500.00, 2, 'standard', 'STD20250909001', NULL, NULL, NULL, '2025-09-09 10:00:00', NULL, NULL, '2025-09-09 09:00:00', '2025-09-09 10:00:00'),
-(3, 9, 'processing', 12000000.00, 800000.00, 200000.00, 960000.00, 11240000.00, 3, 'express', NULL, 'Cần hỗ trợ lắp đặt', NULL, NULL, NULL, NULL, NULL, '2025-09-09 11:00:00', '2025-09-09 11:30:00');
+(1, 7, 'delivered', 25000000.00, 500000.00, 300000.00, 2500000.00, 23000000.00, 6, 'express', 'EXP20250908001', NULL, NULL, NULL, '2025-09-08 12:00:00', '2025-09-08 15:00:00', '2025-09-09 10:00:00', '2025-09-08 10:00:00', '2025-09-09 10:00:00'),
+(2, 8, 'shipped', 1716750.00, 0.00, 50000.00, 383250.00, 1483500.00, 7, 'standard', 'STD20250909001', NULL, NULL, NULL, '2025-09-09 10:00:00', NULL, NULL, '2025-09-09 09:00:00', '2025-09-09 10:00:00'),
+(3, 9, 'processing', 12000000.00, 800000.00, 200000.00, 960000.00, 11240000.00, 4, 'express', NULL, 'Cần hỗ trợ lắp đặt', NULL, NULL, NULL, NULL, NULL, '2025-09-09 11:00:00', '2025-09-09 11:30:00'),
+(4, 10, 'confirmed', 8500000.00, 425000.00, 150000.00, 680000.00, 8395000.00, 5, 'standard', 'STD20250910001', 'Giao hàng trong giờ hành chính', NULL, NULL, '2025-09-10 09:00:00', NULL, NULL, '2025-09-10 08:00:00', '2025-09-10 09:00:00');
 
 -- Insert Order Details
 INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `unit_price`, `discount_amount`, `subtotal`, `created_at`) VALUES
 (1, 1, 1, 1, 25000000.00, 2500000.00, 22500000.00, '2025-09-08 10:00:00'),
 (2, 2, 3, 10, 150000.00, 0.00, 1500000.00, '2025-09-09 09:00:00'),
 (3, 2, 4, 3, 85000.00, 38250.00, 216750.00, '2025-09-09 09:00:00'),
-(4, 3, 5, 1, 12000000.00, 960000.00, 11040000.00, '2025-09-09 11:00:00');
+(4, 3, 5, 1, 12000000.00, 960000.00, 11040000.00, '2025-09-09 11:00:00'),
+(5, 4, 3, 50, 50000.00, 500000.00, 2500000.00, '2025-09-10 08:00:00'),
+(6, 4, 4, 80, 90000.00, 180000.00, 7200000.00, '2025-09-10 08:00:00');
 
 -- Insert Transactions (v7.1 structure - completely restructured)
 INSERT INTO `transactions` (`id`, `transaction_type`, `amount`, `currency`, `order_id`, `user_id`, `status`, `note`, `gateway_payment_id`, `created_by`, `processed_by`, `created_at`, `completed_at`, `updated_at`) VALUES

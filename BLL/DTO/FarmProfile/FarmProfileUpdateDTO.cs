@@ -22,6 +22,15 @@ public class FarmProfileUpdateDTO
 
     [StringLength(100, ErrorMessage = "Xã/Phường không được vượt quá 100 ký tự")]
     public string? Commune { get; set; }
+    
+    [StringLength(100, ErrorMessage = "Mã tỉnh/thành không được vượt quá 100 ký tự")]
+    public string? ProvinceCode { get; set; }
+
+    [StringLength(100, ErrorMessage = "Mã quận/huyện không được vượt quá 100 ký tự")]
+    public string? DistrictCode { get; set; }
+
+    [StringLength(100, ErrorMessage = "Mã xã/phường không được vượt quá 100 ký tự")]
+    public string? CommuneCode { get; set; }
 
     [Range(-90, 90, ErrorMessage = "Vĩ độ phải nằm trong khoảng -90 đến 90")]
     public decimal? Latitude { get; set; }

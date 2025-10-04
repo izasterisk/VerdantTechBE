@@ -26,6 +26,18 @@ public class Address
     [StringLength(100)]
     public string? Commune { get; set; }
 
+    [Column("province_code")]
+    [StringLength(20)]
+    public string? ProvinceCode { get; set; }
+
+    [Column("district_code")]
+    [StringLength(20)]
+    public string? DistrictCode { get; set; }
+
+    [Column("commune_code")]
+    [StringLength(20)]
+    public string? CommuneCode { get; set; }
+
     [Column("latitude")]
     [Precision(10, 8)]
     public decimal? Latitude { get; set; }

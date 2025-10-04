@@ -44,10 +44,12 @@ namespace BLL.Services
             var farmProfile = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false, cancellationToken);
             if (farmProfile == null)
                 throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
-            
             if (farmProfile.Address == null)
                 throw new InvalidOperationException("Địa chỉ của trang trại không tồn tại");
             
+            Utils.ValidateAddressFields(dto.Province, dto.ProvinceCode, 
+                                      dto.District, dto.DistrictCode, 
+                                      dto.Commune, dto.CommuneCode);
             
             _mapper.Map(dto, farmProfile);
             _mapper.Map(dto, farmProfile.Address);

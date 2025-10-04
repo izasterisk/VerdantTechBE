@@ -32,6 +32,18 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
             .HasColumnName("commune")
             .HasMaxLength(100);
             
+        builder.Property(e => e.ProvinceCode)
+            .HasColumnName("province_code")
+            .HasMaxLength(20);
+            
+        builder.Property(e => e.DistrictCode)
+            .HasColumnName("district_code")
+            .HasMaxLength(20);
+            
+        builder.Property(e => e.CommuneCode)
+            .HasColumnName("commune_code")
+            .HasMaxLength(20);
+            
         builder.Property(e => e.Latitude)
             .HasColumnName("latitude")
             .HasPrecision(10, 8);
@@ -50,8 +62,5 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
-        // Indexes
-        builder.HasIndex(e => new { e.Province, e.District })
-            .HasDatabaseName("idx_province_district");
     }
 }

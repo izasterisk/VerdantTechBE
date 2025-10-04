@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 7.2
+-- Phiên bản: 8.0
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -26,12 +26,13 @@ CREATE TABLE addresses (
     province VARCHAR(100),
     district VARCHAR(100),
     commune VARCHAR(100),
+    province_code VARCHAR(20) NULL COMMENT 'Mã tỉnh/thành phố theo hệ thống GoShip',
+    district_code VARCHAR(20) NULL COMMENT 'Mã quận/huyện theo hệ thống GoShip',
+    commune_code VARCHAR(20) NULL COMMENT 'Mã phường/xã theo hệ thống GoShip',
     latitude DECIMAL(10,8) NULL COMMENT 'Vĩ độ',
     longitude DECIMAL(11,8) NULL COMMENT 'Kinh độ',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    INDEX idx_province_district (province, district)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng địa chỉ chung cho các thực thể';
 
 CREATE TABLE users (
@@ -671,29 +672,32 @@ CREATE TABLE cashouts (
     INDEX idx_transaction (transaction_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='bảng rút tiền cho vendor';
 
--- I) TỔNG QUAN THAY ĐỔI v7.2
--- • Chuyển đổi quan hệ users-addresses từ 1-nhiều sang nhiều-nhiều để hỗ trợ người dùng có nhiều địa chỉ.
--- • Xóa cột address_id và khóa ngoại khỏi bảng users.
--- • Thêm bảng trung gian user_addresses để quản lý mối quan hệ nhiều-nhiều giữa users và addresses.
--- • Hỗ trợ soft delete cho user_addresses với cột is_deleted, deleted_at.
+-- =====================================================
+-- TỔNG QUAN THAY ĐỔI v8.0 (từ v7.2)
+-- =====================================================
 
--- II) BẢNG MỚI / BỊ LOẠI BỎ v7.2
--- • Bảng mới: user_addresses (bảng trung gian cho quan hệ users-addresses nhiều-nhiều).
--- • Bảng bị loại bỏ: Không có.
+-- I) CẢI TIẾN BẢNG ADDRESSES
+-- • Thêm 3 cột mới hỗ trợ tích hợp GoShip API:
+--   - province_code VARCHAR(20) NULL - Mã tỉnh/thành phố theo hệ thống GoShip
+--   - district_code VARCHAR(20) NULL - Mã quận/huyện theo hệ thống GoShip  
+--   - commune_code VARCHAR(20) NULL - Mã phường/xã theo hệ thống GoShip
+-- • Loại bỏ tất cả index không cần thiết, chỉ giữ lại PRIMARY KEY (id)
+-- • Removed indexes: idx_province_district, idx_province_code, idx_district_code, idx_commune_code
 
--- III) THAY ĐỔI CHI TIẾT THEO BẢNG v7.2
+-- II) CẬP NHẬT SEEDER DATA
+-- • Thêm địa chỉ FPT University HCM làm địa chỉ ID=1 cho admin
+-- • Shift tất cả address ID hiện tại +1
+-- • Cập nhật tất cả reference trong user_addresses, farm_profiles, orders
+-- • Áp dụng dữ liệu địa chỉ thật từ GoShip API cho các tỉnh thành Việt Nam
 
--- A. users
---    - Xóa cột: address_id
---    - Xóa FK: (address_id) → addresses(id) ON DELETE RESTRICT
---    - Xóa Index: idx_address (address_id)
+-- III) TƯƠNG THÍCH VỚI GOSHIP API
+-- • province_code tương ứng với "id" trong response cities API
+-- • district_code tương ứng với "id" trong response districts API  
+-- • commune_code tương ứng với "id" trong response wards API
+-- • Hỗ trợ đầy đủ hệ thống mã địa chỉ của Vietnam shipping logistics
 
--- B. user_addresses — MỚI
---    - Cột: id, user_id, address_id, is_deleted, created_at, updated_at, deleted_at
---    - FK: (user_id) → users(id) ON DELETE RESTRICT; (address_id) → addresses(id) ON DELETE RESTRICT
---    - Index: idx_user_id (user_id), idx_address_id (address_id)
-
--- IV) GHI CHÚ TƯƠNG THÍCH v7.2
--- • Khi nâng cấp từ v7.1: cần migrate dữ liệu address_id từ bảng users sang bảng user_addresses mới.
--- • Cập nhật Entity Framework models và configurations để phản ánh quan hệ nhiều-nhiều mới.
--- • Cập nhật business logic để xử lý việc người dùng có thể có nhiều địa chỉ thay vì chỉ một địa chỉ.
+-- IV) CHANGES IN DAL LAYER
+-- • Updated Address model: Added ProvinceCode, DistrictCode, CommuneCode properties
+-- • Updated AddressConfiguration: Added configurations for new code fields
+-- • Removed unnecessary index configurations in Entity Framework
+-- • Maintained backward compatibility with existing location fields

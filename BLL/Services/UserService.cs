@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using BLL.Interfaces;
 using AutoMapper;
 using BLL.DTO;
@@ -113,14 +114,17 @@ public class UserService : IUserService
         var existingAddress = await _addressRepository.GetAddressByIdAsync(addressId, cancellationToken);
         if (existingAddress == null)
         {
-            throw new Exception($"Địa chỉ với ID {addressId} không tồn tại.");
+            throw new ValidationException($"Địa chỉ với ID {addressId} không tồn tại.");
         }
-        
         var existingUserAddress = await _addressRepository.GetUserAddressByAddressIdAsync(existingAddress.Id, cancellationToken);
         if (existingUserAddress == null)
         {
-            throw new Exception($"Địa chỉ với ID {addressId} không được liên kết đến địa chỉ nhà/công ty của tài khoản nào.");
+            throw new ValidationException($"Địa chỉ với ID {addressId} không được liên kết đến địa chỉ nhà/công ty của tài khoản nào.");
         }
+        
+        Utils.ValidateAddressFields(dto.Province, dto.ProvinceCode, 
+                                  dto.District, dto.DistrictCode, 
+                                  dto.Commune, dto.CommuneCode);
         
         _mapper.Map(dto, existingAddress);
         _mapper.Map(dto, existingUserAddress);
