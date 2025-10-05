@@ -16,8 +16,23 @@ public class CartItemDTO
     public string? Description { get; set; }
     public decimal UnitPrice { get; set; }
     public int Quantity { get; set; }
-    public string? Images { get; set; }
+    public List<ImagesDTO> Images { get; set; } = new();
     public bool IsActive { get; set; } = true;
     public long SoldCount { get; set; } = 0L;
     public decimal RatingAverage { get; set; } = 0.00m;
+}
+
+public class ImagesDTO
+{
+    public ulong Id { get; set; }
+
+    public string ImageUrl { get; set; } = null!;
+
+    public string Purpose { get; set; } = null!;
+
+    public int SortOrder { get; set; } = 0;
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
 }

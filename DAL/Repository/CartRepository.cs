@@ -10,12 +10,18 @@ public class CartRepository : ICartRepository
     private readonly IRepository<Cart> _cartRepository;
     private readonly IRepository<CartItem> _cartItemsRepository;
     private readonly VerdantTechDbContext _dbContext;
+    private readonly IRepository<MediaLink> _mediaLinkRepository;
     
-    public CartRepository(VerdantTechDbContext context)
+    public CartRepository(
+        IRepository<Cart> cartRepository, 
+        IRepository<CartItem> cartItemsRepository, 
+        VerdantTechDbContext dbContext,
+        IRepository<MediaLink> mediaLinkRepository)
     {
-        _cartRepository = new Repository<Cart>(context);
-        _cartItemsRepository = new Repository<CartItem>(context);
-        _dbContext = context;
+        _cartRepository = cartRepository;
+        _cartItemsRepository = cartItemsRepository;
+        _dbContext = dbContext;
+        _mediaLinkRepository = mediaLinkRepository;
     }
     
     public async Task<Cart> CreateCartByUserIdWithTransactionAsync(ulong userId, CancellationToken cancellationToken = default)
@@ -100,6 +106,18 @@ public class CartRepository : ICartRepository
                 .Include(c => c.CartItems).ThenInclude(ci => ci.Product)
                 .Include(c => c.Customer),
             cancellationToken);
+    }
+    
+    public async Task<List<MediaLink>> GetAllProductImagesForMultipleProducts(List<ulong> productIds, CancellationToken cancellationToken = default)
+    {
+        if (productIds == null || !productIds.Any())
+        {
+            return new List<MediaLink>();
+        }
+
+        return await _mediaLinkRepository.GetAllByFilterAsync(
+            p => productIds.Contains(p.OwnerId) && p.OwnerType == MediaOwnerType.Products,
+            true, cancellationToken);
     }
 
     public async Task<bool> CheckIfProductAlreadyInCart(ulong cartId, ulong productId, CancellationToken cancellationToken = default)

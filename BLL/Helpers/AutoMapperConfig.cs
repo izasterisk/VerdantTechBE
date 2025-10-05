@@ -71,20 +71,17 @@ public class AutoMapperConfig : Profile
 
         // Cart mappings
         CreateMap<CartDTO, CartItem>().ReverseMap();
-        CreateMap<Cart, CartResponseDTO>()
-            .ForMember(d => d.UserInfo, o => o.MapFrom(s => s.Customer))
-            .ForMember(d => d.CartItems,  o => o.MapFrom(s => s.CartItems));
+        CreateMap<DAL.Data.Models.Cart, CartResponseDTO>()
+            .ForMember(d => d.UserInfo, o => o.MapFrom(s => s.Customer));
         CreateMap<CartItem, CartItemDTO>()
-            .ForMember(d => d.ProductId,     o => o.MapFrom(s => s.ProductId))
-            .ForMember(d => d.Quantity,      o => o.MapFrom(s => s.Quantity))
             .ForMember(d => d.ProductName,   o => o.MapFrom(s => s.Product.ProductName))
             .ForMember(d => d.Slug,          o => o.MapFrom(s => s.Product.Slug))
             .ForMember(d => d.Description,   o => o.MapFrom(s => s.Product.Description))
             .ForMember(d => d.UnitPrice,     o => o.MapFrom(s => s.Product.UnitPrice))
-            .ForMember(d => d.Images,        o => o.MapFrom(s => s.Product.Images))
             .ForMember(d => d.IsActive,      o => o.MapFrom(s => s.Product.IsActive))
             .ForMember(d => d.SoldCount,     o => o.MapFrom(s => s.Product.SoldCount))
             .ForMember(d => d.RatingAverage, o => o.MapFrom(s => s.Product.RatingAverage));
+        CreateMap<MediaLink, ImagesDTO>().ReverseMap();
 
         // Order mappings
         CreateMap<OrderCreateDTO, DAL.Data.Models.Order>()

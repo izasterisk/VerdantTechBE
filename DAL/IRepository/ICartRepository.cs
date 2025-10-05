@@ -11,4 +11,5 @@ public interface ICartRepository
     Task<CartItem> UpdateCartWithTransactionAsync(CartItem cartItem, CancellationToken cancellationToken = default);
     Task<bool> DeleteItemFromCartWithTransactionAsync(CartItem cartItem, CancellationToken cancellationToken = default);
     Task<bool> CheckIfProductAlreadyInCart(ulong cartId, ulong productId, CancellationToken cancellationToken = default);
+    Task<List<MediaLink>> GetAllProductImagesForMultipleProducts(List<ulong> productIds, CancellationToken cancellationToken = default);
 }
