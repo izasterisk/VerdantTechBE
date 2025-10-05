@@ -127,6 +127,13 @@ public enum OrderStatus
     Refunded
 }
 
+public enum OrderPaymentMethod
+{
+    Banking,
+    COD,
+    Installment
+}
+
 public enum PaymentMethod
 {
     CreditCard,

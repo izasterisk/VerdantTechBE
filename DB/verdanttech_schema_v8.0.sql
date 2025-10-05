@@ -445,6 +445,7 @@ CREATE TABLE orders (
     discount_amount DECIMAL(12,2) DEFAULT 0.00,
     total_amount DECIMAL(12,2) NOT NULL,
     address_id BIGINT UNSIGNED NOT NULL,
+    payment_method ENUM('Banking', 'COD', 'Installment') NOT NULL,
     shipping_method VARCHAR(100),
     tracking_number VARCHAR(100),
     notes VARCHAR(500),
@@ -701,3 +702,9 @@ CREATE TABLE cashouts (
 -- • Updated AddressConfiguration: Added configurations for new code fields
 -- • Removed unnecessary index configurations in Entity Framework
 -- • Maintained backward compatibility with existing location fields
+
+-- V) ORDER PAYMENT METHOD ADDITION (v8.0)
+-- • Added payment_method ENUM('Banking', 'COD', 'Installment') NOT NULL to orders table
+-- • Updated Order model: Added OrderPaymentMethod property
+-- • Updated OrderConfiguration: Added configuration for OrderPaymentMethod field
+-- • Updated SEEDER.sql: Added sample payment method data for existing orders

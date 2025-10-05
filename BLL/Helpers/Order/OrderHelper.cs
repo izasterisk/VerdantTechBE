@@ -29,7 +29,7 @@ public class OrderHelper
             return false;
         return true;
     }
-
+    
     public class OrderDeletedException : Exception
     {
         public ulong OrderId { get; }
