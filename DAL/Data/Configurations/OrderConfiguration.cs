@@ -29,6 +29,13 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnType("bigint unsigned")
             .IsRequired()
             .HasColumnName("address_id");
+            
+        // Enum conversion for order payment method
+        builder.Property(e => e.OrderPaymentMethod)
+            .HasConversion<string>()
+            .HasColumnType("enum('Banking','COD','Installment')")
+            .HasColumnName("payment_method")
+            .IsRequired();
         
         // Enum conversion for status
         builder.Property(e => e.Status)

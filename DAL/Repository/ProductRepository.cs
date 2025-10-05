@@ -34,9 +34,9 @@ namespace DAL.Repository
             return await _productRepository.GetAllByFilterAsync(c => c.CategoryId == categoryId, useNoTracking, cancellationToken);
         }
 
-        public async Task<Product?> GetProductByIdAsync(ulong categoryId, bool useNoTracking = true, CancellationToken cancellationToken = default)
+        public async Task<Product?> GetProductByIdAsync(ulong Id, bool useNoTracking = true, CancellationToken cancellationToken = default)
         {
-            return await _productRepository.GetAsync(p => p.Id == categoryId, useNoTracking, cancellationToken);
+            return await _productRepository.GetAsync(p => p.Id == Id, useNoTracking, cancellationToken);
         }
 
         public async Task<Product> UpdateProductAsync(Product Product, CancellationToken cancellationToken = default)

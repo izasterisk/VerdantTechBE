@@ -121,8 +121,9 @@ public class OrderRepository : IOrderRepository
     
     public async Task<bool> ValidateAddressBelongsToUserAsync(ulong addressId, ulong userId, CancellationToken cancellationToken = default)
     {
+        var address = await _addressRepository.AnyAsync(a => a.Id == addressId, cancellationToken);
         var farm = await _farmProfileRepository.AnyAsync(f => f.UserId == userId && f.AddressId == addressId, cancellationToken);
         var user = await _userAddressRepository.AnyAsync(u => u.UserId == userId && u.AddressId == addressId, cancellationToken);
-        return farm || user;
+        return farm || user || address;
     }
 }

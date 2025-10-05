@@ -17,6 +17,7 @@ namespace BLL.DTO.Order
         public decimal TotalAmount { get; set; }
 
         public string? ShippingMethod { get; set; }
+        public string? OrderPaymentMethod { get; set; }
         public string? TrackingNumber { get; set; }
         public string? Notes { get; set; }
         public string? CancelledReason { get; set; }

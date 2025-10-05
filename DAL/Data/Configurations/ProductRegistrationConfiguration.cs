@@ -1,7 +1,6 @@
-﻿using DAL.Data.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Text.Json;
+using DAL.Data.Models;
 
 namespace DAL.Data.Configurations;
 
@@ -59,26 +58,23 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("energy_efficiency_rating");
-
+            
+        // JSON fields - Using JsonHelpers for converter and comparer
         builder.Property(e => e.Specifications)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null) ?? new Dictionary<string, object>()
-            )
-            .HasColumnType("json") 
-            .HasColumnName("specifications")
-            .IsRequired();
-
+            .ConfigureAsJson("specifications");
+            
         builder.Property(e => e.ManualUrls)
             .HasMaxLength(1000)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("manual_urls");
             
-        builder.Property(e => e.Images)
-            .HasMaxLength(1000)
+        builder.Property(e => e.PublicUrl)
+            .HasMaxLength(500)
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("public_url")
+            .IsRequired(false);
             
         builder.Property(e => e.WarrantyMonths)
             .HasColumnType("int")
@@ -91,14 +87,8 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasColumnName("weight_kg");
 
         builder.Property(e => e.DimensionsCm)
-           .HasConversion(
-               v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-               v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions)null) ?? new Dictionary<string, object>()
-           )
-           .HasColumnType("json") // Giữ nguyên json nếu MySQL hỗ trợ
-           .HasColumnName("dimensions_cm")
-           .IsRequired();
-
+            .ConfigureAsJson("dimensions_cm");
+            
         // Enum conversion
         builder.Property(e => e.Status)
             .HasConversion<string>()

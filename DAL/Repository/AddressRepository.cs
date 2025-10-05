@@ -34,7 +34,6 @@ public class AddressRepository : IAddressRepository
         return await _addressRepository.GetAsync(u =>u.Id == Id, useNoTracking: true, cancellationToken);
     }
     
-    //User addresses
     public async Task<UserAddress> CreateUserAddressAsync(ulong userId, Address address, CancellationToken cancellationToken = default)
     {
         var createdAddress = await CreateAddressAsync(address, cancellationToken);

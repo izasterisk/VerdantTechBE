@@ -95,9 +95,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("manual_urls")
             .IsRequired(false);
             
-        builder.Property(e => e.Images)
-            .HasMaxLength(1000)
-            .HasColumnName("images")
+        builder.Property(e => e.PublicUrl)
+            .HasMaxLength(500)
+            .HasColumnName("public_url")
             .IsRequired(false);
         
         // JSON fields - Using JsonHelpers for converter and comparer
