@@ -21,6 +21,9 @@ public class VerdantTechDbContext : DbContext
     public DbSet<VendorCertificate> VendorCertificates { get; set; }
     public DbSet<ProductCertificate> ProductCertificates { get; set; }
     
+    // Media Management DbSets (v8.1)
+    public DbSet<MediaLink> MediaLinks { get; set; }
+    
     // Product and Inventory DbSets
     public DbSet<ProductCategory> ProductCategories { get; set; }
     public DbSet<Product> Products { get; set; }
@@ -67,6 +70,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new WalletConfiguration());
         modelBuilder.ApplyConfiguration(new VendorCertificateConfiguration());
         modelBuilder.ApplyConfiguration(new ProductCertificateConfiguration());
+        modelBuilder.ApplyConfiguration(new MediaLinkConfiguration());
         modelBuilder.ApplyConfiguration(new ProductCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new ProductRegistrationConfiguration());

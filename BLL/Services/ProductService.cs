@@ -1,15 +1,7 @@
 ﻿using AutoMapper;
 using BLL.DTO.Product;
-using BLL.DTO.ProductCategory;
 using BLL.Interfaces;
-using DAL.Data.Models;
 using DAL.IRepository;
-using DAL.Repository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL.Services
 {

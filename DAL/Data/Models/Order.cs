@@ -25,6 +25,8 @@ public partial class Order
 
     public ulong AddressId { get; set; }
 
+    public OrderPaymentMethod OrderPaymentMethod { get; set; }
+
     [StringLength(100)]
     public string? ShippingMethod { get; set; }
 

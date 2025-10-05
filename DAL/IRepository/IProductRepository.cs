@@ -9,7 +9,7 @@ namespace DAL.IRepository
 {
     public interface IProductRepository
     {
-        Task<Product?> GetProductByIdAsync(ulong categoryId, bool useNoTracking = true, CancellationToken cancellationToken = default);
+        Task<Product?> GetProductByIdAsync(ulong Id, bool useNoTracking = true, CancellationToken cancellationToken = default);
         Task<List<Product>> GetAllProductAsync(CancellationToken cancellationToken = default);
         Task<List<Product>> GetAllProductByCategoryIdAsync(ulong categoryId, bool useNoTracking = true, CancellationToken cancellationToken = default);
         Task<Product> CreateProductAsync(Product Product, CancellationToken cancellationToken = default);

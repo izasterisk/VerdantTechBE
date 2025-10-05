@@ -4,7 +4,7 @@ using AutoMapper;
 using BLL.DTO;
 using BLL.DTO.User;
 using BLL.Helpers.Auth;
-using BLL.Helpers;
+using BLL.Helpers.AddressHelper;
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
@@ -121,11 +121,7 @@ public class UserService : IUserService
         {
             throw new ValidationException($"Địa chỉ với ID {addressId} không được liên kết đến địa chỉ nhà/công ty của tài khoản nào.");
         }
-        
-        Utils.ValidateAddressFields(dto.Province, dto.ProvinceCode, 
-                                  dto.District, dto.DistrictCode, 
-                                  dto.Commune, dto.CommuneCode);
-        
+        AddressHelper.ValidateAddressFields(dto.Province, dto.ProvinceCode, dto.District, dto.DistrictCode, dto.Commune, dto.CommuneCode);
         _mapper.Map(dto, existingAddress);
         _mapper.Map(dto, existingUserAddress);
         var updatedUserAddress = await _addressRepository.UpdateUserAddressAsync(existingUserAddress, existingAddress, cancellationToken);

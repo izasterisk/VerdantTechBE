@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 8.0
+-- Phiên bản: 8.1
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -100,7 +100,6 @@ CREATE TABLE vendor_certificates (
     vendor_id BIGINT UNSIGNED NOT NULL,
     certification_code VARCHAR(50) NOT NULL,
     certification_name VARCHAR(255) NOT NULL,
-    certificate_url VARCHAR(500) NOT NULL COMMENT 'URL đến hình ảnh/tập tin chứng chỉ đã tải lên',
     status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
     rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu trạng thái bị từ chối',
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -228,7 +227,6 @@ CREATE TABLE chatbot_messages (
     conversation_id BIGINT UNSIGNED NOT NULL,
     message_type ENUM('user', 'bot', 'system') NOT NULL,
     message_text TEXT NOT NULL,
-    attachments VARCHAR(1000) COMMENT 'URL đính kèm hình ảnh hoặc tập tin, phân cách bằng dấu phẩy',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 
     FOREIGN KEY (conversation_id) REFERENCES chatbot_conversations(id) ON DELETE RESTRICT,
@@ -258,7 +256,7 @@ CREATE TABLE forum_posts (
     user_id BIGINT UNSIGNED NOT NULL,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
-    content JSON NOT NULL COMMENT 'Các khối nội dung hỗn hợp: [{"order": 1, "type": "text", "content": "Hello world"}, {"order": 2, "type": "image", "content": "https://example.com/image.jpg"}]',
+    content JSON NOT NULL COMMENT 'Các khối nội dung hỗn hợp: [{"order": 1, "type": "text", "content": "Hello world"}, {"order": 2, "type": "image", "content": "1 (là id từ bảng MediaLink)"}]',
     tags VARCHAR(500) COMMENT 'Thẻ, danh sách phân cách bằng dấu phẩy',
     view_count BIGINT DEFAULT 0,
     like_count INT DEFAULT 0,
@@ -308,7 +306,6 @@ CREATE TABLE product_categories (
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
-    icon_url VARCHAR(500),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -333,7 +330,7 @@ CREATE TABLE products (
     energy_efficiency_rating VARCHAR(10),
     specifications JSON COMMENT 'Thông số kỹ thuật dưới dạng cặp khóa-giá trị',
     manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn/sổ tay, phân cách bằng dấu phẩy',
-    images VARCHAR(1000) COMMENT 'URL hình ảnh, phân cách bằng dấu phẩy',
+    public_url VARCHAR(500) COMMENT 'URL công khai cho manual files',
     warranty_months INT DEFAULT 12,
     stock_quantity INT DEFAULT 0,
     weight_kg DECIMAL(10,3),
@@ -365,7 +362,7 @@ CREATE TABLE product_registrations (
     energy_efficiency_rating VARCHAR(10),
     specifications JSON COMMENT 'Thông số kỹ thuật dưới dạng cặp khóa-giá trị',
     manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn/sổ tay, phân cách bằng dấu phẩy',
-    images VARCHAR(1000) COMMENT 'URL hình ảnh, phân cách bằng dấu phẩy',
+    public_url VARCHAR(500) COMMENT 'URL công khai cho manual files',
     warranty_months INT DEFAULT 12,
     weight_kg DECIMAL(10,3),
     dimensions_cm JSON COMMENT '{chiều dài, chiều rộng, chiều cao}',
@@ -389,7 +386,6 @@ CREATE TABLE product_certificates (
     product_id BIGINT UNSIGNED NOT NULL,
     certification_code VARCHAR(50) NOT NULL,
     certification_name VARCHAR(255) NOT NULL,
-    certificate_url VARCHAR(500) NULL COMMENT 'URL đến hình ảnh/tập tin chứng chỉ đã tải lên',
     status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
     rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu trạng thái bị từ chối',
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -445,6 +441,7 @@ CREATE TABLE orders (
     discount_amount DECIMAL(12,2) DEFAULT 0.00,
     total_amount DECIMAL(12,2) NOT NULL,
     address_id BIGINT UNSIGNED NOT NULL,
+    payment_method ENUM('Banking', 'COD', 'Installment') NOT NULL,
     shipping_method VARCHAR(100),
     tracking_number VARCHAR(100),
     notes VARCHAR(500),
@@ -508,7 +505,6 @@ CREATE TABLE product_reviews (
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
     title VARCHAR(255),
     comment TEXT,
-    images VARCHAR(1000) COMMENT 'URL hình ảnh đánh giá, phân cách bằng dấu phẩy',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -519,6 +515,23 @@ CREATE TABLE product_reviews (
     INDEX idx_product (product_id),
     INDEX idx_customer (customer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đánh giá và xếp hạng sản phẩm';
+
+-- Bảng quản lý media tập trung
+CREATE TABLE media_links (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts') NOT NULL,
+    owner_id BIGINT UNSIGNED NOT NULL,
+    image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
+    image_public_id VARCHAR(512) NOT NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
+    purpose ENUM('front', 'back', 'none') DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
+    sort_order INT NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_owner (owner_type, owner_id),
+    INDEX idx_owner_type (owner_type),
+    INDEX idx_owner_id (owner_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng quản lý media tập trung cho tất cả các thực thể';
 
 -- =========================
 -- INVENTORY
@@ -673,31 +686,42 @@ CREATE TABLE cashouts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='bảng rút tiền cho vendor';
 
 -- =====================================================
--- TỔNG QUAN THAY ĐỔI v8.0 (từ v7.2)
+-- TỔNG QUAN THAY ĐỔI v8.1 (từ v8.0)
 -- =====================================================
 
--- I) CẢI TIẾN BẢNG ADDRESSES
--- • Thêm 3 cột mới hỗ trợ tích hợp GoShip API:
---   - province_code VARCHAR(20) NULL - Mã tỉnh/thành phố theo hệ thống GoShip
---   - district_code VARCHAR(20) NULL - Mã quận/huyện theo hệ thống GoShip  
---   - commune_code VARCHAR(20) NULL - Mã phường/xã theo hệ thống GoShip
--- • Loại bỏ tất cả index không cần thiết, chỉ giữ lại PRIMARY KEY (id)
--- • Removed indexes: idx_province_district, idx_province_code, idx_district_code, idx_commune_code
+-- I) TÁI CẤU TRÚC QUẢN LÝ MEDIA - TIẾP CẬN TẬP TRUNG
+-- • Tạo bảng mới: media_links
+--   - Lưu trữ tập trung cho tất cả media/hình ảnh trong hệ thống
+--   - Hỗ trợ nhiều loại owner: vendor_certificates, chatbot_messages, products, 
+--     product_registrations, product_certificates, product_reviews, forum_posts
+--   - Các trường: id, owner_type (ENUM), owner_id, image_url, image_public_id, purpose (front/back/none), sort_order
+--   - Đánh index cho: owner_type, owner_id, và composite (owner_type, owner_id)
+--   - Cho phép quan hệ 1-nhiều: một thực thể có thể có nhiều media items
 
--- II) CẬP NHẬT SEEDER DATA
--- • Thêm địa chỉ FPT University HCM làm địa chỉ ID=1 cho admin
--- • Shift tất cả address ID hiện tại +1
--- • Cập nhật tất cả reference trong user_addresses, farm_profiles, orders
--- • Áp dụng dữ liệu địa chỉ thật từ GoShip API cho các tỉnh thành Việt Nam
+-- II) XÓA CÁC TRƯỜNG MEDIA TỪ CÁC BẢNG HIỆN TẠI
+-- • vendor_certificates: Xóa certificate_url, public_url
+-- • chatbot_messages: Xóa attachments, public_url
+-- • products: Xóa trường images
+-- • product_registrations: Xóa trường images
+-- • product_certificates: Xóa certificate_url, public_url
+-- • product_reviews: Xóa images, public_url
 
--- III) TƯƠNG THÍCH VỚI GOSHIP API
--- • province_code tương ứng với "id" trong response cities API
--- • district_code tương ứng với "id" trong response districts API  
--- • commune_code tương ứng với "id" trong response wards API
--- • Hỗ trợ đầy đủ hệ thống mã địa chỉ của Vietnam shipping logistics
+-- III) THÊM PUBLIC_URL CHO TÀI LIỆU HƯỚNG DẪN
+-- • products: Thêm public_url VARCHAR(500) - cho phép truy cập công khai manual_urls
+-- • product_registrations: Thêm public_url VARCHAR(500) - cho phép truy cập công khai manual_urls
 
--- IV) CHANGES IN DAL LAYER
--- • Updated Address model: Added ProvinceCode, DistrictCode, CommuneCode properties
--- • Updated AddressConfiguration: Added configurations for new code fields
--- • Removed unnecessary index configurations in Entity Framework
--- • Maintained backward compatibility with existing location fields
+-- IV) LƯU Ý MIGRATION DỮ LIỆU
+-- • Tất cả dữ liệu hình ảnh/media hiện tại cần được migrate sang bảng media_links
+-- • owner_type phải khớp với tên bảng nguồn
+-- • owner_id phải tham chiếu đến primary key của bảng nguồn
+-- • image_public_id bắt buộc cho tích hợp cloud storage (Cloudinary, AWS S3, etc.)
+-- • sort_order cho phép kiểm soát thứ tự hiển thị hình ảnh
+-- • purpose giúp phân biệt giữa hình ảnh chính (front) và phụ (back)
+
+-- V) LỢI ÍCH CỦA QUẢN LÝ MEDIA TẬP TRUNG
+-- • Xử lý media nhất quán trên tất cả các thực thể
+-- • Dễ dàng triển khai các tính năng như tối ưu hóa ảnh, CDN, watermark
+-- • Đơn giản hóa sao lưu và di chuyển file media
+-- • Hỗ trợ tốt hơn cho nhiều hình ảnh mỗi thực thể
+-- • Cấu trúc bảng sạch hơn không có trường URL phân cách bằng dấu phẩy
+-- • Cải thiện hiệu suất truy vấn với indexing phù hợp

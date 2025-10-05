@@ -48,10 +48,10 @@ public partial class Product
     public string? ManualUrls { get; set; }
 
     /// <summary>
-    /// Image URLs, comma-separated
+    /// Public URL for manual document access (v8.1)
     /// </summary>
-    [StringLength(1000)]
-    public string? Images { get; set; }
+    [StringLength(500)]
+    public string? PublicUrl { get; set; }
 
     public int WarrantyMonths { get; set; } = 12;
 

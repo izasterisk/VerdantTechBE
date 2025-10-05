@@ -37,12 +37,6 @@ public class ProductCertificateConfiguration : IEntityTypeConfiguration<ProductC
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("certification_name");
 
-        builder.Property(e => e.CertificateUrl)
-            .HasMaxLength(500)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("certificate_url");
-
         // Enum conversion for status
         builder.Property(e => e.Status)
             .HasConversion<string>()

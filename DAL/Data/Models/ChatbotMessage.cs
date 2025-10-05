@@ -16,12 +16,6 @@ public partial class ChatbotMessage
     [Required]
     public string MessageText { get; set; } = null!;
 
-    /// <summary>
-    /// Image or file attachment URLs, comma-separated
-    /// </summary>
-    [StringLength(1000)]
-    public string? Attachments { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     // Navigation Properties

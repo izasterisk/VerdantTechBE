@@ -2,9 +2,8 @@ using AutoMapper;
 using BLL.DTO.Address;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.User;
-using BLL.Helpers;
+using BLL.Helpers.AddressHelper;
 using BLL.Interfaces;
-using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 
@@ -47,10 +46,7 @@ namespace BLL.Services
             if (farmProfile.Address == null)
                 throw new InvalidOperationException("Địa chỉ của trang trại không tồn tại");
             
-            Utils.ValidateAddressFields(dto.Province, dto.ProvinceCode, 
-                                      dto.District, dto.DistrictCode, 
-                                      dto.Commune, dto.CommuneCode);
-            
+            AddressHelper.ValidateAddressFields(dto.Province, dto.ProvinceCode, dto.District, dto.DistrictCode, dto.Commune, dto.CommuneCode);
             _mapper.Map(dto, farmProfile);
             _mapper.Map(dto, farmProfile.Address);
             

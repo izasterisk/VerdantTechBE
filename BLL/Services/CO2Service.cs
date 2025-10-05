@@ -44,19 +44,16 @@ public class CO2Service : ICO2Service
         try
         {
             // Get both soil data and weather data concurrently
-            var soilDataTask = _soilGridsApiClient.GetSoilDataAsync(
+            var rawSoilData = await _soilGridsApiClient.GetSoilDataAsync(
                 farmProfile.Address.Latitude.Value, 
                 farmProfile.Address.Longitude.Value, 
                 cancellationToken);
-            var weatherDataTask = _weatherApiClient.GetHistoricalWeatherDataAsync(
+            var (precipitationData, et0Data) = await _weatherApiClient.GetHistoricalWeatherDataAsync(
                 farmProfile.Address.Latitude.Value, 
                 farmProfile.Address.Longitude.Value, 
                 dto.MeasurementStartDate, 
                 dto.MeasurementEndDate, 
                 cancellationToken);
-            // Wait for both tasks to complete
-            var rawSoilData = await soilDataTask;
-            var (precipitationData, et0Data) = await weatherDataTask;
 
             // Calculate weighted averages for soil data
             var sandAverage = CalculationHelper.CalculateWeightedAverage(

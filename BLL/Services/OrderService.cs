@@ -3,6 +3,7 @@ using BLL.DTO.Order;
 using BLL.Helpers;
 using BLL.Helpers.Order;
 using BLL.Interfaces;
+using BLL.Interfaces.Infrastructure;
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
@@ -15,14 +16,19 @@ public class OrderService : IOrderService
     private readonly IOrderRepository _orderRepository;
     private readonly IMapper _mapper;
     private readonly IOrderDetailRepository _orderDetailRepository;
+    private readonly IAddressRepository _addressRepository;
+    private readonly ICourierApiClient _courierApiClient;
+    private readonly IProductRepository _productRepository;
     
-    public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository)
+    public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository, IAddressRepository addressRepository, ICourierApiClient courierApiClient, IProductRepository productRepository)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
         _orderDetailRepository = orderDetailRepository;
+        _addressRepository = addressRepository;
+        _courierApiClient = courierApiClient;
+        _productRepository = productRepository;
     }
-    
     public async Task<OrderResponseDTO> CreateOrderAsync(ulong userId, OrderCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
@@ -32,7 +38,7 @@ public class OrderService : IOrderService
         
         var addressBelongsToUser = await _orderRepository.ValidateAddressBelongsToUserAsync(dto.AddressId, userId, cancellationToken);
         if (!addressBelongsToUser)
-            throw new ArgumentException($"Địa chỉ với ID {dto.AddressId} không thuộc về người dùng với ID {userId}. Vui lòng tạo địa chỉ mới.");
+            throw new ArgumentException($"Địa chỉ với ID {dto.AddressId} không thuộc về người dùng với ID {userId} hoặc không tồn tại. Vui lòng tạo địa chỉ mới.");
         
         Order order = _mapper.Map<Order>(dto);
         order.CustomerId = userId;
@@ -40,10 +46,26 @@ public class OrderService : IOrderService
         List<OrderDetail> orderDetails = dto.OrderDetails
             .Select(odDto => _mapper.Map<OrderDetail>(odDto)).ToList();
         decimal orderSubtotal = 0;
+        decimal length = 0;
+        decimal width = 0;
+        decimal height = 0;
+        decimal weight = 0;
+        
         foreach (var orderDetail in orderDetails)
         {
             orderDetail.Subtotal = OrderHelper.ComputeSubtotalForOrderItem(orderDetail.Quantity, orderDetail.UnitPrice, orderDetail.DiscountAmount);
             orderSubtotal += orderDetail.Subtotal;
+            var product = await _productRepository.GetProductByIdAsync(orderDetail.ProductId, true, cancellationToken);
+            if (product == null)
+                throw new KeyNotFoundException($"Sản phẩm với ID {orderDetail.ProductId} không tồn tại.");
+            if (product.DimensionsCm.TryGetValue("length", out var l))
+                length += l * orderDetail.Quantity;
+            if (product.DimensionsCm.TryGetValue("width", out var w))
+                width  += w * orderDetail.Quantity;
+            if (product.DimensionsCm.TryGetValue("height", out var h))
+                height += h * orderDetail.Quantity;
+            if (product.WeightKg.HasValue)
+                weight += product.WeightKg.Value * orderDetail.Quantity;
         }
         order.Subtotal = orderSubtotal;
         
@@ -139,9 +161,12 @@ public class OrderService : IOrderService
         
         var count = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
         existingOrder.Subtotal = 0;
-        foreach (var detail in count.OrderDetails)
+        if (count != null)
         {
-            existingOrder.Subtotal += detail.Subtotal;
+            foreach (var detail in count.OrderDetails)
+            {
+                existingOrder.Subtotal += detail.Subtotal;
+            }
         }
         existingOrder.TotalAmount = OrderHelper.ComputeTotalAmountForOrder(existingOrder.Subtotal, existingOrder.TaxAmount, existingOrder.ShippingFee, existingOrder.DiscountAmount);
         var updatedOrder = await _orderRepository.UpdateOrderWithTransactionAsync(existingOrder, cancellationToken);

@@ -28,19 +28,28 @@ public partial class ProductRegistration
     [StringLength(10)]
     public string? EnergyEfficiencyRating { get; set; }
 
-    public string Specifications { get; set; } = "{}";
+    /// <summary>
+    /// Technical specifications as key-value pairs (JSON)
+    /// </summary>
+    public Dictionary<string, object> Specifications { get; set; } = new();
 
     [StringLength(1000)]
     public string? ManualUrls { get; set; }
 
-    [StringLength(1000)]
-    public string? Images { get; set; }
+    /// <summary>
+    /// Public URL for manual document access (v8.1)
+    /// </summary>
+    [StringLength(500)]
+    public string? PublicUrl { get; set; }
 
     public int WarrantyMonths { get; set; } = 12;
 
     public decimal? WeightKg { get; set; }
 
-    public string DimensionsCm { get; set; } = "{}";
+    /// <summary>
+    /// {length, width, height} (JSON)
+    /// </summary>
+    public Dictionary<string, decimal> DimensionsCm { get; set; } = new();
 
     public ProductRegistrationStatus Status { get; set; } = ProductRegistrationStatus.Pending;
 
