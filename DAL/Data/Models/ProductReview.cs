@@ -29,6 +29,9 @@ public partial class ProductReview
     [StringLength(1000)]
     public string? Images { get; set; }
 
+    [StringLength(500)]
+    public string? PublicUrl { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

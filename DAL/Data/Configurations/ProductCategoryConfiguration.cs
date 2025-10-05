@@ -43,12 +43,6 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("description");
-            
-        builder.Property(e => e.IconUrl)
-            .HasMaxLength(500)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("icon_url");
         
         // Boolean defaults
         builder.Property(e => e.IsActive)

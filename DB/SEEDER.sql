@@ -66,18 +66,18 @@ INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `last_transaction_id`, `las
 (2, 6, 2500000.00, NULL, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00');
 
 -- Insert Vendor Certificates (v7.1 structure - renamed from vendor_sustainability_credentials)
-INSERT INTO `vendor_certificates` (`id`, `vendor_id`, `certification_code`, `certification_name`, `certificate_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
+INSERT INTO `vendor_certificates` (`id`, `vendor_id`, `certification_code`, `certification_name`, `certificate_url`, `public_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
 -- Vendor 1 (Công Ty Thiết Bị Nông Nghiệp Xanh) certificates
-(1, 5, 'ISO14001', 'ISO 14001 Environmental Management', 'https://example.com/certificates/vendor1_iso14001.pdf', 'verified', NULL, '2025-09-08 09:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:00:00', '2025-09-09 07:00:00'),
-(2, 5, 'ISO50001', 'ISO 50001 Energy Management', 'https://example.com/certificates/vendor1_iso50001.pdf', 'verified', NULL, '2025-09-08 09:15:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:15:00', '2025-09-09 07:00:00'),
-(3, 5, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'https://example.com/certificates/vendor1_carbon_neutral.pdf', 'verified', NULL, '2025-09-08 09:30:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:30:00', '2025-09-09 07:00:00'),
-(4, 5, 'HACCP', 'HACCP - Hazard Analysis Critical Control Points', 'https://example.com/certificates/vendor1_haccp.pdf', 'pending', NULL, '2025-09-09 08:00:00', NULL, NULL, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
+(1, 5, 'ISO14001', 'ISO 14001 Environmental Management', 'https://example.com/certificates/vendor1_iso14001.pdf', 'https://public.verdanttech.com/certificates/vendor1_iso14001.pdf', 'verified', NULL, '2025-09-08 09:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:00:00', '2025-09-09 07:00:00'),
+(2, 5, 'ISO50001', 'ISO 50001 Energy Management', 'https://example.com/certificates/vendor1_iso50001.pdf', 'https://public.verdanttech.com/certificates/vendor1_iso50001.pdf', 'verified', NULL, '2025-09-08 09:15:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:15:00', '2025-09-09 07:00:00'),
+(3, 5, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'https://example.com/certificates/vendor1_carbon_neutral.pdf', 'https://public.verdanttech.com/certificates/vendor1_carbon_neutral.pdf', 'verified', NULL, '2025-09-08 09:30:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:30:00', '2025-09-09 07:00:00'),
+(4, 5, 'HACCP', 'HACCP - Hazard Analysis Critical Control Points', 'https://example.com/certificates/vendor1_haccp.pdf', NULL, 'pending', NULL, '2025-09-09 08:00:00', NULL, NULL, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
 
 -- Vendor 2 (Cửa Hàng Nông Sản Sạch VerdantTech) certificates  
-(5, 6, 'USDA_ORGANIC', 'USDA Organic Certification', 'https://example.com/certificates/vendor2_usda_organic.pdf', 'verified', NULL, '2025-09-08 10:00:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:00:00', '2025-09-09 06:30:00'),
-(6, 6, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'https://example.com/certificates/vendor2_vietgap.pdf', 'verified', NULL, '2025-09-08 10:15:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:15:00', '2025-09-09 06:30:00'),
-(7, 6, 'FAIRTRADE', 'Fairtrade International Certification', 'https://example.com/certificates/vendor2_fairtrade.pdf', 'verified', NULL, '2025-09-08 10:30:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:30:00', '2025-09-09 06:30:00'),
-(8, 6, 'NON_GMO', 'Non-GMO Project Verified', 'https://example.com/certificates/vendor2_non_gmo.pdf', 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-09-09 09:00:00', '2025-09-09 10:00:00', 1, '2025-09-09 09:00:00', '2025-09-09 10:00:00');
+(5, 6, 'USDA_ORGANIC', 'USDA Organic Certification', 'https://example.com/certificates/vendor2_usda_organic.pdf', 'https://public.verdanttech.com/certificates/vendor2_usda_organic.pdf', 'verified', NULL, '2025-09-08 10:00:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:00:00', '2025-09-09 06:30:00'),
+(6, 6, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'https://example.com/certificates/vendor2_vietgap.pdf', 'https://public.verdanttech.com/certificates/vendor2_vietgap.pdf', 'verified', NULL, '2025-09-08 10:15:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:15:00', '2025-09-09 06:30:00'),
+(7, 6, 'FAIRTRADE', 'Fairtrade International Certification', 'https://example.com/certificates/vendor2_fairtrade.pdf', 'https://public.verdanttech.com/certificates/vendor2_fairtrade.pdf', 'verified', NULL, '2025-09-08 10:30:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:30:00', '2025-09-09 06:30:00'),
+(8, 6, 'NON_GMO', 'Non-GMO Project Verified', 'https://example.com/certificates/vendor2_non_gmo.pdf', NULL, 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-09-09 09:00:00', '2025-09-09 10:00:00', 1, '2025-09-09 09:00:00', '2025-09-09 10:00:00');
 
 -- Insert Farm Profiles
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `primary_crops`, `status`, `created_at`, `updated_at`) VALUES
@@ -86,13 +86,13 @@ INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`,
 (3, 9, 'Trang trại Thực nghiệm Mê Linh', 3.75, 9, 'Rau sạch, Hoa màu', 'Active', '2025-09-08 11:00:00', '2025-09-09 06:30:00');
 
 -- Insert Product Categories
-INSERT INTO `product_categories` (`id`, `parent_id`, `name`, `slug`, `description`, `icon_url`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, NULL, 'Thiết Bị Nông Nghiệp', 'thiet-bi-nong-nghiep', 'Các loại máy móc và thiết bị phục vụ sản xuất nông nghiệp', NULL, 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(2, 1, 'Máy Cày', 'may-cay', 'Máy cày và thiết bị làm đất', NULL, 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(3, 1, 'Máy Gặt', 'may-gat', 'Máy gặt và thu hoạch', NULL, 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(4, NULL, 'Hạt Giống', 'hat-giong', 'Hạt giống chất lượng cao', NULL, 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(5, 4, 'Hạt Giống Rau', 'hat-giong-rau', 'Hạt giống rau củ hữu cơ', NULL, 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(6, NULL, 'Phân Bón', 'phan-bon', 'Phân bón hữu cơ và hóa học', NULL, 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00');
+INSERT INTO `product_categories` (`id`, `parent_id`, `name`, `slug`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, NULL, 'Thiết Bị Nông Nghiệp', 'thiet-bi-nong-nghiep', 'Các loại máy móc và thiết bị phục vụ sản xuất nông nghiệp', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(2, 1, 'Máy Cày', 'may-cay', 'Máy cày và thiết bị làm đất', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(3, 1, 'Máy Gặt', 'may-gat', 'Máy gặt và thu hoạch', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(4, NULL, 'Hạt Giống', 'hat-giong', 'Hạt giống chất lượng cao', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(5, 4, 'Hạt Giống Rau', 'hat-giong-rau', 'Hạt giống rau củ hữu cơ', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(6, NULL, 'Phân Bón', 'phan-bon', 'Phân bón hữu cơ và hóa học', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00');
 
 -- Insert Products (v7.1 structure - updated column names and vendor_id referencing users table)
 INSERT INTO `products` (`id`, `category_id`, `vendor_id`, `product_code`, `product_name`, `slug`, `description`, `unit_price`, `commission_rate`, `discount_percentage`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `images`, `warranty_months`, `stock_quantity`, `weight_kg`, `dimensions_cm`, `is_active`, `view_count`, `sold_count`, `rating_average`, `created_at`, `updated_at`) VALUES
@@ -103,22 +103,22 @@ INSERT INTO `products` (`id`, `category_id`, `vendor_id`, `product_code`, `produ
 (5, 1, 5, 'DR005', 'Drone Phun Thuốc Thông Minh VerdantTech D3', 'drone-phun-thuoc-thong-minh-verdanttech-d3', 'Drone phun thuốc tự động với AI, chính xác cao, tiết kiệm thuốc.', 30000000.00, 12.00, 15.00, 'A', '{"flight_time": "30min", "capacity": "10L"}', 'manual_dr005.pdf', 'dr005_1.jpg,dr005_2.jpg', 12, 15, 5.000, '{"length": 100, "width": 100, "height": 50}', 1, 90, 7, 4.40, '2025-09-08 08:00:00', '2025-09-09 08:00:00');
 
 -- Insert Product Certificates (v7 structure - renamed from product_sustainability_credentials)
-INSERT INTO `product_certificates` (`id`, `product_id`, `certification_code`, `certification_name`, `certificate_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
+INSERT INTO `product_certificates` (`id`, `product_id`, `certification_code`, `certification_name`, `certificate_url`, `public_url`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
 -- Product 1 (Máy Cày Mini Điện VerdantTech V1) certificates
-(1, 1, 'ISO50001', 'ISO 50001 Energy Management', 'https://example.com/certificates/product1_iso50001.pdf', 'verified', NULL, '2025-09-08 09:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:00:00', '2025-09-09 07:00:00'),
-(2, 1, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'https://example.com/certificates/product1_carbon_neutral.pdf', 'verified', NULL, '2025-09-08 09:15:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:15:00', '2025-09-09 07:00:00'),
+(1, 1, 'ISO50001', 'ISO 50001 Energy Management', 'https://example.com/certificates/product1_iso50001.pdf', 'https://public.verdanttech.com/certificates/product1_iso50001.pdf', 'verified', NULL, '2025-09-08 09:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:00:00', '2025-09-09 07:00:00'),
+(2, 1, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'https://example.com/certificates/product1_carbon_neutral.pdf', 'https://public.verdanttech.com/certificates/product1_carbon_neutral.pdf', 'verified', NULL, '2025-09-08 09:15:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:15:00', '2025-09-09 07:00:00'),
 -- Product 2 (Máy Gặt Lúa Tự Động VerdantTech H2) certificates
-(3, 2, 'ISO14001', 'ISO 14001 Environmental Management', 'https://example.com/certificates/product2_iso14001.pdf', 'verified', NULL, '2025-09-08 09:30:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:30:00', '2025-09-09 07:00:00'),
-(4, 2, 'SBTI', 'SBTi - Science Based Targets Initiative', 'https://example.com/certificates/product2_sbti.pdf', 'pending', NULL, '2025-09-09 08:00:00', NULL, NULL, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
+(3, 2, 'ISO14001', 'ISO 14001 Environmental Management', 'https://example.com/certificates/product2_iso14001.pdf', 'https://public.verdanttech.com/certificates/product2_iso14001.pdf', 'verified', NULL, '2025-09-08 09:30:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:30:00', '2025-09-09 07:00:00'),
+(4, 2, 'SBTI', 'SBTi - Science Based Targets Initiative', 'https://example.com/certificates/product2_sbti.pdf', NULL, 'pending', NULL, '2025-09-09 08:00:00', NULL, NULL, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
 -- Product 3 (Hạt Giống Rau Cải Xanh Hữu Cơ) certificates
-(5, 3, 'USDA_ORGANIC', 'USDA Organic Certification', 'https://example.com/certificates/product3_usda_organic.pdf', 'verified', NULL, '2025-09-08 10:00:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:00:00', '2025-09-09 06:30:00'),
-(6, 3, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'https://example.com/certificates/product3_vietgap.pdf', 'verified', NULL, '2025-09-08 10:15:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:15:00', '2025-09-09 06:30:00'),
+(5, 3, 'USDA_ORGANIC', 'USDA Organic Certification', 'https://example.com/certificates/product3_usda_organic.pdf', 'https://public.verdanttech.com/certificates/product3_usda_organic.pdf', 'verified', NULL, '2025-09-08 10:00:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:00:00', '2025-09-09 06:30:00'),
+(6, 3, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'https://example.com/certificates/product3_vietgap.pdf', 'https://public.verdanttech.com/certificates/product3_vietgap.pdf', 'verified', NULL, '2025-09-08 10:15:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:15:00', '2025-09-09 06:30:00'),
 -- Product 4 (Phân Bón Hữu Cơ Compost Premium) certificates
-(7, 4, 'GLOBALGAP', 'GlobalGAP Certification', 'https://example.com/certificates/product4_globalgap.pdf', 'verified', NULL, '2025-09-08 10:30:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:30:00', '2025-09-09 06:30:00'),
-(8, 4, 'NON_GMO', 'Non-GMO Project Verified', 'https://example.com/certificates/product4_non_gmo.pdf', 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-09-09 09:00:00', '2025-09-09 10:00:00', 1, '2025-09-09 09:00:00', '2025-09-09 10:00:00'),
+(7, 4, 'GLOBALGAP', 'GlobalGAP Certification', 'https://example.com/certificates/product4_globalgap.pdf', 'https://public.verdanttech.com/certificates/product4_globalgap.pdf', 'verified', NULL, '2025-09-08 10:30:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:30:00', '2025-09-09 06:30:00'),
+(8, 4, 'NON_GMO', 'Non-GMO Project Verified', 'https://example.com/certificates/product4_non_gmo.pdf', NULL, 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-09-09 09:00:00', '2025-09-09 10:00:00', 1, '2025-09-09 09:00:00', '2025-09-09 10:00:00'),
 -- Product 5 (Drone Phun Thuốc Thông Minh VerdantTech D3) certificates
-(9, 5, 'RAINFOREST_ALLIANCE', 'Rainforest Alliance Certification', 'https://example.com/certificates/product5_rainforest_alliance.pdf', 'verified', NULL, '2025-09-08 11:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 11:00:00', '2025-09-09 07:00:00'),
-(10, 5, 'CARBON_NEUTRAL_2', 'Carbon Neutral Certification', 'https://example.com/certificates/product5_carbon_neutral.pdf', 'pending', NULL, '2025-09-09 08:30:00', NULL, NULL, '2025-09-09 08:30:00', '2025-09-09 08:30:00');
+(9, 5, 'RAINFOREST_ALLIANCE', 'Rainforest Alliance Certification', 'https://example.com/certificates/product5_rainforest_alliance.pdf', 'https://public.verdanttech.com/certificates/product5_rainforest_alliance.pdf', 'verified', NULL, '2025-09-08 11:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 11:00:00', '2025-09-09 07:00:00'),
+(10, 5, 'CARBON_NEUTRAL_2', 'Carbon Neutral Certification', 'https://example.com/certificates/product5_carbon_neutral.pdf', NULL, 'pending', NULL, '2025-09-09 08:30:00', NULL, NULL, '2025-09-09 08:30:00', '2025-09-09 08:30:00');
 
 -- Insert Cart (v7.1 structure - changed user_id to customer_id)
 INSERT INTO `cart` (`id`, `customer_id`, `created_at`, `updated_at`) VALUES
@@ -168,17 +168,17 @@ INSERT INTO `chatbot_conversations` (`id`, `customer_id`, `session_id`, `title`,
 (3, 8, 'session_20250909_002', 'Tư vấn phân bón hữu cơ', '{"topic": "fertilizer_consultation", "crop_type": "vegetables", "soil_type": "sandy"}', 0, '2025-09-09 08:00:00', '2025-09-09 08:45:00');
 
 -- Insert Chatbot Messages
-INSERT INTO `chatbot_messages` (`id`, `conversation_id`, `message_type`, `message_text`, `attachments`, `created_at`) VALUES
-(1, 1, 'user', 'Tôi cần tư vấn chọn máy cày cho ruộng nhỏ khoảng 2ha', NULL, '2025-09-08 14:00:00'),
-(2, 1, 'bot', 'Với diện tích 2ha, tôi khuyên bạn nên chọn máy cày mini điện VerdantTech V1. Máy này có những ưu điểm: tiết kiệm năng lượng, thân thiện môi trường, phù hợp với ruộng nhỏ.', NULL, '2025-09-08 14:00:30'),
-(3, 1, 'user', 'Giá của máy này là bao nhiêu? Có khuyến mãi không?', NULL, '2025-09-08 14:02:00'),
-(4, 1, 'bot', 'Máy cày mini điện VerdantTech V1 có giá 25.000.000 VNĐ. Hiện tại đang có khuyến mãi 10%, giá sau khuyến mãi là 22.500.000 VNĐ. Bạn có muốn xem thêm thông tin chi tiết không?', NULL, '2025-09-08 14:02:30'),
-(5, 2, 'user', 'Tôi muốn hỏi về kỹ thuật trồng lúa hữu cơ', NULL, '2025-09-09 06:00:00'),
-(6, 2, 'bot', 'Trồng lúa hữu cơ cần chú ý những điểm sau: 1) Chuẩn bị đất: Sử dụng phân compost thay vì phân hóa học 2) Chọn giống: Nên chọn giống lúa địa phương thích nghi 3) Quản lý nước: Tưới tiêu đúng thời điểm 4) Phòng trừ sâu bệnh: Sử dụng biện pháp sinh học', NULL, '2025-09-09 06:01:00'),
-(7, 3, 'user', 'Tôi trồng rau, đất cát, nên dùng loại phân nào?', NULL, '2025-09-09 08:00:00'),
-(8, 3, 'bot', 'Với đất cát trồng rau, tôi khuyên bạn sử dụng Phân Compost Hữu Cơ Premium. Loại phân này giúp cải thiện cấu trúc đất cát, tăng khả năng giữ nước và cung cấp dinh dưỡng lâu dài cho cây trồng.', NULL, '2025-09-09 08:00:30'),
-(9, 3, 'user', 'Cảm ơn bạn! Tôi sẽ đặt mua ngay.', NULL, '2025-09-09 08:44:00'),
-(10, 3, 'bot', 'Rất vui được hỗ trợ bạn! Chúc bạn canh tác thành công. Nếu có thắc mắc gì khác, đừng ngần ngại liên hệ nhé!', NULL, '2025-09-09 08:44:30');
+INSERT INTO `chatbot_messages` (`id`, `conversation_id`, `message_type`, `message_text`, `attachments`, `public_url`, `created_at`) VALUES
+(1, 1, 'user', 'Tôi cần tư vấn chọn máy cày cho ruộng nhỏ khoảng 2ha', NULL, NULL, '2025-09-08 14:00:00'),
+(2, 1, 'bot', 'Với diện tích 2ha, tôi khuyên bạn nên chọn máy cày mini điện VerdantTech V1. Máy này có những ưu điểm: tiết kiệm năng lượng, thân thiện môi trường, phù hợp với ruộng nhỏ.', NULL, NULL, '2025-09-08 14:00:30'),
+(3, 1, 'user', 'Giá của máy này là bao nhiêu? Có khuyến mãi không?', NULL, NULL, '2025-09-08 14:02:00'),
+(4, 1, 'bot', 'Máy cày mini điện VerdantTech V1 có giá 25.000.000 VNĐ. Hiện tại đang có khuyến mãi 10%, giá sau khuyến mãi là 22.500.000 VNĐ. Bạn có muốn xem thêm thông tin chi tiết không?', NULL, NULL, '2025-09-08 14:02:30'),
+(5, 2, 'user', 'Tôi muốn hỏi về kỹ thuật trồng lúa hữu cơ', NULL, NULL, '2025-09-09 06:00:00'),
+(6, 2, 'bot', 'Trồng lúa hữu cơ cần chú ý những điểm sau: 1) Chuẩn bị đất: Sử dụng phân compost thay vì phân hóa học 2) Chọn giống: Nên chọn giống lúa địa phương thích nghi 3) Quản lý nước: Tưới tiêu đúng thời điểm 4) Phòng trừ sâu bệnh: Sử dụng biện pháp sinh học', NULL, NULL, '2025-09-09 06:01:00'),
+(7, 3, 'user', 'Tôi trồng rau, đất cát, nên dùng loại phân nào?', NULL, NULL, '2025-09-09 08:00:00'),
+(8, 3, 'bot', 'Với đất cát trồng rau, tôi khuyên bạn sử dụng Phân Compost Hữu Cơ Premium. Loại phân này giúp cải thiện cấu trúc đất cát, tăng khả năng giữ nước và cung cấp dinh dưỡng lâu dài cho cây trồng.', NULL, NULL, '2025-09-09 08:00:30'),
+(9, 3, 'user', 'Cảm ơn bạn! Tôi sẽ đặt mua ngay.', NULL, NULL, '2025-09-09 08:44:00'),
+(10, 3, 'bot', 'Rất vui được hỗ trợ bạn! Chúc bạn canh tác thành công. Nếu có thắc mắc gì khác, đừng ngần ngại liên hệ nhé!', NULL, NULL, '2025-09-09 08:44:30');
 
 -- Insert Environmental Data (v7.2 structure - updated column names and added new environmental measurement fields)
 INSERT INTO `environmental_data` (`id`, `farm_profile_id`, `customer_id`, `measurement_start_date`, `measurement_end_date`, `sand_pct`, `silt_pct`, `clay_pct`, `phh2o`, `precipitation_sum`, `et0_fao_evapotranspiration`, `co2_footprint`, `notes`, `created_at`, `updated_at`) VALUES
@@ -251,7 +251,7 @@ INSERT INTO `export_inventory` (`id`, `product_id`, `order_id`, `quantity`, `bal
 (4, 5, 3, 1, 14, 'sale', 'Drone phun thuốc cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
 -- Insert Product Reviews
-INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `rating`, `title`, `comment`, `images`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 7, 5, 'Máy cày tuyệt vời!', 'Máy chạy êm, tiết kiệm điện và rất phù hợp với ruộng nhỏ của tôi. Chất lượng tốt, đóng gói cẩn thận.', 'review1-1.jpg,review1-2.jpg', '2025-09-09 16:00:00', '2025-09-09 16:00:00'),
-(2, 3, 2, 8, 4, 'Hạt giống chất lượng', 'Hạt giống nảy mầm tốt, tỷ lệ cao như quảng cáo. Cây trồng phát triển khỏe mạnh.', 'review2-1.jpg', '2025-09-09 18:00:00', '2025-09-09 18:00:00'),
-(3, 4, 2, 8, 5, 'Phân compost chất lượng', 'Phân rất tốt, cây trồng phát triển nhanh sau khi bón. Mùi không quá nặng, dễ sử dụng.', NULL, '2025-09-09 19:00:00', '2025-09-09 19:00:00');
+INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `rating`, `title`, `comment`, `images`, `public_url`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 7, 5, 'Máy cày tuyệt vời!', 'Máy chạy êm, tiết kiệm điện và rất phù hợp với ruộng nhỏ của tôi. Chất lượng tốt, đóng gói cẩn thận.', 'review1-1.jpg,review1-2.jpg', 'https://public.verdanttech.com/reviews/review1_images.jpg', '2025-09-09 16:00:00', '2025-09-09 16:00:00'),
+(2, 3, 2, 8, 4, 'Hạt giống chất lượng', 'Hạt giống nảy mầm tốt, tỷ lệ cao như quảng cáo. Cây trồng phát triển khỏe mạnh.', 'review2-1.jpg', 'https://public.verdanttech.com/reviews/review2_images.jpg', '2025-09-09 18:00:00', '2025-09-09 18:00:00'),
+(3, 4, 2, 8, 5, 'Phân compost chất lượng', 'Phân rất tốt, cây trồng phát triển nhanh sau khi bón. Mùi không quá nặng, dễ sử dụng.', NULL, NULL, '2025-09-09 19:00:00', '2025-09-09 19:00:00');

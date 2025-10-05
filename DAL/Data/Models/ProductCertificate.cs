@@ -25,6 +25,9 @@ public partial class ProductCertificate
     [StringLength(500)]
     public string? CertificateUrl { get; set; }
 
+    [StringLength(500)]
+    public string? PublicUrl { get; set; }
+
     public ProductCertificateStatus Status { get; set; } = ProductCertificateStatus.Pending;
 
     /// <summary>

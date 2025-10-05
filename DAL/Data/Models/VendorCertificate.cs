@@ -24,6 +24,9 @@ public partial class VendorCertificate
     [StringLength(500)]
     public string CertificateUrl { get; set; } = null!;
 
+    [StringLength(500)]
+    public string? PublicUrl { get; set; }
+
     [Required]
     public VendorCertificateStatus Status { get; set; } = VendorCertificateStatus.Pending;
 

@@ -22,6 +22,9 @@ public partial class ChatbotMessage
     [StringLength(1000)]
     public string? Attachments { get; set; }
 
+    [StringLength(500)]
+    public string? PublicUrl { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     // Navigation Properties

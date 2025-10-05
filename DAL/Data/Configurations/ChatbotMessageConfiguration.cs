@@ -42,6 +42,11 @@ public class ChatbotMessageConfiguration : IEntityTypeConfiguration<ChatbotMessa
             .HasMaxLength(1000)
             .IsRequired(false);
 
+        builder.Property(e => e.PublicUrl)
+            .HasColumnName("public_url")
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
             .HasColumnType("timestamp")

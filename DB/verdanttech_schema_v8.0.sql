@@ -101,6 +101,7 @@ CREATE TABLE vendor_certificates (
     certification_code VARCHAR(50) NOT NULL,
     certification_name VARCHAR(255) NOT NULL,
     certificate_url VARCHAR(500) NOT NULL COMMENT 'URL đến hình ảnh/tập tin chứng chỉ đã tải lên',
+    public_url VARCHAR(500),
     status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
     rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu trạng thái bị từ chối',
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -229,6 +230,7 @@ CREATE TABLE chatbot_messages (
     message_type ENUM('user', 'bot', 'system') NOT NULL,
     message_text TEXT NOT NULL,
     attachments VARCHAR(1000) COMMENT 'URL đính kèm hình ảnh hoặc tập tin, phân cách bằng dấu phẩy',
+    public_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 
     FOREIGN KEY (conversation_id) REFERENCES chatbot_conversations(id) ON DELETE RESTRICT,
@@ -258,7 +260,7 @@ CREATE TABLE forum_posts (
     user_id BIGINT UNSIGNED NOT NULL,
     title VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
-    content JSON NOT NULL COMMENT 'Các khối nội dung hỗn hợp: [{"order": 1, "type": "text", "content": "Hello world"}, {"order": 2, "type": "image", "content": "https://example.com/image.jpg"}]',
+    content JSON NOT NULL COMMENT 'Các khối nội dung hỗn hợp: [{"order": 1, "type": "text", "content": "Hello world"}, {"order": 2, "type": "image", "content": "1 (là id từ bảng MediaLink)"}]',
     tags VARCHAR(500) COMMENT 'Thẻ, danh sách phân cách bằng dấu phẩy',
     view_count BIGINT DEFAULT 0,
     like_count INT DEFAULT 0,
@@ -308,7 +310,6 @@ CREATE TABLE product_categories (
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
-    icon_url VARCHAR(500),
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -390,6 +391,7 @@ CREATE TABLE product_certificates (
     certification_code VARCHAR(50) NOT NULL,
     certification_name VARCHAR(255) NOT NULL,
     certificate_url VARCHAR(500) NULL COMMENT 'URL đến hình ảnh/tập tin chứng chỉ đã tải lên',
+    public_url VARCHAR(500),
     status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
     rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu trạng thái bị từ chối',
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -510,6 +512,7 @@ CREATE TABLE product_reviews (
     title VARCHAR(255),
     comment TEXT,
     images VARCHAR(1000) COMMENT 'URL hình ảnh đánh giá, phân cách bằng dấu phẩy',
+    public_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -708,3 +711,10 @@ CREATE TABLE cashouts (
 -- • Updated Order model: Added OrderPaymentMethod property
 -- • Updated OrderConfiguration: Added configuration for OrderPaymentMethod field
 -- • Updated SEEDER.sql: Added sample payment method data for existing orders
+
+-- VI) SCHEMA MODIFICATIONS (v8.0)
+-- • Removed icon_url field from product_categories table
+-- • Added public_url VARCHAR(500) field to vendor_certificates table
+-- • Added public_url VARCHAR(500) field to chatbot_messages table
+-- • Added public_url VARCHAR(500) field to product_certificates table
+-- • Added public_url VARCHAR(500) field to product_reviews table
