@@ -1,6 +1,8 @@
 ﻿using BLL.DTO;
 using BLL.DTO.Product;
+using BLL.DTO.ProductRegistration;
 using BLL.Interfaces;
+using BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +21,23 @@ namespace Controller.Controllers
         public ProductController(IProductService productService)
         {
             _productService = productService;
+        }
+        /// <summary>
+        /// Đăng ký sản phẩm mới từ nhà cung cấp, đợi phê duyệt từ staff trước khi hiển thị trên nền tảng
+        /// </summary>
+        /// <param name="requestDTO"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [HttpPost("register-product")]
+        public async Task<IActionResult> RegisterProduct([FromBody] ProductRegistrationCreateDTO requestDTO, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var vendorid = GetCurrentUserId();
+            var result = await _productService.ProductRegistrationAsync(vendorid, requestDTO, cancellationToken);
+            return Ok(result);
         }
 
 

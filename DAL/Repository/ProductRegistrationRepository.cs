@@ -1,0 +1,27 @@
+﻿using DAL.Data;
+using DAL.Data.Models;
+using DAL.IRepository;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DAL.Repository
+{
+    public class ProductRegistrationRepository : IProductRegistrationRepository
+    {
+        private readonly VerdantTechDbContext _context;
+        private readonly IRepository<ProductRegistration> _repository;
+        public ProductRegistrationRepository( VerdantTechDbContext context, IRepository<ProductRegistration> repository)
+        {
+            _context = context;
+            _repository = repository;
+        }
+
+        public async Task<ProductRegistration> CreateProductAsync(ProductRegistration entity, CancellationToken cancellationToken = default)
+        {
+            return await _repository.CreateAsync(entity, cancellationToken);
+        }
+    }
+}

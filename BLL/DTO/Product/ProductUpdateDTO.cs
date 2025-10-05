@@ -68,7 +68,7 @@ namespace BLL.DTO.Product
         /// <summary>
         /// {length, width, height} (JSON)
         /// </summary>
-        public Dictionary<string, decimal> DimensionsCm { get; set; } = new();
+        public DimensionsDTO DimensionsCm { get; set; } = new();
 
         public bool IsActive { get; set; } = true;
 
@@ -79,5 +79,17 @@ namespace BLL.DTO.Product
         [Range(0.00, 5.00, ErrorMessage = "Đánh giá trung bình phải nằm trong khoảng 0 đến 5")]
         public decimal RatingAverage { get; set; } = 0.00m;
 
+        public class DimensionsDTO
+        {
+            [Range(0.01, double.MaxValue, ErrorMessage = "Chiều rộng phải lớn hơn 0")]
+            public decimal Width { get; set; }
+
+            [Range(0.01, double.MaxValue, ErrorMessage = "Chiều cao phải lớn hơn 0")]
+            public decimal Height { get; set; }
+
+            [Range(0.01, double.MaxValue, ErrorMessage = "Chiều dài phải lớn hơn 0")]
+            public decimal Length { get; set; }
+        }
     }
-}
+   }
+

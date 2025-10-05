@@ -28,7 +28,7 @@ public partial class ProductRegistration
     [StringLength(10)]
     public string? EnergyEfficiencyRating { get; set; }
 
-    public string Specifications { get; set; } = "{}";
+    public Dictionary<string, object> Specifications { get; set; } = new();
 
     [StringLength(1000)]
     public string? ManualUrls { get; set; }
@@ -40,7 +40,7 @@ public partial class ProductRegistration
 
     public decimal? WeightKg { get; set; }
 
-    public string DimensionsCm { get; set; } = "{}";
+    public Dictionary<string, object> DimensionsCm { get; set; } = new();
 
     public ProductRegistrationStatus Status { get; set; } = ProductRegistrationStatus.Pending;
 
