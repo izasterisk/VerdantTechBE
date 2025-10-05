@@ -59,9 +59,9 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("energy_efficiency_rating");
             
+        // JSON fields - Using JsonHelpers for converter and comparer
         builder.Property(e => e.Specifications)
-            .HasColumnType("json")
-            .IsRequired();
+            .ConfigureAsJson("specifications");
             
         builder.Property(e => e.ManualUrls)
             .HasMaxLength(1000)
@@ -69,10 +69,12 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("manual_urls");
             
-        builder.Property(e => e.Images)
-            .HasMaxLength(1000)
+        builder.Property(e => e.PublicUrl)
+            .HasMaxLength(500)
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("public_url")
+            .IsRequired(false);
             
         builder.Property(e => e.WarrantyMonths)
             .HasColumnType("int")
@@ -85,9 +87,7 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasColumnName("weight_kg");
             
         builder.Property(e => e.DimensionsCm)
-            .HasColumnType("json")
-            .HasColumnName("dimensions_cm")
-            .IsRequired();
+            .ConfigureAsJson("dimensions_cm");
             
         // Enum conversion
         builder.Property(e => e.Status)

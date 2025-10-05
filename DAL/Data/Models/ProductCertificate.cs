@@ -19,15 +19,6 @@ public partial class ProductCertificate
     [StringLength(255)]
     public string CertificationName { get; set; } = null!;
 
-    /// <summary>
-    /// URL to uploaded certificate image/file
-    /// </summary>
-    [StringLength(500)]
-    public string? CertificateUrl { get; set; }
-
-    [StringLength(500)]
-    public string? PublicUrl { get; set; }
-
     public ProductCertificateStatus Status { get; set; } = ProductCertificateStatus.Pending;
 
     /// <summary>

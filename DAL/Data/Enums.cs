@@ -232,4 +232,25 @@ public enum ConditionOnArrival
     Damaged
 }
 
+// =====================================================
+// MEDIA MANAGEMENT ENUMS (v8.1)
+// =====================================================
+
+public enum MediaOwnerType
+{
+    VendorCertificates,
+    ChatbotMessages,
+    Products,
+    ProductRegistrations,
+    ProductCertificates,
+    ProductReviews,
+    ForumPosts
+}
+
+public enum MediaPurpose
+{
+    Front,
+    Back,
+    None
+}
 

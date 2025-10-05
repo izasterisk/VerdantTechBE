@@ -48,18 +48,6 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
         
-        // VARCHAR field for images array
-        builder.Property(e => e.Images)
-            .HasMaxLength(2000)
-            .IsRequired(false);
-
-        builder.Property(e => e.PublicUrl)
-            .HasMaxLength(500)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("public_url")
-            .IsRequired(false);
-        
         // DateTime fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")

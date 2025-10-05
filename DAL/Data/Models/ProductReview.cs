@@ -23,15 +23,6 @@ public partial class ProductReview
 
     public string? Comment { get; set; }
 
-    /// <summary>
-    /// Review image URLs, comma-separated
-    /// </summary>
-    [StringLength(1000)]
-    public string? Images { get; set; }
-
-    [StringLength(500)]
-    public string? PublicUrl { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
