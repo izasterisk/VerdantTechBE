@@ -18,19 +18,6 @@ public class OrderHelper
         return quantity * unitPrice - discountAmount;
     }
     
-    public static bool AreOrderDetailsEqual(OrderDetailUpdateDTO a, OrderDetailUpdateDTO b)
-    {
-        if (a.ProductId.HasValue && b.ProductId.HasValue && a.ProductId.Value != b.ProductId.Value)
-            return false;
-        if (a.Quantity.HasValue && b.Quantity.HasValue && a.Quantity.Value != b.Quantity.Value)
-            return false;
-        if (a.UnitPrice.HasValue && b.UnitPrice.HasValue && a.UnitPrice.Value != b.UnitPrice.Value)
-            return false;
-        if (a.DiscountAmount.HasValue && b.DiscountAmount.HasValue && a.DiscountAmount.Value != b.DiscountAmount.Value)
-            return false;
-        return true;
-    }
-    
     /// <summary>
     /// Generate cache key cho OrderPreview.
     /// </summary>
