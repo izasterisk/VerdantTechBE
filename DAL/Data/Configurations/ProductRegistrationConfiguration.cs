@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using DAL.Data.Models;
 
@@ -85,7 +85,7 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasPrecision(10, 3)
             .HasColumnType("decimal(10,3)")
             .HasColumnName("weight_kg");
-            
+
         builder.Property(e => e.DimensionsCm)
             .ConfigureAsJson("dimensions_cm");
             

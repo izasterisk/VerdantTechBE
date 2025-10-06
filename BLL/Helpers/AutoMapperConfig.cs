@@ -6,8 +6,10 @@ using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.Order;
 using BLL.DTO.ProductCategory;
+using BLL.DTO.ProductRegistration;
 using BLL.DTO.User;
 using DAL.Data.Models;
+using static BLL.DTO.Product.ProductUpdateDTO;
 
 namespace BLL.Helpers;
 
@@ -91,6 +93,23 @@ public class AutoMapperConfig : Profile
         CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>().ReverseMap();
         CreateMap<DAL.Data.Models.Order, OrderPreviewResponseDTO>().ReverseMap();
         CreateMap<DAL.Data.Models.Order, OrderResponseDTO>().ReverseMap();
+        CreateMap<OrderDetail, OrderDetailResponseDTO>().ReverseMap();
+        CreateMap<Product, ProductResponseDTO>().ReverseMap();
+        // Mapping cho ProductRegistration
+        CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
+            .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, object>
+            {
+                { "Width", src.DimensionsCm.Width },
+                { "Height", src.DimensionsCm.Height },
+                { "Length", src.DimensionsCm.Length }
+            }));
+        CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
+    .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new DimensionsDTO
+    {
+        Width = src.DimensionsCm.ContainsKey("Width") ? Convert.ToDecimal(src.DimensionsCm["Width"]) : 0,
+        Height = src.DimensionsCm.ContainsKey("Height") ? Convert.ToDecimal(src.DimensionsCm["Height"]) : 0,
+        Length = src.DimensionsCm.ContainsKey("Length") ? Convert.ToDecimal(src.DimensionsCm["Length"]) : 0
+    }));
         CreateMap<DAL.Data.Models.Order, OrderUpdateDTO>().ReverseMap();
     }
 }
