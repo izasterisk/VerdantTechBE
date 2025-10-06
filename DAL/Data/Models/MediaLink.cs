@@ -23,7 +23,7 @@ public partial class MediaLink
 
     public MediaPurpose Purpose { get; set; } = MediaPurpose.None;
 
-    public int SortOrder { get; set; } = 0;
+    public int SortOrder { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

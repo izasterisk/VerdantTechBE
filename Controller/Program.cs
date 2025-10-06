@@ -97,6 +97,9 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
 
+// Configure Memory Cache
+builder.Services.AddMemoryCache();
+
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));
 

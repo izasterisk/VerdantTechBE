@@ -18,14 +18,11 @@ public class AddressResponseDTO
     [StringLength(100, ErrorMessage = "Tên xã/phường không được vượt quá 100 ký tự")]
     public string? Commune { get; set; }
     
-    [StringLength(100, ErrorMessage = "Mã tỉnh/thành không được vượt quá 100 ký tự")]
-    public string? ProvinceCode { get; set; }
+    public int? ProvinceCode { get; set; }
 
-    [StringLength(100, ErrorMessage = "Mã quận/huyện không được vượt quá 100 ký tự")]
-    public string? DistrictCode { get; set; }
+    public int? DistrictCode { get; set; }
 
-    [StringLength(100, ErrorMessage = "Mã xã/phường không được vượt quá 100 ký tự")]
-    public string? CommuneCode { get; set; }
+    public int? CommuneCode { get; set; }
 
     [Range(-90.0, 90.0, ErrorMessage = "Vĩ độ phải nằm trong khoảng từ -90 đến 90")]
     public decimal? Latitude { get; set; }

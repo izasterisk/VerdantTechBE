@@ -22,27 +22,30 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
             
         builder.Property(e => e.Province)
             .HasColumnName("province")
-            .HasMaxLength(100);
+            .HasMaxLength(100)
+            .IsRequired();
             
         builder.Property(e => e.District)
             .HasColumnName("district")
-            .HasMaxLength(100);
+            .HasMaxLength(100)
+            .IsRequired();
             
         builder.Property(e => e.Commune)
             .HasColumnName("commune")
-            .HasMaxLength(100);
+            .HasMaxLength(100)
+            .IsRequired();
             
         builder.Property(e => e.ProvinceCode)
             .HasColumnName("province_code")
-            .HasMaxLength(20);
+            .IsRequired();
             
         builder.Property(e => e.DistrictCode)
             .HasColumnName("district_code")
-            .HasMaxLength(20);
+            .IsRequired();
             
         builder.Property(e => e.CommuneCode)
             .HasColumnName("commune_code")
-            .HasMaxLength(20);
+            .IsRequired();
             
         builder.Property(e => e.Latitude)
             .HasColumnName("latitude")
