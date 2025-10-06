@@ -142,19 +142,15 @@ public class OrderService : IOrderService
         var existingOrder = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
         if (existingOrder == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
+        _mapper.Map(dto, existingOrder);
         if (dto.CancelledReason != null)
         {
-            if (dto.Status == null)
-                dto.Status = OrderStatus.Cancelled;
-            else
-                throw new ArgumentException("Khi đã có CancelledReason, trạng thái đơn hàng nhận vào phải là null hoặc Cancelled.");
+            if (existingOrder.Status == OrderStatus.Shipped || existingOrder.Status == OrderStatus.Delivered)
+            {
+                throw new InvalidOperationException("Không thể hủy đơn hàng đã được vận chuyển hoặc giao hàng.");
+            }
+            existingOrder.Status = OrderStatus.Cancelled;
         }
-        if (existingOrder.Status == OrderStatus.Shipped || existingOrder.Status == OrderStatus.Delivered)
-        {
-            if(dto.Status == OrderStatus.Cancelled)
-                throw new InvalidOperationException($"Không thể hủy đơn khi hàng đã được vận chuyển đi.");
-        }
-        _mapper.Map(dto, existingOrder);
         var updatedOrder = await _orderRepository.UpdateOrderWithTransactionAsync(existingOrder, cancellationToken);
         return _mapper.Map<OrderResponseDTO>(updatedOrder);
     }
