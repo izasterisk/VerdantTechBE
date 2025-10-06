@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BLL.DTO.Cart;
+using BLL.Helpers.Cart;
 using BLL.Interfaces;
 using DAL.Data.Models;
 using DAL.IRepository;
@@ -22,7 +23,7 @@ public class CartService : ICartService
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         if(dto.Quantity < 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(dto.Quantity), "Số lượng sản phẩm phải lớn hơn 1.");
+            throw new ArgumentOutOfRangeException(nameof(dto.Quantity), "Số lượng sản phẩm phải lớn hơn 0.");
         }
         var cart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
         if (cart == null)
@@ -40,8 +41,13 @@ public class CartService : ICartService
         var cartItem = _mapper.Map<CartItem>(dto);
         cartItem.CartId = cart.Id;
         await _cartRepository.AddItemToCartWithTransactionAsync(cartItem, cancellationToken);
+        
         var updatedCart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
-        return _mapper.Map<CartResponseDTO>(updatedCart);
+        var response = _mapper.Map<CartResponseDTO>(updatedCart);
+        
+        await CartHelper.PopulateCartItemsImagesAsync(response.CartItems, _cartRepository, _mapper, cancellationToken);
+        
+        return response;
     }
     
     public async Task<CartResponseDTO> UpdateCartItemQuantityAsync(ulong userId, CartDTO dto, CancellationToken cancellationToken = default)
@@ -60,8 +66,8 @@ public class CartService : ICartService
         }
         if (dto.Quantity == 0)
         {
-            var response = await _cartRepository.DeleteItemFromCartWithTransactionAsync(item, cancellationToken);
-            if (!response)
+            var deleteResponse = await _cartRepository.DeleteItemFromCartWithTransactionAsync(item, cancellationToken);
+            if (!deleteResponse)
             {
                 throw new InvalidOperationException("Xoá sản phẩm khỏi giỏ hàng thất bại.");
             }
@@ -72,12 +78,22 @@ public class CartService : ICartService
             await _cartRepository.UpdateCartWithTransactionAsync(item, cancellationToken);
         }
         var updatedCart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
-        return _mapper.Map<CartResponseDTO>(updatedCart);
+        var response = _mapper.Map<CartResponseDTO>(updatedCart);
+        
+        await CartHelper.PopulateCartItemsImagesAsync(response.CartItems, _cartRepository, _mapper, cancellationToken);
+        
+        return response;
     }
     
     public async Task<CartResponseDTO?> GetCartByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         var cart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
-        return cart == null ? null : _mapper.Map<CartResponseDTO>(cart);
+        if (cart == null) return null;
+        
+        var response = _mapper.Map<CartResponseDTO>(cart);
+        
+        await CartHelper.PopulateCartItemsImagesAsync(response.CartItems, _cartRepository, _mapper, cancellationToken);
+        
+        return response;
     }
 }

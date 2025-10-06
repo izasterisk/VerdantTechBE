@@ -1,4 +1,5 @@
 ﻿using BLL.DTO.Order;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BLL.Helpers.Order;
 
@@ -17,17 +18,26 @@ public class OrderHelper
         return quantity * unitPrice - discountAmount;
     }
     
-    public static bool AreOrderDetailsEqual(OrderDetailUpdateDTO a, OrderDetailUpdateDTO b)
+    /// <summary>
+    /// Generate cache key cho OrderPreview.
+    /// </summary>
+    public static string GenerateOrderPreviewCacheKey(Guid orderPreviewId)
     {
-        if (a.ProductId.HasValue && b.ProductId.HasValue && a.ProductId.Value != b.ProductId.Value)
-            return false;
-        if (a.Quantity.HasValue && b.Quantity.HasValue && a.Quantity.Value != b.Quantity.Value)
-            return false;
-        if (a.UnitPrice.HasValue && b.UnitPrice.HasValue && a.UnitPrice.Value != b.UnitPrice.Value)
-            return false;
-        if (a.DiscountAmount.HasValue && b.DiscountAmount.HasValue && a.DiscountAmount.Value != b.DiscountAmount.Value)
-            return false;
-        return true;
+        return $"OrderPreview_{orderPreviewId}";
+    }
+    
+    /// <summary>
+    /// Lấy OrderPreviewResponseDTO từ cache thông qua OrderPreviewId.
+    /// </summary>
+    /// <returns>OrderPreviewResponseDTO nếu tìm thấy, null nếu không tìm thấy hoặc đã hết hạn.</returns>
+    public static OrderPreviewResponseDTO? GetOrderPreviewFromCache(IMemoryCache memoryCache, Guid orderPreviewId)
+    {
+        var cacheKey = GenerateOrderPreviewCacheKey(orderPreviewId);
+        if (memoryCache.TryGetValue(cacheKey, out OrderPreviewResponseDTO? cachedPreview))
+        {
+            return cachedPreview;
+        }
+        return null;
     }
     
     public class OrderDeletedException : Exception

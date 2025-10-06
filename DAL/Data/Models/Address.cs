@@ -16,27 +16,30 @@ public class Address
 
     [Column("province")]
     [StringLength(100)]
-    public string? Province { get; set; }
+    [Required]
+    public string Province { get; set; } = string.Empty;
 
     [Column("district")]
     [StringLength(100)]
-    public string? District { get; set; }
+    [Required]
+    public string District { get; set; } = string.Empty;
 
     [Column("commune")]
     [StringLength(100)]
-    public string? Commune { get; set; }
+    [Required]
+    public string Commune { get; set; } = string.Empty;
 
     [Column("province_code")]
-    [StringLength(20)]
-    public string? ProvinceCode { get; set; }
+    [Required]
+    public int ProvinceCode { get; set; }
 
     [Column("district_code")]
-    [StringLength(20)]
-    public string? DistrictCode { get; set; }
+    [Required]
+    public int DistrictCode { get; set; }
 
     [Column("commune_code")]
-    [StringLength(20)]
-    public string? CommuneCode { get; set; }
+    [Required]
+    public int CommuneCode { get; set; }
 
     [Column("latitude")]
     [Precision(10, 8)]

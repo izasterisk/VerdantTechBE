@@ -69,6 +69,7 @@ builder.Services.AddScoped<IRepository<CartItem>, Repository<CartItem>>();
 builder.Services.AddScoped<IRepository<Order>, Repository<Order>>();
 builder.Services.AddScoped<IRepository<OrderDetail>, Repository<OrderDetail>>();
 builder.Services.AddScoped<IRepository<ProductRegistration>, Repository<ProductRegistration>>();
+builder.Services.AddScoped<IRepository<MediaLink>, Repository<MediaLink>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -97,6 +98,9 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
+
+// Configure Memory Cache
+builder.Services.AddMemoryCache();
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(AutoMapperConfig));

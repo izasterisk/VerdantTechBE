@@ -19,15 +19,15 @@ public class OrderController : BaseController
     }
 
     /// <summary>
-    /// Tạo đơn hàng mới cho người dùng hiện tại (lấy userId từ JWT)
+    /// Tạo preview đơn hàng (bước 1: xem trước giá, phí ship, tổng tiền)
     /// </summary>
-    /// <param name="dto">Thông tin đơn hàng</param>
-    /// <returns>Đơn hàng vừa tạo</returns>
-    [HttpPost]
+    /// <param name="dto">Thông tin đơn hàng preview</param>
+    /// <returns>Order preview với các tùy chọn vận chuyển, được cache trong 10 phút</returns>
+    [HttpPost("preview")]
     [Authorize]
-    [EndpointSummary("Create Order")]
-    [EndpointDescription("Tạo đơn hàng mới cho user hiện tại (userId lấy từ token).")]
-    public async Task<ActionResult<APIResponse>> CreateOrder([FromBody] OrderCreateDTO dto)
+    [EndpointSummary("Create Order Preview")]
+    [EndpointDescription("Tạo preview đơn hàng để xem trước giá, phí ship và các tùy chọn vận chuyển. Preview sẽ được cache trong 10 phút rồi biến mất hoàn toàn vì không được lưu trong DB.")]
+    public async Task<ActionResult<APIResponse>> CreateOrderPreview([FromBody] OrderPreviewCreateDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
@@ -35,7 +35,33 @@ public class OrderController : BaseController
         try
         {
             var userId = GetCurrentUserId();
-            var order = await _orderService.CreateOrderAsync(userId, dto, GetCancellationToken());
+            var preview = await _orderService.CreateOrderPreviewAsync(userId, dto, GetCancellationToken());
+            return SuccessResponse(preview, HttpStatusCode.Created);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Tạo đơn hàng thật từ preview (bước 2: xác nhận và lưu vào database)
+    /// </summary>
+    /// <param name="orderPreviewId">ID của order preview (lấy từ response của CreateOrderPreview)</param>
+    /// <param name="dto">Chỉ cần ShippingDetailId - ID phương thức vận chuyển được chọn</param>
+    /// <returns>Đơn hàng đã được lưu vào database</returns>
+    [HttpPost("{orderPreviewId}")]
+    [Authorize]
+    [EndpointSummary("Create Order From Preview")]
+    [EndpointDescription("Tạo đơn hàng thật từ preview đã cache, nhận vào Guid orderPreviewId. Preview phải còn hợp lệ (chưa quá 10 phút).")]
+    public async Task<ActionResult<APIResponse>> CreateOrder(Guid orderPreviewId, [FromBody] OrderCreateDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var order = await _orderService.CreateOrderAsync(orderPreviewId, dto, GetCancellationToken());
             return SuccessResponse(order, HttpStatusCode.Created);
         }
         catch (Exception ex)
@@ -53,10 +79,7 @@ public class OrderController : BaseController
     [HttpPatch("{orderId}")]
     [Authorize]
     [EndpointSummary("Update Order (PATCH)")]
-    [EndpointDescription("Cập nhật một phần đơn hàng. Nếu Quantity của sản phẩm = 0 thì sản phẩm đó sẽ bị xóa khỏi order. " +
-                         "Nếu xóa hết item thì sẽ tự động xóa luôn order, trả về 204 No Content. " +
-                         "Nếu muốn thêm sản phẩm mới vào order thì thêm bình thường nhưng phải để Id = 0. " +
-                         "Lưu ý: Xóa là HARD DELETE, không thể khôi phục.")]
+    [EndpointDescription("Nếu truyền CancelledReason đồng nghĩa với xác nhận hủy đơn. Không thể hủy đơn khi trạng thái đã là Shipped hoặc Delivered.")]
     public async Task<ActionResult<APIResponse>> UpdateOrder(ulong orderId, [FromBody] OrderUpdateDTO dto)
     {
         var validationResult = ValidateModel();
