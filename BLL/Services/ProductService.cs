@@ -3,6 +3,7 @@ using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
 using BLL.DTO.ProductRegistration;
 using BLL.Interfaces;
+using DAL.Data.Models;
 using DAL.IRepository;
 
 namespace BLL.Services
