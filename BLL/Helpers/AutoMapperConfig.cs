@@ -2,6 +2,7 @@ using AutoMapper;
 using BLL.DTO.Address;
 using BLL.DTO.Cart;
 using BLL.DTO.CO2;
+using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.Order;
 using BLL.DTO.ProductCategory;
@@ -84,16 +85,12 @@ public class AutoMapperConfig : Profile
         CreateMap<MediaLink, ImagesDTO>().ReverseMap();
 
         // Order mappings
-        CreateMap<OrderCreateDTO, DAL.Data.Models.Order>()
-            .ForMember(d => d.OrderDetails, opt => opt.Ignore());
-        CreateMap<OrderDetailDTO, OrderDetail>().ReverseMap();
-        CreateMap<OrderUpdateDTO, DAL.Data.Models.Order>()
-            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));;
-        CreateMap<OrderDetailUpdateDTO, OrderDetail>()
-            .ForMember(d => d.Id, opt => opt.Ignore())
-            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));;
+        CreateMap<ProductResponseDTO, Product>().ReverseMap();
+        CreateMap<RateResponseDTO, ShippingDetailDTO>().ReverseMap();
+        CreateMap<OrderDetailResponseDTO, OrderDetail>().ReverseMap();
+        CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>().ReverseMap();
+        CreateMap<DAL.Data.Models.Order, OrderPreviewResponseDTO>().ReverseMap();
         CreateMap<DAL.Data.Models.Order, OrderResponseDTO>().ReverseMap();
-        CreateMap<OrderDetail, OrderDetailResponseDTO>().ReverseMap();
-        CreateMap<Product, ProductResponseDTO>().ReverseMap();
+        CreateMap<DAL.Data.Models.Order, OrderUpdateDTO>().ReverseMap();
     }
 }

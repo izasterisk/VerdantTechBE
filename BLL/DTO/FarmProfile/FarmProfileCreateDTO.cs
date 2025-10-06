@@ -28,17 +28,17 @@ namespace BLL.DTO.FarmProfile;
         public string Commune { get; set; } = string.Empty;
         
         [Required(ErrorMessage = "Mã tỉnh/thành là bắt buộc")]
-        [StringLength(100, ErrorMessage = "Mã tỉnh/thành không được vượt quá 100 ký tự")]
-        public string ProvinceCode { get; set; } = null!;
+        [Range(1, int.MaxValue, ErrorMessage = "Mã tỉnh/thành phải lớn hơn 0")]
+        public int ProvinceCode { get; set; }
 
         [Required(ErrorMessage = "Mã quận/huyện là bắt buộc")]
-        [StringLength(100, ErrorMessage = "Mã quận/huyện không được vượt quá 100 ký tự")]
-        public string DistrictCode { get; set; } = null!;
+        [Range(1, int.MaxValue, ErrorMessage = "Mã quận/huyện phải lớn hơn 0")]
+        public int DistrictCode { get; set; }
 
         [Required(ErrorMessage = "Mã xã/phường là bắt buộc")]
-        [StringLength(100, ErrorMessage = "Mã xã/phường không được vượt quá 100 ký tự")]
-        public string CommuneCode { get; set; } = null!;
-
+        [Range(1, int.MaxValue, ErrorMessage = "Mã xã/phường phải lớn hơn 0")]
+        public int CommuneCode { get; set; }        
+        
         [Required(ErrorMessage = "Vĩ độ không được để trống")]
         [Range(-90, 90, ErrorMessage = "Vĩ độ phải nằm trong khoảng -90 đến 90")]
         public decimal Latitude { get; set; }

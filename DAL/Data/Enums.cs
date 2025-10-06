@@ -249,8 +249,8 @@ public enum MediaOwnerType
 
 public enum MediaPurpose
 {
+    None,
     Front,
-    Back,
-    None
+    Back
 }
 

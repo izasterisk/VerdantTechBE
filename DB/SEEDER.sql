@@ -6,15 +6,15 @@
 
 -- Insert Addresses (updated with FPT University HCM address for admin and real Vietnamese address data)
 INSERT INTO `addresses` (`id`, `location_address`, `province`, `district`, `commune`, `province_code`, `district_code`, `commune_code`, `latitude`, `longitude`, `created_at`, `updated_at`) VALUES
-(1, 'Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Long Thạnh Mỹ', 'TP.HCM', 'Thành phố Thủ Đức', 'Phường Long Thạnh Mỹ', '700000', '720300', '720300', 10.84142000, 106.80986000, '2025-09-22 07:45:00', '2025-09-22 07:45:00'),
-(2, 'Số 789 Đường Công Nghiệp, Quận Hai Bà Trưng, Hà Nội', 'Hà Nội', 'Quận Hai Bà Trưng', 'Phường Bách Khoa', '100000', '100300', '10030001', 21.00650000, 105.84250000, '2025-09-22 08:00:00', '2025-09-22 08:00:00'),
-(3, 'Số 321 Đường Nông Sản, Quận 7, TP.HCM', 'Hồ Chí Minh', 'Quận 7', 'Phường Tân Phong', '700000', '700700', '70070001', 10.72890000, 106.71940000, '2025-09-22 08:30:00', '2025-09-22 08:30:00'),
-(4, 'Số 123 Đường Nông Nghiệp, Thành phố Biên Hòa, Đồng Nai', 'Đồng Nai', 'Thành phố Biên Hòa', 'Phường Tân Phong', '810000', '810001', '81000101', 10.94740000, 106.82420000, '2025-09-22 10:00:00', '2025-09-22 10:00:00'),
-(5, 'Số 456 Đường Nông Thôn, Huyện Đức Hòa, Long An', 'Long An', 'Huyện Đức Hòa', 'Xã Đức Hòa Thượng', '850000', '850300', '85030001', 10.88080000, 106.39220000, '2025-09-22 10:30:00', '2025-09-22 10:30:00'),
-(6, 'Số 555 Đường Quang Minh, Huyện Mê Linh, Hà Nội', 'Hà Nội', 'Huyện Mê Linh', 'Thị trấn Quang Minh', '100000', '102900', '272', 21.17890000, 105.69540000, '2025-09-22 11:00:00', '2025-09-22 11:00:00'),
-(7, 'Số 777 Đường Tân Phú, Quận Tân Bình, TP.HCM', 'Hồ Chí Minh', 'Quận Tân Bình', 'Phường 15', '700000', '700300', '70030015', 10.80150000, 106.65340000, '2025-09-22 11:30:00', '2025-09-22 11:30:00'),
-(8, 'Số 999 Đường Công Viên, Quận Hà Đông, Hà Nội', 'Hà Nội', 'Quận Hà Đông', 'Phường Hà Cầu', '100000', '101500', '10150001', 20.97240000, 105.78420000, '2025-09-22 12:00:00', '2025-09-22 12:00:00'),
-(9, 'Số 168 Đường Thạch Đà, Huyện Mê Linh, Hà Nội', 'Hà Nội', 'Huyện Mê Linh', 'Xã Thạch Đà', '100000', '102900', '266', 21.19750000, 105.71240000, '2025-09-22 12:30:00', '2025-09-22 12:30:00');
+(1, 'Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Long Thạnh Mỹ', 'TP.HCM', 'Thành phố Thủ Đức', 'Phường Long Thạnh Mỹ', 700000, 720300, 720300, 10.84142000, 106.80986000, '2025-09-22 07:45:00', '2025-09-22 07:45:00'),
+(2, 'Số 789 Đường Công Nghiệp, Quận Hai Bà Trưng, Hà Nội', 'Hà Nội', 'Quận Hai Bà Trưng', 'Phường Bách Khoa', 100000, 100300, 10030001, 21.00650000, 105.84250000, '2025-09-22 08:00:00', '2025-09-22 08:00:00'),
+(3, 'Số 321 Đường Nông Sản, Quận 7, TP.HCM', 'Hồ Chí Minh', 'Quận 7', 'Phường Tân Phong', 700000, 700700, 70070001, 10.72890000, 106.71940000, '2025-09-22 08:30:00', '2025-09-22 08:30:00'),
+(4, 'Số 123 Đường Nông Nghiệp, Thành phố Biên Hòa, Đồng Nai', 'Đồng Nai', 'Thành phố Biên Hòa', 'Phường Tân Phong', 810000, 810001, 81000101, 10.94740000, 106.82420000, '2025-09-22 10:00:00', '2025-09-22 10:00:00'),
+(5, 'Số 456 Đường Nông Thôn, Huyện Đức Hòa, Long An', 'Long An', 'Huyện Đức Hòa', 'Xã Đức Hòa Thượng', 850000, 850300, 85030001, 10.88080000, 106.39220000, '2025-09-22 10:30:00', '2025-09-22 10:30:00'),
+(6, 'Số 555 Đường Quang Minh, Huyện Mê Linh, Hà Nội', 'Hà Nội', 'Huyện Mê Linh', 'Thị trấn Quang Minh', 100000, 102900, 272, 21.17890000, 105.69540000, '2025-09-22 11:00:00', '2025-09-22 11:00:00'),
+(7, 'Số 777 Đường Tân Phú, Quận Tân Bình, TP.HCM', 'Hồ Chí Minh', 'Quận Tân Bình', 'Phường 15', 700000, 700300, 70030015, 10.80150000, 106.65340000, '2025-09-22 11:30:00', '2025-09-22 11:30:00'),
+(8, 'Số 999 Đường Công Viên, Quận Hà Đông, Hà Nội', 'Hà Nội', 'Quận Hà Đông', 'Phường Hà Cầu', 100000, 101500, 10150001, 20.97240000, 105.78420000, '2025-09-22 12:00:00', '2025-09-22 12:00:00'),
+(9, 'Số 168 Đường Thạch Đà, Huyện Mê Linh, Hà Nội', 'Hà Nội', 'Huyện Mê Linh', 'Xã Thạch Đà', 100000, 102900, 266, 21.19750000, 105.71240000, '2025-09-22 12:30:00', '2025-09-22 12:30:00');
 
 -- Insert Users (with gmail.com emails, consistent password, and vendor role users)
 INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `tax_code`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `RefreshToken`, `RefreshTokenExpiresAt`, `created_at`, `updated_at`, `deleted_at`) VALUES

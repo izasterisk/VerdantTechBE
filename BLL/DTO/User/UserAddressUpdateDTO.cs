@@ -16,14 +16,14 @@ public class UserAddressUpdateDTO
     [StringLength(100, ErrorMessage = "Tên xã/phường không được vượt quá 100 ký tự")]
     public string? Commune { get; set; }
     
-    [StringLength(100, ErrorMessage = "Mã tỉnh/thành không được vượt quá 100 ký tự")]
-    public string? ProvinceCode { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Mã tễnh/thành phải lớn hơn 0")]
+    public int? ProvinceCode { get; set; }
 
-    [StringLength(100, ErrorMessage = "Mã quận/huyện không được vượt quá 100 ký tự")]
-    public string? DistrictCode { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Mã quận/huyện phải lớn hơn 0")]
+    public int? DistrictCode { get; set; }
 
-    [StringLength(100, ErrorMessage = "Mã xã/phường không được vượt quá 100 ký tự")]
-    public string? CommuneCode { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "Mã xã/phường phải lớn hơn 0")]
+    public int? CommuneCode { get; set; }
 
     [Range(-90.0, 90.0, ErrorMessage = "Vĩ độ phải nằm trong khoảng từ -90 đến 90")]
     public decimal? Latitude { get; set; }
