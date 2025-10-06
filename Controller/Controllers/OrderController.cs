@@ -79,7 +79,7 @@ public class OrderController : BaseController
     [HttpPatch("{orderId}")]
     [Authorize]
     [EndpointSummary("Update Order (PATCH)")]
-    [EndpointDescription("Khi đã có CancelledReason, trạng thái đơn hàng nhận vào phải là null hoặc Cancelled. Không thể hủy đơn khi trạng thái đã là Shipped hoặc Delivered.")]
+    [EndpointDescription("Nếu truyền CancelledReason đồng nghĩa với xác nhận hủy đơn. Không thể hủy đơn khi trạng thái đã là Shipped hoặc Delivered.")]
     public async Task<ActionResult<APIResponse>> UpdateOrder(ulong orderId, [FromBody] OrderUpdateDTO dto)
     {
         var validationResult = ValidateModel();
