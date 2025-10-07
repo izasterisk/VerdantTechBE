@@ -29,24 +29,50 @@ namespace Controller.Controllers
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         [HttpPost("register-product")]
-        public async Task<IActionResult> RegisterProduct([FromBody] ProductRegistrationCreateDTO requestDTO, CancellationToken cancellationToken)
+        [EndpointSummary("Register Product By VendorID")]
+        [EndpointDescription("đăng ký sản phẩm của vendor và đợi staff duyệt .")]
+        public async Task<ActionResult<APIResponse>> RegisterProduct([FromBody] ProductRegistrationCreateDTO requestDTO)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                var vendorid = GetCurrentUserId();
+                var result = await _productService.ProductRegistrationAsync(vendorid, requestDTO, GetCancellationToken());
+                return Ok(result);
             }
-            var vendorid = GetCurrentUserId();
-            var result = await _productService.ProductRegistrationAsync(vendorid, requestDTO, cancellationToken);
-            return Ok(result);
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+
+            }
         }
 
-
         /// <summary>
-        /// Lấy thông tin sản phẩm theo ID
+        /// Get toàn bộ sản phẩm đã đăng ký của nhà cung cấp (vendor) hiện tại
         /// </summary>
-        /// <param name="id">ID của sản phẩm</param>
-        /// <returns>Thông tin sản phẩm</returns>
-        [HttpGet("{id}")]
+        /// <returns></returns>
+        [HttpGet("product-registrations")]
+        [EndpointSummary("Get All Product By VendorID")]
+        [EndpointDescription("Lấy toàn bộ thông tin sản phẩm đã đăng ký theo VendorID.")]
+        public async Task<ActionResult<APIResponse>> GetAllProductRegistrationsByVendorId()
+        {
+            try
+            {
+                var vendorid = GetCurrentUserId();
+                var result = await _productService.GetAllProductByVendorIdAsync(vendorid, GetCancellationToken());
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+
+        }
+            /// <summary>
+            /// Lấy thông tin sản phẩm theo ID
+            /// </summary>
+            /// <param name="id">ID của sản phẩm</param>
+            /// <returns>Thông tin sản phẩm</returns>
+            [HttpGet("{id}")]
         [EndpointSummary("Get Product By ID")]
         [EndpointDescription("Lấy thông tin  sản phẩm theo ID.")]
         public async Task<ActionResult<APIResponse>> GetProductById([FromRoute] ulong id)

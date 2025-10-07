@@ -102,19 +102,15 @@ public class AutoMapperConfig : Profile
         CreateMap<Product, ProductResponseDTO>().ReverseMap();
         // Mapping cho ProductRegistration
         CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
-            .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, object>
+            .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>
             {
                 { "Width", src.DimensionsCm.Width },
                 { "Height", src.DimensionsCm.Height },
                 { "Length", src.DimensionsCm.Length }
             }));
         CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
-    .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new DimensionsDTO
-    {
-        Width = src.DimensionsCm.ContainsKey("Width") ? Convert.ToDecimal(src.DimensionsCm["Width"]) : 0,
-        Height = src.DimensionsCm.ContainsKey("Height") ? Convert.ToDecimal(src.DimensionsCm["Height"]) : 0,
-        Length = src.DimensionsCm.ContainsKey("Length") ? Convert.ToDecimal(src.DimensionsCm["Length"]) : 0
-    }));
+            .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => 
+                src.DimensionsCm.ToDictionary(k => k.Key, v => (object)v.Value)));
         CreateMap<DAL.Data.Models.Order, OrderUpdateDTO>().ReverseMap();
     }
 }

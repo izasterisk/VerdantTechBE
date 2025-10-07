@@ -79,5 +79,15 @@ namespace BLL.Services
             var response = _mapper.Map<ProductResponseDTO>(result);
             return response;
         }
+
+        public async Task<IReadOnlyList<ProductRegistrationReponseDTO?>> GetAllProductByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default)
+        {
+
+            if (vendorId == 0)
+                throw new UnauthorizedAccessException("Người dùng chưa đăng nhập hoặc không hợp lệ");
+            var list =  await _productRegistrationRepository.GetProductRegistrationByVendorIdAsync(vendorId, useNoTracking: true, cancellationToken);
+            var response = _mapper.Map<IReadOnlyList<ProductRegistrationReponseDTO?>>(list);
+            return response;
+        }
     }
 }
