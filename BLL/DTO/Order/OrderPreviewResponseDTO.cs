@@ -6,7 +6,7 @@ namespace BLL.DTO.Order;
 
 public class OrderPreviewResponseDTO
 {
-    public Guid orderPreviewId { get; set; } = Guid.NewGuid();
+    public Guid OrderPreviewId { get; set; } = Guid.NewGuid();
     
     // [Required(ErrorMessage = "CustomerId là bắt buộc.")]
     public ulong CustomerId { get; set; }

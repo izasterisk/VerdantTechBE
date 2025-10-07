@@ -93,11 +93,11 @@ public class OrderService : IOrderService
         if (dto.OrderPaymentMethod == OrderPaymentMethod.COD)
             cod = response.TotalAmountBeforeShippingFee;
         List<RateResponseDTO> shippingOptions = await _courierApiClient.GetRatesAsync(720300, 700000, 
-            address.CommuneCode, address.ProvinceCode, cod, response.TotalAmountBeforeShippingFee, 
-            width, height, length, weight, cancellationToken);
+            address.DistrictCode, address.ProvinceCode, cod, response.TotalAmountBeforeShippingFee, 
+            width, height, length, weight * 1000, cancellationToken);
         response.ShippingDetails = _mapper.Map<List<ShippingDetailDTO>>(shippingOptions);
         
-        var cacheKey = OrderHelper.GenerateOrderPreviewCacheKey(response.orderPreviewId);
+        var cacheKey = OrderHelper.GenerateOrderPreviewCacheKey(response.OrderPreviewId);
         var cacheOptions = new MemoryCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
         _memoryCache.Set(cacheKey, response, cacheOptions);
         

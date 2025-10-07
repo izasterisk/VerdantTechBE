@@ -29,8 +29,12 @@ public class AddressResponseDTO
 
     [Range(-180.0, 180.0, ErrorMessage = "Kinh độ phải nằm trong khoảng từ -180 đến 180")]
     public decimal? Longitude { get; set; }
+    
+    public bool IsDeleted { get; set; } = false;
 
     public DateTime? CreatedAt { get; set; }
     
     public DateTime? UpdatedAt { get; set; }
+    
+    public DateTime? DeletedAt { get; set; }
 }
