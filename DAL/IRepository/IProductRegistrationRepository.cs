@@ -10,5 +10,6 @@ namespace DAL.IRepository
     public interface IProductRegistrationRepository
     {
         Task <ProductRegistration> CreateProductAsync(ProductRegistration entity, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<ProductRegistration>> GetProductRegistrationByVendorIdAsync(ulong vendorId, bool useNoTracking = true, CancellationToken cancellationToken = default);
     }
 }
