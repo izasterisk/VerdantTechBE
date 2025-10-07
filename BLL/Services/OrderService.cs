@@ -132,6 +132,7 @@ public class OrderService : IOrderService
         }).ToList();
         var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, cancellationToken);
         var finalResponse = await _orderRepository.GetOrderByIdAsync(createdOrder.Id, cancellationToken);
+        OrderHelper.RemoveOrderPreviewFromCache(_memoryCache, orderPreviewId);
         return _mapper.Map<OrderResponseDTO>(finalResponse);
     }
 
