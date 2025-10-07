@@ -33,7 +33,7 @@ public class AutoMapperConfig : Profile
         CreateMap<UserUpdateDTO, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<UserResponseDTO, User>().ReverseMap()
-            .ForMember(dest => dest.Addresses, opt => opt.MapFrom(src => src.UserAddresses.Select(ua => ua.Address)));
+            .ForMember(dest => dest.Addresses, opt => opt.MapFrom(src => src.UserAddresses));
         CreateMap<UserAddressCreateDTO, Address>().ReverseMap();
         CreateMap<UserAddressUpdateDTO, Address>().ReverseMap();
         CreateMap<UserAddressUpdateDTO, UserAddress>().ReverseMap();
@@ -46,6 +46,10 @@ public class AutoMapperConfig : Profile
         
         // Address mappings
         CreateMap<Address, AddressResponseDTO>().ReverseMap();
+        CreateMap<UserAddress, AddressResponseDTO>()
+            .IncludeMembers(src => src.Address)
+            .ForMember(dest => dest.IsDeleted, opt => opt.MapFrom(src => src.IsDeleted))
+            .ForMember(dest => dest.DeletedAt, opt => opt.MapFrom(src => src.DeletedAt));
         CreateMap<FarmProfileCreateDto, Address>().ReverseMap();
         CreateMap<FarmProfileUpdateDTO, Address>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
