@@ -94,7 +94,8 @@ public class AutoMapperConfig : Profile
         CreateMap<ProductResponseDTO, Product>().ReverseMap();
         CreateMap<RateResponseDTO, ShippingDetailDTO>().ReverseMap();
         CreateMap<OrderDetailResponseDTO, OrderDetail>().ReverseMap();
-        CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>().ReverseMap();
+        CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
+            .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
         CreateMap<DAL.Data.Models.Order, OrderPreviewResponseDTO>().ReverseMap();
         CreateMap<DAL.Data.Models.Order, OrderResponseDTO>().ReverseMap();
         CreateMap<OrderDetail, OrderDetailResponseDTO>().ReverseMap();
