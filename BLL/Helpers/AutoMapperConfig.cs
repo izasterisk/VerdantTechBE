@@ -96,10 +96,12 @@ public class AutoMapperConfig : Profile
         CreateMap<OrderDetailResponseDTO, OrderDetail>().ReverseMap();
         CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
             .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
-        CreateMap<DAL.Data.Models.Order, OrderPreviewResponseDTO>().ReverseMap();
+        CreateMap<DAL.Data.Models.Order, OrderPreviewResponseDTO>().ReverseMap()
+            .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
         CreateMap<DAL.Data.Models.Order, OrderResponseDTO>().ReverseMap();
         CreateMap<OrderDetail, OrderDetailResponseDTO>().ReverseMap();
         CreateMap<Product, ProductResponseDTO>().ReverseMap();
+        
         // Mapping cho ProductRegistration
         CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
             .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>

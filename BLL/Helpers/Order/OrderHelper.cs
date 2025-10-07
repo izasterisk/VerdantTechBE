@@ -40,6 +40,16 @@ public class OrderHelper
         return null;
     }
     
+    /// <summary>
+    /// Xóa OrderPreviewResponseDTO khỏi cache sau khi đã tạo order thành công.
+    /// Điều này đảm bảo preview không thể được sử dụng lại để tạo nhiều order.
+    /// </summary>
+    public static void RemoveOrderPreviewFromCache(IMemoryCache memoryCache, Guid orderPreviewId)
+    {
+        var cacheKey = GenerateOrderPreviewCacheKey(orderPreviewId);
+        memoryCache.Remove(cacheKey);
+    }
+    
     public class OrderDeletedException : Exception
     {
         public ulong OrderId { get; }
