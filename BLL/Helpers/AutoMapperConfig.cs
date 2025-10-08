@@ -115,6 +115,36 @@ public class AutoMapperConfig : Profile
         CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
             .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => 
                 src.DimensionsCm.ToDictionary(k => k.Key, v => (object)v.Value)));
+
+        CreateMap<ProductRegistrationUpdateDTO, ProductRegistration>()
+          .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>
+          {
+                { "Width", src.DimensionsCm.Width },
+                { "Height", src.DimensionsCm.Height },
+                { "Length", src.DimensionsCm.Length }
+          }))
+          .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+        CreateMap<ProductRegistration, Product>()
+            .ForMember(d => d.Id, o => o.Ignore()) // tránh insert id nếu DB tự sinh
+            .ForMember(d => d.ProductCode, o => o.MapFrom(s => s.ProposedProductCode))
+            .ForMember(d => d.ProductName, o => o.MapFrom(s => s.ProposedProductName))
+            .ForMember(d => d.CategoryId, o => o.MapFrom(s => s.CategoryId))
+            .ForMember(d => d.VendorId, o => o.MapFrom(s => s.VendorId))
+            .ForMember(d => d.Description, o => o.MapFrom(s => s.Description))
+            .ForMember(d => d.UnitPrice, o => o.MapFrom(s => s.UnitPrice))
+            .ForMember(d => d.EnergyEfficiencyRating, o => o.MapFrom(s => s.EnergyEfficiencyRating))
+            .ForMember(d => d.Specifications, o => o.MapFrom(s => s.Specifications))
+            .ForMember(d => d.ManualUrls, o => o.MapFrom(s => s.ManualUrls))
+            .ForMember(d => d.WeightKg, o => o.MapFrom(s => s.WeightKg))
+            .ForMember(d => d.WarrantyMonths, o => o.MapFrom(s => s.WarrantyMonths))
+            .ForMember(d => d.DimensionsCm, o => o.MapFrom(s => s.DimensionsCm))
+            // Nếu Product có các trường như Slug/PublicUrl/CreatedAt/UpdatedAt do service set:
+            .ForMember(d => d.Slug, o => o.Ignore())
+            .ForMember(d => d.PublicUrl, o => o.Ignore())
+            .ForMember(d => d.CreatedAt, o => o.Ignore())
+            .ForMember(d => d.UpdatedAt, o => o.Ignore());
+        // Order mappings
         CreateMap<DAL.Data.Models.Order, OrderUpdateDTO>().ReverseMap();
+      
     }
 }
