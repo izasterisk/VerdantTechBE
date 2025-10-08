@@ -29,5 +29,13 @@ namespace DAL.Repository
             return await _repository.GetAllByFilterAsync(_repository => _repository.VendorId == vendorId, useNoTracking, cancellationToken);
         }
 
+        public async Task<ProductRegistration> UpdateProductRegistrationAsync(ProductRegistration entity, CancellationToken cancellationToken = default)
+        {
+            return await _repository.UpdateAsync(entity, cancellationToken);
+       }
+        public async Task<ProductRegistration?> GetProductRegistrationByIdAsync(ulong id, bool useNoTracking = true, CancellationToken cancellationToken = default)
+        {
+            return await _repository.GetAsync(_repository => _repository.Id == id, useNoTracking, cancellationToken);
+        }
     }
 }
