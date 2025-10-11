@@ -28,7 +28,7 @@ CREATE TABLE addresses (
     commune VARCHAR(100) NOT NULL,
     province_code INT NOT NULL COMMENT 'Mã tỉnh/thành phố theo hệ thống GoShip',
     district_code INT NOT NULL COMMENT 'Mã quận/huyện theo hệ thống GoShip',
-    commune_code INT NOT NULL COMMENT 'Mã phường/xã theo hệ thống GoShip',
+    commune_code VARCHAR(20) NOT NULL COMMENT 'Mã phường/xã theo hệ thống GoShip',
     latitude DECIMAL(10,8) NULL COMMENT 'Vĩ độ',
     longitude DECIMAL(11,8) NULL COMMENT 'Kinh độ',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

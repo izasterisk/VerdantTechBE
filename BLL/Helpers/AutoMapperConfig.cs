@@ -9,7 +9,6 @@ using BLL.DTO.ProductCategory;
 using BLL.DTO.ProductRegistration;
 using BLL.DTO.User;
 using DAL.Data.Models;
-using static BLL.DTO.Product.ProductUpdateDTO;
 
 namespace BLL.Helpers;
 

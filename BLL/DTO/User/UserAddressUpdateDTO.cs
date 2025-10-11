@@ -22,8 +22,8 @@ public class UserAddressUpdateDTO
     [Range(1, int.MaxValue, ErrorMessage = "Mã quận/huyện phải lớn hơn 0")]
     public int? DistrictCode { get; set; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "Mã xã/phường phải lớn hơn 0")]
-    public int? CommuneCode { get; set; }
+    [StringLength(20, ErrorMessage = "Mã xã/phường không được vượt quá 20 ký tự")]
+    public string? CommuneCode { get; set; }
 
     [Range(-90.0, 90.0, ErrorMessage = "Vĩ độ phải nằm trong khoảng từ -90 đến 90")]
     public decimal? Latitude { get; set; }

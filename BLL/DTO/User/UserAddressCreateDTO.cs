@@ -29,8 +29,8 @@ public class UserAddressCreateDTO
     public int DistrictCode { get; set; }
 
     [Required(ErrorMessage = "Mã xã/phường là bắt buộc")]
-    [Range(1, int.MaxValue, ErrorMessage = "Mã xã/phường phải lớn hơn 0")]
-    public int CommuneCode { get; set; }
+    [StringLength(20, ErrorMessage = "Mã xã/phường không được vượt quá 20 ký tự")]
+    public string CommuneCode { get; set; } = null!;
 
     [Required(ErrorMessage = "Vĩ độ là bắt buộc")]
     [Range(-90.0, 90.0, ErrorMessage = "Vĩ độ phải nằm trong khoảng từ -90 đến 90")]
