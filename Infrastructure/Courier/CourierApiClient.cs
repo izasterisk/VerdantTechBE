@@ -139,31 +139,13 @@ public class CourierApiClient : ICourierApiClient
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             
             // Use helper to parse and validate response
-            var deliveryDate = CourierApiHelpers.ParseGhnResponse(responseContent, dataElement =>
+            var leadTime = CourierApiHelpers.ParseGhnResponse(responseContent, dataElement =>
             {
                 CourierApiHelpers.ValidateObjectData(dataElement, "thời gian giao hàng");
-                
-                // Get leadtime
-                var leadTime = dataElement.GetProperty("leadtime").GetInt32();
-                
-                // Get leadtime_order object
-                var leadTimeOrder = dataElement.GetProperty("leadtime_order");
-                var fromDateStr = leadTimeOrder.GetProperty("from_estimate_date").GetString() ?? string.Empty;
-                var toDateStr = leadTimeOrder.GetProperty("to_estimate_date").GetString() ?? string.Empty;
-                
-                // Parse datetime strings
-                var fromDate = DateTime.Parse(fromDateStr);
-                var toDate = DateTime.Parse(toDateStr);
-                
-                return new DeliveryDate
-                {
-                    LeadTime = leadTime,
-                    FromDate = fromDate,
-                    ToDate = toDate
-                };
+                return dataElement.GetProperty("leadtime").GetInt32();
             }, "thời gian giao hàng");
             
-            return deliveryDate.LeadTime;
+            return leadTime;
         }
         catch (TaskCanceledException)
         {
@@ -180,6 +162,63 @@ public class CourierApiClient : ICourierApiClient
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Lỗi không xác định khi lấy thời gian giao hàng: {ex.Message}");
+        }
+    }
+
+    public async Task<int> GetShippingFeeAsync(int fromDistrictId, string fromWardCode, int toDistrictId, string toWardCode, int serviceId, int serviceTypeId, int height, int length, int weight, int width, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var url = $"{_baseUrl}/shipping-order/fee";
+            // Create request body
+            var requestBody = new
+            {
+                from_district_id = fromDistrictId,
+                from_ward_code = fromWardCode,
+                service_id = serviceId,
+                service_type_id = serviceTypeId,
+                to_district_id = toDistrictId,
+                to_ward_code = toWardCode,
+                height = height,
+                length = length,
+                weight = weight,
+                width = width
+            };
+            
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            // Use helper to parse and validate response
+            var total = CourierApiHelpers.ParseGhnResponse(responseContent, dataElement =>
+            {
+                CourierApiHelpers.ValidateObjectData(dataElement, "phí vận chuyển");
+                
+                // Get total fee
+                return dataElement.GetProperty("total").GetInt32();
+            }, "phí vận chuyển");
+            
+            return total;
+        }
+        catch (TaskCanceledException)
+        {
+            throw new TimeoutException("Server GHN hiện đang quá tải, vui lòng thử lại sau.");
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException($"Không thể kết nối đến server GHN: {ex.Message}");
+        }
+        catch (InvalidOperationException)
+        {
+            throw; // Re-throw custom exceptions
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Lỗi không xác định khi lấy phí vận chuyển: {ex.Message}");
         }
     }
 }

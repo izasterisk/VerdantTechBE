@@ -1,37 +1,69 @@
-URL: https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/fee
+URL: https://dev-online-gateway.ghn.vn/shiip/public-api/v2/shipping-order/create
+Header: Token, ShopId
 {
-  "from_district_id": 1916,
-  "from_ward_code": "800057",
-  "service_id": 53321,
-  "service_type_id": 2,
-  "to_district_id": 1739,
-  "to_ward_code": "910318",
-  "height": 200,
-  "length": 200,
-  "weight": 1000,
-  "width": 200,
-  "insurance_value": 10000,
-  "cod_failed_amount": 0,
-  "coupon": null
+  "to_name": "abc",
+  "to_phone": "0332190444",
+  "to_address": "72 Thành Thái, Phường 14, Quận 10, Hồ Chí Minh, Vietnam",
+  "to_district_id": 1582,
+  "to_ward_code": "1A1301",
+  "weight": 500,
+  "length": 10,
+  "width": 10,
+  "height": 10,
+  "payment_type_id": 2,
+  "required_note": "KHONGCHOXEMHANG",
+  "note": "Tintest 123",
+  "service_type_id": 2,                
+  "service_id": 53321,                  
+  "insurance_value": 12222,
+  "cod_amount": 20000,
+  "items": [
+    {
+      "name": "abc",
+      "code": "SSSSSS",
+      "quantity": 1,
+      "weight": 200,
+      "length": 10,
+      "width": 10,
+      "height": 10
+    }
+  ]
 }
+
 
 Response:
 {
     "code": 200,
-    "message": "Success",
+    "code_message_value": "",
     "data": {
-        "total": 22385777,
-        "service_fee": 22385777,
-        "insurance_fee": 0,
-        "pick_station_fee": 0,
-        "coupon_value": 0,
-        "r2s_fee": 0,
-        "return_again": 0,
-        "document_return": 0,
-        "double_check": 0,
-        "cod_fee": 0,
-        "pick_remote_areas_fee": 0,
-        "deliver_remote_areas_fee": 0,
-        "cod_failed_fee": 0
-    }
+        "order_code": "L4LRR4",
+        "sort_code": "0-000-0-00",
+        "trans_type": "truck",
+        "ward_encode": "",
+        "district_encode": "",
+        "fee": {
+            "main_service": 20500,
+            "insurance": 0,
+            "cod_fee": 0,
+            "station_do": 0,
+            "station_pu": 0,
+            "return": 0,
+            "r2s": 0,
+            "return_again": 0,
+            "coupon": 0,
+            "document_return": 0,
+            "double_check": 0,
+            "double_check_deliver": 0,
+            "pick_remote_areas_fee": 0,
+            "deliver_remote_areas_fee": 0,
+            "pick_remote_areas_fee_return": 0,
+            "deliver_remote_areas_fee_return": 0,
+            "cod_failed_fee": 0
+        },
+        "total_fee": 20500,
+        "expected_delivery_time": "2025-10-14T16:59:59Z",
+        "operation_partner": ""
+    },
+    "message": "Success",
+    "message_display": "Tạo đơn hàng thành công. Mã đơn hàng: L4LRR4"
 }
