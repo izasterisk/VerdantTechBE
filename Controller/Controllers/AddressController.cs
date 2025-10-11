@@ -21,7 +21,7 @@ public class AddressController : BaseController
     /// </summary>
     /// <returns>Danh sách tỉnh/thành phố</returns>
     [HttpGet("provinces")]
-    [AllowAnonymous]
+    [Authorize]
     [EndpointSummary("Get All Provinces")]
     [EndpointDescription("Lấy danh sách tất cả tỉnh/thành phố từ GHN API. Không yêu cầu authentication.")]
     public async Task<ActionResult<APIResponse>> GetProvinces()
@@ -43,7 +43,7 @@ public class AddressController : BaseController
     /// <param name="provinceId">ID của tỉnh/thành phố để filter (optional)</param>
     /// <returns>Danh sách quận/huyện</returns>
     [HttpGet("districts")]
-    [AllowAnonymous]
+    [Authorize]
     [EndpointSummary("Get Districts (with optional Province filter)")]
     [EndpointDescription("Lấy danh sách quận/huyện từ GHN API. Không yêu cầu authentication. " +
                          "Có thể filter theo provinceId. Ví dụ: /api/Address/districts?provinceId=202")]
@@ -66,7 +66,7 @@ public class AddressController : BaseController
     /// <param name="districtId">ID của quận/huyện</param>
     /// <returns>Danh sách phường/xã</returns>
     [HttpGet("communes")]
-    [AllowAnonymous]
+    [Authorize]
     [EndpointSummary("Get Communes By District")]
     [EndpointDescription("Lấy danh sách phường/xã theo ID quận/huyện từ GHN API. Không yêu cầu authentication. " +
                          "Ví dụ: /api/Address/communes?districtId=1735")]

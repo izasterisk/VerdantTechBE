@@ -4,7 +4,6 @@ namespace BLL.Interfaces.Infrastructure;
 
 public interface ICourierApiClient
 {
-    Task<List<RateResponseDTO>> GetRatesAsync(int fromDistrict, int fromCity, int toDistrict, int toCity, 
-        decimal cod, decimal amount, decimal width, decimal height, decimal length, decimal weight, 
-        CancellationToken cancellationToken = default);
+    Task<List<CourierServicesResponseDTO>> GetAvailableServicesAsync(int fromDistrictId, int toDistrictId, CancellationToken cancellationToken = default);
+    Task<int> GetDeliveryDateAsync(int fromDistrictId, string fromWardCode, int toDistrictId, string toWardCode, int serviceId, CancellationToken cancellationToken = default);
 }
