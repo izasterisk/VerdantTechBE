@@ -2,7 +2,7 @@
 
 public class Province
 {
-    public string ProvinceId { get; set; } = string.Empty;
+    public int ProvinceId { get; set; }
     public string Name { get; set; } = string.Empty;
 }
 

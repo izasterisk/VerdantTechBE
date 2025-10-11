@@ -2,8 +2,8 @@
 
 public class District
 {
-    public string DistrictId { get; set; } = string.Empty;
-    public string ProvinceId { get; set; } = string.Empty;
+    public int DistrictId { get; set; }
+    public int ProvinceId { get; set; }
     public string Name { get; set; } = string.Empty;
 }
 

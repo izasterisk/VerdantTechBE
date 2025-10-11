@@ -1,0 +1,483 @@
+URL: https://online-gateway.ghn.vn/shiip/public-api/master-data/province
+{
+    "code": 200,
+    "message": "Success",
+    "data": [
+        {
+            "ProvinceID": 269,
+            "ProvinceName": "Lào Cai",
+            "CountryID": 1,
+            "Code": "20",
+            "NameExtension": [
+                "Lào Cai",
+                "Tỉnh Lào Cai",
+                "T.Lào Cai",
+                "T Lào Cai",
+                "laocai"
+            ],
+            "IsEnable": 1,
+            "RegionID": 6,
+            "RegionCPN": 5,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 15:41:26.891384 +0700 +07 m=+0.010448463",
+            "UpdatedAt": "2019-12-05 15:41:26.891384 +0700 +07 m=+0.010449016",
+            "AreaID": 1,
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T09:49:55.799Z"
+        },
+        {
+            "ProvinceID": 268,
+            "ProvinceName": "Hưng Yên",
+            "CountryID": 1,
+            "Code": "321",
+            "NameExtension": [
+                "Hưng Yên",
+                "Tỉnh Hưng Yên",
+                "T.Hưng Yên",
+                "T Hưng Yên",
+                "hungyen"
+            ],
+            "IsEnable": 1,
+            "RegionID": 6,
+            "RegionCPN": 4,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 15:41:26.89138 +0700 +07 m=+0.010444468",
+            "UpdatedAt": "2019-12-05 15:41:26.891383 +0700 +07 m=+0.010447473",
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T09:49:56.011Z"
+        },
+        {
+            "ProvinceID": 267,
+            "ProvinceName": "Hòa Bình",
+            "CountryID": 1,
+            "Code": "218",
+            "NameExtension": [
+                "Hòa Bình",
+                "Tỉnh Hòa Bình",
+                "T.Hòa Bình",
+                "T Hòa Bình",
+                "hoabinh"
+            ],
+            "IsEnable": 1,
+            "RegionID": 6,
+            "RegionCPN": 5,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 15:41:26.891378 +0700 +07 m=+0.010443042",
+            "UpdatedAt": "2019-12-05 15:41:26.891379 +0700 +07 m=+0.010443604",
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T09:49:55.852Z"
+        },
+        {
+            "ProvinceID": 266,
+            "ProvinceName": "Sơn La",
+            "CountryID": 1,
+            "Code": "22",
+            "NameExtension": [
+                "Sơn La",
+                "Tỉnh Sơn La",
+                "T.Sơn La",
+                "T Sơn La",
+                "sonla"
+            ],
+            "IsEnable": 1,
+            "RegionID": 6,
+            "RegionCPN": 5,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 15:41:26.891377 +0700 +07 m=+0.010441659",
+            "UpdatedAt": "2019-12-05 15:41:26.891378 +0700 +07 m=+0.010442220",
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T09:49:55.831Z"
+        },
+        {
+            "ProvinceID": 265,
+            "ProvinceName": "Điện Biên",
+            "CountryID": 1,
+            "Code": "230",
+            "NameExtension": [
+                "Điện Biên",
+                "Tỉnh Điện Biên",
+                "T.Điện Biên",
+                "T Điện Biên",
+                "dienbien"
+            ],
+            "IsEnable": 1,
+            "RegionID": 6,
+            "RegionCPN": 5,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 15:41:26.891376 +0700 +07 m=+0.010440285",
+            "UpdatedAt": "2019-12-05 15:41:26.891376 +0700 +07 m=+0.010440840",
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T09:49:55.809Z"
+        },
+        {
+            "ProvinceID": 264,
+            "ProvinceName": "Lai Châu",
+            "CountryID": 1,
+            "Code": "231",
+            "NameExtension": [
+                "Lai Châu",
+                "Tỉnh Lai Châu",
+                "T.Lai Châu",
+                "T Lai Châu",
+                "laichau"
+            ],
+            "IsEnable": 1,
+            "RegionID": 6,
+            "RegionCPN": 5,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 15:41:26.891374 +0700 +07 m=+0.010438850",
+            "UpdatedAt": "2019-12-05 15:41:26.891375 +0700 +07 m=+0.010439440",
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T09:49:55.822Z"
+        }
+    ]
+}
+
+URL: https://online-gateway.ghn.vn/shiip/public-api/master-data/district
+{
+    "code": 200,
+    "message": "Success",
+    "data": [
+        {
+            "DistrictID": 3704,
+            "ProvinceID": 206,
+            "DistrictName": "Huyện Long Đất",
+            "Code": "753",
+            "Type": 2,
+            "SupportType": 3,
+            "NameExtension": [
+                "huyện long đất",
+                "Huyện Long Đất",
+                "huyen long dat",
+                "Huyen Long Dat",
+                "long đất",
+                "Long Đất",
+                "long dat",
+                "Long Dat",
+                "h.long đất",
+                "H.long Đất",
+                "H.long đất",
+                "h.long dat",
+                "H.long Dat"
+            ],
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "PickType": 2,
+            "DeliverType": 2,
+            "WhiteListClient": {
+                "From": [],
+                "To": [],
+                "Return": []
+            },
+            "WhiteListDistrict": {
+                "From": null,
+                "To": null
+            },
+            "GovernmentCode": "753",
+            "ReasonCode": "",
+            "ReasonMessage": "",
+            "OnDates": null,
+            "CreatedEmployee": 8888,
+            "CreatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "CreatedDate": "2025-03-05T11:15:15.294Z",
+            "UpdatedIP": "101.99.32.236",
+            "UpdatedEmployee": 3002766,
+            "UpdatedSource": "internal",
+            "UpdatedDate": "2025-03-18T05:08:07.275Z"
+        },
+        {
+            "DistrictID": 3703,
+            "ProvinceID": 223,
+            "DistrictName": "Quận Phú Xuân",
+            "Code": "475",
+            "Type": 1,
+            "SupportType": 3,
+            "NameExtension": [
+                "quận phú xuân",
+                "Quận Phú Xuân",
+                "quan phu xuan",
+                "Quan Phu Xuan",
+                "phú xuân",
+                "Phú Xuân",
+                "phu xuan",
+                "Phu Xuan",
+                "q.phú xuân",
+                "Q.phú Xuân",
+                "Q.phú xuân",
+                "q.phu xuan",
+                "Q.phu Xuan"
+            ],
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "PickType": 1,
+            "DeliverType": 1,
+            "WhiteListClient": {
+                "From": [],
+                "To": [],
+                "Return": []
+            },
+            "WhiteListDistrict": {
+                "From": null,
+                "To": null
+            },
+            "GovernmentCode": "475",
+            "ReasonCode": "",
+            "ReasonMessage": "",
+            "OnDates": null,
+            "CreatedEmployee": 8888,
+            "CreatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "CreatedDate": "2025-03-05T11:15:14.017Z",
+            "UpdatedIP": "101.99.32.236",
+            "UpdatedEmployee": 3002766,
+            "UpdatedSource": "internal",
+            "UpdatedDate": "2025-03-18T05:11:02.583Z"
+        },
+        {
+            "DistrictID": 3702,
+            "ProvinceID": 223,
+            "DistrictName": "Quận Thuận Hóa",
+            "Code": "474",
+            "Type": 1,
+            "SupportType": 3,
+            "NameExtension": [
+                "quận thuận hóa",
+                "Quận Thuận Hóa",
+                "quan thuan hoa",
+                "Quan Thuan Hoa",
+                "thuận hóa",
+                "Thuận Hóa",
+                "thuan hoa",
+                "Thuan Hoa",
+                "q.thuận hóa",
+                "Q.thuận Hóa",
+                "Q.thuận hóa",
+                "q.thuan hoa",
+                "Q.thuan Hoa"
+            ],
+            "CanUpdateCOD": false,
+            "Status": 1,
+            "PickType": 1,
+            "DeliverType": 1,
+            "WhiteListClient": {
+                "From": [],
+                "To": [],
+                "Return": []
+            },
+            "WhiteListDistrict": {
+                "From": null,
+                "To": null
+            },
+            "GovernmentCode": "474",
+            "ReasonCode": "",
+            "ReasonMessage": "",
+            "OnDates": null,
+            "CreatedEmployee": 8888,
+            "CreatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "CreatedDate": "2025-03-05T11:15:13.598Z",
+            "UpdatedIP": "101.99.32.236",
+            "UpdatedEmployee": 3002766,
+            "UpdatedSource": "internal",
+            "UpdatedDate": "2025-03-18T05:11:13.757Z"
+        }
+    ]
+}
+
+URL: https://online-gateway.ghn.vn/shiip/public-api/master-data/ward?district_id=1735
+{
+    "code": 200,
+    "message": "Success",
+    "data": [
+        {
+            "WardCode": "340314",
+            "DistrictID": 1735,
+            "WardName": "Xã Duy Vinh",
+            "NameExtension": [
+                "Xã Duy Vinh",
+                "X.Duy Vinh",
+                "X Duy Vinh",
+                "Duy Vinh",
+                "Xa Duy Vinh",
+                "duyvinh"
+            ],
+            "IsEnable": 1,
+            "CanUpdateCOD": false,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 16:02:20.408373 +0700 +07 m=+0.044710281",
+            "UpdatedAt": "2020-09-29 13:53:57.957251 +0700 +07 m=+262.619080868",
+            "SupportType": 3,
+            "PickType": 2,
+            "DeliverType": 2,
+            "WhiteListClient": {
+                "From": [],
+                "To": [],
+                "Return": []
+            },
+            "WhiteListWard": {
+                "From": null,
+                "To": null
+            },
+            "GovernmentCode": "20632",
+            "Status": 1,
+            "Config": {
+                "From": {
+                    "LockType": "unlocked"
+                },
+                "To": {
+                    "LockType": "unlocked"
+                },
+                "Return": {
+                    "LockType": "unlocked"
+                }
+            },
+            "ReasonCode": "",
+            "ReasonMessage": "",
+            "OnDates": [
+                "2024-09-22T17:00:00Z",
+                "2024-09-18T17:00:00Z",
+                "2024-09-19T17:00:00Z",
+                "2024-10-30T17:00:00Z",
+                "2024-10-27T17:00:00Z"
+            ],
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T10:13:57.743Z"
+        },
+        {
+            "WardCode": "340313",
+            "DistrictID": 1735,
+            "WardName": "Xã Duy Trung",
+            "NameExtension": [
+                "Xã Duy Trung",
+                "X.Duy Trung",
+                "X Duy Trung",
+                "Duy Trung",
+                "Xa Duy Trung",
+                "duytrung"
+            ],
+            "IsEnable": 1,
+            "CanUpdateCOD": false,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 16:02:20.408369 +0700 +07 m=+0.044706086",
+            "UpdatedAt": "2020-09-29 13:53:57.989012 +0700 +07 m=+262.650841315",
+            "SupportType": 3,
+            "PickType": 2,
+            "DeliverType": 2,
+            "WhiteListClient": {
+                "From": [],
+                "To": [],
+                "Return": []
+            },
+            "WhiteListWard": {
+                "From": null,
+                "To": null
+            },
+            "GovernmentCode": "20623",
+            "Status": 1,
+            "Config": {
+                "From": {
+                    "LockType": "unlocked"
+                },
+                "To": {
+                    "LockType": "unlocked"
+                },
+                "Return": {
+                    "LockType": "unlocked"
+                }
+            },
+            "ReasonCode": "",
+            "ReasonMessage": "",
+            "OnDates": [
+                "2024-09-22T17:00:00Z",
+                "2024-09-18T17:00:00Z",
+                "2024-09-19T17:00:00Z",
+                "2024-10-30T17:00:00Z",
+                "2024-10-27T17:00:00Z"
+            ],
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T10:13:57.704Z"
+        },
+        {
+            "WardCode": "340312",
+            "DistrictID": 1735,
+            "WardName": "Xã Duy Trinh",
+            "NameExtension": [
+                "Xã Duy Trinh",
+                "X.Duy Trinh",
+                "X Duy Trinh",
+                "Duy Trinh",
+                "Xa Duy Trinh",
+                "duytrinh"
+            ],
+            "IsEnable": 1,
+            "CanUpdateCOD": false,
+            "UpdatedBy": 1718600,
+            "CreatedAt": "2019-12-05 16:02:20.408366 +0700 +07 m=+0.044703250",
+            "UpdatedAt": "2020-09-29 13:53:58.048683 +0700 +07 m=+262.710511469",
+            "SupportType": 3,
+            "PickType": 2,
+            "DeliverType": 2,
+            "WhiteListClient": {
+                "From": [],
+                "To": [],
+                "Return": []
+            },
+            "WhiteListWard": {
+                "From": null,
+                "To": null
+            },
+            "GovernmentCode": "20617",
+            "Status": 1,
+            "Config": {
+                "From": {
+                    "LockType": "unlocked"
+                },
+                "To": {
+                    "LockType": "unlocked"
+                },
+                "Return": {
+                    "LockType": "unlocked"
+                }
+            },
+            "ReasonCode": "",
+            "ReasonMessage": "",
+            "OnDates": [
+                "2024-09-22T17:00:00Z",
+                "2024-09-18T17:00:00Z",
+                "2024-09-19T17:00:00Z",
+                "2024-10-30T17:00:00Z",
+                "2024-10-27T17:00:00Z"
+            ],
+            "UpdatedEmployee": 8888,
+            "UpdatedSource": "online--stream--master-data.RawData--UpdateMasterData",
+            "UpdatedDate": "2025-03-05T10:13:57.682Z"
+        }
+    ]
+}
+
+If Error:
+{
+    "code": 400,
+    "message": "Lỗi gọi API: masterdata_wards_v2_by_district_id - District ID khong ton tai",
+    "data": null,
+    "code_message": "SERVER_ERR_COMMON",
+    "code_message_value": "Lỗi hệ thống. Vui lòng thử lại sau"
+}
