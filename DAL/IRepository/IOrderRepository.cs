@@ -11,4 +11,5 @@ public interface IOrderRepository
     Task<bool> FindUserExistAsync(ulong userId, CancellationToken cancellationToken = default);
     Task<bool> ValidateAddressBelongsToUserAsync(ulong addressId, ulong userId, CancellationToken cancellationToken = default);
     Task<List<Order>> GetAllOrdersByUserIdAsync(ulong userId, CancellationToken cancellationToken = default);
+    Task<Product?> GetActiveProductByIdAsync(ulong productId, CancellationToken cancellationToken = default);
 }

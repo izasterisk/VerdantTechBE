@@ -2,6 +2,7 @@
 using DAL.Data;
 
 namespace BLL.DTO.Order;
+
 public class OrderPreviewCreateDTO
 {
     // [Required(ErrorMessage = "CustomerId là bắt buộc.")]
@@ -55,5 +56,5 @@ public class OrderPreviewCreateDTO
     
     [Required(ErrorMessage = "Đơn hàng phải có ít nhất một sản phẩm.")]
     [MinLength(1, ErrorMessage = "Đơn hàng phải có ít nhất một sản phẩm.")]
-    public List<OrderDetailPreviewCreateDTO> OrderDetails { get; set; } = new();
+    public List<OrderDetailsPreviewDTO> OrderDetails { get; set; } = new();
 }

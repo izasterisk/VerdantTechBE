@@ -4,7 +4,7 @@ namespace DAL.IRepository;
 
 public interface IAddressRepository
 {
-    Task<Address?> GetAddressByIdAsync(ulong Id, CancellationToken cancellationToken = default);
+    Task<Address?> GetAddressByIdAsync(ulong id, CancellationToken cancellationToken = default);
     Task<Address> CreateAddressAsync(Address address, CancellationToken cancellationToken = default);
     Task<Address> UpdateAddressAsync(Address address, CancellationToken cancellationToken = default);
 

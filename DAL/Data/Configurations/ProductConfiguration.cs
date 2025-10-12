@@ -59,9 +59,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("description");
             
         builder.Property(e => e.EnergyEfficiencyRating)
-            .HasMaxLength(10)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnType("int")
             .HasColumnName("energy_efficiency_rating");
         
         // Decimal fields with precision

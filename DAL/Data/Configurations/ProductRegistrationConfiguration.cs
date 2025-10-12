@@ -54,9 +54,7 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             
             
         builder.Property(e => e.EnergyEfficiencyRating)
-            .HasMaxLength(10)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnType("int")
             .HasColumnName("energy_efficiency_rating");
             
         // JSON fields - Using JsonHelpers for converter and comparer

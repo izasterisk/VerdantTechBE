@@ -25,8 +25,10 @@ public partial class ProductRegistration
 
     public decimal UnitPrice { get; set; }
 
-    [StringLength(10)]
-    public string? EnergyEfficiencyRating { get; set; }
+    /// <summary>
+    /// Energy efficiency rating (0-5, with 0 being lowest and 5 being highest)
+    /// </summary>
+    public int? EnergyEfficiencyRating { get; set; }
 
     /// <summary>
     /// Technical specifications as key-value pairs (JSON)

@@ -2,18 +2,7 @@
 
 namespace BLL.DTO.Order;
 
-public class OrderDetailResponseDTO
-{
-    public ulong Id { get; set; }
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
-    public decimal DiscountAmount { get; set; }
-    public decimal Subtotal { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public ProductResponseDTO Product { get; set; } = null!;
-}
-
-public class OrderDetailPreviewCreateDTO
+public class OrderDetailsPreviewDTO
 {
     [Required(ErrorMessage = "ProductId là bắt buộc.")]
     public ulong ProductId { get; set; }
@@ -34,7 +23,7 @@ public class OrderDetailPreviewCreateDTO
     // public decimal Subtotal { get; set; }
 }
 
-public class OrderDetailPreviewResponseDTO
+public class OrderDetailsPreviewResponseDTO
 {
     // [Required(ErrorMessage = "ProductId là bắt buộc.")]
     // public ulong ProductId { get; set; }

@@ -82,4 +82,35 @@ public static class CourierApiHelpers
             throw new InvalidOperationException($"Dữ liệu {contextMessage} không đúng định dạng (không phải object).");
         }
     }
+
+    /// <summary>
+    /// Execute API request với exception handling chung
+    /// </summary>
+    /// <typeparam name="T">Kiểu dữ liệu trả về</typeparam>
+    /// <param name="apiCall">Lambda function chứa logic API call</param>
+    /// <param name="errorContext">Context message cho error (vd: "lấy danh sách dịch vụ vận chuyển")</param>
+    /// <returns>Kết quả từ API call</returns>
+    public static async Task<T> ExecuteApiRequestAsync<T>(Func<Task<T>> apiCall, string errorContext)
+    {
+        try
+        {
+            return await apiCall();
+        }
+        catch (TaskCanceledException)
+        {
+            throw new TimeoutException("Server GHN hiện đang quá tải, vui lòng thử lại sau.");
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException($"Không thể kết nối đến server GHN: {ex.Message}");
+        }
+        catch (InvalidOperationException)
+        {
+            throw; // Re-throw custom exceptions
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Lỗi không xác định khi {errorContext}: {ex.Message}");
+        }
+    }
 }

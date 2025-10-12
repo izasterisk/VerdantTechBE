@@ -1,35 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using BLL.DTO.Address;
+﻿namespace BLL.DTO.Order;
 
-namespace BLL.DTO.Order
+public class OrderResponseDTO
 {
-    public class OrderResponseDTO
-    {
-        public ulong Id { get; set; }
-        public ulong CustomerId { get; set; }
-        public string Status { get; set; } = string.Empty;
+    
+}
 
-        public decimal Subtotal { get; set; }
-        public decimal TaxAmount { get; set; }
-        public decimal ShippingFee { get; set; }
-        public decimal DiscountAmount { get; set; }
-        public decimal TotalAmount { get; set; }
-
-        public string? ShippingMethod { get; set; }
-        public string? OrderPaymentMethod { get; set; }
-        public string? TrackingNumber { get; set; }
-        public string? Notes { get; set; }
-        public string? CancelledReason { get; set; }
-
-        public DateTime? CancelledAt { get; set; }
-        public DateTime? ConfirmedAt { get; set; }
-        public DateTime? ShippedAt { get; set; }
-        public DateTime? DeliveredAt { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
-
-        public AddressResponseDTO Address { get; set; } = null!;
-        public List<OrderDetailResponseDTO> OrderDetails { get; set; } = new();
-    }
+public class ProductResponseDTO
+{
+    public ulong Id { get; set; }
+    public string ProductCode { get; set; } = null!;
+    public string ProductName { get; set; } = null!;
+    public string Slug { get; set; } = null!;
+    public string? Description { get; set; }
+    public decimal UnitPrice { get; set; }
+    public int WarrantyMonths { get; set; }
+    public Dictionary<string, object> Specifications { get; set; } = new();
+    public Dictionary<string, decimal> DimensionsCm { get; set; } = new();
 }

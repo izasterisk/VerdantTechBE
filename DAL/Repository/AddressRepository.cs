@@ -29,9 +29,9 @@ public class AddressRepository : IAddressRepository
         return await _addressRepository.UpdateAsync(address, cancellationToken);
     }
     
-    public async Task<Address?> GetAddressByIdAsync(ulong Id, CancellationToken cancellationToken = default)
+    public async Task<Address?> GetAddressByIdAsync(ulong id, CancellationToken cancellationToken = default)
     {
-        return await _addressRepository.GetAsync(u =>u.Id == Id, useNoTracking: true, cancellationToken);
+        return await _addressRepository.GetAsync(u =>u.Id == id, useNoTracking: true, cancellationToken);
     }
     
     public async Task<UserAddress> CreateUserAddressAsync(ulong userId, Address address, CancellationToken cancellationToken = default)
