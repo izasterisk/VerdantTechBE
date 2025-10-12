@@ -9,7 +9,6 @@ using BLL.DTO.ProductCategory;
 using BLL.DTO.ProductRegistration;
 using BLL.DTO.User;
 using DAL.Data.Models;
-using static BLL.DTO.Product.ProductUpdateDTO;
 
 namespace BLL.Helpers;
 
@@ -89,21 +88,7 @@ public class AutoMapperConfig : Profile
             .ForMember(d => d.SoldCount,     o => o.MapFrom(s => s.Product.SoldCount))
             .ForMember(d => d.RatingAverage, o => o.MapFrom(s => s.Product.RatingAverage));
         CreateMap<MediaLink, ImagesDTO>().ReverseMap();
-
-        // Order mappings
-        CreateMap<ProductResponseDTO, Product>().ReverseMap();
-        CreateMap<RateResponseDTO, ShippingDetailDTO>().ReverseMap();
-        CreateMap<OrderDetailResponseDTO, OrderDetail>().ReverseMap();
-        CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
-            .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
-        CreateMap<DAL.Data.Models.Order, OrderPreviewResponseDTO>().ReverseMap()
-            .ForMember(dest => dest.OrderDetails, opt => opt.Ignore())
-            .ForMember(dest => dest.Address, opt => opt.Ignore())
-            .ForMember(dest => dest.Customer, opt => opt.Ignore());
-        CreateMap<DAL.Data.Models.Order, OrderResponseDTO>().ReverseMap();
-        CreateMap<OrderDetail, OrderDetailResponseDTO>().ReverseMap();
-        CreateMap<Product, ProductResponseDTO>().ReverseMap();
-        
+       
         // Mapping cho ProductRegistration
         CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
             .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>
@@ -143,8 +128,10 @@ public class AutoMapperConfig : Profile
             .ForMember(d => d.PublicUrl, o => o.Ignore())
             .ForMember(d => d.CreatedAt, o => o.Ignore())
             .ForMember(d => d.UpdatedAt, o => o.Ignore());
+        
         // Order mappings
-        CreateMap<DAL.Data.Models.Order, OrderUpdateDTO>().ReverseMap();
-      
+        CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
+            .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
+        
     }
 }

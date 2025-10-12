@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using BLL.DTO.Courier;
 using BLL.Interfaces.Infrastructure;
 using Infrastructure.Courier.Models;
@@ -11,310 +12,234 @@ public class CourierApiClient : ICourierApiClient
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly string _baseUrl;
-    private readonly string _bearerToken;
+    private readonly string _token;
+    private readonly int _shopId;
     private readonly int _timeoutSeconds;
 
     public CourierApiClient(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _baseUrl = Environment.GetEnvironmentVariable("GOSHIP_SANDBOX_MANAGE_API_ENDPOINT") ?? "https://sandbox.goship.io/api/v2";
-        _bearerToken = Environment.GetEnvironmentVariable("GOSHIP_TOKEN") ?? throw new InvalidOperationException("GOSHIP_TOKEN không được cấu hình trong .env file");
+        _baseUrl = Environment.GetEnvironmentVariable("GHN_TESTING_URL") ?? "https://dev-online-gateway.ghn.vn/shiip/public-api/v2";
+        _token = Environment.GetEnvironmentVariable("GHN_TESTING_TOKEN") ?? throw new InvalidOperationException("GHN_TESTING_TOKEN không được cấu hình trong .env file");
+        _shopId = int.Parse(Environment.GetEnvironmentVariable("GHN_SHOP_ID") ?? throw new InvalidOperationException("GHN_SHOP_ID không được cấu hình trong .env file"));
         _timeoutSeconds = int.Parse(Environment.GetEnvironmentVariable("TIME_OUT_SECONDS") ?? "10");
         
-        // Configure HttpClient timeout and Bearer token
+        // Configure HttpClient timeout and headers
         _httpClient.Timeout = TimeSpan.FromSeconds(_timeoutSeconds);
-        _httpClient.DefaultRequestHeaders.Authorization = 
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _bearerToken);
+        _httpClient.DefaultRequestHeaders.Add("Token", _token);
+        _httpClient.DefaultRequestHeaders.Add("ShopId", _shopId.ToString());
     }
 
-    public async Task<List<CourierProvinceResponseDTO>> GetCitiesAsync(CancellationToken cancellationToken = default)
+    public async Task<List<CourierServicesResponseDTO>> GetAvailableServicesAsync(int fromDistrictId, int toDistrictId, CancellationToken cancellationToken = default)
     {
-        try
+        return await CourierApiHelpers.ExecuteApiRequestAsync(async () =>
         {
-            var url = $"{_baseUrl}/cities";
-            
-            var response = await _httpClient.GetAsync(url, cancellationToken);
-            response.EnsureSuccessStatusCode();
-            
-            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            
-            // Check if response is HTML (error page) instead of JSON
-            if (jsonContent.TrimStart().StartsWith("<"))
-            {
-                throw new InvalidOperationException("API endpoint không khả dụng hoặc URL không đúng.");
-            }
-            
-            CitiesResponse? citiesResponse;
-            try
-            {
-                citiesResponse = JsonSerializer.Deserialize<CitiesResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException)
-            {
-                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
-            }
-            
-            if (citiesResponse?.Data == null)
-            {
-                throw new InvalidOperationException("Không thể lấy dữ liệu tỉnh/thành phố từ GoShip.");
-            }
-            
-            // Manual mapping to DTO
-            return citiesResponse.Data.Select(city => new CourierProvinceResponseDTO
-            {
-                Id = city.Id,
-                Name = city.Name
-            }).ToList();
-        }
-        catch (TaskCanceledException)
-        {
-            throw new TimeoutException("Server GoShip hiện đang quá tải, vui lòng thử lại sau.");
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new InvalidOperationException($"Không thể kết nối đến server GoShip: {ex.Message}");
-        }
-        catch (InvalidOperationException)
-        {
-            throw; // Re-throw custom exceptions
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Lỗi không xác định khi lấy danh sách tỉnh/thành phố: {ex.Message}");
-        }
-    }
-
-    public async Task<List<CourierDistrictResponseDTO>> GetDistrictsAsync(string cityId, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var url = $"{_baseUrl}/cities/{cityId}/districts";
-            
-            var response = await _httpClient.GetAsync(url, cancellationToken);
-            response.EnsureSuccessStatusCode();
-            
-            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            
-            // Check if response is HTML (error page) instead of JSON
-            if (jsonContent.TrimStart().StartsWith("<"))
-            {
-                throw new InvalidOperationException($"API endpoint không khả dụng hoặc mã thành phố {cityId} không đúng.");
-            }
-            
-            DistrictsResponse? districtsResponse;
-            try
-            {
-                districtsResponse = JsonSerializer.Deserialize<DistrictsResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException)
-            {
-                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
-            }
-            
-            if (districtsResponse?.Data == null)
-            {
-                throw new InvalidOperationException($"Không thể lấy dữ liệu quận/huyện cho thành phố {cityId} từ GoShip.");
-            }
-            
-            // Manual mapping to DTO
-            return districtsResponse.Data.Select(district => new CourierDistrictResponseDTO
-            {
-                Id = district.Id,
-                Name = district.Name
-            }).ToList();
-        }
-        catch (TaskCanceledException)
-        {
-            throw new TimeoutException("Server GoShip hiện đang quá tải, vui lòng thử lại sau.");
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new InvalidOperationException($"Không thể kết nối đến server GoShip: {ex.Message}");
-        }
-        catch (InvalidOperationException)
-        {
-            throw; // Re-throw custom exceptions
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Lỗi không xác định khi lấy danh sách quận/huyện cho thành phố {cityId}: {ex.Message}");
-        }
-    }
-
-    public async Task<List<CourierWardResponseDTO>> GetWardsAsync(string districtId, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var url = $"{_baseUrl}/districts/{districtId}/wards";
-            
-            var response = await _httpClient.GetAsync(url, cancellationToken);
-            response.EnsureSuccessStatusCode();
-            
-            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            
-            // Check if response is HTML (error page) instead of JSON
-            if (jsonContent.TrimStart().StartsWith("<"))
-            {
-                throw new InvalidOperationException($"API endpoint không khả dụng hoặc mã quận/huyện {districtId} không đúng.");
-            }
-            
-            WardsResponse? wardsResponse;
-            try
-            {
-                wardsResponse = JsonSerializer.Deserialize<WardsResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException)
-            {
-                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
-            }
-            
-            if (wardsResponse?.Data == null)
-            {
-                throw new InvalidOperationException($"Không thể lấy dữ liệu phường/xã cho quận/huyện {districtId} từ GoShip.");
-            }
-            
-            // Manual mapping to DTO
-            return wardsResponse.Data.Select(ward => new CourierWardResponseDTO
-            {
-                Id = ward.Id,
-                Name = ward.Name
-            }).ToList();
-        }
-        catch (TaskCanceledException)
-        {
-            throw new TimeoutException("Server GoShip hiện đang quá tải, vui lòng thử lại sau.");
-        }
-        catch (HttpRequestException ex)
-        {
-            throw new InvalidOperationException($"Không thể kết nối đến server GoShip: {ex.Message}");
-        }
-        catch (InvalidOperationException)
-        {
-            throw; // Re-throw custom exceptions
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Lỗi không xác định khi lấy danh sách phường/xã cho quận/huyện {districtId}: {ex.Message}");
-        }
-    }
-
-    public async Task<List<RateResponseDTO>> GetRatesAsync(int fromDistrict, int fromCity, int toDistrict, int toCity, 
-        decimal cod, decimal amount, decimal width, decimal height, decimal length, decimal weight, 
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var url = $"{_baseUrl}/rates";
-            
+            var url = $"{_baseUrl}/shipping-order/available-services";
+            // Create request body
             var requestBody = new
             {
-                shipment = new
-                {
-                    address_from = new
-                    {
-                        district = fromDistrict,
-                        city = fromCity
-                    },
-                    address_to = new
-                    {
-                        district = toDistrict,
-                        city = toCity
-                    },
-                    parcel = new
-                    {
-                        cod = cod,
-                        amount = amount,
-                        width = width,
-                        height = height,
-                        length = length,
-                        weight = weight
-                    }
-                }
+                shop_id = _shopId,
+                from_district = fromDistrictId,
+                to_district = toDistrictId
             };
-
+            
             var jsonContent = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
             var response = await _httpClient.PostAsync(url, content, cancellationToken);
             response.EnsureSuccessStatusCode();
             
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             
-            // Check if response is HTML (error page) instead of JSON
-            if (responseContent.TrimStart().StartsWith("<"))
+            // Use helper to parse and validate response
+            var services = CourierApiHelpers.ParseGhnResponse(responseContent, dataElement =>
             {
-                throw new InvalidOperationException("API endpoint không khả dụng hoặc URL không đúng.");
-            }
+                CourierApiHelpers.ValidateArrayData(dataElement, "dịch vụ vận chuyển");
+                
+                var serviceList = new List<CourierServices>();
+                foreach (var item in dataElement.EnumerateArray())
+                {
+                    var service = new CourierServices
+                    {
+                        ServiceId = item.GetProperty("service_id").GetInt32(),
+                        ShortName = item.GetProperty("short_name").GetString() ?? string.Empty,
+                        ServiceTypeId = item.GetProperty("service_type_id").GetInt32()
+                    };
+                    serviceList.Add(service);
+                }
+                return serviceList;
+            }, "dịch vụ vận chuyển");
             
-            var ratesResponse = JsonSerializer.Deserialize<JsonDocument>(responseContent);
-            var dataElement = ratesResponse?.RootElement.GetProperty("data");
-            
-            if (dataElement == null || dataElement.Value.ValueKind == JsonValueKind.Null)
+            // Map to DTO
+            return services.Select(service => new CourierServicesResponseDTO
             {
-                throw new InvalidOperationException("Không thể lấy dữ liệu rates từ GoShip.");
-            }
-            
-            var rates = JsonSerializer.Deserialize<List<RateResponse>>(dataElement.Value.GetRawText(), new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            if (rates == null) return new List<RateResponseDTO>();
-            
-            // Manual mapping to DTO
-            return rates.Select(rate => new RateResponseDTO
-            {
-                Id = rate.Id,
-                CarrierName = rate.CarrierName,
-                CarrierLogo = rate.CarrierLogo,
-                CarrierShortName = rate.CarrierShortName,
-                Service = rate.Service,
-                Expected = rate.Expected,
-                IsApplyOnly = rate.IsApplyOnly,
-                PromotionId = rate.PromotionId,
-                Discount = rate.Discount,
-                WeightFee = rate.WeightFee,
-                LocationFirstFee = rate.LocationFirstFee,
-                LocationStepFee = rate.LocationStepFee,
-                RemoteAreaFee = rate.RemoteAreaFee,
-                OilFee = rate.OilFee,
-                LocationFee = rate.LocationFee,
-                CodFee = rate.CodFee,
-                ServiceFee = rate.ServiceFee,
-                TotalFee = rate.TotalFee,
-                TotalAmount = rate.TotalAmount,
-                TotalAmountCarrier = rate.TotalAmountCarrier,
-                TotalAmountShop = rate.TotalAmountShop,
-                PriceTableId = rate.PriceTableId,
-                InsurranceFee = rate.InsurranceFee,
-                ReturnFee = rate.ReturnFee
+                ServiceId = service.ServiceId,
+                ShortName = service.ShortName,
+                ServiceTypeId = service.ServiceTypeId
             }).ToList();
-        }
-        catch (TaskCanceledException)
+        }, "lấy danh sách dịch vụ vận chuyển");
+    }
+
+    public async Task<int> GetDeliveryDateAsync(int fromDistrictId, string fromWardCode, int toDistrictId, string toWardCode, int serviceId, CancellationToken cancellationToken = default)
+    {
+        return await CourierApiHelpers.ExecuteApiRequestAsync(async () =>
         {
-            throw new TimeoutException("Server GoShip hiện đang quá tải, vui lòng thử lại sau.");
-        }
-        catch (HttpRequestException ex)
+            var url = $"{_baseUrl}/shipping-order/leadtime";
+            // Create request body
+            var requestBody = new
+            {
+                from_district_id = fromDistrictId,
+                from_ward_code = fromWardCode,
+                to_district_id = toDistrictId,
+                to_ward_code = toWardCode,
+                service_id = serviceId
+            };
+            
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            // Use helper to parse and validate response
+            return CourierApiHelpers.ParseGhnResponse(responseContent, dataElement =>
+            {
+                CourierApiHelpers.ValidateObjectData(dataElement, "thời gian giao hàng");
+                return dataElement.GetProperty("leadtime").GetInt32();
+            }, "thời gian giao hàng");
+        }, "lấy thời gian giao hàng");
+    }
+
+    public async Task<int> GetShippingFeeAsync(int fromDistrictId, string fromWardCode, int toDistrictId, 
+        string toWardCode, int serviceId, int serviceTypeId, int height, int length, int weight, int width, CancellationToken cancellationToken = default)
+    {
+        return await CourierApiHelpers.ExecuteApiRequestAsync(async () =>
         {
-            throw new InvalidOperationException($"Không thể kết nối đến server GoShip: {ex.Message}");
-        }
-        catch (InvalidOperationException)
+            var url = $"{_baseUrl}/shipping-order/fee";
+            // Create request body
+            var requestBody = new
+            {
+                from_district_id = fromDistrictId,
+                from_ward_code = fromWardCode,
+                service_id = serviceId,
+                service_type_id = serviceTypeId,
+                to_district_id = toDistrictId,
+                to_ward_code = toWardCode,
+                height = height,
+                length = length,
+                weight = weight,
+                width = width
+            };
+            
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            // Use helper to parse and validate response
+            return CourierApiHelpers.ParseGhnResponse(responseContent, dataElement =>
+            {
+                CourierApiHelpers.ValidateObjectData(dataElement, "phí vận chuyển");
+                return dataElement.GetProperty("total").GetInt32();
+            }, "phí vận chuyển");
+        }, "lấy phí vận chuyển");
+    }
+
+    public async Task<CourierOrderCreateResponseDTO> CreateOrderAsync(string toName, string toPhone, string toAddress, int toDistrictId, string toWardCode, int weight, int length, int width, int height, int paymentTypeId, string note, int serviceTypeId, int serviceId, int codAmount, List<OrderItemsCreateDTO> items, CancellationToken cancellationToken = default)
+    {
+        return await CourierApiHelpers.ExecuteApiRequestAsync(async () =>
         {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Lỗi không xác định khi lấy rates: {ex.Message}");
-        }
+            var url = $"{_baseUrl}/shipping-order/create";
+            // Create request body
+            var requestBody = new
+            {
+                to_name = toName,
+                to_phone = toPhone,
+                to_address = toAddress,
+                to_district_id = toDistrictId,
+                to_ward_code = toWardCode,
+                weight = weight,
+                length = length,
+                width = width,
+                height = height,
+                payment_type_id = paymentTypeId,
+                required_note = "KHONGCHOXEMHANG",
+                note = note,
+                service_type_id = serviceTypeId,
+                service_id = serviceId,
+                cod_amount = codAmount,
+                items = items.Select(item => new
+                {
+                    name = item.Name,
+                    code = item.Code,
+                    quantity = item.Quantity,
+                    weight = item.Weight,
+                    length = item.Length,
+                    width = item.Width,
+                    height = item.Height
+                }).ToList()
+            };
+            
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.PostAsync(url, content, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            // Use helper to parse and validate response
+            var orderCreate = CourierApiHelpers.ParseGhnResponse(responseContent, dataElement =>
+            {
+                CourierApiHelpers.ValidateObjectData(dataElement, "tạo đơn hàng");
+                
+                // Get fee object
+                var feeElement = dataElement.GetProperty("fee");
+                
+                return new OrderCreate
+                {
+                    OrderCode = dataElement.GetProperty("order_code").GetString() ?? string.Empty,
+                    SortCode = dataElement.GetProperty("sort_code").GetString() ?? string.Empty,
+                    TransType = dataElement.GetProperty("trans_type").GetString() ?? string.Empty,
+                    WardEncode = dataElement.GetProperty("ward_encode").GetString() ?? string.Empty,
+                    DistrictEncode = dataElement.GetProperty("district_encode").GetString() ?? string.Empty,
+                    MainService = feeElement.GetProperty("main_service").GetInt32(),
+                    Insurance = feeElement.GetProperty("insurance").GetInt32(),
+                    CodFee = feeElement.GetProperty("cod_fee").GetInt32(),
+                    StationDo = feeElement.GetProperty("station_do").GetInt32(),
+                    StationPu = feeElement.GetProperty("station_pu").GetInt32(),
+                    Return = feeElement.GetProperty("return").GetInt32(),
+                    R2s = feeElement.GetProperty("r2s").GetInt32(),
+                    ReturnAgain = feeElement.GetProperty("return_again").GetInt32(),
+                    Coupon = feeElement.GetProperty("coupon").GetInt32(),
+                    DocumentReturn = feeElement.GetProperty("document_return").GetInt32(),
+                    DoubleCheck = feeElement.GetProperty("double_check").GetInt32(),
+                    DoubleCheckDeliver = feeElement.GetProperty("double_check_deliver").GetInt32(),
+                    PickRemoteAreasFee = feeElement.GetProperty("pick_remote_areas_fee").GetInt32(),
+                    DeliverRemoteAreasFee = feeElement.GetProperty("deliver_remote_areas_fee").GetInt32(),
+                    PickRemoteAreasFeeReturn = feeElement.GetProperty("pick_remote_areas_fee_return").GetInt32(),
+                    DeliverRemoteAreasFeeReturn = feeElement.GetProperty("deliver_remote_areas_fee_return").GetInt32(),
+                    CodFailedFee = feeElement.GetProperty("cod_failed_fee").GetInt32(),
+                    TotalFee = dataElement.GetProperty("total_fee").GetInt32(),
+                    ExpectedDeliveryTime = DateTime.Parse(dataElement.GetProperty("expected_delivery_time").GetString() ?? string.Empty),
+                    OperationPartner = dataElement.GetProperty("operation_partner").GetString() ?? string.Empty
+                };
+            }, "tạo đơn hàng");
+            
+            // Map to DTO
+            return new CourierOrderCreateResponseDTO
+            {
+                OrderCode = orderCreate.OrderCode,
+                TransType = orderCreate.TransType,
+                TotalFee = orderCreate.TotalFee,
+                ExpectedDeliveryTime = orderCreate.ExpectedDeliveryTime
+            };
+        }, "tạo đơn hàng");
     }
 }

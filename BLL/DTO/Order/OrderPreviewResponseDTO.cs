@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using BLL.DTO.Address;
+using BLL.DTO.Courier;
 using DAL.Data;
 
 namespace BLL.DTO.Order;
@@ -7,10 +8,10 @@ namespace BLL.DTO.Order;
 public class OrderPreviewResponseDTO
 {
     public Guid OrderPreviewId { get; set; } = Guid.NewGuid();
-    
-    // [Required(ErrorMessage = "CustomerId là bắt buộc.")]
+    [Required(ErrorMessage = "CustomerId là bắt buộc.")]
     public ulong CustomerId { get; set; }
-    public string Status { get; set; } = OrderStatus.Pending.ToString();
+
+    public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
     [Required(ErrorMessage = "Tổng phụ (Subtotal) là bắt buộc.")]
     [Range(0, double.MaxValue, ErrorMessage = "Tổng phụ không được âm.")]
@@ -32,12 +33,13 @@ public class OrderPreviewResponseDTO
     // [Required(ErrorMessage = "AddressId là bắt buộc.")]
     // public ulong AddressId { get; set; }
 
-    // [Required(ErrorMessage = "Phương thức thanh toán là bắt buộc.")]
-    public string? OrderPaymentMethod { get; set; }
+    [Required(ErrorMessage = "Phương thức thanh toán là bắt buộc.")]
+    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Installment.")]
+    public OrderPaymentMethod OrderPaymentMethod { get; set; }
 
     // [MaxLength(100, ErrorMessage = "Phương thức vận chuyển không được vượt quá 100 ký tự.")]
     // public string? ShippingMethod { get; set; }
-
+    
     // [MaxLength(100, ErrorMessage = "Mã theo dõi không được vượt quá 100 ký tự.")]
     // public string? TrackingNumber { get; set; }
 
@@ -57,32 +59,14 @@ public class OrderPreviewResponseDTO
     
     [Required(ErrorMessage = "Đơn hàng phải có ít nhất một sản phẩm.")]
     [MinLength(1, ErrorMessage = "Đơn hàng phải có ít nhất một sản phẩm.")]
-    public List<OrderDetailPreviewResponseDTO> OrderDetails { get; set; } = new();
+    public List<OrderDetailsPreviewResponseDTO> OrderDetails { get; set; } = new();
     public AddressResponseDTO Address { get; set; } = null!;
-    
     public List<ShippingDetailDTO> ShippingDetails { get; set; } = new();
 }
 
 public class ShippingDetailDTO
 {
-    public string Id { get; set; } = string.Empty;
-    public string CarrierName { get; set; } = string.Empty;
-    public string? CarrierLogo { get; set; }
-    public string CarrierShortName { get; set; } = string.Empty;
-    public string Service { get; set; } = string.Empty;
-    public string Expected { get; set; } = string.Empty;
-    public decimal TotalAmount { get; set; }
-}
-
-public class ProductResponseDTO
-{
-    public ulong Id { get; set; }
-    public string ProductCode { get; set; } = string.Empty;
-    public string ProductName { get; set; } = string.Empty;
-    public string Slug { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public decimal UnitPrice { get; set; }
-    public string? Images { get; set; }
-    public int WarrantyMonths { get; set; }
-    public decimal RatingAverage { get; set; }
+    public CourierServicesResponseDTO CourierServices { get; set; } = new();
+    public int ShippingFee { get; set; }
+    public DateOnly EstimateDeliveryDate { get; set; }
 }

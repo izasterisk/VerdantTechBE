@@ -14,23 +14,18 @@ public class OrderRepository : IOrderRepository
     private readonly IRepository<Address> _addressRepository;
     private readonly IRepository<UserAddress> _userAddressRepository;
     private readonly IRepository<FarmProfile> _farmProfileRepository;
+    private readonly IRepository<Product> _productRepository;
     
-    public OrderRepository(
-        IRepository<Order> orderRepository, 
-        VerdantTechDbContext dbContext, 
-        IRepository<User> userRepository, 
-        IRepository<Address> addressRepository, 
-        IRepository<UserAddress> userAddressRepository,
-        IRepository<FarmProfile> farmProfileRepository,
-        IOrderDetailRepository orderDetailRepository)
+    public OrderRepository(IOrderDetailRepository orderDetailRepository, IRepository<Order> orderRepository, VerdantTechDbContext dbContext, IRepository<User> userRepository, IRepository<Address> addressRepository, IRepository<UserAddress> userAddressRepository, IRepository<FarmProfile> farmProfileRepository, IRepository<Product> productRepository)
     {
+        _orderDetailRepository = orderDetailRepository;
         _orderRepository = orderRepository;
         _dbContext = dbContext;
         _userRepository = userRepository;
         _addressRepository = addressRepository;
         _userAddressRepository = userAddressRepository;
         _farmProfileRepository = farmProfileRepository;
-        _orderDetailRepository = orderDetailRepository;
+        _productRepository = productRepository;
     }
     
     public async Task<Order> CreateOrderWithTransactionAsync(Order order, List<OrderDetail> orderDetails, CancellationToken cancellationToken = default)
@@ -124,5 +119,10 @@ public class OrderRepository : IOrderRepository
         var farm = await _farmProfileRepository.AnyAsync(f => f.UserId == userId && f.AddressId == addressId, cancellationToken);
         var user = await _userAddressRepository.AnyAsync(u => u.UserId == userId && u.AddressId == addressId, cancellationToken);
         return farm || user;
+    }
+
+    public async Task<Product?> GetActiveProductByIdAsync(ulong productId, CancellationToken cancellationToken = default)
+    {
+        return await _productRepository.GetAsync(p => p.Id == productId && p.IsActive == true, true, cancellationToken);
     }
 }

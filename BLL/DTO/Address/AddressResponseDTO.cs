@@ -22,7 +22,7 @@ public class AddressResponseDTO
 
     public int? DistrictCode { get; set; }
 
-    public int? CommuneCode { get; set; }
+    public string? CommuneCode { get; set; }
 
     [Range(-90.0, 90.0, ErrorMessage = "Vĩ độ phải nằm trong khoảng từ -90 đến 90")]
     public decimal? Latitude { get; set; }
@@ -35,6 +35,5 @@ public class AddressResponseDTO
     public DateTime? CreatedAt { get; set; }
     
     public DateTime? UpdatedAt { get; set; }
-    
     public DateTime? DeletedAt { get; set; }
 }

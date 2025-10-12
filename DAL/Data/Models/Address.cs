@@ -39,7 +39,8 @@ public class Address
 
     [Column("commune_code")]
     [Required]
-    public int CommuneCode { get; set; }
+    [StringLength(20)]
+    public string CommuneCode { get; set; } = string.Empty;
 
     [Column("latitude")]
     [Precision(10, 8)]

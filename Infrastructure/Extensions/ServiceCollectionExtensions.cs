@@ -1,4 +1,5 @@
 using BLL.Interfaces.Infrastructure;
+using Infrastructure.Address;
 using Infrastructure.Email;
 using Infrastructure.Soil;
 using Infrastructure.Weather;
@@ -35,6 +36,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICourierApiClient, CourierApiClient>();
         return services;
     }
+    
+    public static IServiceCollection AddAddress(this IServiceCollection services)
+    {
+        services.AddScoped<HttpClient>();
+        services.AddScoped<IAddressApiClient, AddressApiClient>();
+        return services;
+    }
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
@@ -42,6 +50,7 @@ public static class ServiceCollectionExtensions
         services.AddWeather();
         services.AddSoilGrids();
         services.AddCourier();
+        services.AddAddress();
         return services;
     }
 }

@@ -34,7 +34,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(e => e.OrderPaymentMethod)
             .HasConversion<string>()
             .HasColumnType("enum('Banking','COD','Installment')")
-            .HasColumnName("payment_method")
+            .HasColumnName("order_payment_method")
             .IsRequired();
         
         // Enum conversion for status

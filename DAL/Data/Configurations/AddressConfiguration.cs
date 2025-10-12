@@ -45,6 +45,7 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
             
         builder.Property(e => e.CommuneCode)
             .HasColumnName("commune_code")
+            .HasMaxLength(20)
             .IsRequired();
             
         builder.Property(e => e.Latitude)

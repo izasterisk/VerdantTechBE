@@ -6,18 +6,37 @@ namespace BLL.Helpers.Order;
 public class OrderHelper
 {
     /// <summary>
-    /// Tính tổng tiền đơn hàng cuối cùng.
+    /// Chuyển đổi Unix timestamp (tính bằng giây) sang DateOnly (UTC).
     /// </summary>
-    public static decimal ComputeTotalAmountForOrder(decimal subtotal, decimal taxAmount, decimal shippingFee, decimal discountAmount)
+    /// <param name="unixTimestamp">Số giây kể từ 1970-01-01 UTC.</param>
+    /// <returns>DateOnly tương ứng với ngày UTC.</returns>
+    public static DateOnly FromUnixTimestampToDateOnly(int unixTimestamp)
     {
-        return subtotal + taxAmount + shippingFee - discountAmount;
+        var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp);
+        return DateOnly.FromDateTime(dateTimeOffset.UtcDateTime);
     }
     
-    public static decimal ComputeSubtotalForOrderItem(int quantity, decimal unitPrice, decimal discountAmount)
+    public static (decimal length, decimal width, decimal height) CalculatePackageDimensions(decimal length, 
+        decimal width, decimal height, decimal nextLength, decimal nextWidth, decimal nextHeight, int quantity)
     {
-        return quantity * unitPrice - discountAmount;
+        var option1 = (length + nextLength * quantity, Math.Max(width, nextWidth),
+            Math.Max(height, nextHeight));
+        var option2 = (Math.Max(length, nextLength), width + nextWidth * quantity,
+            Math.Max(height, nextHeight));
+        var option3 = (Math.Max(length, nextLength), Math.Max(width, nextWidth),
+            height + nextHeight * quantity);
+
+        decimal volume1 = option1.Item1 * option1.Item2 * option1.Item3;
+        decimal volume2 = option2.Item1 * option2.Item2 * option2.Item3;
+        decimal volume3 = option3.Item1 * option3.Item2 * option3.Item3;
+
+        if (volume1 <= volume2 && volume1 <= volume3)
+            return option1;
+        if (volume2 <= volume1 && volume2 <= volume3)
+            return option2;
+        return option3;
     }
-    
+
     /// <summary>
     /// Generate cache key cho OrderPreview.
     /// </summary>
@@ -25,7 +44,20 @@ public class OrderHelper
     {
         return $"OrderPreview_{orderPreviewId}";
     }
-    
+
+    /// <summary>
+    /// Lưu OrderPreviewResponseDTO vào cache với thời gian hết hạn 10 phút.
+    /// </summary>
+    public static void CacheOrderPreview(IMemoryCache memoryCache, Guid orderPreviewId, OrderPreviewResponseDTO data)
+    {
+        var cacheKey = GenerateOrderPreviewCacheKey(orderPreviewId);
+        var cacheOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+        };
+        memoryCache.Set(cacheKey, data, cacheOptions);
+    }
+
     /// <summary>
     /// Lấy OrderPreviewResponseDTO từ cache thông qua OrderPreviewId.
     /// </summary>
@@ -39,7 +71,7 @@ public class OrderHelper
         }
         return null;
     }
-    
+
     /// <summary>
     /// Xóa OrderPreviewResponseDTO khỏi cache sau khi đã tạo order thành công.
     /// Điều này đảm bảo preview không thể được sử dụng lại để tạo nhiều order.
@@ -48,16 +80,5 @@ public class OrderHelper
     {
         var cacheKey = GenerateOrderPreviewCacheKey(orderPreviewId);
         memoryCache.Remove(cacheKey);
-    }
-    
-    public class OrderDeletedException : Exception
-    {
-        public ulong OrderId { get; }
-
-        public OrderDeletedException(ulong orderId)
-            : base($"Order with ID {orderId} has been deleted.")
-        {
-            OrderId = orderId;
-        }
     }
 }

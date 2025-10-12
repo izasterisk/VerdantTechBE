@@ -4,10 +4,8 @@ namespace BLL.Interfaces.Infrastructure;
 
 public interface ICourierApiClient
 {
-    Task<List<CourierProvinceResponseDTO>> GetCitiesAsync(CancellationToken cancellationToken = default);
-    Task<List<CourierDistrictResponseDTO>> GetDistrictsAsync(string cityId, CancellationToken cancellationToken = default);
-    Task<List<CourierWardResponseDTO>> GetWardsAsync(string districtId, CancellationToken cancellationToken = default);
-    Task<List<RateResponseDTO>> GetRatesAsync(int fromDistrict, int fromCity, int toDistrict, int toCity, 
-        decimal cod, decimal amount, decimal width, decimal height, decimal length, decimal weight, 
-        CancellationToken cancellationToken = default);
+    Task<List<CourierServicesResponseDTO>> GetAvailableServicesAsync(int fromDistrictId, int toDistrictId, CancellationToken cancellationToken = default);
+    Task<int> GetDeliveryDateAsync(int fromDistrictId, string fromWardCode, int toDistrictId, string toWardCode, int serviceId, CancellationToken cancellationToken = default);
+    Task<int> GetShippingFeeAsync(int fromDistrictId, string fromWardCode, int toDistrictId, string toWardCode, int serviceId, int serviceTypeId, int height, int length, int weight, int width, CancellationToken cancellationToken = default);
+    Task<CourierOrderCreateResponseDTO> CreateOrderAsync(string toName, string toPhone, string toAddress, int toDistrictId, string toWardCode, int weight, int length, int width, int height, int paymentTypeId, string note, int serviceTypeId, int serviceId, int codAmount, List<OrderItemsCreateDTO> items, CancellationToken cancellationToken = default);
 }

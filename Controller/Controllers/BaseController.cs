@@ -99,10 +99,6 @@ public abstract class BaseController : ControllerBase
                     string.IsNullOrWhiteSpace(invEx.Message) ? "Yêu cầu không hợp lệ." : invEx.Message,
                     HttpStatusCode.BadRequest)),
 
-            // 410: domain-case: đơn hàng đã bị xóa trong khi PATCH
-            OrderHelper.OrderDeletedException ode =>
-                StatusCode(410, APIResponse.Error(ode.Message, HttpStatusCode.Gone)),
-
             // 499/408: request bị hủy/timeout
             OperationCanceledException or TaskCanceledException =>
                 StatusCode(499, APIResponse.Error("Yêu cầu đã bị hủy.", (HttpStatusCode)499)),

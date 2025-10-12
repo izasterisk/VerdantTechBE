@@ -1,7 +1,7 @@
-﻿namespace BLL.DTO.Courier;
+﻿namespace BLL.DTO.Address;
 
 public class CourierProvinceResponseDTO
 {
-    public string Id { get; set; } = string.Empty;
+    public int ProvinceId { get; set; }
     public string Name { get; set; } = string.Empty;
 }
