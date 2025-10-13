@@ -2,7 +2,6 @@ using AutoMapper;
 using BLL.DTO.Address;
 using BLL.DTO.Cart;
 using BLL.DTO.CO2;
-using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.Order;
 using BLL.DTO.ProductCategory;
@@ -132,6 +131,6 @@ public class AutoMapperConfig : Profile
         // Order mappings
         CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
             .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
-        
+        CreateMap<ProductResponseDTO, Product>().ReverseMap();
     }
 }
