@@ -132,5 +132,12 @@ public class AutoMapperConfig : Profile
         CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
             .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
         CreateMap<ProductResponseDTO, Product>().ReverseMap();
+        CreateMap<OrderPreviewResponseDTO, DAL.Data.Models.Order>()
+            .ForMember(dest => dest.OrderDetails, opt => opt.Ignore())
+            .ForMember(dest => dest.Address, opt => opt.Ignore());
+        CreateMap<DAL.Data.Models.Order, OrderResponseDTO>();
+        CreateMap<OrderDetail, OrderDetailsResponseDTO>()
+            .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src.Product));
+        CreateMap<MediaLink, ProductImageResponseDTO>().ReverseMap();
     }
 }
