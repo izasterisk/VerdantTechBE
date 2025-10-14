@@ -1,5 +1,7 @@
-﻿using BLL.DTO.Product;
+﻿using BLL.DTO;
+using BLL.DTO.Product;
 using BLL.DTO.ProductRegistration;
+using BLL.DTO.User;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +16,7 @@ namespace BLL.Interfaces
         Task<ProductResponseDTO?> GetProductByIdAsync(ulong id, CancellationToken cancellationToken = default);
         Task<IReadOnlyList<ProductRegistrationReponseDTO?>> GetAllProductByVendorIdAsync(ulong id, CancellationToken cancellationToken = default);
         Task<IReadOnlyList<ProductResponseDTO?>> GetAllProductByCategoryIdAsync(ulong id, CancellationToken cancellationToken = default);
+        Task<PagedResponse<ProductRegistrationReponseDTO>> GetAllProductRegisterAsync(int page, int pageSize, CancellationToken cancellationToken = default);
         Task<IReadOnlyList<ProductResponseDTO>> GetAllProductAsync(CancellationToken cancellationToken = default);
         Task<ProductResponseDTO> UpdateProductAsync(ulong id, ProductUpdateDTO dto, CancellationToken cancellationToken = default);
     }

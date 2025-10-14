@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
+using BLL.DTO;
 using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
 using BLL.DTO.ProductRegistration;
+using BLL.DTO.User;
 using BLL.Interfaces;
 using DAL.Data.Models;
 using DAL.IRepository;
+using DAL.Repository;
 
 namespace BLL.Services
 {
@@ -88,6 +91,24 @@ namespace BLL.Services
             var list =  await _productRegistrationRepository.GetProductRegistrationByVendorIdAsync(vendorId, useNoTracking: true, cancellationToken);
             var response = _mapper.Map<IReadOnlyList<ProductRegistrationReponseDTO?>>(list);
             return response;
+        }
+        public async Task<PagedResponse<ProductRegistrationReponseDTO>> GetAllProductRegisterAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+        {
+            var (product, totalCount) = await _productRegistrationRepository.GetAllProductRegistrationAsync(page, pageSize, cancellationToken);
+            var userDtos = _mapper.Map<List<ProductRegistrationReponseDTO>>(product);
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            return new PagedResponse<ProductRegistrationReponseDTO>
+            {
+                Data = userDtos,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                TotalRecords = totalCount,
+                HasNextPage = page < totalPages,
+                HasPreviousPage = page > 1
+            };
         }
     }
 }
