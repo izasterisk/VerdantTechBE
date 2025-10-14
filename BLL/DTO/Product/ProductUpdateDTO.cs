@@ -62,6 +62,7 @@ namespace BLL.DTO.Product
 
         [Range(0, int.MaxValue, ErrorMessage = "Số lượng hàng tồn kho phải lớn hơn hoặc bằng 0")]
         public int StockQuantity { get; set; } = 0;
+        [Range(0, 50000, ErrorMessage = "Khối lượng sản phẩm phải từ 0 đến 50.000 gram")]
 
         public decimal? WeightKg { get; set; }
 
@@ -81,13 +82,13 @@ namespace BLL.DTO.Product
 
         public class DimensionsDTO
         {
-            [Range(0.01, double.MaxValue, ErrorMessage = "Chiều rộng phải lớn hơn 0")]
+            [Range(0, 200, ErrorMessage = "Chiều rộng sản phẩm phải từ 0 đến 200 cm")]
             public decimal Width { get; set; }
 
-            [Range(0.01, double.MaxValue, ErrorMessage = "Chiều cao phải lớn hơn 0")]
+            [Range(0, 200, ErrorMessage = "Chiều cao sản phẩm phải từ 0 đến 200 cm")]
             public decimal Height { get; set; }
 
-            [Range(0.01, double.MaxValue, ErrorMessage = "Chiều dài phải lớn hơn 0")]
+            [Range(0, 200, ErrorMessage = "Chiều dài sản phẩm phải từ 0 đến 200 cm")]
             public decimal Length { get; set; }
         }
     }
