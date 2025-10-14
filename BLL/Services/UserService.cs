@@ -140,9 +140,7 @@ public class UserService : IUserService
     {
         var (users, totalCount) = await _userRepository.GetAllUsersAsync(page, pageSize, role, cancellationToken);
         var userDtos = _mapper.Map<List<UserResponseDTO>>(users);
-        
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-        
         return new PagedResponse<UserResponseDTO>
         {
             Data = userDtos,
