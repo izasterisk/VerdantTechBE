@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using BLL.DTO;
 using BLL.DTO.Address;
 using BLL.DTO.Order;
+using BLL.DTO.User;
 using BLL.Helpers.Order;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
@@ -32,7 +34,7 @@ public class OrderService : IOrderService
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
-        if (!await _orderRepository.FindUserExistAsync(userId, cancellationToken))
+        if (await _orderRepository.GetActiveUserByIdAsync(userId, cancellationToken) == null)
             throw new KeyNotFoundException($"Người dùng với ID {userId} không tồn tại.");
         var address = await _addressRepository.GetAddressByIdAsync(dto.AddressId, cancellationToken);
         if (address == null)
@@ -145,7 +147,36 @@ public class OrderService : IOrderService
                 product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
             }
         }
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(createdOrder.CustomerId, cancellationToken));
+        finalResponse.Address = orderPreview.Address;
         OrderHelper.RemoveOrderPreviewFromCache(_memoryCache, orderPreviewId);
         return finalResponse;
+    }
+
+    public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default)
+    {
+        var (orders, totalCount) = await _orderRepository.GetAllOrdersAsync(page, pageSize, status, cancellationToken);
+        var response = _mapper.Map<List<OrderResponseDTO>>(orders);
+        foreach (var item in response)
+        {
+            if (item.OrderDetails != null)
+            {
+                foreach (var product in item.OrderDetails)
+                {
+                    product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
+                }
+            }
+        }
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<OrderResponseDTO>
+        {
+            Data = response,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
     }
 }

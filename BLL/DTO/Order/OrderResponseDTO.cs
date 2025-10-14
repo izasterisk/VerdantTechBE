@@ -1,4 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using BLL.DTO.Address;
+using BLL.DTO.User;
 using DAL.Data;
 
 namespace BLL.DTO.Order;
@@ -8,8 +10,9 @@ public class OrderResponseDTO
     [Required(ErrorMessage = "Mã đơn hàng là bắt buộc.")]
     public ulong Id { get; set; }
 
-    [Required(ErrorMessage = "Mã khách hàng là bắt buộc.")]
-    public ulong CustomerId { get; set; }
+    // [Required(ErrorMessage = "Mã khách hàng là bắt buộc.")]
+    // public ulong CustomerId { get; set; }
+    public UserResponseDTO Customer { get; set; } = null!;
 
     [Required(ErrorMessage = "Trạng thái đơn hàng là bắt buộc.")]
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
@@ -31,8 +34,9 @@ public class OrderResponseDTO
     [Range(0, double.MaxValue, ErrorMessage = "Tổng thanh toán không được âm.")]
     public decimal TotalAmount { get; set; }
 
-    [Required(ErrorMessage = "Địa chỉ giao hàng là bắt buộc.")]
-    public ulong AddressId { get; set; }
+    // [Required(ErrorMessage = "Địa chỉ giao hàng là bắt buộc.")]
+    // public ulong AddressId { get; set; }
+    public AddressResponseDTO Address { get; set; } = null!;
 
     [Required(ErrorMessage = "Phương thức thanh toán là bắt buộc.")]
     [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Installment.")]

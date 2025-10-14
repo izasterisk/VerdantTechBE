@@ -65,4 +65,27 @@ public class OrderController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Lấy danh sách tất cả đơn hàng với phân trang và lọc theo trạng thái
+    /// </summary>
+    /// <param name="page">Số trang (mặc định là 1)</param>
+    /// <param name="pageSize">Số lượng đơn hàng trên mỗi trang (mặc định là 10)</param>
+    /// <param name="status">Trạng thái đơn hàng để lọc (không bắt buộc)</param>
+    /// <returns>Danh sách đơn hàng với thông tin phân trang</returns>
+    [HttpGet]
+    [EndpointSummary("Get All Orders")]
+    [EndpointDescription("GET toàn bộ Order theo Status (Pending, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded). Hoặc không nhập status cũng được, trả về toàn bộ.")]
+    public async Task<ActionResult<APIResponse>> GetAllOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
+    {
+        try
+        {
+            var orders = await _orderService.GetAllOrdersAsync(page, pageSize, status, GetCancellationToken());
+            return SuccessResponse(orders, HttpStatusCode.OK);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

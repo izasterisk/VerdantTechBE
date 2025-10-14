@@ -31,7 +31,7 @@ public class AutoMapperConfig : Profile
         CreateMap<UserUpdateDTO, User>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<UserResponseDTO, User>().ReverseMap()
-            .ForMember(dest => dest.Addresses, opt => opt.MapFrom(src => src.UserAddresses));
+            .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserAddresses));
         CreateMap<UserAddressCreateDTO, Address>().ReverseMap();
         CreateMap<UserAddressUpdateDTO, Address>().ReverseMap();
         CreateMap<UserAddressUpdateDTO, UserAddress>().ReverseMap();

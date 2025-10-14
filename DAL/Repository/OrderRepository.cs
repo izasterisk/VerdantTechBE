@@ -2,6 +2,7 @@
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace DAL.Repository;
 
@@ -105,13 +106,40 @@ public class OrderRepository : IOrderRepository
             true,
             query => query.Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
-                .Include(o => o.Address),
+                .Include(o => o.Address)
+                .Include(o => o.Customer),
             cancellationToken);
     }
     
-    public async Task<bool> FindUserExistAsync(ulong userId, CancellationToken cancellationToken = default)
+    public async Task<(List<Order>, int totalCount)> GetAllOrdersAsync(int page, int pageSize, string? status = null, CancellationToken cancellationToken = default)
     {
-        return await _userRepository.AnyAsync(o => o.Id == userId, cancellationToken);
+        Expression<Func<Order, bool>> filter = o => true;
+        
+        // Apply status filter if provided
+        if (!string.IsNullOrEmpty(status))
+        {
+            if (Enum.TryParse<OrderStatus>(status, true, out var orderStatus))
+            {
+                filter = o => o.Status == orderStatus;
+            }
+        }
+        return await _orderRepository.GetPaginatedWithRelationsAsync(
+            page, 
+            pageSize, 
+            filter, 
+            useNoTracking: true, 
+            orderBy: query => query.OrderByDescending(o => o.CreatedAt),
+            includeFunc: query => query.Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .Include(o => o.Address)
+                .Include(o => o.Customer),
+            cancellationToken
+        );
+    }
+    
+    public async Task<User?> GetActiveUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    {
+        return await _userRepository.GetAsync(o => o.Id == userId && o.IsVerified == true && o.DeletedAt == null, true, cancellationToken);
     }
     
     public async Task<bool> ValidateAddressBelongsToUserAsync(ulong addressId, ulong userId, CancellationToken cancellationToken = default)
