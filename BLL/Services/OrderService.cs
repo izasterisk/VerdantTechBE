@@ -1,15 +1,13 @@
 ﻿using AutoMapper;
+using BLL.DTO;
 using BLL.DTO.Address;
-using BLL.DTO.Courier;
 using BLL.DTO.Order;
-using BLL.Helpers;
+using BLL.DTO.User;
 using BLL.Helpers.Order;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
-using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace BLL.Services;
@@ -36,13 +34,13 @@ public class OrderService : IOrderService
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
-        if (!await _orderRepository.FindUserExistAsync(userId, cancellationToken))
+        if (await _orderRepository.GetActiveUserByIdAsync(userId, cancellationToken) == null)
             throw new KeyNotFoundException($"Người dùng với ID {userId} không tồn tại.");
         var address = await _addressRepository.GetAddressByIdAsync(dto.AddressId, cancellationToken);
         if (address == null)
             throw new KeyNotFoundException($"Địa chỉ với ID {dto.AddressId} không tồn tại.");
         if(!await _orderRepository.ValidateAddressBelongsToUserAsync(dto.AddressId, userId, cancellationToken))
-            throw new KeyNotFoundException($"Địa chỉ với ID {dto.AddressId} không thuộc về người dùng với ID {userId}.");
+            throw new KeyNotFoundException($"Địa chỉ với ID {dto.AddressId} không thuộc về người dùng với ID {userId} hoặc đã bị xóa.");
         
         var response = _mapper.Map<OrderPreviewResponseDTO>(dto);
         response.CustomerId = userId;
@@ -58,6 +56,7 @@ public class OrderService : IOrderService
             if (orderDetail.Quantity > productRaw.StockQuantity || productRaw.StockQuantity == 0)
                 throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} không còn đủ hàng so với yêu cầu trong đơn hàng của bạn.");
             var product = _mapper.Map<ProductResponseDTO>(productRaw);
+            product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(orderDetail.ProductId, cancellationToken));
             OrderDetailsPreviewResponseDTO orderDetailResponse = new()
             {
                 Product = product,
@@ -81,23 +80,103 @@ public class OrderService : IOrderService
         List<ShippingDetailDTO> shippingDetails = new();
         foreach (var availableService in availableServices)
         {
-            int deliveryDate = await _courierApiClient.GetDeliveryDateAsync(3695, "90752", 
-                address.DistrictCode, address.CommuneCode, availableService.ServiceId, cancellationToken);
-            int shippingFee = await _courierApiClient.GetShippingFeeAsync(3695, "90752", 
-                address.DistrictCode, address.CommuneCode, availableService.ServiceId, 
-                availableService.ServiceTypeId, (int)Math.Round(height, MidpointRounding.AwayFromZero), 
-                (int)Math.Round(length, MidpointRounding.AwayFromZero), 
-                (int)Math.Round(weight, MidpointRounding.AwayFromZero), 
-                (int)Math.Round(width, MidpointRounding.AwayFromZero), cancellationToken);
-            shippingDetails.Add(new ShippingDetailDTO
+            try
             {
-                CourierServices = availableService,
-                ShippingFee = shippingFee,
-                EstimateDeliveryDate = OrderHelper.FromUnixTimestampToDateOnly(deliveryDate)
-            });
+                int deliveryDate = await _courierApiClient.GetDeliveryDateAsync(3695, "90752", 
+                    address.DistrictCode, address.CommuneCode, availableService.ServiceId, cancellationToken);
+                int shippingFee = await _courierApiClient.GetShippingFeeAsync(3695, "90752", 
+                    address.DistrictCode, address.CommuneCode, availableService.ServiceId, 
+                    availableService.ServiceTypeId, (int)Math.Round(height, MidpointRounding.AwayFromZero), 
+                    (int)Math.Round(length, MidpointRounding.AwayFromZero), 
+                    (int)Math.Round(weight, MidpointRounding.AwayFromZero), 
+                    (int)Math.Round(width, MidpointRounding.AwayFromZero), cancellationToken);
+                shippingDetails.Add(new ShippingDetailDTO
+                {
+                    CourierServices = availableService,
+                    ShippingFee = shippingFee,
+                    EstimateDeliveryDate = OrderHelper.FromUnixTimestampToDateOnly(deliveryDate)
+                });
+            }
+            catch
+            {
+                continue;
+            }
         }
+        if (shippingDetails.Count == 0)
+            throw new InvalidOperationException("Không thể lấy được thông tin vận chuyển.");
         response.ShippingDetails = shippingDetails;
         OrderHelper.CacheOrderPreview(_memoryCache, response.OrderPreviewId, response);
         return response;
+    }
+
+    public async Task<OrderResponseDTO> CreateOrderAsync(Guid orderPreviewId, OrderCreateDTO dto, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        var orderPreview = OrderHelper.GetOrderPreviewFromCache(_memoryCache, orderPreviewId);
+        if (orderPreview == null)
+            throw new KeyNotFoundException($"Đơn hàng xem trước với ID {orderPreviewId} đã hết hạn.");
+        
+        List<OrderDetail> orderDetails = new();
+        foreach (var orderDetail in orderPreview.OrderDetails)
+        {
+            orderDetails.Add(new OrderDetail
+            {
+                ProductId = orderDetail.Product.Id,
+                Quantity = orderDetail.Quantity,
+                UnitPrice = orderDetail.Product.UnitPrice,
+                DiscountAmount = orderDetail.DiscountAmount,
+                Subtotal = orderDetail.Subtotal
+            });
+        }
+        var selectedShipping = orderPreview.ShippingDetails.FirstOrDefault(s => s.CourierServices.ServiceId == dto.ServiceId);
+        if (selectedShipping == null)
+            throw new KeyNotFoundException($"Dịch vụ vận chuyển với ID {dto.ServiceId} không tồn tại trong đơn hàng xem trước.");
+        var order = _mapper.Map<Order>(orderPreview);
+        order.ShippingFee = selectedShipping.ShippingFee;
+        order.TotalAmount = orderPreview.TotalAmountBeforeShippingFee + order.ShippingFee;
+        order.AddressId = orderPreview.Address.Id;
+        var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, cancellationToken);
+        var response = await _orderRepository.GetOrderByIdAsync(createdOrder.Id, cancellationToken);
+        if(response == null)
+            throw new InvalidOperationException("Không thể tạo đơn hàng, vui lòng liên hệ với Staff để được hỗ trợ.");
+        var finalResponse = _mapper.Map<OrderResponseDTO>(response);
+        if (finalResponse.OrderDetails != null)
+        {
+            foreach (var product in finalResponse.OrderDetails)
+            {
+                product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
+            }
+        }
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(createdOrder.CustomerId, cancellationToken));
+        finalResponse.Address = orderPreview.Address;
+        OrderHelper.RemoveOrderPreviewFromCache(_memoryCache, orderPreviewId);
+        return finalResponse;
+    }
+
+    public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default)
+    {
+        var (orders, totalCount) = await _orderRepository.GetAllOrdersAsync(page, pageSize, status, cancellationToken);
+        var response = _mapper.Map<List<OrderResponseDTO>>(orders);
+        foreach (var item in response)
+        {
+            if (item.OrderDetails != null)
+            {
+                foreach (var product in item.OrderDetails)
+                {
+                    product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
+                }
+            }
+        }
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<OrderResponseDTO>
+        {
+            Data = response,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
     }
 }
