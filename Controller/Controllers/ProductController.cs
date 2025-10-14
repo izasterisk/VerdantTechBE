@@ -130,6 +130,34 @@ namespace Controller.Controllers
                 return HandleException(ex);
             }
         }
+        /// <summary>
+        /// Lấy danh sách tất cả product registration với phân trang 
+        /// </summary>
+        /// <param name="page">Số trang (mặc định: 1)</param>
+        /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
+        /// <returns>Danh sách product registration có phân trang</returns>
+        [HttpGet("registrations")]
+        [Authorize(Roles = "Admin,Staff")]
+        [EndpointSummary("Get All Product Registration (note.)")]
+        public async Task<ActionResult<APIResponse>> GetAllProductRegistraion([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                // Validate pagination parameters
+                if (page < 1)
+                    return ErrorResponse("Page number must be greater than 0");
+
+                if (pageSize < 1 || pageSize > 100)
+                    return ErrorResponse("Page size must be between 1 and 100");
+
+                var users = await _productService.GetAllProductRegisterAsync(page, pageSize, GetCancellationToken());
+                return SuccessResponse(users);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
 
         /// <summary>
         /// Cập nhật thông tin sản phẩm

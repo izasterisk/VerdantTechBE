@@ -44,7 +44,7 @@ namespace BLL.DTO.ProductRegistration
         [Required(ErrorMessage = "Thời gian bảo hành là bắt buộc")]
         public int WarrantyMonths { get; set; } = 12;
 
-        [Range(0.0, double.MaxValue, ErrorMessage = "Khối lượng sản phẩm phải lớn hơn hoặc bằng 0")]
+        [Range(0, 50000, ErrorMessage = "Khối lượng sản phẩm phải từ 0 đến 50.000 gram")]
         public decimal? WeightKg { get; set; }
 
         [Required(ErrorMessage = "Kích thước sản phẩm là bắt buộc")]

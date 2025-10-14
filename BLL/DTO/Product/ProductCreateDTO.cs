@@ -63,6 +63,7 @@ namespace BLL.DTO.Product
         [Range(0, int.MaxValue, ErrorMessage = "Số lượng hàng tồn kho phải lớn hơn hoặc bằng 0")]
         public int StockQuantity { get; set; } = 0;
 
+        [Range(0, 50000, ErrorMessage = "Khối lượng sản phẩm phải từ 0 đến 50.000 gram")]
         public decimal? WeightKg { get; set; }
 
         /// <summary>

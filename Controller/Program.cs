@@ -70,6 +70,7 @@ builder.Services.AddScoped<IRepository<Order>, Repository<Order>>();
 builder.Services.AddScoped<IRepository<OrderDetail>, Repository<OrderDetail>>();
 builder.Services.AddScoped<IRepository<ProductRegistration>, Repository<ProductRegistration>>();
 builder.Services.AddScoped<IRepository<MediaLink>, Repository<MediaLink>>();
+builder.Services.AddScoped<IRepository<ProductCertificate>, Repository<ProductCertificate>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -84,6 +85,7 @@ builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
 builder.Services.AddScoped<IProductRegistrationRepository, ProductRegistrationRepository>();
+builder.Services.AddScoped<IProductCertificateRepository, ProductCertificateRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -96,6 +98,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IStaffService, StaffService>();
+builder.Services.AddScoped<IProductCertificateService, ProductCertificateService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

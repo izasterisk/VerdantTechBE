@@ -5,6 +5,7 @@ using BLL.DTO.CO2;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.Order;
 using BLL.DTO.ProductCategory;
+using BLL.DTO.ProductCertificate;
 using BLL.DTO.ProductRegistration;
 using BLL.DTO.User;
 using DAL.Data.Models;
@@ -131,6 +132,18 @@ public class AutoMapperConfig : Profile
         // Order mappings
         CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
             .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
+        // Certificate mapping 
+        CreateMap<ProductCertificateCreateDTO, ProductCertificate>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+            .ForMember(d => d.UpdatedAt, opt => opt.Ignore());
+
+        CreateMap<ProductCertificateUpdateDTO, ProductCertificate>()
+            .ForMember(d => d.Id, opt => opt.Ignore())
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore());
+        CreateMap<ProductCertificate, ProductCertificateResponseDTO>();
+
+
         CreateMap<ProductResponseDTO, Product>().ReverseMap();
         CreateMap<OrderPreviewResponseDTO, DAL.Data.Models.Order>()
             .ForMember(dest => dest.OrderDetails, opt => opt.Ignore())
