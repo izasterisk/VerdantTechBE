@@ -50,7 +50,7 @@ namespace Controller.Controllers
             CancellationToken ct = default)
         {
             var item = await _service.GetByIdAsync(id, ct);
-            return item is null ? NotFound() : Ok(item);
+            return item is null ? NotFound("Đơn đăng ký không tồn tại.") : Ok(item);
         }
 
         [HttpGet("vendor/{vendorId:long}")]
@@ -149,8 +149,15 @@ namespace Controller.Controllers
 
             var removed = req.RemoveImagePublicIds ?? new List<string>();
 
-            var updated = await _service.UpdateAsync(req.Data, manualUrl, manualPublicUrl, addImages, removed, ct);
-            return Ok(updated);
+            try
+            {
+                var updated = await _service.UpdateAsync(req.Data, manualUrl, manualPublicUrl, addImages, removed, ct);
+                return Ok(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound("Đơn đăng ký không tồn tại.");
+            }
         }
 
         // ========= CHANGE STATUS / DELETE =========
@@ -164,7 +171,7 @@ namespace Controller.Controllers
             CancellationToken ct = default)
         {
             var ok = await _service.ChangeStatusAsync(id, dto.Status, dto.RejectionReason, dto.ApprovedBy, ct);
-            return ok ? NoContent() : NotFound();
+            return ok ? NoContent() : NotFound("Đơn đăng ký không tồn tại.");
         }
 
         [HttpDelete("{id:long}")]
@@ -173,7 +180,7 @@ namespace Controller.Controllers
         public async Task<IActionResult> Delete(ulong id, CancellationToken ct = default)
         {
             var ok = await _service.DeleteAsync(id, ct);
-            return ok ? NoContent() : NotFound();
+            return ok ? NoContent() : NotFound("Đơn đăng ký không tồn tại.");
         }
 
         // ========= Request models =========
