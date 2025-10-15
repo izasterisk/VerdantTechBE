@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using DAL.Data.Models;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace DAL.Data.Configurations;
 
@@ -14,6 +15,7 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
+            .HasColumnName("id")
             .ValueGeneratedOnAdd();
         
         // Required fields
@@ -44,8 +46,9 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
         builder.Property(e => e.Description)
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
-            
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("Description");
+
         builder.Property(e => e.UnitPrice)
             .HasPrecision(12, 2)
             .HasColumnType("decimal(12,2)")
@@ -62,7 +65,6 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .ConfigureAsJson("specifications");
             
         builder.Property(e => e.ManualUrls)
-            .HasMaxLength(1000)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("manual_urls");
@@ -86,13 +88,29 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
 
         builder.Property(e => e.DimensionsCm)
             .ConfigureAsJson("dimensions_cm");
-            
+
         // Enum conversion
+
+        //var statusConverter = new ValueConverter<ProductRegistrationStatus, string>(
+        //   v => v.ToString().ToLower(),                 // enum -> "pending|approved|rejected"
+        //   v => (ProductRegistrationStatus)Enum.Parse(typeof(ProductRegistrationStatus), v, true));
+
+
+        //builder.Property(e => e.Status)
+        //    .HasConversion(statusConverter)
+        //    .HasColumnName("status")
+        //    .HasColumnType("enum('pending','approved','rejected')")
+        //    .HasDefaultValue("pending")                 // default đúng theo DB
+        //    .IsRequired();
+
         builder.Property(e => e.Status)
-            .HasConversion<string>()
+            .HasConversion<string>() // Lưu enum dưới dạng string
+            .HasColumnName("Status") // khớp tên cột trong DB (đang là lowercase)
             .HasColumnType("enum('pending','approved','rejected')")
-            .HasDefaultValue(ProductRegistrationStatus.Pending);
-            
+            .HasDefaultValue(ProductRegistrationStatus.Pending) // <-- dùng enum, KHÔNG phải "pending"
+            .IsRequired();
+
+
         builder.Property(e => e.RejectionReason)
             .HasMaxLength(500)
             .HasCharSet("utf8mb4")
@@ -112,8 +130,17 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
         builder.Property(e => e.ApprovedAt)
             .HasColumnType("timestamp")
             .HasColumnName("approved_at");
-        
+
+
+        builder.Property(e => e.UpdatedAt)
+           .HasColumnType("timestamp")
+           .HasColumnName("UpdatedAt");
+
+
+
         // Indexes
+        builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
+
         builder.HasIndex(e => new { e.VendorId, e.Status })
             .HasDatabaseName("idx_vendor_status");
             

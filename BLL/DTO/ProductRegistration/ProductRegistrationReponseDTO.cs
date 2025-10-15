@@ -1,4 +1,5 @@
-﻿using DAL.Data;
+﻿using BLL.DTO.MediaLink;
+using DAL.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -26,28 +27,34 @@ namespace BLL.DTO.ProductRegistration
 
         public string? EnergyEfficiencyRating { get; set; }
 
-        public Dictionary<string, object>? Specifications { get; set; } 
+        public Dictionary<string, object>? Specifications { get; set; }
 
-        public string? ManualUrls { get; set; }
+        //public string? ManualUrls { get; set; }
 
-        public string? Images { get; set; }
+        //public string? Images { get; set; }
+
+        // Manual lưu ở field riêng
+        public string? ManualUrl { get; set; }
+        public string? ManualPublicUrl { get; set; }
 
         public int WarrantyMonths { get; set; } = 12;
 
         public decimal? WeightKg { get; set; }
 
-        public Dictionary<string, object>? DimensionsCm { get; set; } 
+        public Dictionary<string, object>? DimensionsCm { get; set; }
 
         public ProductRegistrationStatus Status { get; set; } = ProductRegistrationStatus.Pending;
 
         public string? RejectionReason { get; set; }
-
         public ulong? ApprovedBy { get; set; }
-
+        public DateTime? ApprovedAt { get; set; }
         public DateTime CreatedAt { get; set; }
-
         public DateTime UpdatedAt { get; set; }
 
-        public DateTime? ApprovedAt { get; set; }
+
+        // Trả media ra dạng list
+        public List<MediaLinkItemDTO> ProductImages { get; set; } = new();
+        public List<MediaLinkItemDTO> CertificateFiles { get; set; } = new();
+
     }
 }

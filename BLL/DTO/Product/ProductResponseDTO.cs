@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BLL.DTO.MediaLink;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -23,17 +24,21 @@ namespace BLL.DTO.Product
 
         public decimal UnitPrice { get; set; }
 
-        public decimal CommissionRate { get; set; } = 0.00m;
+        public decimal CommissionRate { get; set; }
 
-        public decimal DiscountPercentage { get; set; } = 0.00m;
+        public decimal DiscountPercentage { get; set; } 
 
         public string? EnergyEfficiencyRating { get; set; }
 
         public Dictionary<string, object> Specifications { get; set; } = new();
 
-        public string? ManualUrls { get; set; }
+        //public string? ManualUrls { get; set; }
 
-        public string? Images { get; set; }
+        //public string? Images { get; set; }
+        public string? ManualUrls { get; set; }
+        public string? PublicUrl { get; set; }
+
+        public List<MediaLinkItemDTO> Images { get; set; } = new();
 
         public int WarrantyMonths { get; set; } = 12;
 
@@ -45,9 +50,9 @@ namespace BLL.DTO.Product
 
         public bool IsActive { get; set; } = true;
 
-        public long ViewCount { get; set; } = 0L;
+        public long ViewCount { get; set; } 
 
-        public long SoldCount { get; set; } = 0L;
+        public long SoldCount { get; set; }
 
         public decimal RatingAverage { get; set; } = 0.00m;
 

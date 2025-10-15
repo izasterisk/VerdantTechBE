@@ -1,4 +1,5 @@
-﻿using DAL.Data;
+﻿using BLL.DTO.MediaLink;
+using DAL.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -11,6 +12,11 @@ namespace BLL.DTO.ProductRegistration
 {
     public class ProductRegistrationUpdateDTO 
     {
+        [Required(ErrorMessage = "ProductRegistrationId")] 
+        public ulong Id { get; set; }
+
+        [Required(ErrorMessage = "Nhà cung cấp là bắt buộc")]
+        public ulong VendorId { get; set; }
         [Required(ErrorMessage = "Danh mục sản phẩm là bắt buộc")]
         public ulong CategoryId { get; set; }
 
@@ -35,11 +41,11 @@ namespace BLL.DTO.ProductRegistration
         [Required(ErrorMessage = "Thông số kỹ thuật là bắt buộc")]
         public Dictionary<string, object> Specifications { get; set; } = new();
 
-        [StringLength(1000, ErrorMessage = "Liên kết hướng dẫn sử dụng không được vượt quá 1000 ký tự")]
-        public string? ManualUrls { get; set; }
+        //[StringLength(1000, ErrorMessage = "Liên kết hướng dẫn sử dụng không được vượt quá 1000 ký tự")]
+        //public string? ManualUrls { get; set; }
 
-        [StringLength(1000, ErrorMessage = "Danh sách hình ảnh không được vượt quá 1000 ký tự")]
-        public string? Images { get; set; }
+        //[StringLength(1000, ErrorMessage = "Danh sách hình ảnh không được vượt quá 1000 ký tự")]
+        //public string? Images { get; set; }
 
         [Required(ErrorMessage = "Thời gian bảo hành là bắt buộc")]
         public int WarrantyMonths { get; set; } = 12;
@@ -51,20 +57,22 @@ namespace BLL.DTO.ProductRegistration
         public required DimensionsDTO DimensionsCm { get; set; }
         [Required(ErrorMessage = "Trạng thái là bắt buộc")]
 
-        public ProductRegistrationStatus Status { get; set; }
-        [StringLength(1000, ErrorMessage = "Lý do từ chối không được vượt quá 1000 ký tự")]
+        // Manual mới (nếu upload) – controller set
+        public string? ManualUrl { get; set; }
+        public string? ManualPublicUrl { get; set; }
 
-        public string? RejectionReason { get; set; }
+        // Thêm mới
+        public List<MediaLinkItemDTO>? AddProductImages { get; set; }
+        public List<MediaLinkItemDTO>? AddCertificateFiles { get; set; }
 
-        public ulong? ApprovedBy { get; set; }
+        // Xóa
+        public List<string>? RemoveImagePublicIds { get; set; }
+        public List<string>? RemoveCertificatePublicIds { get; set; }
 
-        public DateTime CreatedAt { get; set; }
 
-        public DateTime UpdatedAt { get; set; }
 
-        public DateTime? ApprovedAt { get; set; }
 
-      
+
 
     }
 }

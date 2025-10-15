@@ -1,114 +1,253 @@
-﻿using AutoMapper;
+﻿// BLL/Services/ProductService.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
 using BLL.DTO;
+using BLL.DTO.MediaLink;
 using BLL.DTO.Product;
-using BLL.DTO.ProductCategory;
-using BLL.DTO.ProductRegistration;
-using BLL.DTO.User;
 using BLL.Interfaces;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
-using DAL.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace BLL.Services
 {
     public class ProductService : IProductService
     {
-        private readonly IProductRepository _productRepository;
-        private readonly IProductRegistrationRepository _productRegistrationRepository;
-        private readonly IProductCategoryRepository _productCategoryRepository;
+        private readonly IProductRepository _repo;
         private readonly IMapper _mapper;
-        public ProductService(IProductRepository productService,IProductRegistrationRepository productRegistrationRepository,IProductCategoryRepository productCategoryRepository, IMapper mapper)
-        { 
-            _productRegistrationRepository = productRegistrationRepository;
-            _productRepository = productService;
-            _productCategoryRepository = productCategoryRepository;
+        private readonly VerdantTechDbContext _db;
+
+        public ProductService(IProductRepository repo, IMapper mapper, VerdantTechDbContext db)
+        {
+            _repo = repo;
             _mapper = mapper;
-        }
-        //public Task<ProductResponseDTO> CreateProductAsync(ProductCreateDTO dto, CancellationToken cancellationToken = default)
-        //{
-        //    throw new NotImplementedException();
-        //}
-        public async Task<ProductRegistrationReponseDTO> ProductRegistrationAsync(ulong currentUserId, ProductRegistrationCreateDTO requestDTO, CancellationToken cancellationToken = default)
-        {
-            
-            var productCategory = await _productCategoryRepository.GetProductCategoryByIdAsync(requestDTO.CategoryId, useNoTracking: true, cancellationToken);
-            if (productCategory == null || !productCategory.IsActive)
-                throw new KeyNotFoundException("Danh mục sản phẩm không tồn tại hoặc không hợp lệ");
-            if(currentUserId == 0) 
-                throw new UnauthorizedAccessException("Người dùng chưa đăng nhập hoặc không hợp lệ");
-            var productEntity = _mapper.Map<ProductRegistration>(requestDTO);
-            productEntity.CreatedAt = DateTime.UtcNow;
-            productEntity.VendorId = currentUserId;
-
-            var createdProduct = await _productRegistrationRepository.CreateProductAsync(productEntity, cancellationToken);
-            var responseDTO = _mapper.Map<ProductRegistrationReponseDTO>(createdProduct);
-            return responseDTO;
-        }
-        public async Task<IReadOnlyList<ProductResponseDTO>> GetAllProductAsync(CancellationToken cancellationToken = default)
-        {
-            var list = await _productRepository.GetAllProductAsync(cancellationToken);
-            var response = _mapper.Map<IReadOnlyList<ProductResponseDTO>>(list);
-            return response;
+            _db = db;
         }
 
-        public async Task<IReadOnlyList<ProductResponseDTO?>> GetAllProductByCategoryIdAsync(ulong id, CancellationToken cancellationToken = default)
+        // ========== READS (Paged) ==========
+        public async Task<PagedResponse<ProductListItemDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
         {
-            var list = await _productRepository.GetAllProductByCategoryIdAsync(id, useNoTracking: true, cancellationToken);
-            var response = _mapper.Map<IReadOnlyList<ProductResponseDTO?>>(list);
-            return response;
+            var (items, total) = await _repo.GetAllProductAsync(page, pageSize, ct);
+            var list = _mapper.Map<List<ProductListItemDTO>>(items);
+
+            // hydrate ảnh (thumbnail đầu tiên) nếu muốn
+            await HydrateImagesAsync(list.Select(x => x.Id).ToList(), list, ct);
+
+            return ToPaged(list, total, page, pageSize);
         }
 
-        public async Task<ProductResponseDTO?> GetProductByIdAsync(ulong id, CancellationToken cancellationToken = default)
+        public async Task<PagedResponse<ProductListItemDTO>> GetByCategoryAsync(ulong categoryId, int page, int pageSize, CancellationToken ct = default)
         {
-         
-            var product = await _productRepository.GetProductByIdAsync(id, useNoTracking: true, cancellationToken);
-            if (product == null)
-                return null;
-            var response = _mapper.Map<ProductResponseDTO>(product);
-            return response;
-
+            var (items, total) = await _repo.GetAllProductByCategoryIdAsync(categoryId, page, pageSize, ct);
+            var list = _mapper.Map<List<ProductListItemDTO>>(items);
+            await HydrateImagesAsync(list.Select(x => x.Id).ToList(), list, ct);
+            return ToPaged(list, total, page, pageSize);
         }
 
-        public async Task<ProductResponseDTO> UpdateProductAsync(ulong id, ProductUpdateDTO dto, CancellationToken cancellationToken = default)
+        public async Task<PagedResponse<ProductListItemDTO>> GetByVendorAsync(ulong vendorId, int page, int pageSize, CancellationToken ct = default)
         {
-            var product = await _productRepository.GetProductByIdAsync(id, useNoTracking: false, cancellationToken);
-            if (product == null)
-                throw new KeyNotFoundException("Không tìm thấy sản phẩm");
-
-            var updatedProduct = _mapper.Map(dto, product);
-
-            var result = await _productRepository.UpdateProductAsync(updatedProduct, cancellationToken);
-
-            var response = _mapper.Map<ProductResponseDTO>(result);
-            return response;
+            var (items, total) = await _repo.GetAllProductByVendorIdAsync(vendorId, page, pageSize, ct);
+            var list = _mapper.Map<List<ProductListItemDTO>>(items);
+            await HydrateImagesAsync(list.Select(x => x.Id).ToList(), list, ct);
+            return ToPaged(list, total, page, pageSize);
         }
 
-        public async Task<IReadOnlyList<ProductRegistrationReponseDTO?>> GetAllProductByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default)
+        public async Task<ProductResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default)
         {
+            var entity = await _repo.GetProductByIdAsync(id, useNoTracking: true, ct);
+            if (entity is null) return null;
 
-            if (vendorId == 0)
-                throw new UnauthorizedAccessException("Người dùng chưa đăng nhập hoặc không hợp lệ");
-            var list =  await _productRegistrationRepository.GetProductRegistrationByVendorIdAsync(vendorId, useNoTracking: true, cancellationToken);
-            var response = _mapper.Map<IReadOnlyList<ProductRegistrationReponseDTO?>>(list);
-            return response;
+            var dto = _mapper.Map<ProductResponseDTO>(entity);
+            // Chuyển rating int? -> string (DTO đang là string?)
+            dto.EnergyEfficiencyRating = entity.EnergyEfficiencyRating?.ToString();
+
+            // Nạp toàn bộ images
+            dto.Images = await LoadImagesAsDtoAsync(id, ct);
+            return dto;
         }
-        public async Task<PagedResponse<ProductRegistrationReponseDTO>> GetAllProductRegisterAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+
+        // ========== UPDATE (base fields + images add/remove) ==========
+        public async Task<ProductResponseDTO> UpdateAsync(
+            ulong id,
+            ProductUpdateDTO dto,
+            List<MediaLinkItemDTO> addImages,
+            List<string> removeImagePublicIds,
+            CancellationToken ct = default)
         {
-            var (product, totalCount) = await _productRegistrationRepository.GetAllProductRegistrationAsync(page, pageSize, cancellationToken);
-            var userDtos = _mapper.Map<List<ProductRegistrationReponseDTO>>(product);
+            var entity = await _repo.GetProductByIdAsync(id, useNoTracking: false, ct)
+                         ?? throw new KeyNotFoundException("Product không tồn tại.");
 
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            // Update base fields
+            entity.CategoryId = dto.CategoryId;
+            entity.VendorId = dto.VendorId;
+            entity.ProductCode = dto.ProductCode;
+            entity.ProductName = dto.ProductName;
+            entity.Description = dto.Description;
+            entity.UnitPrice = dto.UnitPrice;
+            entity.CommissionRate = dto.CommissionRate;
+            entity.DiscountPercentage = dto.DiscountPercentage;
+            entity.EnergyEfficiencyRating = ParseNullableInt(dto.EnergyEfficiencyRating);
+            entity.Specifications = dto.Specifications ?? entity.Specifications;
+            entity.ManualUrls = dto.ManualUrls ?? entity.ManualUrls;
+            entity.PublicUrl = dto.PublicUrl ?? entity.PublicUrl;
+            entity.WarrantyMonths = dto.WarrantyMonths;
+            entity.StockQuantity = dto.StockQuantity;
+            entity.WeightKg = dto.WeightKg;
 
-            return new PagedResponse<ProductRegistrationReponseDTO>
+            // Dimensions từ DTO (Width/Height/Length) -> dict
+            if (dto.DimensionsCm != null)
             {
-                Data = userDtos,
+                entity.DimensionsCm = new Dictionary<string, decimal>
+                {
+                    ["width"] = dto.DimensionsCm.Width,
+                    ["height"] = dto.DimensionsCm.Height,
+                    ["length"] = dto.DimensionsCm.Length
+                };
+            }
+
+            entity.IsActive = dto.IsActive;
+            entity.ViewCount = dto.ViewCount;
+            entity.SoldCount = dto.SoldCount;
+            entity.RatingAverage = dto.RatingAverage;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            // Lưu entity
+            entity = await _repo.UpdateProductAsync(entity, ct);
+
+            // Xoá ảnh theo publicId
+            if (removeImagePublicIds is { Count: > 0 })
+            {
+                var toRemove = await _db.MediaLinks
+                    .Where(m => m.OwnerType == MediaOwnerType.Products
+                             && m.OwnerId == entity.Id
+                             && m.ImagePublicId != null
+                             && removeImagePublicIds.Contains(m.ImagePublicId))
+                    .ToListAsync(ct);
+
+                if (toRemove.Count > 0)
+                {
+                    _db.MediaLinks.RemoveRange(toRemove);
+                    await _db.SaveChangesAsync(ct);
+                }
+            }
+
+            // Thêm ảnh mới
+            if (addImages is { Count: > 0 })
+            {
+                await SaveImagesAsync(entity.Id, addImages, ct);
+            }
+
+            // Trả về DTO đầy đủ
+            var result = _mapper.Map<ProductResponseDTO>(entity);
+            result.EnergyEfficiencyRating = entity.EnergyEfficiencyRating?.ToString();
+            result.Images = await LoadImagesAsDtoAsync(entity.Id, ct);
+            return result;
+        }
+
+        // ========== UPDATE EMISSION (CommissionRate) ==========
+        public Task<bool> UpdateEmissionAsync(ProductUpdateEmissionDTO dto, CancellationToken ct = default)
+            => _repo.UpdateEmissionAsync(dto.Id, dto.CommissionRate, ct);
+
+        // ========== DELETE ==========
+        public Task<bool> DeleteAsync(ulong id, CancellationToken ct = default)
+            => _repo.DeleteAsync(id, ct);
+
+        // ========== Helpers ==========
+        private static PagedResponse<T> ToPaged<T>(List<T> items, int totalRecords, int page, int pageSize)
+        {
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+            return new PagedResponse<T>
+            {
+                Data = items,
                 CurrentPage = page,
                 PageSize = pageSize,
                 TotalPages = totalPages,
-                TotalRecords = totalCount,
+                TotalRecords = totalRecords,
                 HasNextPage = page < totalPages,
                 HasPreviousPage = page > 1
             };
+        }
+
+        private static int? ParseNullableInt(string? s)
+            => int.TryParse(s, out var v) ? v : null;
+
+        private async Task<List<MediaLinkItemDTO>> LoadImagesAsDtoAsync(ulong productId, CancellationToken ct)
+        {
+            var medias = await _db.MediaLinks.AsNoTracking()
+                .Where(m => m.OwnerType == MediaOwnerType.Products && m.OwnerId == productId)
+                .OrderBy(m => m.SortOrder)
+                .ToListAsync(ct);
+
+            return medias.Select(m => new MediaLinkItemDTO
+            {
+                Id = m.Id,
+                ImagePublicId = m.ImagePublicId,
+                ImageUrl = m.ImageUrl,
+                Purpose = m.Purpose.ToString().ToLowerInvariant(),
+                SortOrder = m.SortOrder
+            }).ToList();
+        }
+
+        private async Task SaveImagesAsync(ulong productId, IReadOnlyList<MediaLinkItemDTO> addImages, CancellationToken ct)
+        {
+            var start = await _db.MediaLinks
+                .Where(m => m.OwnerType == MediaOwnerType.Products && m.OwnerId == productId)
+                .Select(m => (int?)m.SortOrder)
+                .MaxAsync(ct) ?? 0;
+
+            var now = DateTime.UtcNow;
+            var sort = start;
+            var list = addImages.Select(i => new MediaLink
+            {
+                OwnerType = MediaOwnerType.Products,
+                OwnerId = productId,
+                ImagePublicId = i.ImagePublicId,
+                ImageUrl = i.ImageUrl,
+                Purpose = ParsePurpose(i.Purpose),
+                SortOrder = ++sort,
+                CreatedAt = now,
+                UpdatedAt = now
+            }).ToList();
+
+            _db.MediaLinks.AddRange(list);
+            await _db.SaveChangesAsync(ct);
+        }
+
+        private static MediaPurpose ParsePurpose(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return MediaPurpose.None;
+            return Enum.TryParse<MediaPurpose>(s, true, out var p) ? p : MediaPurpose.None;
+        }
+
+        /// <summary>
+        /// Gắn thumbnail (ảnh sort nhỏ nhất) vào ProductListItemDTO (optional)
+        /// </summary>
+        private async Task HydrateImagesAsync(List<ulong> ids, List<ProductListItemDTO> rows, CancellationToken ct)
+        {
+            if (ids.Count == 0) return;
+
+            var images = await _db.MediaLinks.AsNoTracking()
+                .Where(m => m.OwnerType == MediaOwnerType.Products && ids.Contains(m.OwnerId))
+                .OrderBy(m => m.OwnerId).ThenBy(m => m.SortOrder)
+                .ToListAsync(ct);
+
+            var firstByOwner = images
+                .GroupBy(m => m.OwnerId)
+                .ToDictionary(g => g.Key, g => g.FirstOrDefault());
+
+            var byId = rows.ToDictionary(x => x.Id);
+            foreach (var kv in firstByOwner)
+            {
+                if (kv.Value == null) continue;
+                if (!byId.TryGetValue(kv.Key, out var row)) continue;
+                // có thể mở rộng DTO list-item để có Thumbnail nếu bạn muốn
+                // row.ThumbnailUrl = kv.Value.ImageUrl;
+            }
         }
     }
 }

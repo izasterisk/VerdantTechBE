@@ -1,119 +1,158 @@
-﻿using CloudinaryDotNet;
-using CloudinaryDotNet.Actions;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using System.Security.AccessControl;
-using System.Security.Principal;
 
-namespace Infrastructure.Cloudinary;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
 
-public sealed class CloudinaryService : ICloudinaryService
+namespace Infrastructure.Cloudinary
 {
-    private readonly ICloudinary _cloud;
-    private readonly CloudinaryOptions _opts;
-
-    private static readonly HashSet<string> ImageMime =
-    [
-        "image/jpeg","image/png","image/webp","image/gif"
-    ];
-
-    private static readonly HashSet<string> PdfMime = ["application/pdf"];
-
-    public CloudinaryService(IOptions<CloudinaryOptions> options)
+    public class CloudinaryService : ICloudinaryService
     {
-        _opts = options.Value;
-        _cloud = new Cloudinary(new Account(_opts.CloudName, _opts.ApiKey, _opts.ApiSecret))
+        private readonly CloudinaryDotNet.Cloudinary _cloudinary;
+        private readonly CloudinaryOptions _opts;
+
+        private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+        { "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "ico", "svg" };
+
+        public CloudinaryService(IOptions<CloudinaryOptions> opts)
         {
-            Api = { Secure = true }
-        };
-    }
+            _opts = opts?.Value ?? throw new ArgumentNullException(nameof(opts));
 
-    public async Task<UploadResultDTO> UploadAsync(IFormFile file, string folder, CancellationToken ct = default)
-    {
-        if (file is null || file.Length == 0)
-            throw new InvalidOperationException("Empty file.");
-
-        // quick validation (allow pdf OR image)
-        var isPdf = PdfMime.Contains(file.ContentType);
-        var isImage = ImageMime.Contains(file.ContentType);
-
-        var path = $"{(_opts.DefaultFolder?.Trim('/') ?? "verdanttech")}/{folder.Trim('/')}";
-
-        using var stream = file.OpenReadStream();
-
-        RawUploadParams rawParams;
-        ImageUploadParams imgParams;
-
-        UploadResult rawResult;
-        ImageUploadResult imgResult;
-
-        if (isPdf)
-        {
-            rawParams = new RawUploadParams
+            if (string.IsNullOrWhiteSpace(_opts.CloudName) ||
+                string.IsNullOrWhiteSpace(_opts.ApiKey) ||
+                string.IsNullOrWhiteSpace(_opts.ApiSecret))
             {
-                File = new FileDescription(file.FileName, stream),
-                Folder = path,
-                ResourceType = ResourceType.Raw, // pdf is raw
-                UseFilename = true,
-                UniqueFilename = true,
-                Overwrite = false
-            };
-            rawResult = await _cloud.UploadAsync(rawParams, ct);
-            if (rawResult.StatusCode is not System.Net.HttpStatusCode.OK)
-                throw new InvalidOperationException($"Cloudinary pdf upload failed: {rawResult.Error?.Message}");
+                throw new InvalidOperationException("Thiếu Cloudinary credentials. Kiểm tra .env / appsettings.");
+            }
 
-            return new UploadResultDTO
-            {
-                PublicId = rawResult.PublicId,
-                Url = rawResult.SecureUrl?.ToString() ?? string.Empty,
-                PublicUrl = rawResult.SecureUrl?.ToString() ?? string.Empty
-            };
+            var account = new Account(_opts.CloudName, _opts.ApiKey, _opts.ApiSecret);
+            _cloudinary = new CloudinaryDotNet.Cloudinary(account) { Api = { Secure = true } };
         }
 
-        if (isImage)
+        public async Task<UploadResultDTO> UploadAsync(IFormFile file, string folder, CancellationToken ct = default)
         {
-            imgParams = new ImageUploadParams
-            {
-                File = new FileDescription(file.FileName, stream),
-                Folder = path,
-                UseFilename = true,
-                UniqueFilename = true,
-                Overwrite = false
-            };
-            imgResult = await _cloud.UploadAsync(imgParams, ct);
-            if (imgResult.StatusCode is not System.Net.HttpStatusCode.OK)
-                throw new InvalidOperationException($"Cloudinary image upload failed: {imgResult.Error?.Message}");
+            if (file is null || file.Length == 0)
+                throw new InvalidOperationException("File rỗng.");
 
-            return new UploadResultDTO
+            var ext = Path.GetExtension(file.FileName)?.Trim('.').ToLowerInvariant() ?? "";
+            var isImage = (file.ContentType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ?? false)
+                          || ImageExtensions.Contains(ext);
+
+            var targetFolder = BuildFolder(folder);
+
+            await using var stream = file.OpenReadStream();
+
+            if (isImage)
             {
-                PublicId = imgResult.PublicId,
-                Url = imgResult.SecureUrl?.ToString() ?? string.Empty,
-                PublicUrl = imgResult.SecureUrl?.ToString() ?? string.Empty
-            };
+                var p = new ImageUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = targetFolder,
+                    UseFilename = true,
+                    UniqueFilename = true,
+                    Overwrite = false,
+                    Transformation = new Transformation()
+                        .Width(2000).Height(2000).Crop("limit").Quality("auto")
+                };
+
+                // ❗ Thư viện không có overload nhận CancellationToken
+                var r = await _cloudinary.UploadAsync(p);
+                EnsureOk(r);
+
+                return new UploadResultDTO
+                {
+                    PublicId = r.PublicId,
+                    Url = r.SecureUrl?.ToString() ?? string.Empty,
+                    PublicUrl = r.SecureUrl?.ToString() ?? string.Empty
+                };
+            }
+            else
+            {
+                var p = new RawUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    Folder = targetFolder,
+                    UseFilename = true,
+                    UniqueFilename = true,
+                    Overwrite = false
+                };
+
+                // ❗ Gọi UploadAsync với RawUploadParams (không có CancellationToken)
+                var r = await _cloudinary.UploadAsync(p);
+                EnsureOk(r);
+
+                return new UploadResultDTO
+                {
+                    PublicId = r.PublicId,
+                    Url = r.SecureUrl?.ToString() ?? string.Empty,
+                    PublicUrl = r.SecureUrl?.ToString() ?? string.Empty
+                };
+            }
         }
 
-        throw new InvalidOperationException($"Unsupported file type: {file.ContentType}");
-    }
-
-    public async Task<List<UploadResultDTO>> UploadManyAsync(IEnumerable<IFormFile> files, string folder, CancellationToken ct = default)
-    {
-        var list = new List<UploadResultDTO>();
-        foreach (var f in files)
+        public async Task<List<UploadResultDTO>> UploadManyAsync(IEnumerable<IFormFile> files, string folder, CancellationToken ct = default)
         {
-            list.Add(await UploadAsync(f, folder, ct));
+            var list = files?.ToList() ?? new List<IFormFile>();
+            var results = new List<UploadResultDTO>(list.Count);
+
+            foreach (var f in list)
+            {
+                ct.ThrowIfCancellationRequested();
+                var one = await UploadAsync(f, folder, ct);
+                results.Add(one);
+            }
+
+            return results;
         }
-        return list;
-    }
 
-    public async Task<bool> DeleteAsync(string publicId, CancellationToken ct = default)
-    {
-        if (string.IsNullOrWhiteSpace(publicId)) return false;
+        public async Task<bool> DeleteAsync(string publicId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(publicId)) return false;
 
-        // Try delete as image first, then raw
-        var img = await _cloud.DestroyAsync(new DeletionParams(publicId), ct);
-        if (img.Result == "ok") return true;
+            // Thử xóa như ảnh
+            var delImg = await _cloudinary.DestroyAsync(new DeletionParams(publicId)
+            {
+                ResourceType = ResourceType.Image,
+                Invalidate = true
+            });
 
-        var raw = await _cloud.DestroyAsync(new DeletionParams(publicId) { ResourceType = ResourceType.Raw }, ct);
-        return raw.Result == "ok";
+            if (string.Equals(delImg.Result, "ok", StringComparison.OrdinalIgnoreCase)) return true;
+
+            // Nếu không phải ảnh, thử xóa như raw (pdf, docx, ...)
+            var delRaw = await _cloudinary.DestroyAsync(new DeletionParams(publicId)
+            {
+                ResourceType = ResourceType.Raw,
+                Invalidate = true
+            });
+
+            return string.Equals(delRaw.Result, "ok", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void EnsureOk(UploadResult r)
+        {
+            if (r is null || r.Error is not null)
+                throw new InvalidOperationException(r?.Error?.Message ?? "Upload thất bại.");
+        }
+
+        private string BuildFolder(string subFolder)
+        {
+            var baseFolder = _opts.DefaultFolder?.Trim().Trim('/');
+            var child = subFolder?.Trim().Trim('/');
+
+            if (string.IsNullOrWhiteSpace(baseFolder) && string.IsNullOrWhiteSpace(child))
+                return string.Empty;
+
+            if (string.IsNullOrWhiteSpace(baseFolder)) return child!;
+            if (string.IsNullOrWhiteSpace(child)) return baseFolder!;
+
+            return $"{baseFolder}/{child}";
+        }
     }
 }

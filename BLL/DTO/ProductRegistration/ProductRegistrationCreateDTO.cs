@@ -1,4 +1,5 @@
-﻿using DAL.Data;
+﻿using BLL.DTO.MediaLink;
+using DAL.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -11,6 +12,10 @@ namespace BLL.DTO.ProductRegistration
 {
     public class ProductRegistrationCreateDTO
     {
+        [Required] public ulong Id { get; set; }
+
+        [Required] public ulong VendorId { get; set; }
+
         [Required(ErrorMessage = "Danh mục sản phẩm là bắt buộc")]
         public ulong CategoryId { get; set; }
 
@@ -35,11 +40,11 @@ namespace BLL.DTO.ProductRegistration
         [Required(ErrorMessage = "Thông số kỹ thuật là bắt buộc")]
         public Dictionary<string, object> Specifications { get; set; } = new();
 
-        [StringLength(1000, ErrorMessage = "Liên kết hướng dẫn sử dụng không được vượt quá 1000 ký tự")]
-        public string? ManualUrls { get; set; }
+        //[StringLength(1000, ErrorMessage = "Liên kết hướng dẫn sử dụng không được vượt quá 1000 ký tự")]
+        //public string? ManualUrls { get; set; }
 
-        [StringLength(1000, ErrorMessage = "Danh sách hình ảnh không được vượt quá 1000 ký tự")]
-        public string? Images { get; set; }
+        //[StringLength(1000, ErrorMessage = "Danh sách hình ảnh không được vượt quá 1000 ký tự")]
+        //public string? Images { get; set; }
 
         [Required(ErrorMessage = "Thời gian bảo hành là bắt buộc")]
         public int WarrantyMonths { get; set; } = 12;
@@ -48,7 +53,16 @@ namespace BLL.DTO.ProductRegistration
         public decimal? WeightKg { get; set; }
 
         [Required(ErrorMessage = "Kích thước sản phẩm là bắt buộc")]
-        public required DimensionsDTO DimensionsCm { get; set; } 
+        public required DimensionsDTO DimensionsCm { get; set; }
+
+        // Manual lưu ở field riêng, controller set sau khi upload
+        public string? ManualUrl { get; set; }
+        public string? ManualPublicUrl { get; set; }
+
+        // Ảnh & chứng chỉ: lưu ở MediaLinks
+        public List<MediaLinkItemDTO>? ProductImages { get; set; }
+        public List<MediaLinkItemDTO>? CertificateFiles { get; set; }
+
 
     }
 }

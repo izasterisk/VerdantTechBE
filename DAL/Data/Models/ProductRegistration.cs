@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DAL.Data.Models;
 
@@ -70,5 +71,8 @@ public partial class ProductRegistration
     public virtual User Vendor { get; set; } = null!;
     public virtual ProductCategory Category { get; set; } = null!;
     public virtual User? ApprovedByUser { get; set; }
+
+    [NotMapped] public List<MediaLink> ProductImages { get; set; } = new();
+    [NotMapped] public List<MediaLink> CertificateFiles { get; set; } = new();
 }
 

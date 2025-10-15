@@ -1,53 +1,292 @@
-﻿using DAL.Data;
-using DAL.Data.Models;
-using DAL.IRepository;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using DAL.Data;
+using DAL.Data.Models;
+using Microsoft.EntityFrameworkCore;
 
-namespace DAL.Repository
+namespace DAL.Repositories;
+
+public sealed class ProductRegistrationRepository : IProductRegistrationRepository
 {
-    public class ProductRegistrationRepository : IProductRegistrationRepository
+    private readonly VerdantTechDbContext _db;
+
+    public ProductRegistrationRepository(VerdantTechDbContext db) => _db = db;
+
+    // ========= READS =========
+    public async Task<(IReadOnlyList<ProductRegistration> Items, int Total)> GetAllAsync(
+        int page, int pageSize, CancellationToken ct = default)
     {
-        private readonly VerdantTechDbContext _context;
-        private readonly IRepository<ProductRegistration> _repository;
-        public ProductRegistrationRepository( VerdantTechDbContext context, IRepository<ProductRegistration> repository)
+        if (page <= 0) page = 1;
+        if (pageSize <= 0) pageSize = 20;
+
+        var query = _db.ProductRegistrations.AsNoTracking();
+
+        var total = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        // nạp media (nếu muốn eager load kèm theo)
+        await LoadMediaAsync(items.Select(i => i.Id).ToList(), items, ct);
+
+        return (items, total);
+    }
+
+    public async Task<ProductRegistration?> GetByIdAsync(ulong id, CancellationToken ct = default)
+    {
+        var entity = await _db.ProductRegistrations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+        if (entity is null) return null;
+
+        await LoadMediaAsync(new List<ulong> { id }, new List<ProductRegistration> { entity }, ct);
+        return entity;
+    }
+
+    public async Task<(IReadOnlyList<ProductRegistration> Items, int Total)> GetByVendorAsync(
+        ulong vendorId, int page, int pageSize, CancellationToken ct = default)
+    {
+        if (page <= 0) page = 1;
+        if (pageSize <= 0) pageSize = 20;
+
+        var query = _db.ProductRegistrations
+            .AsNoTracking()
+            .Where(x => x.VendorId == vendorId);
+
+        var total = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        await LoadMediaAsync(items.Select(i => i.Id).ToList(), items, ct);
+        return (items, total);
+    }
+
+    // ========= CREATE =========
+    public async Task<ProductRegistration> CreateAsync( ProductRegistration registration, IEnumerable<MediaLink>? productImages, IEnumerable<MediaLink>? certificateImages, CancellationToken ct = default)
+    {
+        // đảm bảo trạng thái mặc định
+        if (registration.Status == default)
+            registration.Status = ProductRegistrationStatus.Pending;
+
+        // ManualUrls/PublicUrl (manual PDF) đã set vào registration trước khi call repo
+
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
+        await _db.ProductRegistrations.AddAsync(registration, ct);
+        await _db.SaveChangesAsync(ct); // để có Id
+
+        // insert Product images
+        if (productImages != null)
         {
-            _context = context;
-            _repository = repository;
+            var startSort = await GetMaxSortAsync(registration.Id, MediaOwnerType.ProductRegistrations, ct);
+            var sort = startSort;
+
+            foreach (var m in productImages)
+            {
+                m.OwnerType = MediaOwnerType.ProductRegistrations;
+                m.OwnerId = registration.Id;
+                m.SortOrder = ++sort;
+                m.CreatedAt = DateTime.UtcNow;
+                m.UpdatedAt = DateTime.UtcNow;
+                await _db.MediaLinks.AddAsync(m, ct);
+            }
         }
 
-        public async Task<ProductRegistration> CreateProductAsync(ProductRegistration entity, CancellationToken cancellationToken = default)
+        // insert Certificate images
+        if (certificateImages != null)
         {
-            return await _repository.CreateAsync(entity, cancellationToken);
+            var startSort = await GetMaxSortAsync(registration.Id, MediaOwnerType.ProductCertificates, ct);
+            var sort = startSort;
+
+            foreach (var m in certificateImages)
+            {
+                m.OwnerType = MediaOwnerType.ProductCertificates;
+                m.OwnerId = registration.Id;
+                m.SortOrder = ++sort;
+                m.CreatedAt = DateTime.UtcNow;
+                m.UpdatedAt = DateTime.UtcNow;
+                await _db.MediaLinks.AddAsync(m, ct);
+            }
         }
 
-        public async Task<IReadOnlyList<ProductRegistration>> GetProductRegistrationByVendorIdAsync(ulong vendorId, bool useNoTracking = true, CancellationToken cancellationToken = default)
+        await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
+        // load lại media (nếu cần trả về đầy đủ)
+        await LoadMediaAsync(new List<ulong> { registration.Id }, new List<ProductRegistration> { registration }, ct);
+
+        return registration;
+    }
+
+    // ========= UPDATE =========
+    public async Task<ProductRegistration> UpdateAsync( ProductRegistration registration, IEnumerable<MediaLink>? addProductImages, IEnumerable<MediaLink>? addCertificateImages, IEnumerable<string>? removeImagePublicIds, IEnumerable<string>? removeCertificatePublicIds, CancellationToken ct = default)
+    {
+        var existing = await _db.ProductRegistrations
+            .FirstOrDefaultAsync(x => x.Id == registration.Id, ct);
+
+        if (existing is null)
+            throw new KeyNotFoundException("ProductRegistration not found");
+
+        // update các field cơ bản (manual urls/public url, specs, price, dimensions…)
+        _db.Entry(existing).CurrentValues.SetValues(registration);
+        existing.UpdatedAt = DateTime.UtcNow;
+
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
+        // remove product images
+        if (removeImagePublicIds != null)
         {
-            return await _repository.GetAllByFilterAsync(_repository => _repository.VendorId == vendorId, useNoTracking, cancellationToken);
+            var toRemove = await _db.MediaLinks
+                .Where(x => x.OwnerType == MediaOwnerType.ProductRegistrations
+                            && x.OwnerId == existing.Id
+                            && removeImagePublicIds.Contains(x.ImagePublicId))
+                .ToListAsync(ct);
+            if (toRemove.Count > 0)
+                _db.MediaLinks.RemoveRange(toRemove);
         }
 
-        public async Task<ProductRegistration> UpdateProductRegistrationAsync(ProductRegistration entity, CancellationToken cancellationToken = default)
+        // remove certificate images
+        if (removeCertificatePublicIds != null)
         {
-            return await _repository.UpdateAsync(entity, cancellationToken);
-       }
-        public async Task<ProductRegistration?> GetProductRegistrationByIdAsync(ulong id, bool useNoTracking = true, CancellationToken cancellationToken = default)
-        {
-            return await _repository.GetAsync(_repository => _repository.Id == id, useNoTracking, cancellationToken);
+            var toRemove = await _db.MediaLinks
+                .Where(x => x.OwnerType == MediaOwnerType.ProductCertificates
+                            && x.OwnerId == existing.Id
+                            && removeCertificatePublicIds.Contains(x.ImagePublicId))
+                .ToListAsync(ct);
+            if (toRemove.Count > 0)
+                _db.MediaLinks.RemoveRange(toRemove);
         }
-        public async Task<(List<ProductRegistration>, int totalCount)> GetAllProductRegistrationAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+
+        // add product images
+        if (addProductImages != null)
         {
-            return await _repository.GetPaginatedWithRelationsAsync(
-                page,
-                pageSize,
-                useNoTracking: true,
-                orderBy: query => query.OrderByDescending(u => u.UpdatedAt),
-                includeFunc: null,
-                cancellationToken: cancellationToken
-            );
+            var startSort = await GetMaxSortAsync(existing.Id, MediaOwnerType.ProductRegistrations, ct);
+            var sort = startSort;
+
+            foreach (var m in addProductImages)
+            {
+                m.OwnerType = MediaOwnerType.ProductRegistrations;
+                m.OwnerId = existing.Id;
+                m.SortOrder = ++sort;
+                m.CreatedAt = DateTime.UtcNow;
+                m.UpdatedAt = DateTime.UtcNow;
+                await _db.MediaLinks.AddAsync(m, ct);
+            }
+        }
+
+        // add certificate images
+        if (addCertificateImages != null)
+        {
+            var startSort = await GetMaxSortAsync(existing.Id, MediaOwnerType.ProductCertificates, ct);
+            var sort = startSort;
+
+            foreach (var m in addCertificateImages)
+            {
+                m.OwnerType = MediaOwnerType.ProductCertificates;
+                m.OwnerId = existing.Id;
+                m.SortOrder = ++sort;
+                m.CreatedAt = DateTime.UtcNow;
+                m.UpdatedAt = DateTime.UtcNow;
+                await _db.MediaLinks.AddAsync(m, ct);
+            }
+        }
+
+        await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
+        // load media cho entity trả về
+        await LoadMediaAsync(new List<ulong> { existing.Id }, new List<ProductRegistration> { existing }, ct);
+        return existing;
+    }
+
+    // ========= STATUS =========
+    public async Task<bool> ChangeStatusAsync( ulong id, ProductRegistrationStatus status, string? rejectionReason, ulong? approvedBy, DateTime? approvedAt, CancellationToken ct = default)
+    {
+        var entity = await _db.ProductRegistrations.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (entity is null) return false;
+
+        entity.Status = status;
+        entity.RejectionReason = rejectionReason;
+        entity.ApprovedBy = approvedBy;
+        entity.ApprovedAt = approvedAt;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
+    // ========= DELETE =========
+    public async Task<bool> DeleteAsync(ulong id, CancellationToken ct = default)
+    {
+        var entity = await _db.ProductRegistrations.FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (entity is null) return false;
+
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+
+        // xóa media links liên quan
+        var medias = await _db.MediaLinks
+            .Where(x => (x.OwnerType == MediaOwnerType.ProductRegistrations || x.OwnerType == MediaOwnerType.ProductCertificates)
+                        && x.OwnerId == id)
+            .ToListAsync(ct);
+
+        if (medias.Count > 0) _db.MediaLinks.RemoveRange(medias);
+
+        _db.ProductRegistrations.Remove(entity);
+
+        await _db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        return true;
+    }
+
+    // ========= Helpers =========
+    private async Task<int> GetMaxSortAsync(ulong ownerId, MediaOwnerType ownerType, CancellationToken ct)
+    {
+        var max = await _db.MediaLinks
+            .Where(m => m.OwnerId == ownerId && m.OwnerType == ownerType)
+            .Select(m => (int?)m.SortOrder)
+            .MaxAsync(ct);
+
+        return max ?? 0;
+    }
+
+    private async Task LoadMediaAsync( List<ulong> ids, List<ProductRegistration> registrations, CancellationToken ct)
+    {
+        if (ids.Count == 0) return;
+
+        var regMedias = await _db.MediaLinks
+            .AsNoTracking()
+            .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations && ids.Contains(m.OwnerId))
+            .OrderBy(m => m.SortOrder)
+            .ToListAsync(ct);
+
+        var certMedias = await _db.MediaLinks
+            .AsNoTracking()
+            .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates && ids.Contains(m.OwnerId))
+            .OrderBy(m => m.SortOrder)
+            .ToListAsync(ct);
+
+        var byId = registrations.ToDictionary(x => x.Id);
+        foreach (var g in regMedias.GroupBy(x => x.OwnerId))
+        {
+            if (byId.TryGetValue(g.Key, out var r))
+                r.ProductImages = g.ToList(); // đảm bảo entity có nav/list tương ứng
+        }
+
+        foreach (var g in certMedias.GroupBy(x => x.OwnerId))
+        {
+            if (byId.TryGetValue(g.Key, out var r))
+                r.CertificateFiles = g.ToList(); // đảm bảo entity có nav/list tương ứng
         }
     }
 }
