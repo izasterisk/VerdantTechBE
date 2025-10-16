@@ -76,13 +76,13 @@ namespace BLL.DTO.Product
 
         public class DimensionsDTO
         {
-            [Range(0, 200, ErrorMessage = "Chiều rộng sản phẩm phải từ 0 đến 200 cm")]
+            //[Range(0, 200, ErrorMessage = "Chiều rộng sản phẩm phải từ 0 đến 200 cm")]
             public decimal Width { get; set; }
 
-            [Range(0, 200, ErrorMessage = "Chiều cao sản phẩm phải từ 0 đến 200 cm")]
+            //[Range(0, 200, ErrorMessage = "Chiều cao sản phẩm phải từ 0 đến 200 cm")]
             public decimal Height { get; set; }
 
-            [Range(0, 200, ErrorMessage = "Chiều dài sản phẩm phải từ 0 đến 200 cm")]
+            //[Range(0, 200, ErrorMessage = "Chiều dài sản phẩm phải từ 0 đến 200 cm")]
             public decimal Length { get; set; }
         }
     }

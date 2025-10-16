@@ -65,12 +65,7 @@ namespace BLL.Services
 
         // ================ CREATE (ảnh + manual) ================
 
-        public async Task<ProductRegistrationReponseDTO> CreateAsync(
-            ProductRegistrationCreateDTO dto,
-            string? manualUrl,
-            string? manualPublicUrl,
-            List<MediaLinkItemDTO> addImages,
-            CancellationToken ct = default)
+        public async Task<ProductRegistrationReponseDTO> CreateAsync( ProductRegistrationCreateDTO dto, string? manualUrl, string? manualPublicUrl, List<MediaLinkItemDTO> addImages, List<MediaLinkItemDTO> addCertificates, CancellationToken ct = default)
         {
             // validate FK
             if (!await _db.Users.AnyAsync(x => x.Id == dto.VendorId, ct))
@@ -103,12 +98,10 @@ namespace BLL.Services
 
             // map ảnh sang MediaLink để repo insert cùng lúc
             var productImages = ToMediaLinks(addImages, MediaOwnerType.ProductRegistrations, 0);
+            var certificateImages = ToMediaLinks(addCertificates, MediaOwnerType.ProductCertificates, 0);
 
-            entity = await _repo.CreateAsync(
-                entity,
-                productImages,   // ảnh sản phẩm
-                certificateImages: null,
-                ct);
+
+            entity = await _repo.CreateAsync( entity, productImages, certificateImages, ct);
 
             var result = _mapper.Map<ProductRegistrationReponseDTO>(entity);
             await HydrateMediaAsync(new List<ProductRegistrationReponseDTO> { result }, ct);
@@ -118,13 +111,7 @@ namespace BLL.Services
 
         // ================ UPDATE (thêm/bớt ảnh + manual) ================
 
-        public async Task<ProductRegistrationReponseDTO> UpdateAsync(
-            ProductRegistrationUpdateDTO dto,
-            string? manualUrl,
-            string? manualPublicUrl,
-            List<MediaLinkItemDTO> addImages,
-            List<string> removed,
-            CancellationToken ct = default)
+        public async Task<ProductRegistrationReponseDTO> UpdateAsync( ProductRegistrationUpdateDTO dto, string? manualUrl, string? manualPublicUrl, List<MediaLinkItemDTO> addImages, List<MediaLinkItemDTO> addCertificates, List<string> removedImages, List<string> removedCertificates, CancellationToken ct = default)
         {
             var entity = await _repo.GetByIdAsync(dto.Id, ct)
                          ?? throw new KeyNotFoundException("Đơn đăng ký không tồn tại.");
@@ -154,14 +141,15 @@ namespace BLL.Services
             entity.UpdatedAt = DateTime.UtcNow;
 
             var addProductImages = ToMediaLinks(addImages, MediaOwnerType.ProductRegistrations, 0);
-            var removeImagePublicIds = removed ?? new List<string>();
+            var addCertificateImages = ToMediaLinks(addCertificates, MediaOwnerType.ProductCertificates, 0);
+            //var removeImagePublicIds = removed ?? new List<string>();
 
             entity = await _repo.UpdateAsync(
                 entity,
                 addProductImages,
-                addCertificateImages: null,
-                removeImagePublicIds,
-                removeCertificatePublicIds: null,
+                addCertificateImages,
+                removedImages ?? new List<string>(),
+                removedCertificates ?? new List<string>(),
                 ct);
 
             var result = _mapper.Map<ProductRegistrationReponseDTO>(entity);
@@ -172,18 +160,10 @@ namespace BLL.Services
 
         // ================ STATUS / DELETE ================
 
-        public async Task<bool> ChangeStatusAsync(
-            ulong id,
-            ProductRegistrationStatus status,
-            string? rejectionReason,
-            ulong? approvedBy,
-            CancellationToken ct = default)
+        public async Task<bool> ChangeStatusAsync( ulong id, ProductRegistrationStatus status, string? rejectionReason, ulong? approvedBy, CancellationToken ct = default)
         {
 
-            var ok = await _repo.ChangeStatusAsync(id, status, rejectionReason,
-                                       approvedBy,
-                                       status == ProductRegistrationStatus.Approved ? DateTime.UtcNow : (DateTime?)null,
-                                       ct);
+            var ok = await _repo.ChangeStatusAsync(id, status, rejectionReason, approvedBy, status == ProductRegistrationStatus.Approved ? DateTime.UtcNow : (DateTime?)null, ct);
             if (!ok) throw new KeyNotFoundException("Đơn đăng ký không tồn tại.");
 
             var approvedAt = status == ProductRegistrationStatus.Approved
@@ -199,33 +179,75 @@ namespace BLL.Services
 
         // ================= Helpers =================
 
-        private async Task HydrateMediaAsync(
-            IReadOnlyList<ProductRegistrationReponseDTO> items,
-            CancellationToken ct)
+        //private async Task HydrateMediaAsync( IReadOnlyList<ProductRegistrationReponseDTO> items, CancellationToken ct)
+        //{
+        //    if (items.Count == 0) return;
+        //    var ids = items.Select(x => x.Id).ToList();
+        //    var map = items.ToDictionary(x => x.Id);
+
+        //    var regMedias = await _db.MediaLinks.AsNoTracking()
+        //        .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations && ids.Contains(m.OwnerId))
+        //        .OrderBy(m => m.OwnerId).ThenBy(m => m.SortOrder)
+        //        .ToListAsync(ct);
+
+        //    var byId = items.ToDictionary(x => x.Id);
+
+        //    foreach (var g in regMedias.GroupBy(x => x.OwnerId))
+        //    {
+        //        if (!byId.TryGetValue(g.Key, out var dto)) continue;
+        //        dto.ProductImages = g.Select(m => new MediaLinkItemDTO
+        //        {
+        //            Id = m.Id,
+        //            ImagePublicId = m.ImagePublicId,
+        //            ImageUrl = m.ImageUrl,
+        //            Purpose = m.Purpose.ToString().ToLowerInvariant(),
+        //            SortOrder = m.SortOrder
+        //        }).ToList();
+        //    }
+        //}
+
+
+        private async Task HydrateMediaAsync( IReadOnlyList<ProductRegistrationReponseDTO> items, CancellationToken ct)
         {
             if (items.Count == 0) return;
             var ids = items.Select(x => x.Id).ToList();
+            var map = items.ToDictionary(x => x.Id);
 
-            var regMedias = await _db.MediaLinks.AsNoTracking()
+            // images
+            var imgs = await _db.MediaLinks.AsNoTracking()
                 .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations && ids.Contains(m.OwnerId))
                 .OrderBy(m => m.OwnerId).ThenBy(m => m.SortOrder)
                 .ToListAsync(ct);
 
-            var byId = items.ToDictionary(x => x.Id);
+            foreach (var g in imgs.GroupBy(m => m.OwnerId))
+                if (map.TryGetValue(g.Key, out var dto))
+                    dto.ProductImages = g.Select(m => new MediaLinkItemDTO
+                    {
+                        Id = m.Id,
+                        ImagePublicId = m.ImagePublicId,
+                        ImageUrl = m.ImageUrl,
+                        Purpose = m.Purpose.ToString().ToLowerInvariant(),
+                        SortOrder = m.SortOrder
+                    }).ToList();
 
-            foreach (var g in regMedias.GroupBy(x => x.OwnerId))
-            {
-                if (!byId.TryGetValue(g.Key, out var dto)) continue;
-                dto.ProductImages = g.Select(m => new MediaLinkItemDTO
-                {
-                    Id = m.Id,
-                    ImagePublicId = m.ImagePublicId,
-                    ImageUrl = m.ImageUrl,
-                    Purpose = m.Purpose.ToString().ToLowerInvariant(),
-                    SortOrder = m.SortOrder
-                }).ToList();
-            }
+            // certificates
+            var certs = await _db.MediaLinks.AsNoTracking()
+                .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates && ids.Contains(m.OwnerId))
+                .OrderBy(m => m.OwnerId).ThenBy(m => m.SortOrder)
+                .ToListAsync(ct);
+
+            foreach (var g in certs.GroupBy(m => m.OwnerId))
+                if (map.TryGetValue(g.Key, out var dto))
+                    dto.CertificateFiles = g.Select(m => new MediaLinkItemDTO
+                    {
+                        Id = m.Id,
+                        ImagePublicId = m.ImagePublicId,
+                        ImageUrl = m.ImageUrl,
+                        Purpose = m.Purpose.ToString().ToLowerInvariant(),
+                        SortOrder = m.SortOrder
+                    }).ToList();
         }
+
 
         private static PagedResponse<T> ToPaged<T>(
             List<T> items, int totalRecords, int page, int pageSize)

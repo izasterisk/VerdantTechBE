@@ -102,8 +102,21 @@ namespace Controller.Controllers
                     SortOrder = i + 1
                 }).ToList();
             }
+            // Certificates
+            var certDtos = new List<MediaLinkItemDTO>();
+            if (req.Certificate is { Count: > 0 })
+            {
+                var ups = await _cloud.UploadManyAsync(req.Certificate, "product-registrations/certificates", ct);
+                certDtos = ups.Select((x, i) => new MediaLinkItemDTO
+                {
+                    ImagePublicId = x.PublicId,
+                    ImageUrl = x.Url,
+                    Purpose = "none",
+                    SortOrder = i + 1
+                }).ToList();
+            }
 
-            var created = await _service.CreateAsync(req.Data, manualUrl, manualPublicUrl, imagesDto, ct);
+            var created = await _service.CreateAsync(req.Data, manualUrl, manualPublicUrl, imagesDto, certDtos, ct);
             return Ok(created);
         }
 
@@ -118,7 +131,7 @@ namespace Controller.Controllers
             [FromForm] UpdateForm req,
             CancellationToken ct = default)
         {
-            if (id != req.Data.Id) return BadRequest("Id không khớp.");
+            //if (id != req.Data.Id) return BadRequest("Id không khớp.");
 
             // Upload manual (nếu có)
             string? manualUrl = null;
@@ -147,11 +160,26 @@ namespace Controller.Controllers
                 }).ToList();
             }
 
-            var removed = req.RemoveImagePublicIds ?? new List<string>();
+            //add certificates
+            var addCertificates = new List<MediaLinkItemDTO>();
+            if (req.Certificate is { Count: > 0 })
+            {
+                var ups = await _cloud.UploadManyAsync(req.Certificate, "product-registrations/certificates", ct);
+                addCertificates = ups.Select((x, i) => new MediaLinkItemDTO
+                {
+                    ImagePublicId = x.PublicId,
+                    ImageUrl = x.Url,
+                    Purpose = "none",
+                    SortOrder = i + 1
+                }).ToList();
+            }
+
+            var removedImages = req.RemoveImagePublicIds ?? new List<string>();
+            var removedCerts = req.RemoveCertificatePublicIds ?? new List<string>();
 
             try
             {
-                var updated = await _service.UpdateAsync(req.Data, manualUrl, manualPublicUrl, addImages, removed, ct);
+                var updated = await _service.UpdateAsync(req.Data, manualUrl, manualPublicUrl, addImages, addCertificates, removedImages, removedCerts, ct);
                 return Ok(updated);
             }
             catch (KeyNotFoundException)
@@ -190,6 +218,7 @@ namespace Controller.Controllers
             [FromForm] public ProductRegistrationCreateDTO Data { get; set; } = null!;
             [FromForm] public IFormFile? ManualFile { get; set; }
             [FromForm] public List<IFormFile>? Images { get; set; }
+            [FromForm] public List<IFormFile>? Certificate { get; set; }
         }
 
         public sealed class UpdateForm
@@ -197,7 +226,9 @@ namespace Controller.Controllers
             [FromForm] public ProductRegistrationUpdateDTO Data { get; set; } = null!;
             [FromForm] public IFormFile? ManualFile { get; set; }
             [FromForm] public List<IFormFile>? Images { get; set; }
-            [FromForm] public List<string>? RemoveImagePublicIds { get; set; }
+            [FromForm] public List<IFormFile>? Certificate { get; set; }     
+            [FromForm] public List<string>? RemoveImagePublicIds { get; set; }                 
+            [FromForm] public List<string>? RemoveCertificatePublicIds { get; set; }     
         }
     }
 }

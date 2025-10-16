@@ -3,6 +3,7 @@ using BLL.DTO.Address;
 using BLL.DTO.Cart;
 using BLL.DTO.CO2;
 using BLL.DTO.FarmProfile;
+using BLL.DTO.MediaLink;
 using BLL.DTO.Order;
 using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
@@ -69,6 +70,13 @@ public class AutoMapperConfig : Profile
         CreateMap<ProductCategoryUpdateDTO, ProductCategory>()
             .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
         CreateMap<ProductCategory, ProductCategoryResponseDTO>().ReverseMap();
+        //medialink map 
+        CreateMap<MediaLink, MediaLinkItemDTO>()
+          .ForMember(d => d.ImagePublicId, o => o.MapFrom(s => s.ImagePublicId))
+          .ForMember(d => d.ImageUrl, o => o.MapFrom(s => s.ImageUrl))
+          .ForMember(d => d.SortOrder, o => o.MapFrom(s => s.SortOrder))
+          .ForMember(d => d.Purpose, o => o.MapFrom(s => s.Purpose.ToString().ToLowerInvariant()))
+          .ForMember(d => d.Id, o => o.MapFrom(s => s.Id));
 
         //// Product mappings
         //CreateMap<BLL.DTO.Product.ProductCreateDTO, Product>().ReverseMap();
@@ -91,25 +99,41 @@ public class AutoMapperConfig : Profile
         CreateMap<MediaLink, ImagesDTO>().ReverseMap();
 
         // Mapping cho ProductRegistration
+        CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
+            .ForMember(d => d.ManualUrl, opt => opt.MapFrom(s => s.ManualUrls))
+            .ForMember(d => d.ManualPublicUrl, opt => opt.MapFrom(s => s.PublicUrl))
+            .ForMember(d => d.EnergyEfficiencyRating, opt => opt.MapFrom(s => s.EnergyEfficiencyRating.HasValue ? s.EnergyEfficiencyRating.Value.ToString() : null))
+            .ReverseMap();
+
+        CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
+            .ForMember(d => d.ManualUrl, o => o.MapFrom(s => s.ManualUrls))        
+            .ForMember(d => d.ManualPublicUrl, o => o.MapFrom(s => s.PublicUrl)); 
+
+        CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
+            .ForMember(d => d.ProductImages, o => o.Ignore())
+            .ForMember(d => d.CertificateFiles, o => o.Ignore());
         CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
+            // BỎ QUA rating để service tự parse string -> int?
+            .ForMember(d => d.EnergyEfficiencyRating, o => o.Ignore())
+            // Giữ mapping Dimensions như bạn đang có
             .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>
             {
-                { "Width", src.DimensionsCm.Width },
-                { "Height", src.DimensionsCm.Height },
-                { "Length", src.DimensionsCm.Length }
+        { "Width",  src.DimensionsCm.Width },
+        { "Height", src.DimensionsCm.Height },
+        { "Length", src.DimensionsCm.Length }
             }));
-        CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
-            .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src =>
-                src.DimensionsCm.ToDictionary(k => k.Key, v => (object)v.Value)));
 
         CreateMap<ProductRegistrationUpdateDTO, ProductRegistration>()
-          .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>
-          {
-                { "Width", src.DimensionsCm.Width },
-                { "Height", src.DimensionsCm.Height },
-                { "Length", src.DimensionsCm.Length }
-          }))
-          .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            // BỎ QUA rating để service tự parse string -> int?
+            .ForMember(d => d.EnergyEfficiencyRating, o => o.Ignore())
+            .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>
+            {
+        { "Width",  src.DimensionsCm.Width },
+        { "Height", src.DimensionsCm.Height },
+        { "Length", src.DimensionsCm.Length }
+            }))
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
         CreateMap<ProductRegistration, Product>()
             .ForMember(d => d.Id, o => o.Ignore()) // tránh insert id nếu DB tự sinh
             .ForMember(d => d.ProductCode, o => o.MapFrom(s => s.ProposedProductCode))
@@ -176,11 +200,24 @@ public class AutoMapperConfig : Profile
                                     ? s.EnergyEfficiencyRating.Value.ToString()
                                     : null));
 
-        // !!! Quan trọng: XÓA các map sau nếu đang tồn tại ở file của bạn:
-        // - CreateMap<DAL.Data.Models.Product, BLL.DTO.Product.ProductResponseDTO>().ReverseMap();
-        // - CreateMap<Product, ProductResponseDTO>().ReverseMap(); (không fully qualify)
-        // - Bất kỳ map nào dùng tên trần "ProductResponseDTO" (không namespace đầy đủ)
 
+        CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
+    // enum -> string
+    .ForMember(d => d.Status,
+        o => o.MapFrom(s => s.Status.ToString()))
+    // int? -> string
+    .ForMember(d => d.EnergyEfficiencyRating,
+        o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue ? s.EnergyEfficiencyRating.Value.ToString() : null))
+    // Dictionary<string, decimal> -> Dictionary<string, object>
+    .ForMember(d => d.DimensionsCm,
+        o => o.MapFrom(s => s.DimensionsCm != null
+            ? s.DimensionsCm.ToDictionary(k => k.Key, v => (object)v.Value)
+            : new Dictionary<string, object>()))
+    // giữ nguyên specs, fallback rỗng nếu null
+    .ForMember(d => d.Specifications,
+        o => o.MapFrom(s => s.Specifications ?? new Dictionary<string, object>()))
+    // ảnh sẽ được hydrate riêng trong service
+    .ForMember(d => d.ProductImages, o => o.Ignore());
     }
 
 

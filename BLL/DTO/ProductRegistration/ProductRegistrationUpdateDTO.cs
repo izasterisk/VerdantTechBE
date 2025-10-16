@@ -55,19 +55,18 @@ namespace BLL.DTO.ProductRegistration
 
         [Required(ErrorMessage = "Kích thước sản phẩm là bắt buộc")]
         public required DimensionsDTO DimensionsCm { get; set; }
-        [Required(ErrorMessage = "Trạng thái là bắt buộc")]
 
-        // Manual mới (nếu upload) – controller set
-        public string? ManualUrl { get; set; }
-        public string? ManualPublicUrl { get; set; }
+        //// Manual mới (nếu upload) – controller set
+        //public string? ManualUrl { get; set; }
+        //public string? ManualPublicUrl { get; set; }
 
-        // Thêm mới
-        public List<MediaLinkItemDTO>? AddProductImages { get; set; }
-        public List<MediaLinkItemDTO>? AddCertificateFiles { get; set; }
+        //// Thêm mới
+        //public List<MediaLinkItemDTO>? AddProductImages { get; set; }
+        //public List<MediaLinkItemDTO>? AddCertificateFiles { get; set; }
 
-        // Xóa
-        public List<string>? RemoveImagePublicIds { get; set; }
-        public List<string>? RemoveCertificatePublicIds { get; set; }
+        //// Xóa
+        //public List<string>? RemoveImagePublicIds { get; set; }
+        //public List<string>? RemoveCertificatePublicIds { get; set; }
 
 
 

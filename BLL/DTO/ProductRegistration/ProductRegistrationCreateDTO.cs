@@ -7,12 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static BLL.DTO.Product.ProductUpdateDTO;
+using System.Text.Json.Serialization;
 
 namespace BLL.DTO.ProductRegistration
 {
     public class ProductRegistrationCreateDTO
     {
-        [Required] public ulong Id { get; set; }
+       //[Required] public ulong Id { get; set; }
 
         [Required] public ulong VendorId { get; set; }
 
@@ -55,13 +56,21 @@ namespace BLL.DTO.ProductRegistration
         [Required(ErrorMessage = "Kích thước sản phẩm là bắt buộc")]
         public required DimensionsDTO DimensionsCm { get; set; }
 
-        // Manual lưu ở field riêng, controller set sau khi upload
-        public string? ManualUrl { get; set; }
-        public string? ManualPublicUrl { get; set; }
+        //// Manual lưu ở field riêng, controller set sau khi upload
+        //[JsonIgnore] 
+        ////[BindNever] [SwaggerSchema(ReadOnly = true)]
+        //public string? ManualUrl { get; set; }
+        //[JsonIgnore] 
+        ////[BindNever] [SwaggerSchema(ReadOnly = true)]
+        //public string? ManualPublicUrl { get; set; }
 
-        // Ảnh & chứng chỉ: lưu ở MediaLinks
-        public List<MediaLinkItemDTO>? ProductImages { get; set; }
-        public List<MediaLinkItemDTO>? CertificateFiles { get; set; }
+        //// Ảnh & chứng chỉ: lưu ở MediaLinks
+        //[JsonIgnore] 
+        ////[BindNever] [SwaggerSchema(ReadOnly = true)]
+        //public List<MediaLinkItemDTO>? ProductImages { get; set; }
+        //[JsonIgnore] 
+        ////[BindNever] [SwaggerSchema(ReadOnly = true)]
+        //public List<MediaLinkItemDTO>? CertificateFiles { get; set; }
 
 
     }

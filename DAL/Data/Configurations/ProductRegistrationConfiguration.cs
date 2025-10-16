@@ -105,10 +105,13 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
 
         builder.Property(e => e.Status)
             .HasConversion<string>() // Lưu enum dưới dạng string
+            .HasMaxLength(50)
             .HasColumnName("Status") // khớp tên cột trong DB (đang là lowercase)
             .HasColumnType("enum('pending','approved','rejected')")
             .HasDefaultValue(ProductRegistrationStatus.Pending) // <-- dùng enum, KHÔNG phải "pending"
             .IsRequired();
+        
+
 
 
         builder.Property(e => e.RejectionReason)

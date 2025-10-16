@@ -16,6 +16,8 @@ namespace BLL.DTO.Product
 
         public decimal UnitPrice { get; set; }
         public int? EnergyEfficiencyRating { get; set; }
+        public decimal CommissionRate { get; set; }
+
 
         public string? ManualUrls { get; set; }
         public string? PublicUrl { get; set; }
