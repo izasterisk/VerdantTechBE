@@ -179,24 +179,171 @@ namespace BLL.Services
 
         // ================ STATUS / DELETE ================
 
+        //public async Task<bool> ChangeStatusAsync(ulong id, ProductRegistrationStatus status, string? rejectionReason, ulong? approvedBy, CancellationToken ct = default)
+        //{
+
+        //    var ok = await _repo.ChangeStatusAsync(id, status, rejectionReason, approvedBy, status == ProductRegistrationStatus.Approved ? DateTime.UtcNow : (DateTime?)null, ct);
+        //    if (!ok) throw new KeyNotFoundException("Đơn đăng ký không tồn tại.");
+
+        //    var approvedAt = status == ProductRegistrationStatus.Approved
+        //        ? DateTime.UtcNow
+        //        : (DateTime?)null;
+
+
+        //    return await _repo.ChangeStatusAsync(id, status, rejectionReason, approvedBy, approvedAt, ct);
+        //}
+
         public async Task<bool> ChangeStatusAsync( ulong id, ProductRegistrationStatus status, string? rejectionReason, ulong? approvedBy, CancellationToken ct = default)
         {
+            // Lấy đơn
+            var reg = await _db.ProductRegistrations
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
 
-            var ok = await _repo.ChangeStatusAsync(id, status, rejectionReason, approvedBy, status == ProductRegistrationStatus.Approved ? DateTime.UtcNow : (DateTime?)null, ct);
-            if (!ok) throw new KeyNotFoundException("Đơn đăng ký không tồn tại.");
+            if (reg == null) return false;
 
-            var approvedAt = status == ProductRegistrationStatus.Approved
-                ? DateTime.UtcNow
-                : (DateTime?)null;
+            // Nếu không đổi gì thì thôi
+            if (reg.Status == status &&
+                reg.RejectionReason == rejectionReason &&
+                reg.ApprovedBy == approvedBy)
+            {
+                return true;
+            }
 
+            // Cập nhật trạng thái cơ bản
+            reg.Status = status;
+            reg.RejectionReason = status == ProductRegistrationStatus.Rejected ? (rejectionReason ?? string.Empty) : null;
+            reg.ApprovedBy = status == ProductRegistrationStatus.Approved ? approvedBy : null;
+            reg.ApprovedAt = status == ProductRegistrationStatus.Approved ? DateTime.UtcNow : (DateTime?)null;
+            reg.UpdatedAt = DateTime.UtcNow;
 
-            return await _repo.ChangeStatusAsync(id, status, rejectionReason, approvedBy, approvedAt, ct);
+            // Nếu không phải Approved => chỉ save thay đổi trạng thái
+            if (status != ProductRegistrationStatus.Approved)
+            {
+                await _db.SaveChangesAsync(ct);
+                return true;
+            }
+
+            // -----------------------------
+            // Approved: tạo Product + copy media
+            // -----------------------------
+            using var tx = await _db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                // 1) Map qua Product
+                //    Lưu ý: bạn đã cấu hình AutoMapper ProductRegistration -> Product rồi.
+                var product = _mapper.Map<Product>(reg);
+
+                // Bổ sung các field nên set tại service
+                product.Slug = Slugify(reg.ProposedProductName);
+                product.IsActive = true;                    // tuỳ mô hình
+                product.CreatedAt = DateTime.UtcNow;
+                product.UpdatedAt = DateTime.UtcNow;
+
+                // Nếu Product có các trường có default hoặc do DB sinh thì bỏ qua
+                _db.Products.Add(product);
+                await _db.SaveChangesAsync(ct); // cần ID của product để copy media
+
+                // 2) Copy media từ registration → product
+                //    2.1) Ảnh sản phẩm
+                var regImages = await _db.MediaLinks
+                    .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations && m.OwnerId == reg.Id)
+                    .OrderBy(m => m.SortOrder)
+                    .ToListAsync(ct);
+
+                if (regImages.Count > 0)
+                {
+                    var now = DateTime.UtcNow;
+                    var clones = regImages.Select(m => new MediaLink
+                    {
+                        OwnerType = MediaOwnerType.Products,
+                        OwnerId = product.Id,
+                        ImagePublicId = m.ImagePublicId,
+                        ImageUrl = m.ImageUrl,
+                        Purpose = m.Purpose,
+                        SortOrder = m.SortOrder,
+                        CreatedAt = now,
+                        UpdatedAt = now
+                    }).ToList();
+
+                    _db.MediaLinks.AddRange(clones);
+                    await _db.SaveChangesAsync(ct);
+                }
+
+                //    2.2) (Tuỳ chọn) Copy certificates để Product cũng có chứng chỉ
+                var regCerts = await _db.MediaLinks
+                    .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates && m.OwnerId == reg.Id)
+                    .OrderBy(m => m.SortOrder)
+                    .ToListAsync(ct);
+
+                if (regCerts.Count > 0)
+                {
+                    var now = DateTime.UtcNow;
+                    var certClones = regCerts.Select(m => new MediaLink
+                    {
+                        OwnerType = MediaOwnerType.ProductCertificates, // giữ nguyên type
+                        OwnerId = product.Id,                         // nhưng trỏ sang product
+                        ImagePublicId = m.ImagePublicId,
+                        ImageUrl = m.ImageUrl,
+                        Purpose = m.Purpose,
+                        SortOrder = m.SortOrder,
+                        CreatedAt = now,
+                        UpdatedAt = now
+                    }).ToList();
+
+                    _db.MediaLinks.AddRange(certClones);
+                    await _db.SaveChangesAsync(ct);
+                }
+
+                await tx.CommitAsync(ct);
+                return true;
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
         }
+
+
 
         public Task<bool> DeleteAsync(ulong id, CancellationToken ct = default)
             => _repo.DeleteAsync(id, ct);
 
+
+
+
         // ================= Helpers =================
+
+        private static string Slugify(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return Guid.NewGuid().ToString("n");
+            var s = text.Trim().ToLowerInvariant();
+
+            // bỏ dấu tiếng Việt & kí tự đặc biệt cơ bản
+            s = s
+                .Replace("đ", "d")
+                .Normalize(System.Text.NormalizationForm.FormD);
+            var filtered = new System.Text.StringBuilder();
+            foreach (var c in s)
+            {
+                var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+                if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
+                    filtered.Append(c);
+            }
+            s = filtered.ToString().Normalize(System.Text.NormalizationForm.FormC);
+
+            // thay thế khoảng trắng/ký tự lạ bằng '-'
+            var chars = s.Select(ch => char.IsLetterOrDigit(ch) ? ch : '-').ToArray();
+            s = new string(chars);
+
+            // gộp nhiều dấu '-' liên tiếp
+            while (s.Contains("--")) s = s.Replace("--", "-");
+            s = s.Trim('-');
+
+            return string.IsNullOrEmpty(s) ? Guid.NewGuid().ToString("n") : s;
+        }
+
+
 
         //private async Task HydrateMediaAsync( IReadOnlyList<ProductRegistrationReponseDTO> items, CancellationToken ct)
         //{
