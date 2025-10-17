@@ -86,6 +86,7 @@ namespace BLL.Services
             var entity = _mapper.Map<ProductRegistration>(dto);
 
             // đồng bộ kiểu
+            entity.Specifications = dto.Specifications ?? new Dictionary<string, object>();
             entity.EnergyEfficiencyRating = ParseNullableInt(dto.EnergyEfficiencyRating);
             entity.Specifications = dto.Specifications ?? new Dictionary<string, object>();
             entity.DimensionsCm = ToDecimalDict(dto.DimensionsCm) ?? new Dictionary<string, decimal>();
@@ -102,6 +103,9 @@ namespace BLL.Services
 
 
             entity = await _repo.CreateAsync( entity, productImages, certificateImages, ct);
+            entity = await _db.ProductRegistrations
+                .AsNoTracking()
+                .FirstAsync(x => x.Id == entity.Id, ct);
 
             var result = _mapper.Map<ProductRegistrationReponseDTO>(entity);
             await HydrateMediaAsync(new List<ProductRegistrationReponseDTO> { result }, ct);
@@ -144,15 +148,14 @@ namespace BLL.Services
             var addCertificateImages = ToMediaLinks(addCertificates, MediaOwnerType.ProductCertificates, 0);
             //var removeImagePublicIds = removed ?? new List<string>();
 
-            entity = await _repo.UpdateAsync(
-                entity,
-                addProductImages,
-                addCertificateImages,
-                removedImages ?? new List<string>(),
-                removedCertificates ?? new List<string>(),
-                ct);
+            entity = await _repo.UpdateAsync( entity, addProductImages, addCertificateImages, removedImages ?? new List<string>(), removedCertificates ?? new List<string>(), ct);
 
             var result = _mapper.Map<ProductRegistrationReponseDTO>(entity);
+
+            entity = await _db.ProductRegistrations
+                .AsNoTracking()
+                .FirstAsync(x => x.Id == entity.Id, ct);
+
             await HydrateMediaAsync(new List<ProductRegistrationReponseDTO> { result }, ct);
             result.EnergyEfficiencyRating = entity.EnergyEfficiencyRating?.ToString();
             return result;

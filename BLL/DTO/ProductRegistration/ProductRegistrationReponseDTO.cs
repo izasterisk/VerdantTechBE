@@ -27,7 +27,7 @@ namespace BLL.DTO.ProductRegistration
 
         public string? EnergyEfficiencyRating { get; set; }
 
-        public Dictionary<string, object>? Specifications { get; set; }
+        public Dictionary<string, object>? Specifications { get; set; }  
 
         //public string? ManualUrls { get; set; }
 
