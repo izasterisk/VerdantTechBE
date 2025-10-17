@@ -13,6 +13,7 @@ using DAL.Data.Models;
 using DAL.IRepository;
 using DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace BLL.Services
 {
@@ -72,9 +73,6 @@ namespace BLL.Services
                 throw new InvalidOperationException("Vendor không tồn tại.");
             if (!await _db.ProductCategories.AnyAsync(x => x.Id == dto.CategoryId, ct))
                 throw new InvalidOperationException("Category không tồn tại.");
-
-
-            // validate rating 0..5 (nếu bạn muốn)
             var rating = ParseNullableInt(dto.EnergyEfficiencyRating);
             if (rating is < 0 or > 5)
                 throw new InvalidOperationException("EnergyEfficiencyRating phải từ 0 đến 5.");
@@ -83,12 +81,14 @@ namespace BLL.Services
             if (dto.DimensionsCm != null && dims is null)
                 throw new InvalidOperationException("Kích thước không hợp lệ (width/height/length).");
 
+
+
             var entity = _mapper.Map<ProductRegistration>(dto);
 
             // đồng bộ kiểu
-            entity.Specifications = dto.Specifications ?? new Dictionary<string, object>();
+            //entity.Specifications = dto.Specifications ?? new Dictionary<string, object>();
+            entity.Specifications = ParseSpecs(dto);
             entity.EnergyEfficiencyRating = ParseNullableInt(dto.EnergyEfficiencyRating);
-            entity.Specifications = dto.Specifications ?? new Dictionary<string, object>();
             entity.DimensionsCm = ToDecimalDict(dto.DimensionsCm) ?? new Dictionary<string, decimal>();
 
             entity.Status = ProductRegistrationStatus.Pending;
@@ -97,19 +97,26 @@ namespace BLL.Services
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
 
+
             // map ảnh sang MediaLink để repo insert cùng lúc
+
             var productImages = ToMediaLinks(addImages, MediaOwnerType.ProductRegistrations, 0);
             var certificateImages = ToMediaLinks(addCertificates, MediaOwnerType.ProductCertificates, 0);
 
 
             entity = await _repo.CreateAsync( entity, productImages, certificateImages, ct);
-            entity = await _db.ProductRegistrations
+            var fresh = await _db.ProductRegistrations
                 .AsNoTracking()
                 .FirstAsync(x => x.Id == entity.Id, ct);
 
-            var result = _mapper.Map<ProductRegistrationReponseDTO>(entity);
+            var result = _mapper.Map<ProductRegistrationReponseDTO>(fresh);
             await HydrateMediaAsync(new List<ProductRegistrationReponseDTO> { result }, ct);
             result.EnergyEfficiencyRating = entity.EnergyEfficiencyRating?.ToString();
+            Console.WriteLine("REQ specsJson: " + dto.SpecificationsJson);
+            Console.WriteLine("REQ specs dict: " + (dto.Specifications == null ? "null" : JsonSerializer.Serialize(dto.Specifications)));
+
+            Console.WriteLine("WILL SAVE specs: " + JsonSerializer.Serialize(entity.Specifications));
+
             return result;
         }
 
@@ -137,7 +144,18 @@ namespace BLL.Services
             entity.Description = dto.Description;
             entity.UnitPrice = dto.UnitPrice;
             entity.EnergyEfficiencyRating = ParseNullableInt(dto.EnergyEfficiencyRating);
-            entity.Specifications = dto.Specifications ?? entity.Specifications ?? new Dictionary<string, object>();
+
+            //entity.Specifications = dto.Specifications ?? entity.Specifications ?? new Dictionary<string, object>();
+
+            var parsedSpecs = ParseSpecs(dto);
+            if (dto.Specifications != null || !string.IsNullOrWhiteSpace(dto.SpecificationsJson))
+                entity.Specifications = parsedSpecs;
+
+            //if (dto.Specifications != null)
+            //{
+            //    entity.Specifications = dto.Specifications;
+            //}
+
             entity.DimensionsCm = ToDecimalDict(dto.DimensionsCm) ?? entity.DimensionsCm ?? new Dictionary<string, decimal>();
 
             if (!string.IsNullOrWhiteSpace(manualUrl)) entity.ManualUrls = manualUrl;
@@ -150,12 +168,13 @@ namespace BLL.Services
 
             entity = await _repo.UpdateAsync( entity, addProductImages, addCertificateImages, removedImages ?? new List<string>(), removedCertificates ?? new List<string>(), ct);
 
-            var result = _mapper.Map<ProductRegistrationReponseDTO>(entity);
+            
 
-            entity = await _db.ProductRegistrations
+            var fresh = await _db.ProductRegistrations
                 .AsNoTracking()
                 .FirstAsync(x => x.Id == entity.Id, ct);
 
+            var result = _mapper.Map<ProductRegistrationReponseDTO>(fresh);
             await HydrateMediaAsync(new List<ProductRegistrationReponseDTO> { result }, ct);
             result.EnergyEfficiencyRating = entity.EnergyEfficiencyRating?.ToString();
             return result;
@@ -312,6 +331,70 @@ namespace BLL.Services
 
             return res.Count == 0 ? null : res;
         }
+
+        //private static Dictionary<string, object> ParseSpecs(ProductRegistrationCreateDTO dto)
+        //{
+        //    if (dto.Specifications != null) return dto.Specifications;
+        //    if (!string.IsNullOrWhiteSpace(dto.SpecificationsJson))
+        //    {
+        //        try
+        //        {
+        //            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(dto.SpecificationsJson);
+        //            return dict ?? new Dictionary<string, object>();
+        //        }
+        //        catch
+        //        {
+        //            return new Dictionary<string, object>();
+        //        }
+        //    }
+        //    return new Dictionary<string, object>();
+        //}
+
+        //private static Dictionary<string, object> ParseSpecs(ProductRegistrationUpdateDTO dto)
+        //{
+        //    if (dto.Specifications != null) return dto.Specifications;
+        //    if (!string.IsNullOrWhiteSpace(dto.SpecificationsJson))
+        //    {
+        //        try
+        //        {
+        //            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(dto.SpecificationsJson);
+        //            return dict ?? new Dictionary<string, object>();
+        //        }
+        //        catch
+        //        {
+        //            return new Dictionary<string, object>();
+        //        }
+        //    }
+        //    return new Dictionary<string, object>();
+        //}
+        private static Dictionary<string, object> ParseSpecs(ProductRegistrationCreateDTO dto)
+        {
+            if (!string.IsNullOrWhiteSpace(dto.SpecificationsJson))
+            {
+                try
+                {
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(dto.SpecificationsJson);
+                    return dict ?? new();
+                }
+                catch { return new(); }
+            }
+            return dto.Specifications ?? new();
+        }
+
+        private static Dictionary<string, object> ParseSpecs(ProductRegistrationUpdateDTO dto)
+        {
+            if (!string.IsNullOrWhiteSpace(dto.SpecificationsJson))
+            {
+                try
+                {
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(dto.SpecificationsJson);
+                    return dict ?? new();
+                }
+                catch { return new(); }
+            }
+            return dto.Specifications ?? new();
+        }
+
 
         private static MediaPurpose ParsePurpose(string? purpose)
         {
