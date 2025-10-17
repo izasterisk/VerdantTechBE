@@ -32,6 +32,7 @@ namespace Controller.Controllers
             try
             {
                 var result = await _productCertificateService.CreateProductCertificateAsync(productCertificateCreateDTO, GetCancellationToken());
+                Console.WriteLine(result);
                 return SuccessResponse(result);
             }
             catch (Exception ex)

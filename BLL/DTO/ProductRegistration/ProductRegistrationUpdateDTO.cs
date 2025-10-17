@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using static BLL.DTO.Product.ProductUpdateDTO;
 
@@ -39,8 +40,10 @@ namespace BLL.DTO.ProductRegistration
         public string? EnergyEfficiencyRating { get; set; }
 
         //[Required(ErrorMessage = "Thông số kỹ thuật là bắt buộc")]
-        public string? SpecificationsJson { get; set; }
-        public Dictionary<string, object> Specifications { get; set; } 
+        //public string? SpecificationsJson { get; set; }
+        //public string? SpecificationsJson { get; set; }
+        public Dictionary<string, object>? Specifications { get; set; }
+
 
         //[StringLength(1000, ErrorMessage = "Liên kết hướng dẫn sử dụng không được vượt quá 1000 ký tự")]
         //public string? ManualUrls { get; set; }

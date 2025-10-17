@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static BLL.DTO.Product.ProductUpdateDTO;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace BLL.DTO.ProductRegistration
 {
@@ -39,8 +40,9 @@ namespace BLL.DTO.ProductRegistration
         public string? EnergyEfficiencyRating { get; set; }
 
         //[Required(ErrorMessage = "Thông số kỹ thuật là bắt buộc")]
-        public string? SpecificationsJson { get; set; }
-        public Dictionary<string, object> Specifications { get; set; }
+        /// <summary>Điền JSON text ở form field tên "specifications".</summary>
+        //[FromForm(Name = "specifications")]
+        public Dictionary<string, object>? Specifications { get; set; }
 
         //[StringLength(1000, ErrorMessage = "Liên kết hướng dẫn sử dụng không được vượt quá 1000 ký tự")]
         //public string? ManualUrls { get; set; }

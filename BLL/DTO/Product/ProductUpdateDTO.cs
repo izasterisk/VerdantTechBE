@@ -43,7 +43,7 @@ namespace BLL.DTO.Product
         public string? EnergyEfficiencyRating { get; set; }
 
        
-        public Dictionary<string, object> Specifications { get; set; } = new();
+        public Dictionary<string, object> Specifications { get; set; }
 
         
         [StringLength(1000, ErrorMessage = "Các URL hướng dẫn không được vượt quá 1000 ký tự")]

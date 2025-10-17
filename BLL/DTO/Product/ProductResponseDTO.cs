@@ -30,7 +30,7 @@ namespace BLL.DTO.Product
 
         public string? EnergyEfficiencyRating { get; set; }
 
-        public Dictionary<string, object> Specifications { get; set; } = new();
+        public Dictionary<string, object> Specifications { get; set; }
 
         //public string? ManualUrls { get; set; }
 
