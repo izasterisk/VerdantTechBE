@@ -1,28 +1,78 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using DAL.Data.Models;
+using DAL.Data;
 
 namespace DAL.Data.Configurations;
 
-/// <summary>
-/// Configuration for MediaLink entity (v8.1)
-/// </summary>
+internal static class MediaLinkEfMaps
+{
+    public static string OwnerTypeToDb(MediaOwnerType v) => v switch
+    {
+        MediaOwnerType.VendorCertificates => "vendor_certificates",
+        MediaOwnerType.ChatbotMessages => "chatbot_messages",
+        MediaOwnerType.Products => "products",
+        MediaOwnerType.ProductRegistrations => "product_registrations",
+        MediaOwnerType.ProductCertificates => "product_certificates",
+        MediaOwnerType.ProductReviews => "product_reviews",
+        MediaOwnerType.ForumPosts => "forum_posts",
+        _ => throw new ArgumentOutOfRangeException(nameof(v), v, null)
+    };
+
+    public static MediaOwnerType OwnerTypeFromDb(string s) => s switch
+    {
+        "vendor_certificates" => MediaOwnerType.VendorCertificates,
+        "chatbot_messages" => MediaOwnerType.ChatbotMessages,
+        "products" => MediaOwnerType.Products,
+        "product_registrations" => MediaOwnerType.ProductRegistrations,
+        "product_certificates" => MediaOwnerType.ProductCertificates,
+        "product_reviews" => MediaOwnerType.ProductReviews,
+        "forum_posts" => MediaOwnerType.ForumPosts,
+        _ => throw new ArgumentOutOfRangeException(nameof(s), s, null)
+    };
+
+    public static string PurposeToDb(MediaPurpose v) => v switch
+    {
+        MediaPurpose.Front => "front",
+        MediaPurpose.Back => "back",
+        MediaPurpose.None => "none",
+        _ => "none"
+    };
+
+    public static MediaPurpose PurposeFromDb(string s) => s switch
+    {
+        "front" => MediaPurpose.Front,
+        "back" => MediaPurpose.Back,
+        "none" => MediaPurpose.None,
+        _ => MediaPurpose.None
+    };
+}
+
 public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
 {
     public void Configure(EntityTypeBuilder<MediaLink> builder)
     {
         builder.ToTable("media_links");
 
-        // Primary Key
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
-        // Required fields
+        // ==== Converters (không dùng switch-expression trong lambda) ====
+        var ownerTypeConverter = new ValueConverter<MediaOwnerType, string>(
+            v => MediaLinkEfMaps.OwnerTypeToDb(v),
+            s => MediaLinkEfMaps.OwnerTypeFromDb(s));
+
+        var purposeConverter = new ValueConverter<MediaPurpose, string>(
+            v => MediaLinkEfMaps.PurposeToDb(v),
+            s => MediaLinkEfMaps.PurposeFromDb(s));
+
         builder.Property(e => e.OwnerType)
-            .HasConversion<string>()
+            .HasConversion(ownerTypeConverter)
+            .HasMaxLength(500)                 // đủ dài cho ENUM string
             .HasColumnType("enum('vendor_certificates','chatbot_messages','products','product_registrations','product_certificates','product_reviews','forum_posts')")
             .IsRequired()
             .HasColumnName("owner_type");
@@ -39,7 +89,6 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("image_url");
 
-        // Optional fields
         builder.Property(e => e.ImagePublicId)
             .HasMaxLength(512)
             .HasCharSet("utf8mb4")
@@ -47,7 +96,8 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
             .HasColumnName("image_public_id");
 
         builder.Property(e => e.Purpose)
-            .HasConversion<string>()
+            .HasConversion(purposeConverter)
+            .HasMaxLength(500)
             .HasColumnType("enum('front','back','none')")
             .HasDefaultValue(MediaPurpose.None)
             .HasColumnName("purpose");
@@ -57,7 +107,6 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
             .HasDefaultValue(0)
             .HasColumnName("sort_order");
 
-        // DateTime fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -68,11 +117,7 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
             .HasColumnName("updated_at");
 
-        // Indexes
-        builder.HasIndex(e => new { e.OwnerType, e.OwnerId })
-            .HasDatabaseName("idx_owner");
-
-        builder.HasIndex(e => e.Purpose)
-            .HasDatabaseName("idx_purpose");
+        builder.HasIndex(e => new { e.OwnerType, e.OwnerId }).HasDatabaseName("idx_owner");
+        builder.HasIndex(e => e.Purpose).HasDatabaseName("idx_purpose");
     }
 }

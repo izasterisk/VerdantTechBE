@@ -15,6 +15,9 @@ using BLL.DTO;
 using System.Net;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
+using Infrastructure.Cloudinary;
+using Microsoft.AspNetCore.Http.Features;
+using DAL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +56,25 @@ builder.Services.AddDbContext<VerdantTechDbContext>(options =>
         b => b.MigrationsAssembly("DAL")
             .CommandTimeout(databaseTimeout)));
 
+
+//cloudinary
+builder.Services.Configure<CloudinaryOptions>(o =>
+{
+    o.CloudName = Environment.GetEnvironmentVariable("CLOUDINARY__CLOUDNAME") ?? "";
+    o.ApiKey = Environment.GetEnvironmentVariable("CLOUDINARY__APIKEY") ?? "";
+    o.ApiSecret = Environment.GetEnvironmentVariable("CLOUDINARY__APISECRET") ?? "";
+    o.DefaultFolder = Environment.GetEnvironmentVariable("CLOUDINARY__DEFAULTFOLDER") ?? "uploads";
+});
+
+builder.Services.Configure<FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = 1024L * 1024 * 200; // 200MB
+    o.ValueLengthLimit = int.MaxValue;
+    o.BufferBody = true;
+});
+
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
 //Dependency Injection
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>>();
@@ -71,6 +93,7 @@ builder.Services.AddScoped<IRepository<OrderDetail>, Repository<OrderDetail>>();
 builder.Services.AddScoped<IRepository<ProductRegistration>, Repository<ProductRegistration>>();
 builder.Services.AddScoped<IRepository<MediaLink>, Repository<MediaLink>>();
 builder.Services.AddScoped<IRepository<ProductCertificate>, Repository<ProductCertificate>>();
+
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -97,8 +120,9 @@ builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<IStaffService, StaffService>();
+//builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IProductCertificateService, ProductCertificateService>();
+builder.Services.AddScoped<IProductRegistrationService, ProductRegistrationService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

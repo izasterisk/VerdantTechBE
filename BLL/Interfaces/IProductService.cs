@@ -1,4 +1,5 @@
 ﻿using BLL.DTO;
+using BLL.DTO.MediaLink;
 using BLL.DTO.Product;
 using BLL.DTO.ProductRegistration;
 using BLL.DTO.User;
@@ -12,12 +13,22 @@ namespace BLL.Interfaces
 {
     public interface IProductService
     {
-        Task<ProductRegistrationReponseDTO> ProductRegistrationAsync(ulong currentUserId, ProductRegistrationCreateDTO requestDTO, CancellationToken cancellationToken = default);  
-        Task<ProductResponseDTO?> GetProductByIdAsync(ulong id, CancellationToken cancellationToken = default);
-        Task<IReadOnlyList<ProductRegistrationReponseDTO?>> GetAllProductByVendorIdAsync(ulong id, CancellationToken cancellationToken = default);
-        Task<IReadOnlyList<ProductResponseDTO?>> GetAllProductByCategoryIdAsync(ulong id, CancellationToken cancellationToken = default);
-        Task<PagedResponse<ProductRegistrationReponseDTO>> GetAllProductRegisterAsync(int page, int pageSize, CancellationToken cancellationToken = default);
-        Task<IReadOnlyList<ProductResponseDTO>> GetAllProductAsync(CancellationToken cancellationToken = default);
-        Task<ProductResponseDTO> UpdateProductAsync(ulong id, ProductUpdateDTO dto, CancellationToken cancellationToken = default);
+        //Task<ProductRegistrationReponseDTO> ProductRegistrationAsync(ulong currentUserId, ProductRegistrationCreateDTO requestDTO, CancellationToken cancellationToken = default);  
+        //Task<ProductResponseDTO?> GetProductByIdAsync(ulong id, CancellationToken cancellationToken = default);
+        //Task<IReadOnlyList<ProductRegistrationReponseDTO?>> GetAllProductByVendorIdAsync(ulong id, CancellationToken cancellationToken = default);
+        //Task<IReadOnlyList<ProductResponseDTO?>> GetAllProductByCategoryIdAsync(ulong id, CancellationToken cancellationToken = default);
+        //Task<PagedResponse<ProductRegistrationReponseDTO>> GetAllProductRegisterAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+        //Task<IReadOnlyList<ProductResponseDTO>> GetAllProductAsync(CancellationToken cancellationToken = default);
+        //Task<ProductResponseDTO> UpdateProductAsync(ulong id, ProductUpdateDTO dto, CancellationToken cancellationToken = default);
+        Task<PagedResponse<ProductListItemDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default);
+        Task<ProductResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default);
+        Task<PagedResponse<ProductListItemDTO>> GetByCategoryAsync(ulong categoryId, int page, int pageSize, CancellationToken ct = default);
+        Task<PagedResponse<ProductListItemDTO>> GetByVendorAsync(ulong vendorId, int page, int pageSize, CancellationToken ct = default);
+
+        Task<ProductResponseDTO> UpdateAsync(ulong id, ProductUpdateDTO dto, List<MediaLinkItemDTO> addImages, List<string> removeImagePublicIds, CancellationToken ct = default);
+        Task<bool> UpdateEmissionAsync(ProductUpdateEmissionDTO dto, CancellationToken ct = default);
+        Task<bool> DeleteAsync(ulong id, CancellationToken ct = default);
+
+
     }
 }

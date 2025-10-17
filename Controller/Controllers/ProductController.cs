@@ -1,191 +1,132 @@
-﻿using BLL.DTO;
-using BLL.DTO.Product;
-using BLL.DTO.ProductRegistration;
-using BLL.Interfaces;
-using BLL.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
+using Swashbuckle.AspNetCore.Annotations;
+using BLL.DTO;
+using BLL.DTO.Product;
+using BLL.DTO.MediaLink;
+using BLL.Interfaces;
 
 namespace Controller.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
-
-    public class ProductController : BaseController
+    [Route("api/[controller]")]
+    public class ProductController : ControllerBase
     {
-        private readonly IProductService _productService;
+        private readonly IProductService _svc;
 
-        public ProductController(IProductService productService)
+        public ProductController(IProductService svc)
         {
-            _productService = productService;
-        }
-        /// <summary>
-        /// Đăng ký sản phẩm mới từ nhà cung cấp, đợi phê duyệt từ staff trước khi hiển thị trên nền tảng
-        /// </summary>
-        /// <param name="requestDTO"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        [HttpPost("register-product")]
-        [EndpointSummary("Register Product By VendorID")]
-        [EndpointDescription("đăng ký sản phẩm của vendor và đợi staff duyệt .")]
-        public async Task<ActionResult<APIResponse>> RegisterProduct([FromBody] ProductRegistrationCreateDTO requestDTO)
-        {
-            try
-            {
-                var vendorid = GetCurrentUserId();
-                var result = await _productService.ProductRegistrationAsync(vendorid, requestDTO, GetCancellationToken());
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-
-            }
+            _svc = svc;
         }
 
-        /// <summary>
-        /// Get toàn bộ sản phẩm đã đăng ký của nhà cung cấp (vendor) hiện tại
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("product-registrations")]
-        [EndpointSummary("Get All Product By VendorID")]
-        [EndpointDescription("Lấy toàn bộ thông tin sản phẩm đã đăng ký theo VendorID.")]
-        public async Task<ActionResult<APIResponse>> GetAllProductRegistrationsByVendorId()
-        {
-            try
-            {
-                var vendorid = GetCurrentUserId();
-                var result = await _productService.GetAllProductByVendorIdAsync(vendorid, GetCancellationToken());
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
+        // ========= READS =========
 
-        }
-            /// <summary>
-            /// Lấy thông tin sản phẩm theo ID
-            /// </summary>
-            /// <param name="id">ID của sản phẩm</param>
-            /// <returns>Thông tin sản phẩm</returns>
-            [HttpGet("{id}")]
-        [EndpointSummary("Get Product By ID")]
-        [EndpointDescription("Lấy thông tin  sản phẩm theo ID.")]
-        public async Task<ActionResult<APIResponse>> GetProductById([FromRoute] ulong id)
-        {
-            try
-            {
-                var result = await _productService.GetProductByIdAsync(id, GetCancellationToken());
-
-                if (result == null)
-                    return ErrorResponse($"Không tìm thấy sản phẩm với ID {id}", HttpStatusCode.NotFound);
-
-                return SuccessResponse(result);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        /// <summary>
-        /// Lấy danh sách tất cả sản phẩm
-        /// </summary>
-        /// <returns>Danh sách sản phẩm</returns>
         [HttpGet]
-        [EndpointSummary("Get All Product")]
-        [EndpointDescription("Lấy danh sách tất cả sản phẩm.")]
-        public async Task<ActionResult<APIResponse>> GetAllProduct()
-        {
-            try
-            {
-                var list = await _productService.GetAllProductAsync(GetCancellationToken());
-                return SuccessResponse(list);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-        /// <summary>
-        /// Lấy danh sách tất cả sản phẩm theo category ID
-        /// </summary>
-        /// <returns>Danh sách sản phẩm</returns>
-        [HttpGet("category/{id}")]
-        [EndpointSummary("Get All Product By Category")]
-        [EndpointDescription("Lấy danh sách tất cả sản phẩm theo category ID.")]
-        public async Task<ActionResult<APIResponse>> GetAllProductByCategory([FromRoute] ulong id)
-        {
-            try
-            {
-                var list = await _productService.GetAllProductByCategoryIdAsync(id,GetCancellationToken());
-                return SuccessResponse(list);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-        /// <summary>
-        /// Lấy danh sách tất cả product registration với phân trang 
-        /// </summary>
-        /// <param name="page">Số trang (mặc định: 1)</param>
-        /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
-        /// <returns>Danh sách product registration có phân trang</returns>
-        [HttpGet("registrations")]
-        [Authorize(Roles = "Admin,Staff")]
-        [EndpointSummary("Get All Product Registration (note.)")]
-        public async Task<ActionResult<APIResponse>> GetAllProductRegistraion([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
-        {
-            try
-            {
-                // Validate pagination parameters
-                if (page < 1)
-                    return ErrorResponse("Page number must be greater than 0");
+        [EndpointSummary("Danh sách sản phẩm (phân trang)")]
+        [EndpointDescription("Trả về danh sách sản phẩm kèm thông tin cơ bản.")]
+        public async Task<ActionResult<PagedResponse<ProductListItemDTO>>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
+            => Ok(await _svc.GetAllAsync(page, pageSize, ct));
 
-                if (pageSize < 1 || pageSize > 100)
-                    return ErrorResponse("Page size must be between 1 and 100");
-
-                var users = await _productService.GetAllProductRegisterAsync(page, pageSize, GetCancellationToken());
-                return SuccessResponse(users);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
+        [HttpGet("{id:long}")]
+        [EndpointSummary("Lấy chi tiết sản phẩm theo Id")]
+        [EndpointDescription("Bao gồm đầy đủ thông tin và toàn bộ ảnh (MediaLink) của sản phẩm.")]
+        public async Task<ActionResult<ProductResponseDTO>> GetById(
+            long id,
+            CancellationToken ct = default)
+        {
+            var item = await _svc.GetByIdAsync((ulong)id, ct);
+            return item is null ? NotFound() : Ok(item);
         }
 
-        /// <summary>
-        /// Cập nhật thông tin sản phẩm
-        /// </summary>
-        /// <param name="id">ID của sản phẩm</param>
-        /// <param name="dto">Thông tin sản phẩm cần cập nhật</param>
-        /// <returns>Thông tin sản phẩm đã cập nhật</returns>
-        [HttpPut("{id}")]
-        [EndpointSummary("Update Product ")]
-        [EndpointDescription("Cập nhật thông tin sản phẩm.")]
-        public async Task<ActionResult<APIResponse>> UpdateProduct([FromRoute] ulong id, [FromBody] ProductUpdateDTO dto)
-        {
-            var validationResult = ValidateModel();
-            if (validationResult != null) return validationResult;
+        [HttpGet("category/{categoryId:long}")]
+        [EndpointSummary("Danh sách sản phẩm theo Category (phân trang)")]
+        [EndpointDescription("Lọc theo CategoryId, trả về danh sách kèm thông tin cơ bản.")]
+        public async Task<ActionResult<PagedResponse<ProductListItemDTO>>> GetByCategory(
+            long categoryId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
+            => Ok(await _svc.GetByCategoryAsync((ulong)categoryId, page, pageSize, ct));
 
-            try
-            {
-                var result = await _productService.UpdateProductAsync(id, dto, GetCancellationToken());
-                return SuccessResponse(result);
-            }
-            catch (KeyNotFoundException)
-            {
-                return ErrorResponse("Không tìm thấy sản phẩm", HttpStatusCode.NotFound);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
+        [HttpGet("vendor/{vendorId:long}")]
+        [EndpointSummary("Danh sách sản phẩm theo Vendor (phân trang)")]
+        [EndpointDescription("Lọc theo VendorId, trả về danh sách kèm thông tin cơ bản.")]
+        public async Task<ActionResult<PagedResponse<ProductListItemDTO>>> GetByVendor(
+            long vendorId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
+            => Ok(await _svc.GetByVendorAsync((ulong)vendorId, page, pageSize, ct));
+
+        // ========= UPDATE =========
+
+        [HttpPut("{id:long}")]
+        [EndpointSummary("Cập nhật sản phẩm + ảnh (add/remove)")]
+        [EndpointDescription(@"Body JSON:
+{
+  ""data"": ProductUpdateDTO (các field cơ bản, KHÔNG cần Id),
+  ""addImages"": [ { ImageUrl, ImagePublicId, Purpose, SortOrder }, ... ],
+  ""removeImagePublicIds"": [ ""publicId1"", ""publicId2"" ]
+}
+Ảnh được quản lý trong MediaLink với OwnerType = Product.")]
+        public async Task<ActionResult<ProductResponseDTO>> Update(
+            long id,
+            [FromBody] UpdateRequest body,
+            CancellationToken ct = default)
+        {
+            if (body?.Data is null) return BadRequest("Thiếu Data.");
+
+            // Dùng Id từ route — không cần Id trong body
+            body.Data.Id = (ulong)id;
+
+            var add = body.AddImages ?? new List<MediaLinkItemDTO>();
+            var removed = body.RemoveImagePublicIds ?? new List<string>();
+
+            var updated = await _svc.UpdateAsync((ulong)id, body.Data, add, removed, ct);
+            return Ok(updated);
+        }
+
+        // ========= UPDATE EMISSION (CommissionRate) =========
+
+        [HttpPatch("{id:long}/emission")]
+        [EndpointSummary("Cập nhật CommissionRate của sản phẩm")]
+        [EndpointDescription(@"Body JSON:
+{ ""commissionRate"": 0.05 }   // ví dụ 5%
+Route chứa id, server sẽ set ProductId từ route.")]
+        public async Task<IActionResult> UpdateEmission(
+            long id,
+            [FromBody] ProductUpdateEmissionDTO dto,
+            CancellationToken ct = default)
+        {
+            if (dto is null) return BadRequest("Thiếu dữ liệu.");
+            dto.Id = (ulong)id;
+
+            var ok = await _svc.UpdateEmissionAsync(dto, ct);
+            return ok ? NoContent() : NotFound();
+        }
+
+        // ========= DELETE =========
+
+        [HttpDelete("{id:long}")]
+        [EndpointSummary("Xoá sản phẩm")]
+        [EndpointDescription("Xoá sản phẩm và (tuỳ bạn xử lý ở repo/service) có thể dọn ảnh MediaLink liên quan.")]
+        public async Task<IActionResult> Delete(
+            long id,
+            CancellationToken ct = default)
+            => (await _svc.DeleteAsync((ulong)id, ct)) ? NoContent() : NotFound();
+
+        // ========= Request models =========
+
+        public sealed class UpdateRequest
+        {
+            public ProductUpdateDTO Data { get; set; } = null!;
+            public List<MediaLinkItemDTO>? AddImages { get; set; }
+            public List<string>? RemoveImagePublicIds { get; set; }
         }
     }
 }

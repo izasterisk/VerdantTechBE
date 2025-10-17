@@ -87,8 +87,8 @@ public class ProductResponseDTO
     public List<ProductImageResponseDTO> Images { get; set; } = new();
     public decimal UnitPrice { get; set; }
     public int WarrantyMonths { get; set; }
-    public Dictionary<string, object> Specifications { get; set; } = new();
-    public Dictionary<string, decimal> DimensionsCm { get; set; } = new();
+    public Dictionary<string, object> Specifications { get; set; }
+    public Dictionary<string, decimal> DimensionsCm { get; set; }
 }
 
 public class ProductImageResponseDTO

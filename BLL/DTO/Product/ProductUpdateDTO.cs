@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BLL.DTO.MediaLink;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,6 +10,7 @@ namespace BLL.DTO.Product
 {
     public class ProductUpdateDTO
     {
+        [Required] public ulong Id { get; set; }
 
         [Required(ErrorMessage = "Danh mục sản phẩm là bắt buộc")]
         public ulong CategoryId { get; set; }
@@ -40,22 +42,15 @@ namespace BLL.DTO.Product
         [StringLength(10, ErrorMessage = "Xếp hạng hiệu suất năng lượng không được vượt quá 10 ký tự")]
         public string? EnergyEfficiencyRating { get; set; }
 
-        /// <summary>
-        /// Technical specifications as key-value pairs (JSON)
-        /// </summary>
-        public Dictionary<string, object> Specifications { get; set; } = new();
+       
+        public Dictionary<string, object> Specifications { get; set; }
 
-        /// <summary>
-        /// Manual/guide URLs, comma-separated
-        /// </summary>
+        
         [StringLength(1000, ErrorMessage = "Các URL hướng dẫn không được vượt quá 1000 ký tự")]
         public string? ManualUrls { get; set; }
 
-        /// <summary>
-        /// Image URLs, comma-separated
-        /// </summary>
-        [StringLength(1000, ErrorMessage = "Các URL hình ảnh không được vượt quá 1000 ký tự")]
-        public string? Images { get; set; }
+        public string? PublicUrl { get; set; }
+        //public string? Images { get; set; }
 
         [Range(1, int.MaxValue, ErrorMessage = "Thời gian bảo hành phải là số dương")]
         public int WarrantyMonths { get; set; } = 12;
@@ -66,11 +61,10 @@ namespace BLL.DTO.Product
 
         public decimal? WeightKg { get; set; }
 
-        /// <summary>
-        /// {length, width, height} (JSON)
-        /// </summary>
+       
         public DimensionsDTO DimensionsCm { get; set; } = new();
 
+        public List<MediaLinkItemDTO> Images { get; set; } = new();
         public bool IsActive { get; set; } = true;
 
         public long ViewCount { get; set; } = 0L;
@@ -82,13 +76,13 @@ namespace BLL.DTO.Product
 
         public class DimensionsDTO
         {
-            [Range(0, 200, ErrorMessage = "Chiều rộng sản phẩm phải từ 0 đến 200 cm")]
+            //[Range(0, 200, ErrorMessage = "Chiều rộng sản phẩm phải từ 0 đến 200 cm")]
             public decimal Width { get; set; }
 
-            [Range(0, 200, ErrorMessage = "Chiều cao sản phẩm phải từ 0 đến 200 cm")]
+            //[Range(0, 200, ErrorMessage = "Chiều cao sản phẩm phải từ 0 đến 200 cm")]
             public decimal Height { get; set; }
 
-            [Range(0, 200, ErrorMessage = "Chiều dài sản phẩm phải từ 0 đến 200 cm")]
+            //[Range(0, 200, ErrorMessage = "Chiều dài sản phẩm phải từ 0 đến 200 cm")]
             public decimal Length { get; set; }
         }
     }
