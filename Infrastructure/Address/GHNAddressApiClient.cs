@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using BLL.DTO.Address;
 using BLL.Interfaces.Infrastructure;
 using Infrastructure.Address.Models;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +27,7 @@ public class GHNAddressApiClient : IGHNAddressApiClient
         
     }
 
-    public async Task<List<CourierProvinceResponseDTO>> GHNGetProvincesAsync(CancellationToken cancellationToken = default)
+    public async Task<List<Province>> GHNGetProvincesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -45,20 +44,14 @@ public class GHNAddressApiClient : IGHNAddressApiClient
                 {
                     var province = new Province
                     {
-                        ProvinceCode = item.GetProperty("ProvinceID").GetInt32(),
+                        ProvinceCode = item.GetProperty("ProvinceID").GetInt32().ToString(),
                         Name = item.GetProperty("ProvinceName").GetString() ?? string.Empty
                     };
                     provinceList.Add(province);
                 }
                 return provinceList;
             }, "tỉnh/thành phố");
-            
-            // Manual mapping to DTO
-            return provinces.Select(province => new CourierProvinceResponseDTO
-            {
-                ProvinceId = province.ProvinceCode,
-                Name = province.Name
-            }).ToList();
+            return provinces;
         }
         catch (TaskCanceledException)
         {
@@ -78,15 +71,13 @@ public class GHNAddressApiClient : IGHNAddressApiClient
         }
     }
 
-    public async Task<List<CourierDistrictResponseDTO>> GHNGetDistrictsAsync(CancellationToken cancellationToken = default)
+    public async Task<List<District>> GHNGetDistrictsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             var url = $"{_baseUrl}/district";
-            
             var response = await _httpClient.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
-            
             var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
             
             // Use helper to parse and validate response
@@ -99,22 +90,15 @@ public class GHNAddressApiClient : IGHNAddressApiClient
                 {
                     var district = new District
                     {
-                        DistrictCode = item.GetProperty("DistrictID").GetInt32(),
-                        ProvinceCode = item.GetProperty("ProvinceID").GetInt32(),
+                        DistrictCode = item.GetProperty("DistrictID").GetInt32().ToString(),
+                        ProvinceCode = item.GetProperty("ProvinceID").GetInt32().ToString(),
                         Name = item.GetProperty("DistrictName").GetString() ?? string.Empty
                     };
                     districtList.Add(district);
                 }
                 return districtList;
             }, "quận/huyện");
-            
-            // Manual mapping to DTO
-            return districts.Select(district => new CourierDistrictResponseDTO
-            {
-                DistrictId = district.DistrictCode,
-                ProvinceId = district.ProvinceCode,
-                Name = district.Name
-            }).ToList();
+            return districts;
         }
         catch (TaskCanceledException)
         {
@@ -134,7 +118,7 @@ public class GHNAddressApiClient : IGHNAddressApiClient
         }
     }
 
-    public async Task<List<CourierCommuneResponseDTO>> GHNGetCommunesAsync(int districtId, CancellationToken cancellationToken = default)
+    public async Task<List<Commune>> GHNGetCommunesAsync(string districtId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -156,21 +140,14 @@ public class GHNAddressApiClient : IGHNAddressApiClient
                     var commune = new Commune
                     {
                         CommuneCode = item.GetProperty("WardCode").GetString() ?? string.Empty,
-                        DistrictCode = item.GetProperty("DistrictID").GetInt32(),
+                        DistrictCode = districtId,
                         Name = item.GetProperty("WardName").GetString() ?? string.Empty
                     };
                     communeList.Add(commune);
                 }
                 return communeList;
             }, $"phường/xã cho quận/huyện {districtId}");
-            
-            // Manual mapping to DTO
-            return communes.Select(commune => new CourierCommuneResponseDTO
-            {
-                CommuneCode = commune.CommuneCode,
-                DistrictId = commune.DistrictCode,
-                Name = commune.Name
-            }).ToList();
+            return communes;
         }
         catch (TaskCanceledException)
         {
@@ -188,5 +165,25 @@ public class GHNAddressApiClient : IGHNAddressApiClient
         {
             throw new InvalidOperationException($"Lỗi không xác định khi lấy danh sách phường/xã cho quận/huyện {districtId}: {ex.Message}");
         }
+    }
+    
+    public async Task<(string ProvinceCode, string DistrictCode, string CommuneCode)> GetGHNAddressCodesAsync(string provinceName, string districtName, string communeName, CancellationToken cancellationToken = default)
+    {
+        var provinces = await GHNGetProvincesAsync(cancellationToken);
+        var province = provinces.FirstOrDefault(p => p.Name.Contains(provinceName, StringComparison.CurrentCultureIgnoreCase));
+        if (province == null)
+            throw new InvalidOperationException($"Không tìm thấy tỉnh/thành phố với tên '{provinceName}' từ GHN.");
+
+        var districts = await GHNGetDistrictsAsync(cancellationToken);
+        var district = districts.FirstOrDefault(d => d.ProvinceCode == province.ProvinceCode && d.Name.Contains(districtName, StringComparison.CurrentCultureIgnoreCase));
+        if (district == null)
+            throw new InvalidOperationException($"Không tìm thấy quận/huyện với tên '{districtName}' trong tỉnh/thành phố '{provinceName}' từ GHN.");
+
+        var communes = await GHNGetCommunesAsync(district.DistrictCode, cancellationToken);
+        var commune = communes.FirstOrDefault(c => c.Name.Contains(communeName, StringComparison.CurrentCultureIgnoreCase));
+        if (commune == null)
+            throw new InvalidOperationException($"Không tìm thấy phường/xã với tên '{communeName}' trong quận/huyện '{districtName}' từ GHN.");
+
+        return (province.ProvinceCode, district.DistrictCode, commune.CommuneCode);
     }
 }

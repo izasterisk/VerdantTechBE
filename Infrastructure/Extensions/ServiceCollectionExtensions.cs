@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddCourier(this IServiceCollection services)
     {
         services.AddScoped<HttpClient>();
-        services.AddScoped<ICourierApiClient, GHNCourierApiClient>();
+        services.AddScoped<IGHNCourierApiClient, GHNCourierApiClient>();
         return services;
     }
     

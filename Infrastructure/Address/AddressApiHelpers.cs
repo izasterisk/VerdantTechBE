@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Infrastructure.Address.Models;
 
 namespace Infrastructure.Address;
 

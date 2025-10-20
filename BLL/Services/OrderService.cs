@@ -18,16 +18,16 @@ public class OrderService : IOrderService
     private readonly IMapper _mapper;
     private readonly IOrderDetailRepository _orderDetailRepository;
     private readonly IAddressRepository _addressRepository;
-    private readonly ICourierApiClient _courierApiClient;
+    private readonly IGHNCourierApiClient _ighnCourierApiClient;
     private readonly IMemoryCache _memoryCache;
     
-    public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository, IAddressRepository addressRepository, ICourierApiClient courierApiClient, IMemoryCache memoryCache)
+    public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository, IAddressRepository addressRepository, IGHNCourierApiClient ighnCourierApiClient, IMemoryCache memoryCache)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
         _orderDetailRepository = orderDetailRepository;
         _addressRepository = addressRepository;
-        _courierApiClient = courierApiClient;
+        _ighnCourierApiClient = ighnCourierApiClient;
         _memoryCache = memoryCache;
     }
 
@@ -87,15 +87,15 @@ public class OrderService : IOrderService
         response.TotalAmountBeforeShippingFee = subTotal + response.TaxAmount - response.DiscountAmount;
         response.OrderDetails = orderDetailsResponse;
         
-        var availableServices = await _courierApiClient.GHNGetAvailableServicesAsync(3695, address.DistrictCode, cancellationToken);
+        var availableServices = await _ighnCourierApiClient.GHNGetAvailableServicesAsync(3695, address.DistrictCode, cancellationToken);
         List<ShippingDetailDTO> shippingDetails = new();
         foreach (var availableService in availableServices)
         {
             try
             {
-                int deliveryDate = await _courierApiClient.GHNGetDeliveryDateAsync(3695, "90752", 
+                int deliveryDate = await _ighnCourierApiClient.GHNGetDeliveryDateAsync(3695, "90752", 
                     address.DistrictCode, address.CommuneCode, availableService.ServiceId, cancellationToken);
-                int shippingFee = await _courierApiClient.GHNGetShippingFeeAsync(3695, "90752", 
+                int shippingFee = await _ighnCourierApiClient.GHNGetShippingFeeAsync(3695, "90752", 
                     address.DistrictCode, address.CommuneCode, availableService.ServiceId, 
                     availableService.ServiceTypeId, (int)Math.Round(height, MidpointRounding.AwayFromZero), 
                     (int)Math.Round(length, MidpointRounding.AwayFromZero), 

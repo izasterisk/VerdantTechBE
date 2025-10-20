@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Courier;
 
-public class GHNCourierApiClient : ICourierApiClient
+public class GHNCourierApiClient : IGHNCourierApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;

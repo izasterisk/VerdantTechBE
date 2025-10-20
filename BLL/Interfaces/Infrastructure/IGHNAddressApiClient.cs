@@ -4,7 +4,6 @@ namespace BLL.Interfaces.Infrastructure;
 
 public interface IGHNAddressApiClient
 {
-    Task<List<CourierProvinceResponseDTO>> GHNGetProvincesAsync(CancellationToken cancellationToken = default);
-    Task<List<CourierDistrictResponseDTO>> GHNGetDistrictsAsync(CancellationToken cancellationToken = default);
-    Task<List<CourierCommuneResponseDTO>> GHNGetCommunesAsync(int districtId, CancellationToken cancellationToken = default);
+    Task<(string ProvinceCode, string DistrictCode, string CommuneCode)> GetGHNAddressCodesAsync(string provinceName,
+        string districtName, string communeName, CancellationToken cancellationToken = default);
 }

@@ -2,7 +2,7 @@ using BLL.DTO.Courier;
 
 namespace BLL.Interfaces.Infrastructure;
 
-public interface ICourierApiClient
+public interface IGHNCourierApiClient
 {
     Task<List<CourierServicesResponseDTO>> GHNGetAvailableServicesAsync(int fromDistrictId, int toDistrictId, CancellationToken cancellationToken = default);
     Task<int> GHNGetDeliveryDateAsync(int fromDistrictId, string fromWardCode, int toDistrictId, string toWardCode, int serviceId, CancellationToken cancellationToken = default);
