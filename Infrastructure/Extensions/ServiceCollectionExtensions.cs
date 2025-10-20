@@ -33,14 +33,14 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddCourier(this IServiceCollection services)
     {
         services.AddScoped<HttpClient>();
-        services.AddScoped<ICourierApiClient, CourierApiClient>();
+        services.AddScoped<ICourierApiClient, GHNCourierApiClient>();
         return services;
     }
     
     public static IServiceCollection AddAddress(this IServiceCollection services)
     {
         services.AddScoped<HttpClient>();
-        services.AddScoped<IAddressApiClient, AddressApiClient>();
+        services.AddScoped<IAddressApiClient, GHNAddressApiClient>();
         return services;
     }
 

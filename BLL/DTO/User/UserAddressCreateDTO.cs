@@ -21,12 +21,12 @@ public class UserAddressCreateDTO
     public string Commune { get; set; } = null!;
     
     [Required(ErrorMessage = "Mã tỉnh/thành là bắt buộc")]
-    [Range(1, int.MaxValue, ErrorMessage = "Mã tỉnh/thành phải lớn hơn 0")]
-    public int ProvinceCode { get; set; }
+    [StringLength(20, ErrorMessage = "Mã tỉnh/thành không được vượt quá 20 ký tự")]
+    public string ProvinceCode { get; set; } = null!;
 
     [Required(ErrorMessage = "Mã quận/huyện là bắt buộc")]
-    [Range(1, int.MaxValue, ErrorMessage = "Mã quận/huyện phải lớn hơn 0")]
-    public int DistrictCode { get; set; }
+    [StringLength(20, ErrorMessage = "Mã quận/huyện không được vượt quá 20 ký tự")]
+    public string DistrictCode { get; set; } = null!;
 
     [Required(ErrorMessage = "Mã xã/phường là bắt buộc")]
     [StringLength(20, ErrorMessage = "Mã xã/phường không được vượt quá 20 ký tự")]

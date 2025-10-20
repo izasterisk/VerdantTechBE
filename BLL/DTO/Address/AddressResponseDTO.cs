@@ -18,9 +18,9 @@ public class AddressResponseDTO
     [StringLength(100, ErrorMessage = "Tên xã/phường không được vượt quá 100 ký tự")]
     public string? Commune { get; set; }
     
-    public int? ProvinceCode { get; set; }
+    public string? ProvinceCode { get; set; }
 
-    public int? DistrictCode { get; set; }
+    public string? DistrictCode { get; set; }
 
     public string? CommuneCode { get; set; }
 

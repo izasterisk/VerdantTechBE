@@ -1,0 +1,1146 @@
+GET https://sandbox.goship.io/api/v2/cities
+Auth Type Bearer Token.
+
+Response
+{
+    "code": 200,
+    "status": "success",
+    "data": [
+        {
+            "id": "100000",
+            "name": "Hà Nội",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "ov",
+                "supership",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "700000",
+            "name": "Hồ Chí Minh",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "ov",
+                "supership",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "550000",
+            "name": "Đà Nẵng",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "880000",
+            "name": "An Giang",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "790000",
+            "name": "Bà Rịa - Vũng Tàu",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "220000",
+            "name": "Bắc Ninh",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "230000",
+            "name": "Bắc Giang",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "820000",
+            "name": "Bình Dương",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "590000",
+            "name": "Bình Định",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "830000",
+            "name": "Bình Phước",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "800000",
+            "name": "Bình Thuận",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "960000",
+            "name": "Bạc Liêu",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "930000",
+            "name": "Bến Tre",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "260000",
+            "name": "Bắc Kạn",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "900000",
+            "name": "Cần Thơ",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "650000",
+            "name": "Khánh Hòa",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "530000",
+            "name": "Thừa Thiên Huế",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "330000",
+            "name": "Lào Cai",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "200000",
+            "name": "Quảng Ninh",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "810000",
+            "name": "Đồng Nai",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "420000",
+            "name": "Nam Định",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "970000",
+            "name": "Cà Mau",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "270000",
+            "name": "Cao Bằng",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "600000",
+            "name": "Gia Lai",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "310000",
+            "name": "Hà Giang",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "400000",
+            "name": "Hà Nam",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "480000",
+            "name": "Hà Tĩnh",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "170000",
+            "name": "Hải Dương",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "180000",
+            "name": "Hải Phòng",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "ov",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "350000",
+            "name": "Hòa Bình",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "160000",
+            "name": "Hưng Yên",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "920000",
+            "name": "Kiên Giang",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "580000",
+            "name": "Kon Tum",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "390000",
+            "name": "Lai Châu",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "670000",
+            "name": "Lâm Đồng",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "240000",
+            "name": "Lạng Sơn",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "850000",
+            "name": "Long An",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "460000",
+            "name": "Nghệ An",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "430000",
+            "name": "Ninh Bình",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "660000",
+            "name": "Ninh Thuận",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "290000",
+            "name": "Phú Thọ",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "620000",
+            "name": "Phú Yên",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "510000",
+            "name": "Quảng Bình",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "560000",
+            "name": "Quảng Nam",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "570000",
+            "name": "Quảng Ngãi",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "520000",
+            "name": "Quảng Trị",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "950000",
+            "name": "Sóc Trăng",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "360000",
+            "name": "Sơn La",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "840000",
+            "name": "Tây Ninh",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "410000",
+            "name": "Thái Bình",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "250000",
+            "name": "Thái Nguyên",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "440000",
+            "name": "Thanh Hóa",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "860000",
+            "name": "Tiền Giang",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "940000",
+            "name": "Trà Vinh",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "300000",
+            "name": "Tuyên Quang",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "890000",
+            "name": "Vĩnh Long",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "280000",
+            "name": "Vĩnh Phúc",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "320000",
+            "name": "Yên Bái",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "630000",
+            "name": "Đắk Lắk",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "870000",
+            "name": "Đồng Tháp",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "640000",
+            "name": "Đắk Nông",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "910000",
+            "name": "Hậu Giang",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        },
+        {
+            "id": "380000",
+            "name": "Điện Biên",
+            "support_carriers": [
+                "vtp",
+                "njv",
+                "spl",
+                "kerry",
+                "hola",
+                "snappy",
+                "nhattin",
+                "vnp",
+                "shopee",
+                "jnt",
+                "ems",
+                "jnt2"
+            ]
+        }
+    ]
+}

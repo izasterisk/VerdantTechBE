@@ -14,8 +14,8 @@ public static class AddressHelper
     /// <param name="commune">Tên phường/xã</param>
     /// <param name="communeCode">Mã phường/xã</param>
     /// <exception cref="ValidationException">Ném ra khi các cặp trường không đồng nhất về null</exception>
-    public static void ValidateAddressFields(string? province, int? provinceCode, 
-        string? district, int? districtCode, 
+    public static void ValidateAddressFields(string? province, string? provinceCode, 
+        string? district, string? districtCode, 
         string? commune, string? communeCode)
     {
         if ((province == null) != (provinceCode == null))

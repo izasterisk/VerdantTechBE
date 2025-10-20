@@ -72,19 +72,30 @@ public class OrderService : IOrderService
             subTotal += orderDetailResponse.Subtotal;
             weight += productRaw.WeightKg.GetValueOrDefault() * orderDetail.Quantity * 1000;
         }
+        
+        //Huhu I don't want this
+        if(weight > 50000)
+            weight = 50000;
+        if(length > 200)
+            length = 200;
+        if(width > 200)
+            width = 200;
+        if(height > 200)
+            height = 200;
+        
         response.Subtotal = subTotal;
         response.TotalAmountBeforeShippingFee = subTotal + response.TaxAmount - response.DiscountAmount;
         response.OrderDetails = orderDetailsResponse;
         
-        var availableServices = await _courierApiClient.GetAvailableServicesAsync(3695, address.DistrictCode, cancellationToken);
+        var availableServices = await _courierApiClient.GHNGetAvailableServicesAsync(3695, address.DistrictCode, cancellationToken);
         List<ShippingDetailDTO> shippingDetails = new();
         foreach (var availableService in availableServices)
         {
             try
             {
-                int deliveryDate = await _courierApiClient.GetDeliveryDateAsync(3695, "90752", 
+                int deliveryDate = await _courierApiClient.GHNGetDeliveryDateAsync(3695, "90752", 
                     address.DistrictCode, address.CommuneCode, availableService.ServiceId, cancellationToken);
-                int shippingFee = await _courierApiClient.GetShippingFeeAsync(3695, "90752", 
+                int shippingFee = await _courierApiClient.GHNGetShippingFeeAsync(3695, "90752", 
                     address.DistrictCode, address.CommuneCode, availableService.ServiceId, 
                     availableService.ServiceTypeId, (int)Math.Round(height, MidpointRounding.AwayFromZero), 
                     (int)Math.Round(length, MidpointRounding.AwayFromZero), 

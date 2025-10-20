@@ -31,11 +31,13 @@ public class Address
 
     [Column("province_code")]
     [Required]
-    public int ProvinceCode { get; set; }
+    [StringLength(20)]
+    public string ProvinceCode { get; set; } = string.Empty;
 
     [Column("district_code")]
     [Required]
-    public int DistrictCode { get; set; }
+    [StringLength(20)]
+    public string DistrictCode { get; set; } = string.Empty;
 
     [Column("commune_code")]
     [Required]

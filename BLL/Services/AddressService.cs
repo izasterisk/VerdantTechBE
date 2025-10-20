@@ -15,12 +15,12 @@ public class AddressService : IAddressService
 
     public async Task<List<CourierProvinceResponseDTO>> GetProvincesAsync(CancellationToken cancellationToken = default)
     {
-        return await _addressApiClient.GetProvincesAsync(cancellationToken);
+        return await _addressApiClient.GHNGetProvincesAsync(cancellationToken);
     }
 
     public async Task<List<CourierDistrictResponseDTO>> GetDistrictsAsync(int? provinceId = null, CancellationToken cancellationToken = default)
     {
-        var allDistricts = await _addressApiClient.GetDistrictsAsync(cancellationToken);
+        var allDistricts = await _addressApiClient.GHNGetDistrictsAsync(cancellationToken);
         if (provinceId.HasValue)
         {
             return allDistricts.Where(d => d.ProvinceId == provinceId.Value).ToList();
@@ -30,6 +30,6 @@ public class AddressService : IAddressService
 
     public async Task<List<CourierCommuneResponseDTO>> GetCommunesAsync(int districtId, CancellationToken cancellationToken = default)
     {
-        return await _addressApiClient.GetCommunesAsync(districtId, cancellationToken);
+        return await _addressApiClient.GHNGetCommunesAsync(districtId, cancellationToken);
     }
 }

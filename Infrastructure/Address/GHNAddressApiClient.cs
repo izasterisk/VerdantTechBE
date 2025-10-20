@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Address;
 
-public class AddressApiClient : IAddressApiClient
+public class GHNAddressApiClient : IAddressApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
@@ -14,7 +14,7 @@ public class AddressApiClient : IAddressApiClient
     private readonly string _token;
     private readonly int _timeoutSeconds;
 
-    public AddressApiClient(HttpClient httpClient, IConfiguration configuration)
+    public GHNAddressApiClient(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
         _configuration = configuration;
@@ -28,7 +28,7 @@ public class AddressApiClient : IAddressApiClient
         
     }
 
-    public async Task<List<CourierProvinceResponseDTO>> GetProvincesAsync(CancellationToken cancellationToken = default)
+    public async Task<List<CourierProvinceResponseDTO>> GHNGetProvincesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -82,7 +82,7 @@ public class AddressApiClient : IAddressApiClient
         }
     }
 
-    public async Task<List<CourierDistrictResponseDTO>> GetDistrictsAsync(CancellationToken cancellationToken = default)
+    public async Task<List<CourierDistrictResponseDTO>> GHNGetDistrictsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -138,7 +138,7 @@ public class AddressApiClient : IAddressApiClient
         }
     }
 
-    public async Task<List<CourierCommuneResponseDTO>> GetCommunesAsync(int districtId, CancellationToken cancellationToken = default)
+    public async Task<List<CourierCommuneResponseDTO>> GHNGetCommunesAsync(int districtId, CancellationToken cancellationToken = default)
     {
         try
         {

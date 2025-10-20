@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Courier;
 
-public class CourierApiClient : ICourierApiClient
+public class GHNCourierApiClient : ICourierApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
@@ -16,7 +16,7 @@ public class CourierApiClient : ICourierApiClient
     private readonly int _shopId;
     private readonly int _timeoutSeconds;
 
-    public CourierApiClient(HttpClient httpClient, IConfiguration configuration)
+    public GHNCourierApiClient(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
         _configuration = configuration;
@@ -31,12 +31,11 @@ public class CourierApiClient : ICourierApiClient
         _httpClient.DefaultRequestHeaders.Add("ShopId", _shopId.ToString());
     }
 
-    public async Task<List<CourierServicesResponseDTO>> GetAvailableServicesAsync(int fromDistrictId, int toDistrictId, CancellationToken cancellationToken = default)
+    public async Task<List<CourierServicesResponseDTO>> GHNGetAvailableServicesAsync(int fromDistrictId, int toDistrictId, CancellationToken cancellationToken = default)
     {
         return await CourierApiHelpers.ExecuteApiRequestAsync(async () =>
         {
             var url = $"{_baseUrl}/shipping-order/available-services";
-            // Create request body
             var requestBody = new
             {
                 shop_id = _shopId,
@@ -81,7 +80,7 @@ public class CourierApiClient : ICourierApiClient
         }, "lấy danh sách dịch vụ vận chuyển");
     }
 
-    public async Task<int> GetDeliveryDateAsync(int fromDistrictId, string fromWardCode, int toDistrictId, string toWardCode, int serviceId, CancellationToken cancellationToken = default)
+    public async Task<int> GHNGetDeliveryDateAsync(int fromDistrictId, string fromWardCode, int toDistrictId, string toWardCode, int serviceId, CancellationToken cancellationToken = default)
     {
         return await CourierApiHelpers.ExecuteApiRequestAsync(async () =>
         {
@@ -113,7 +112,7 @@ public class CourierApiClient : ICourierApiClient
         }, "lấy thời gian giao hàng");
     }
 
-    public async Task<int> GetShippingFeeAsync(int fromDistrictId, string fromWardCode, int toDistrictId, 
+    public async Task<int> GHNGetShippingFeeAsync(int fromDistrictId, string fromWardCode, int toDistrictId, 
         string toWardCode, int serviceId, int serviceTypeId, int height, int length, int weight, int width, CancellationToken cancellationToken = default)
     {
         return await CourierApiHelpers.ExecuteApiRequestAsync(async () =>
@@ -151,7 +150,7 @@ public class CourierApiClient : ICourierApiClient
         }, "lấy phí vận chuyển");
     }
 
-    public async Task<CourierOrderCreateResponseDTO> CreateOrderAsync(string toName, string toPhone, string toAddress, int toDistrictId, string toWardCode, int weight, int length, int width, int height, int paymentTypeId, string note, int serviceTypeId, int serviceId, int codAmount, List<OrderItemsCreateDTO> items, CancellationToken cancellationToken = default)
+    public async Task<CourierOrderCreateResponseDTO> GHNCreateOrderAsync(string toName, string toPhone, string toAddress, int toDistrictId, string toWardCode, int weight, int length, int width, int height, int paymentTypeId, string note, int serviceTypeId, int serviceId, int codAmount, List<OrderItemsCreateDTO> items, CancellationToken cancellationToken = default)
     {
         return await CourierApiHelpers.ExecuteApiRequestAsync(async () =>
         {
