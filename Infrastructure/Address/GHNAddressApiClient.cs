@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Address;
 
-public class GHNAddressApiClient : IAddressApiClient
+public class GHNAddressApiClient : IGHNAddressApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
@@ -33,23 +33,19 @@ public class GHNAddressApiClient : IAddressApiClient
         try
         {
             var url = $"{_baseUrl}/province";
-            
             var response = await _httpClient.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
-            
             var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            
             // Use helper to parse and validate response
             var provinces = AddressApiHelpers.ParseGhnResponse(jsonContent, dataElement =>
             {
                 AddressApiHelpers.ValidateArrayData(dataElement, "tỉnh/thành phố");
-                
                 var provinceList = new List<Province>();
                 foreach (var item in dataElement.EnumerateArray())
                 {
                     var province = new Province
                     {
-                        ProvinceId = item.GetProperty("ProvinceID").GetInt32(),
+                        ProvinceCode = item.GetProperty("ProvinceID").GetInt32(),
                         Name = item.GetProperty("ProvinceName").GetString() ?? string.Empty
                     };
                     provinceList.Add(province);
@@ -60,7 +56,7 @@ public class GHNAddressApiClient : IAddressApiClient
             // Manual mapping to DTO
             return provinces.Select(province => new CourierProvinceResponseDTO
             {
-                ProvinceId = province.ProvinceId,
+                ProvinceId = province.ProvinceCode,
                 Name = province.Name
             }).ToList();
         }
@@ -103,8 +99,8 @@ public class GHNAddressApiClient : IAddressApiClient
                 {
                     var district = new District
                     {
-                        DistrictId = item.GetProperty("DistrictID").GetInt32(),
-                        ProvinceId = item.GetProperty("ProvinceID").GetInt32(),
+                        DistrictCode = item.GetProperty("DistrictID").GetInt32(),
+                        ProvinceCode = item.GetProperty("ProvinceID").GetInt32(),
                         Name = item.GetProperty("DistrictName").GetString() ?? string.Empty
                     };
                     districtList.Add(district);
@@ -115,8 +111,8 @@ public class GHNAddressApiClient : IAddressApiClient
             // Manual mapping to DTO
             return districts.Select(district => new CourierDistrictResponseDTO
             {
-                DistrictId = district.DistrictId,
-                ProvinceId = district.ProvinceId,
+                DistrictId = district.DistrictCode,
+                ProvinceId = district.ProvinceCode,
                 Name = district.Name
             }).ToList();
         }
@@ -160,7 +156,7 @@ public class GHNAddressApiClient : IAddressApiClient
                     var commune = new Commune
                     {
                         CommuneCode = item.GetProperty("WardCode").GetString() ?? string.Empty,
-                        DistrictId = item.GetProperty("DistrictID").GetInt32(),
+                        DistrictCode = item.GetProperty("DistrictID").GetInt32(),
                         Name = item.GetProperty("WardName").GetString() ?? string.Empty
                     };
                     communeList.Add(commune);
@@ -172,7 +168,7 @@ public class GHNAddressApiClient : IAddressApiClient
             return communes.Select(commune => new CourierCommuneResponseDTO
             {
                 CommuneCode = commune.CommuneCode,
-                DistrictId = commune.DistrictId,
+                DistrictId = commune.DistrictCode,
                 Name = commune.Name
             }).ToList();
         }

@@ -17,13 +17,12 @@ public class AddressController : BaseController
     }
 
     /// <summary>
-    /// Lấy danh sách tất cả tỉnh/thành phố từ GHN
+    /// Lấy danh sách tất cả tỉnh/thành phố từ GoShip
     /// </summary>
     /// <returns>Danh sách tỉnh/thành phố</returns>
     [HttpGet("provinces")]
     [Authorize]
     [EndpointSummary("Get All Provinces")]
-    [EndpointDescription("Lấy danh sách tất cả tỉnh/thành phố từ GHN API. Không yêu cầu authentication.")]
     public async Task<ActionResult<APIResponse>> GetProvinces()
     {
         try
@@ -38,19 +37,20 @@ public class AddressController : BaseController
     }
 
     /// <summary>
-    /// Lấy danh sách quận/huyện từ GHN (có thể filter theo tỉnh/thành phố)
+    /// Lấy danh sách quận/huyện theo tỉnh/thành phố từ GoShip
     /// </summary>
-    /// <param name="provinceId">ID của tỉnh/thành phố để filter (optional)</param>
+    /// <param name="provinceId">ID của tỉnh/thành phố (string)</param>
     /// <returns>Danh sách quận/huyện</returns>
     [HttpGet("districts")]
     [Authorize]
-    [EndpointSummary("Get Districts (with optional Province filter)")]
-    [EndpointDescription("Lấy danh sách quận/huyện từ GHN API. Không yêu cầu authentication. " +
-                         "Có thể filter theo provinceId. Ví dụ: /api/Address/districts?provinceId=202")]
-    public async Task<ActionResult<APIResponse>> GetDistricts([FromQuery] int? provinceId = null)
+    [EndpointSummary("Get Districts By Province")]
+    public async Task<ActionResult<APIResponse>> GetDistricts([FromQuery] string provinceId)
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(provinceId))
+                return ErrorResponse("Province ID không được để trống");
+
             var districts = await _addressService.GetDistrictsAsync(provinceId, GetCancellationToken());
             return SuccessResponse(districts);
         }
@@ -61,21 +61,19 @@ public class AddressController : BaseController
     }
 
     /// <summary>
-    /// Lấy danh sách phường/xã theo quận/huyện từ GHN
+    /// Lấy danh sách phường/xã theo quận/huyện từ GoShip
     /// </summary>
-    /// <param name="districtId">ID của quận/huyện</param>
+    /// <param name="districtId">ID của quận/huyện (string)</param>
     /// <returns>Danh sách phường/xã</returns>
     [HttpGet("communes")]
     [Authorize]
     [EndpointSummary("Get Communes By District")]
-    [EndpointDescription("Lấy danh sách phường/xã theo ID quận/huyện từ GHN API. Không yêu cầu authentication. " +
-                         "Ví dụ: /api/Address/communes?districtId=1735")]
-    public async Task<ActionResult<APIResponse>> GetCommunes([FromQuery] int districtId)
+    public async Task<ActionResult<APIResponse>> GetCommunes([FromQuery] string districtId)
     {
         try
         {
-            if (districtId <= 0)
-                return ErrorResponse("District ID phải lớn hơn 0", HttpStatusCode.BadRequest);
+            if (string.IsNullOrWhiteSpace(districtId))
+                return ErrorResponse("District ID không được để trống");
 
             var communes = await _addressService.GetCommunesAsync(districtId, GetCancellationToken());
             return SuccessResponse(communes);

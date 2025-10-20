@@ -2,6 +2,6 @@
 
 public class CourierProvinceResponseDTO
 {
-    public int ProvinceId { get; set; }
+    public string ProvinceCode { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 }

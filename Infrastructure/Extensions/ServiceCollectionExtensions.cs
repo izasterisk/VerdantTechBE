@@ -40,7 +40,8 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAddress(this IServiceCollection services)
     {
         services.AddScoped<HttpClient>();
-        services.AddScoped<IAddressApiClient, GHNAddressApiClient>();
+        services.AddScoped<IGHNAddressApiClient, GHNAddressApiClient>();
+        services.AddScoped<IGoshipAddressApiClient, GoshipAddressApiClient>();
         return services;
     }
 

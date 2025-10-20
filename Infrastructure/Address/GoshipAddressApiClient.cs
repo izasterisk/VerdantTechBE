@@ -1,10 +1,12 @@
 ﻿using System.Text.Json;
 using BLL.DTO.Address;
+using BLL.Interfaces.Infrastructure;
+using Infrastructure.Address.Models;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.Address;
 
-public class GoshipAddressApiClient
+public class GoshipAddressApiClient : IGoshipAddressApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
@@ -43,29 +45,34 @@ public class GoshipAddressApiClient
                 throw new InvalidOperationException("API endpoint không khả dụng hoặc URL không đúng.");
             }
             
-            CitiesResponse? citiesResponse;
-            try
-            {
-                citiesResponse = JsonSerializer.Deserialize<CitiesResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException)
-            {
-                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
-            }
-            
-            if (citiesResponse?.Data == null)
+            // Parse JSON manually
+            using var document = JsonDocument.Parse(jsonContent);
+            var root = document.RootElement;
+            // Check response structure
+            if (!root.TryGetProperty("data", out var dataElement))
             {
                 throw new InvalidOperationException("Không thể lấy dữ liệu tỉnh/thành phố từ GoShip.");
             }
-            
-            // Manual mapping to DTO
-            return citiesResponse.Data.Select(city => new CourierProvinceResponseDTO
+            if (dataElement.ValueKind != JsonValueKind.Array)
             {
-                Id = city.Id,
-                Name = city.Name
+                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
+            }
+            // Parse provinces
+            var provinces = new List<Province>();
+            foreach (var item in dataElement.EnumerateArray())
+            {
+                var province = new Province
+                {
+                    ProvinceCode = item.GetProperty("id").GetString() ?? string.Empty,
+                    Name = item.GetProperty("name").GetString() ?? string.Empty
+                };
+                provinces.Add(province);
+            }
+            // Manual mapping to DTO
+            return provinces.Select(province => new CourierProvinceResponseDTO
+            {
+                ProvinceCode = province.ProvinceCode,
+                Name = province.Name
             }).ToList();
         }
         catch (TaskCanceledException)
@@ -103,28 +110,38 @@ public class GoshipAddressApiClient
                 throw new InvalidOperationException($"API endpoint không khả dụng hoặc mã thành phố {cityId} không đúng.");
             }
             
-            DistrictsResponse? districtsResponse;
-            try
-            {
-                districtsResponse = JsonSerializer.Deserialize<DistrictsResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException)
-            {
-                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
-            }
+            // Parse JSON manually
+            using var document = JsonDocument.Parse(jsonContent);
+            var root = document.RootElement;
             
-            if (districtsResponse?.Data == null)
+            // Check response structure
+            if (!root.TryGetProperty("data", out var dataElement))
             {
                 throw new InvalidOperationException($"Không thể lấy dữ liệu quận/huyện cho thành phố {cityId} từ GoShip.");
             }
             
-            // Manual mapping to DTO
-            return districtsResponse.Data.Select(district => new CourierDistrictResponseDTO
+            if (dataElement.ValueKind != JsonValueKind.Array)
             {
-                Id = district.Id,
+                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
+            }
+            
+            // Parse districts
+            var districts = new List<District>();
+            foreach (var item in dataElement.EnumerateArray())
+            {
+                var district = new District
+                {
+                    DistrictCode = item.GetProperty("id").GetString() ?? string.Empty,
+                    ProvinceCode = cityId,
+                    Name = item.GetProperty("name").GetString() ?? string.Empty
+                };
+                districts.Add(district);
+            }
+            
+            // Manual mapping to DTO
+            return districts.Select(district => new CourierDistrictResponseDTO
+            {
+                DistrictCode = district.DistrictCode,
                 Name = district.Name
             }).ToList();
         }
@@ -146,7 +163,7 @@ public class GoshipAddressApiClient
         }
     }
 
-    public async Task<List<CourierWardResponseDTO>> GoshipGetCommunesAsync(string districtId, CancellationToken cancellationToken = default)
+    public async Task<List<CourierCommuneResponseDTO>> GoshipGetCommunesAsync(string districtId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -163,29 +180,40 @@ public class GoshipAddressApiClient
                 throw new InvalidOperationException($"API endpoint không khả dụng hoặc mã quận/huyện {districtId} không đúng.");
             }
             
-            WardsResponse? wardsResponse;
-            try
-            {
-                wardsResponse = JsonSerializer.Deserialize<WardsResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException)
-            {
-                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
-            }
+            // Parse JSON manually
+            using var document = JsonDocument.Parse(jsonContent);
+            var root = document.RootElement;
             
-            if (wardsResponse?.Data == null)
+            // Check response structure
+            if (!root.TryGetProperty("data", out var dataElement))
             {
                 throw new InvalidOperationException($"Không thể lấy dữ liệu phường/xã cho quận/huyện {districtId} từ GoShip.");
             }
             
-            // Manual mapping to DTO
-            return wardsResponse.Data.Select(ward => new CourierWardResponseDTO
+            if (dataElement.ValueKind != JsonValueKind.Array)
             {
-                Id = ward.Id,
-                Name = ward.Name
+                throw new InvalidOperationException("Định dạng dữ liệu từ GoShip không hợp lệ.");
+            }
+            
+            // Parse communes
+            var communes = new List<Commune>();
+            foreach (var item in dataElement.EnumerateArray())
+            {
+                var commune = new Commune
+                {
+                    CommuneCode = item.GetProperty("id").GetInt32().ToString(), // Convert int to string
+                    DistrictCode = districtId, 
+                    Name = item.GetProperty("name").GetString() ?? string.Empty
+                };
+                communes.Add(commune);
+            }
+            
+            // Manual mapping to DTO
+            return communes.Select(commune => new CourierCommuneResponseDTO
+            {
+                CommuneCode = commune.CommuneCode,
+                DistrictCode = commune.DistrictCode,
+                Name = commune.Name
             }).ToList();
         }
         catch (TaskCanceledException)
