@@ -131,6 +131,10 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(true)
             .HasColumnName("is_active");
         
+        builder.Property(e => e.ForRent)
+            .HasDefaultValue(false)
+            .HasColumnName("for_rent");
+        
         // Timestamp fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
