@@ -130,3 +130,10 @@ Auth Type Bearer Token.
         }        
     ]
 }
+
+Nếu như điền code sai sẽ trả về 
+{
+    "code": 200,
+    "status": "success",
+    "data": []
+}

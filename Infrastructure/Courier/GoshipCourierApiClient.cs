@@ -1,6 +1,8 @@
-﻿namespace Infrastructure.Courier;
+﻿using BLL.Interfaces.Infrastructure;
 
-public class GoshipCourierApiClient
+namespace Infrastructure.Courier;
+
+public class GoshipCourierApiClient : IGoshipCourierApiClient
 {
     
 }
