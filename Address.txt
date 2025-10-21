@@ -1,139 +1,95 @@
-GET {_baseUrl}/cities/{cityId}/districts
-Auth Type Bearer Token.
+POST https://sandbox.goship.io/api/v2/rates
+{
+  "shipment": {
+    "address_from": {
+      "district": "720300",
+      "city": "700000"
+    },
+    "address_to": {
+      "district": "700500",
+      "city": "700000"
+    },
+    "parcel": {
+      "cod": 0,
+      "amount": 300000,
+      "width": 65,
+      "height": 230,
+      "length": 240,
+      "weight": 25000
+    }
+  }
+}
+
+
 {
     "code": 200,
     "status": "success",
     "data": [
         {
-            "id": "100300",
-            "name": "Quận Hai Bà Trưng",
-            "city_id": "100000",
-            "support_carriers": [
-                "vtp",
-                "kerry",
-                "ov",
-                "supership",
-                "ghnv3",
-                "vnp",
-                "hola",
-                "snappy",
-                "nhattin",
-                "shopee",
-                "jnt",
-                "ems",
-                "jnt2"
-            ]
+            "id": "MTFfN181OTk=",
+            "carrier_name": "Giao Hàng Tiết Kiệm",
+            "carrier_logo": "https://sandbox.goship.io/storage/images/carriers/2021_12_07_10_36_47_92d84240953b26d3dcf6ed5da91905d5.png",
+            "carrier_short_name": "ghtk",
+            "service": "Nhanh",
+            "expected": "Dự kiến giao 1 ngày",
+            "is_apply_only": false,
+            "promotion_id": 0,
+            "discount": 0,
+            "weight_fee": 3570000,
+            "location_first_fee": 22000,
+            "location_step_fee": 0,
+            "remote_area_fee": 0,
+            "oil_fee": 0,
+            "location_fee": 3592000,
+            "cod_fee": 0,
+            "service_fee": 180600,
+            "total_fee": 3772600,
+            "total_amount": 3772600,
+            "total_amount_carrier": 0,
+            "total_amount_shop": -3772600,
+            "price_table_id": 599,
+            "insurrance_fee": 0,
+            "return_fee": 5500,
+            "report": {
+                "success_percent": 95.5,
+                "return_percent": 4.5,
+                "avg_time_delivery": 0,
+                "avg_time_delivery_format": 0,
+                "score_percent": 10
+            }
         },
         {
-            "id": "101500",
-            "name": "Quận Hà Đông",
-            "city_id": "100000",
-            "support_carriers": [
-                "vtp",
-                "kerry",
-                "ov",
-                "supership",
-                "ghnv3",
-                "vnp",
-                "hola",
-                "snappy",
-                "nhattin",
-                "shopee",
-                "jnt",
-                "ems",
-                "jnt2"
-            ]
+            "id": "MTFfMTdfMTU5NA==",
+            "carrier_name": "Giao Hàng Nhanh (v3)",
+            "carrier_logo": "https://sandbox.goship.io/storage/images/carriers/2018_11_19_08_58_42_a44867924ab27607d9a5e12142d7503e.png",
+            "carrier_short_name": "ghnv3",
+            "service": "Nhanh",
+            "expected": "Dự kiến giao 1 ngày",
+            "is_apply_only": false,
+            "promotion_id": 0,
+            "discount": 0,
+            "weight_fee": 5720000,
+            "location_first_fee": 16500,
+            "location_step_fee": 0,
+            "remote_area_fee": 0,
+            "oil_fee": 0,
+            "location_fee": 5736500,
+            "cod_fee": 0,
+            "service_fee": 287825,
+            "total_fee": 6024325,
+            "total_amount": 6024325,
+            "total_amount_carrier": 0,
+            "total_amount_shop": -6024325,
+            "price_table_id": 1594,
+            "insurrance_fee": 0,
+            "return_fee": 0,
+            "report": {
+                "success_percent": 93.5,
+                "return_percent": 6.5,
+                "avg_time_delivery": 0,
+                "avg_time_delivery_format": 0,
+                "score_percent": 9.93
+            }
         }
     ]
-}
-
-GET {_baseUrl}/districts/{districtId}/wards
-Auth Type Bearer Token.
-{
-    "code": 200,
-    "status": "success",
-    "data": [
-        {
-            "id": 9110,
-            "name": "Phường 14",
-            "district_id": "701400",
-            "support_carriers": [
-                "vtp",
-                "supership",
-                "ghnv3",
-                "hola",
-                "snappy",
-                "vnp",
-                "nhattin",
-                "shopee",
-                "jnt",
-                "tikinow",
-                "ems",
-                "jnt2"
-            ]
-        },
-        {
-            "id": 9111,
-            "name": "Phường 9",
-            "district_id": "701400",
-            "support_carriers": [
-                "vtp",
-                "ghnv3",
-                "hola",
-                "snappy",
-                "vnp",
-                "nhattin",
-                "shopee",
-                "jnt",
-                "tikinow",
-                "ems",
-                "jnt2"
-            ]
-        },
-        {
-            "id": 9112,
-            "name": "Phường 10",
-            "district_id": "701400",
-            "support_carriers": [
-                "vtp",
-                "supership",
-                "ghnv3",
-                "hola",
-                "snappy",
-                "vnp",
-                "nhattin",
-                "shopee",
-                "jnt",
-                "tikinow",
-                "ems",
-                "jnt2"
-            ]
-        },
-        {
-            "id": 9113,
-            "name": "Phường 11",
-            "district_id": "701400",
-            "support_carriers": [
-                "vtp",
-                "supership",
-                "ghnv3",
-                "hola",
-                "snappy",
-                "vnp",
-                "nhattin",
-                "shopee",
-                "jnt",
-                "tikinow",
-                "ems",
-                "jnt2"
-            ]
-        }        
-    ]
-}
-
-Nếu như điền code sai sẽ trả về 
-{
-    "code": 200,
-    "status": "success",
-    "data": []
 }

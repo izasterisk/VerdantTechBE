@@ -336,6 +336,7 @@ CREATE TABLE products (
     weight_kg DECIMAL(10,3),
     dimensions_cm JSON COMMENT '{chiều dài, chiều rộng, chiều cao}',
     is_active BOOLEAN DEFAULT TRUE,
+    for_rent BOOLEAN DEFAULT FALSE COMMENT 'Sản phẩm có sẵn cho thuê hay không',
     view_count BIGINT DEFAULT 0,
     sold_count BIGINT DEFAULT 0,
     rating_average DECIMAL(3,2) DEFAULT 0.00,

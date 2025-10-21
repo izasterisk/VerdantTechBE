@@ -68,6 +68,8 @@ public partial class Product
 
     public bool IsActive { get; set; } = true;
 
+    public bool ForRent { get; set; } = false;
+
     public long ViewCount { get; set; } = 0L;
 
     public long SoldCount { get; set; } = 0L;
