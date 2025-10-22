@@ -21,8 +21,11 @@ public class OrderService : IOrderService
     private readonly IAddressRepository _addressRepository;
     private readonly IGoshipCourierApiClient _courierApiClient;
     private readonly IMemoryCache _memoryCache;
+    private readonly IUserService _userService;
     
-    public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository, IAddressRepository addressRepository, IGoshipCourierApiClient courierApiClient, IMemoryCache memoryCache)
+    public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository,
+        IAddressRepository addressRepository, IGoshipCourierApiClient courierApiClient, IMemoryCache memoryCache,
+        IUserService userService)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
@@ -30,6 +33,7 @@ public class OrderService : IOrderService
         _addressRepository = addressRepository;
         _courierApiClient = courierApiClient;
         _memoryCache = memoryCache;
+        _userService = userService;
     }
 
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
@@ -83,9 +87,12 @@ public class OrderService : IOrderService
         decimal cod = 0;
         if (dto.OrderPaymentMethod == OrderPaymentMethod.COD)
             cod = response.TotalAmountBeforeShippingFee;
-        var availableServices = await _courierApiClient.GetRatesAsync("720300", "700000", 
-            address.DistrictCode, address.ProvinceCode, cod, response.TotalAmountBeforeShippingFee, 
-            width, height, length, weight, cancellationToken);
+        var fromAddress = await _addressRepository.GetAddressByIdAsync(1, cancellationToken);
+        if (fromAddress == null)
+            throw new KeyNotFoundException($"Địa chỉ gửi không tồn tại.");
+        var availableServices = await _courierApiClient.GetRatesAsync(fromAddress.DistrictCode, 
+            fromAddress.ProvinceCode, address.DistrictCode, address.ProvinceCode, cod, 
+            response.TotalAmountBeforeShippingFee, width, height, length, weight, cancellationToken);
         response.ShippingDetails = _mapper.Map<List<ShippingDetailDTO>>(availableServices);
         OrderHelper.CacheOrderPreview(_memoryCache, response.OrderPreviewId, response);
         return response;
@@ -144,14 +151,55 @@ public class OrderService : IOrderService
         return finalResponse;
     }
     
-    public async Task<OrderResponseDTO> ProcessOrder(ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
+    public async Task<OrderResponseDTO> ProcessOrderAsync(ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
-            throw new InvalidOperationException("Khi cung cấp lý do hủy, trạng thái đơn hàng phải là 'Cancelled'.");
         var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
         if (order == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
+        if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
+            throw new InvalidOperationException("Khi cung cấp lý do hủy, trạng thái đơn hàng phải là 'Cancelled'.");
+        OrderHelper.ValidateOrderStatusTransition(order.Status, dto.Status);
+        if(dto.Status == OrderStatus.Processing)
+            order.ConfirmedAt = DateTime.UtcNow;
+        if(dto.Status == OrderStatus.Delivered)
+            order.DeliveredAt = DateTime.UtcNow;
+        if (dto.Status == OrderStatus.Cancelled)
+        {
+            order.CancelledAt = DateTime.UtcNow;
+            order.CancelledReason = dto.CancelledReason;
+        }
+        if (dto.Status == OrderStatus.Shipped)
+        {
+            var from = await _userService.GetUserByIdAsync(1, cancellationToken);
+            var to = await _userService.GetUserByIdAsync(order.CustomerId, cancellationToken);
+            
+            var targetAddress = to.Address.FirstOrDefault(a => a.Id == order.AddressId);
+            if (targetAddress == null)
+                throw new KeyNotFoundException("Địa chỉ không còn tồn tại.");
+            // Đưa địa chỉ này lên đầu tiên
+            to.Address.Insert(0, targetAddress);
+
+            int payer = 0;
+            // order.ShippingMethod = _courierApiClient.CreateShipmentAsync()
+        }
+        
+        order.Status = dto.Status;
+        await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
+        var response = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        if(response == null)
+            throw new InvalidOperationException("Không thể cập nhật đơn hàng, vui lòng liên hệ với Staff để được hỗ trợ.");
+        var finalResponse = _mapper.Map<OrderResponseDTO>(response);
+        if (finalResponse.OrderDetails != null)
+        {
+            foreach (var product in finalResponse.OrderDetails)
+            {
+                product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
+            }
+        }
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(response.CustomerId, cancellationToken));
+        finalResponse.Address = _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken));
+        return finalResponse;
     }
     
     public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default)

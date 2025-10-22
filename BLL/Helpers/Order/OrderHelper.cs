@@ -1,10 +1,67 @@
 ﻿using BLL.DTO.Order;
+using DAL.Data;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace BLL.Helpers.Order;
 
 public class OrderHelper
 {
+    /// <summary>
+    /// Dictionary ánh xạ các trạng thái đơn hàng hiện tại với các trạng thái hợp lệ có thể chuyển đến.
+    /// </summary>
+    private static readonly Dictionary<OrderStatus, HashSet<OrderStatus>> AllowedOrderStatusTransitions = new()
+    {
+        [OrderStatus.Pending] = new() { OrderStatus.Processing, OrderStatus.Cancelled },
+        [OrderStatus.Processing] = new() { OrderStatus.Cancelled, OrderStatus.Shipped },
+        [OrderStatus.Shipped] = new() { OrderStatus.Delivered, OrderStatus.Cancelled },
+        [OrderStatus.Delivered] = new() { OrderStatus.Cancelled },
+        [OrderStatus.Cancelled] = new() { },
+        [OrderStatus.Refunded] = new() { } 
+    };
+
+    /// <summary>
+    /// Kiểm tra xem có thể chuyển từ trạng thái hiện tại sang trạng thái mới hay không.
+    /// </summary>
+    /// <param name="currentStatus">Trạng thái hiện tại của đơn hàng</param>
+    /// <param name="newStatus">Trạng thái mới muốn chuyển đến</param>
+    /// <returns>True nếu chuyển đổi hợp lệ, False nếu không hợp lệ</returns>
+    public static bool IsValidOrderStatusTransition(OrderStatus currentStatus, OrderStatus newStatus)
+    {
+        if (currentStatus == newStatus)
+            return true;
+        return AllowedOrderStatusTransitions.TryGetValue(currentStatus, out var allowedStatuses) 
+               && allowedStatuses.Contains(newStatus);
+    }
+
+    /// <summary>
+    /// Lấy danh sách các trạng thái hợp lệ có thể chuyển đến từ trạng thái hiện tại.
+    /// </summary>
+    /// <param name="currentStatus">Trạng thái hiện tại của đơn hàng</param>
+    /// <returns>Chuỗi mô tả các trạng thái hợp lệ</returns>
+    public static string GetAllowedOrderStatusTransitions(OrderStatus currentStatus)
+    {
+        if (AllowedOrderStatusTransitions.TryGetValue(currentStatus, out var allowedStatuses) && allowedStatuses.Any())
+            return string.Join(", ", allowedStatuses);
+        return "Không có trạng thái hợp lệ (trạng thái cuối)";
+    }
+
+    /// <summary>
+    /// Validate việc chuyển đổi trạng thái và throw exception nếu không hợp lệ.
+    /// </summary>
+    /// <param name="currentStatus">Trạng thái hiện tại của đơn hàng</param>
+    /// <param name="newStatus">Trạng thái mới muốn chuyển đến</param>
+    /// <exception cref="InvalidOperationException">Khi chuyển đổi không hợp lệ</exception>
+    public static void ValidateOrderStatusTransition(OrderStatus currentStatus, OrderStatus newStatus)
+    {
+        if (!IsValidOrderStatusTransition(currentStatus, newStatus))
+        {
+            throw new InvalidOperationException(
+                $"Không thể chuyển trạng thái đơn hàng từ '{currentStatus}' sang '{newStatus}'. " +
+                $"Các trạng thái hợp lệ từ '{currentStatus}': {GetAllowedOrderStatusTransitions(currentStatus)}"
+            );
+        }
+    }
+
     public static (decimal length, decimal width, decimal height) CalculatePackageDimensions(decimal length, 
         decimal width, decimal height, decimal nextLength, decimal nextWidth, decimal nextHeight, int quantity)
     {

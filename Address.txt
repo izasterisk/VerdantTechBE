@@ -1,94 +1,74 @@
-POST https://sandbox.goship.io/api/v2/rates
+POST https://sandbox.goship.io/api/v2/shipments
+Auth Type: Bearer Token
 {
   "shipment": {
+    "rate": "MTNfN18xNjAz",
+    "payer": 1,
     "address_from": {
+      "name": "Nguyễn Văn A",
+      "phone": "0913131313",
+      "street": "195 Đ. Thạch Bàn",
+      "ward": "12653",
       "district": "720300",
       "city": "700000"
     },
     "address_to": {
-      "district": "100100",
+      "name": "Trần Văn B",
+      "phone": "0912121212",
+      "street": "51 Lê Đại Hành",
+      "ward": "20",
+      "district": "100300",
       "city": "100000"
     },
     "parcel": {
-      "cod": 0,
-      "amount": 300000,
-      "width": 65,
-      "height": 230,
-      "length": 240,
-      "weight": 25000
+      "cod": 500000,
+      "amount": 500000,
+      "weight": "220",
+      "width": "15",
+      "height": "15",
+      "length": "15",
+      "metadata": "Hàng dễ vỡ, vui lòng nhẹ tay."
     }
   }
 }
 
+Response
 {
     "code": 200,
     "status": "success",
-    "data": [
-        {
-            "id": "MTNfN18xNjAz",
-            "carrier_name": "Giao Hàng Tiết Kiệm",
-            "carrier_logo": "https://sandbox.goship.io/storage/images/carriers/2021_12_07_10_36_47_92d84240953b26d3dcf6ed5da91905d5.png",
-            "carrier_short_name": "ghtk",
-            "service": "Tiết kiệm",
-            "expected": "Dự kiến giao 4 ngày",
-            "is_apply_only": false,
-            "promotion_id": 0,
-            "discount": 0,
-            "weight_fee": 6572500,
-            "location_first_fee": 30000,
-            "location_step_fee": 0,
-            "remote_area_fee": 0,
-            "oil_fee": 0,
-            "location_fee": 6602500,
-            "cod_fee": 0,
-            "service_fee": 331125,
-            "total_fee": 6933625,
-            "total_amount": 6933625,
-            "total_amount_carrier": 0,
-            "total_amount_shop": -6933625,
-            "price_table_id": 1603,
-            "insurrance_fee": 0,
-            "return_fee": 3301250,
-            "report": {
-                "success_percent": 95.5,
-                "return_percent": 4.5,
-                "avg_time_delivery": 0,
-                "avg_time_delivery_format": 0,
-                "score_percent": 10
-            }
-        },
-        {
-            "id": "MTJfMTdfMTU2Mw==",
-            "carrier_name": "Giao Hàng Nhanh (v3)",
-            "carrier_logo": "https://sandbox.goship.io/storage/images/carriers/2018_11_19_08_58_42_a44867924ab27607d9a5e12142d7503e.png",
-            "carrier_short_name": "ghnv3",
-            "service": "Tiêu chuẩn",
-            "expected": "Dự kiến giao 3 ngày",
-            "is_apply_only": false,
-            "promotion_id": 0,
-            "discount": 0,
-            "weight_fee": 10024000,
-            "location_first_fee": 28000,
-            "location_step_fee": 0,
-            "remote_area_fee": 0,
-            "oil_fee": 0,
-            "location_fee": 10052000,
-            "cod_fee": 0,
-            "service_fee": 503600,
-            "total_fee": 10555600,
-            "total_amount": 10555600,
-            "total_amount_carrier": 0,
-            "total_amount_shop": -10555600,
-            "price_table_id": 1563,
-            "insurrance_fee": 0,
-            "return_fee": 0,
-            "report": {
-                "success_percent": 93.5,
-                "return_percent": 6.5,
-                "avg_time_delivery": 0,
-                "avg_time_delivery_format": 0,
-                "score_percent": 9.93
-            }
-        }
-    ]
+    "data": [],
+    "id": "GS8KOV1VVL",
+    "shipment_status": 900,
+    "shipment_status_txt": "Đơn mới",
+    "cod": 500000,
+    "fee": 38275,
+    "tracking_number": "NULL",
+    "carrier": "Giao Hàng Tiết Kiệm",
+    "carrier_short_name": "ghtk",
+    "sorting_code": "",
+    "return_sorting_code": "",
+    "amount_return_shop": 461725,
+    "created_at": "20/10/2025 23:57:13"
+}
+
+IF ERROR
+{
+  "code": 422,
+  "status": "error",
+  "data": {
+    "errors": {
+      "shipment.address_from.district": [
+        "Thiếu thông tin quận/huyện người gửi"
+      ],
+      "shipment.address_from.city": ["Thiếu thông tin tỉnh/TP người gửi"],
+      "shipment.address_to.district": ["Thiếu thông tin quận/huyện người nhận"],
+      "shipment.address_to.city": ["Thiếu thông tin tỉnh/TP người nhận"],
+      "shipment.parcel.weight": ["Thiếu thông tin cân nặng"],
+      "shipment.parcel.width": ["Thiếu thông tin chiều rộng"],
+      "shipment.parcel.height": ["Thiếu thông tin chiều cao"],
+      "shipment.parcel.length": ["Thiếu thông tin chiều dài"]
+    },
+    "exception": "The given data failed to pass validation."
+  },
+  "message": "Unprocessable Entity"
 }
