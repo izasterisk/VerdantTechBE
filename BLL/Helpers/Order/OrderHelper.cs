@@ -5,17 +5,6 @@ namespace BLL.Helpers.Order;
 
 public class OrderHelper
 {
-    /// <summary>
-    /// Chuyển đổi Unix timestamp (tính bằng giây) sang DateOnly (UTC).
-    /// </summary>
-    /// <param name="unixTimestamp">Số giây kể từ 1970-01-01 UTC.</param>
-    /// <returns>DateOnly tương ứng với ngày UTC.</returns>
-    public static DateOnly FromUnixTimestampToDateOnly(int unixTimestamp)
-    {
-        var dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp);
-        return DateOnly.FromDateTime(dateTimeOffset.UtcDateTime);
-    }
-    
     public static (decimal length, decimal width, decimal height) CalculatePackageDimensions(decimal length, 
         decimal width, decimal height, decimal nextLength, decimal nextWidth, decimal nextHeight, int quantity)
     {

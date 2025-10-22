@@ -115,8 +115,10 @@ public class OrderService : IOrderService
         }
         var order = _mapper.Map<Order>(orderPreview);
         order.ShippingFee = selectedShipping.TotalAmount;
+        order.ShippingMethod = selectedShipping.Service;
         order.TotalAmount = orderPreview.TotalAmountBeforeShippingFee + order.ShippingFee;
         order.AddressId = orderPreview.Address.Id;
+        
         var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, cancellationToken);
         var response = await _orderRepository.GetOrderByIdAsync(createdOrder.Id, cancellationToken);
         if(response == null)
