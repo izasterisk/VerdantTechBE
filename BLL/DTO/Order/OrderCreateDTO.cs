@@ -5,5 +5,5 @@ namespace BLL.DTO.Order;
 public class OrderCreateDTO
 {
     [Required(ErrorMessage = "Mã dịch vụ vận chuyển là bắt buộc.")]
-    public int ServiceId { get; set; }
+    public string CourierId { get; set; } = string.Empty;
 }

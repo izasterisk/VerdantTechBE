@@ -131,7 +131,7 @@ public enum OrderPaymentMethod
 {
     Banking,
     COD,
-    Installment
+    Rent
 }
 
 public enum PaymentMethod

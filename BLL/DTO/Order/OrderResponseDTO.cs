@@ -39,7 +39,7 @@ public class OrderResponseDTO
     public AddressResponseDTO Address { get; set; } = null!;
 
     [Required(ErrorMessage = "Phương thức thanh toán là bắt buộc.")]
-    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Installment.")]
+    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Rent.")]
     public OrderPaymentMethod OrderPaymentMethod { get; set; }
 
     [StringLength(100, ErrorMessage = "Phương thức giao hàng không được vượt quá 100 ký tự.")]
@@ -87,8 +87,8 @@ public class ProductResponseDTO
     public List<ProductImageResponseDTO> Images { get; set; } = new();
     public decimal UnitPrice { get; set; }
     public int WarrantyMonths { get; set; }
-    public Dictionary<string, object> Specifications { get; set; }
-    public Dictionary<string, decimal> DimensionsCm { get; set; }
+    public Dictionary<string, object> Specifications { get; set; } = new();
+    public Dictionary<string, decimal> DimensionsCm { get; set; } = new();
 }
 
 public class ProductImageResponseDTO

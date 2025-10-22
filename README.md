@@ -250,7 +250,7 @@ Các endpoint đều yêu cầu Bearer token.
     | taxAmount | decimal | >= 0 |
     | discountAmount | decimal | >= 0 |
     | addressId | ulong | Required |
-    | orderPaymentMethod | OrderPaymentMethod | Required enum (Banking, COD, Installment) |
+    | orderPaymentMethod | OrderPaymentMethod | Required enum (Banking, COD, Rent) |
     | notes | string? | Optional, tối đa 500 ký tự |
     | orderDetails | List<OrderDetailPreviewCreateDTO> | Required, tối thiểu 1 item |
 
@@ -465,7 +465,7 @@ Các endpoint đều yêu cầu Bearer token.
 | `RequestStatus` | Pending, InReview, Approved, Rejected, Completed, Cancelled | Request module |
 | `RequestPriority` | Low, Medium, High, Urgent | Request module |
 | `OrderStatus` | Pending, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded | Hiển thị trong order response |
-| `OrderPaymentMethod` | Banking, COD, Installment | Dùng trong order preview |
+| `OrderPaymentMethod` | Banking, COD, Rent | Dùng trong order preview |
 | `PaymentMethod` | CreditCard, DebitCard, Paypal, Stripe, BankTransfer, Cod | Hiện chưa expose qua controller |
 | `PaymentGateway` | Stripe, Paypal, Vnpay, Momo, Manual | Giữ cho module thanh toán |
 | `PaymentStatus` | Pending, Processing, Completed, Failed, Refunded, PartiallyRefunded | Trả về từ module payment |

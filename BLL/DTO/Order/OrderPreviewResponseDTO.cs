@@ -29,12 +29,12 @@ public class OrderPreviewResponseDTO
     [Required(ErrorMessage = "Tổng tiền đơn hàng là bắt buộc.")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Tổng tiền phải lớn hơn 0.")]
     public decimal TotalAmountBeforeShippingFee { get; set; }
-
+    
     // [Required(ErrorMessage = "AddressId là bắt buộc.")]
     // public ulong AddressId { get; set; }
 
     [Required(ErrorMessage = "Phương thức thanh toán là bắt buộc.")]
-    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Installment.")]
+    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Rent.")]
     public OrderPaymentMethod OrderPaymentMethod { get; set; }
 
     // [MaxLength(100, ErrorMessage = "Phương thức vận chuyển không được vượt quá 100 ký tự.")]
@@ -44,7 +44,6 @@ public class OrderPreviewResponseDTO
     // public string? TrackingNumber { get; set; }
 
     [MaxLength(500, ErrorMessage = "Ghi chú không được vượt quá 500 ký tự.")]
-    public string? Notes { get; set; }
 
     // [MaxLength(500, ErrorMessage = "Lý do hủy không được vượt quá 500 ký tự.")]
     // public string? CancelledReason { get; set; }
@@ -66,7 +65,11 @@ public class OrderPreviewResponseDTO
 
 public class ShippingDetailDTO
 {
-    public CourierServicesResponseDTO CourierServices { get; set; } = new();
-    public int ShippingFee { get; set; }
-    public DateOnly EstimateDeliveryDate { get; set; }
+    public string Id { get; set; } = string.Empty;
+    public string CarrierName { get; set; } = string.Empty;
+    public string? CarrierLogo { get; set; }
+    public string CarrierShortName { get; set; } = string.Empty;
+    public string Service { get; set; } = string.Empty;
+    public string Expected { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
 }

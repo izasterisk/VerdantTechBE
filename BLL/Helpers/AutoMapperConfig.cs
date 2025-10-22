@@ -2,6 +2,7 @@ using AutoMapper;
 using BLL.DTO.Address;
 using BLL.DTO.Cart;
 using BLL.DTO.CO2;
+using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.MediaLink;
 using BLL.DTO.Order;
@@ -213,6 +214,7 @@ namespace BLL.Helpers
                 .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
 
             CreateMap<ProductResponseDTO, Product>().ReverseMap();
+            CreateMap<ShippingDetailDTO, RateResponseDTO>().ReverseMap();
             CreateMap<OrderPreviewResponseDTO, DAL.Data.Models.Order>()
                 .ForMember(dest => dest.OrderDetails, opt => opt.Ignore())
                 .ForMember(dest => dest.Address, opt => opt.Ignore());

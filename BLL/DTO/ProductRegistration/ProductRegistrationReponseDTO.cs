@@ -53,8 +53,8 @@ namespace BLL.DTO.ProductRegistration
 
 
         // Trả media ra dạng list
-        public List<MediaLinkItemDTO> ProductImages { get; set; }
-        public List<MediaLinkItemDTO> CertificateFiles { get; set; } 
+        public List<MediaLinkItemDTO> ProductImages { get; set; } = new();
+        public List<MediaLinkItemDTO> CertificateFiles { get; set; }  = new();
 
     }
 }

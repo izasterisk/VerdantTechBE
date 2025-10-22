@@ -442,7 +442,7 @@ CREATE TABLE orders (
     discount_amount DECIMAL(12,2) DEFAULT 0.00,
     total_amount DECIMAL(12,2) NOT NULL,
     address_id BIGINT UNSIGNED NOT NULL,
-    order_payment_method ENUM('Banking', 'COD', 'Installment') NOT NULL,
+    order_payment_method ENUM('Banking', 'COD', 'Rent') NOT NULL,
     shipping_method VARCHAR(100),
     tracking_number VARCHAR(100),
     notes VARCHAR(500),
