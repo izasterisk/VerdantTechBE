@@ -119,7 +119,6 @@ public enum RequestPriority
 public enum OrderStatus
 {
     Pending,
-    Confirmed,
     Processing,
     Shipped,
     Delivered,

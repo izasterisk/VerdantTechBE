@@ -34,7 +34,7 @@ public partial class ProductRegistration
     /// <summary>
     /// Technical specifications as key-value pairs (JSON)
     /// </summary>
-    public Dictionary<string, object> Specifications { get; set; }
+    public Dictionary<string, object> Specifications { get; set; } = new();
 
     [StringLength(1000)]
     public string? ManualUrls { get; set; }

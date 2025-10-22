@@ -34,7 +34,7 @@ public class OrderService : IOrderService
 
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         if (await _orderRepository.GetActiveUserByIdAsync(userId, cancellationToken) == null)
             throw new KeyNotFoundException($"Người dùng với ID {userId} không tồn tại.");
         var address = await _addressRepository.GetAddressByIdAsync(dto.AddressId, cancellationToken);
@@ -93,7 +93,7 @@ public class OrderService : IOrderService
     
     public async Task<OrderResponseDTO> CreateOrderAsync(Guid orderPreviewId, OrderCreateDTO dto, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         var orderPreview = OrderHelper.GetOrderPreviewFromCache(_memoryCache, orderPreviewId);
         if (orderPreview == null)
             throw new KeyNotFoundException($"Đơn hàng xem trước với ID {orderPreviewId} đã hết hạn.");
@@ -112,6 +112,13 @@ public class OrderService : IOrderService
                 DiscountAmount = orderDetail.DiscountAmount,
                 Subtotal = orderDetail.Subtotal
             });
+            var productRaw = await _orderRepository.GetActiveProductByIdAsync(orderDetail.Product.Id, cancellationToken);
+            if (productRaw == null)
+                throw new KeyNotFoundException($"Sản phẩm với ID {orderDetail.Product.Id} không tồn tại hoặc đã bị xóa.");
+            if (orderDetail.Quantity > productRaw.StockQuantity || productRaw.StockQuantity == 0)
+                throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.Product.Id} không còn đủ hàng so với yêu cầu của bạn. Vui lòng tạo đơn hàng mới.");
+            productRaw.StockQuantity -= orderDetail.Quantity;
+            await _orderRepository.UpdateProductAsync(productRaw, cancellationToken);
         }
         var order = _mapper.Map<Order>(orderPreview);
         order.ShippingFee = selectedShipping.TotalAmount;
@@ -135,6 +142,16 @@ public class OrderService : IOrderService
         finalResponse.Address = orderPreview.Address;
         OrderHelper.RemoveOrderPreviewFromCache(_memoryCache, orderPreviewId);
         return finalResponse;
+    }
+    
+    public async Task<OrderResponseDTO> ProcessOrder(ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
+        if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
+            throw new InvalidOperationException("Khi cung cấp lý do hủy, trạng thái đơn hàng phải là 'Cancelled'.");
+        var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        if (order == null)
+            throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
     }
     
     public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default)

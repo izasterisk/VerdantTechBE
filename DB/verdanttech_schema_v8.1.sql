@@ -435,7 +435,7 @@ CREATE TABLE cart_items (
 CREATE TABLE orders (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT UNSIGNED NOT NULL,
-    status ENUM('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded') DEFAULT 'pending',
+    status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded') DEFAULT 'pending',
     subtotal DECIMAL(12,2) NOT NULL,
     tax_amount DECIMAL(12,2) DEFAULT 0.00,
     shipping_fee DECIMAL(12,2) DEFAULT 0.00,

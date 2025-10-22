@@ -41,7 +41,7 @@ public partial class Product
     /// <summary>
     /// Technical specifications as key-value pairs (JSON)
     /// </summary>
-    public Dictionary<string, object> Specifications { get; set; }
+    public Dictionary<string, object> Specifications { get; set; } = new();
 
     /// <summary>
     /// Manual/guide URLs, comma-separated
