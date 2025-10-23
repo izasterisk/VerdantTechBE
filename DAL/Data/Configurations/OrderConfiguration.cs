@@ -40,7 +40,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         // Enum conversion for status
         builder.Property(e => e.Status)
             .HasConversion<string>()
-            .HasColumnType("enum('pending','confirmed','processing','shipped','delivered','cancelled','refunded')")
+            .HasColumnType("enum('pending','processing','shipped','delivered','cancelled','refunded')")
             .HasColumnName("status")
             .HasDefaultValue(OrderStatus.Pending);
         
@@ -88,6 +88,28 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnType("text")
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
+            
+        builder.Property(e => e.CourierId)
+            .HasMaxLength(20)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("courier_id");
+            
+        builder.Property(e => e.Width)
+            .HasColumnType("int")
+            .HasColumnName("width");
+            
+        builder.Property(e => e.Height)
+            .HasColumnType("int")
+            .HasColumnName("height");
+            
+        builder.Property(e => e.Length)
+            .HasColumnType("int")
+            .HasColumnName("length");
+            
+        builder.Property(e => e.Weight)
+            .HasColumnType("int")
+            .HasColumnName("weight");
             
         builder.Property(e => e.CancelledReason)
             .HasColumnType("text")

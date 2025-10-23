@@ -2,7 +2,7 @@
 
 namespace BLL.DTO.Order;
 
-public class OrderDetailsPreviewDTO
+public class OrderDetailsPreviewCreateDTO
 {
     [Required(ErrorMessage = "ProductId là bắt buộc.")]
     public ulong ProductId { get; set; }

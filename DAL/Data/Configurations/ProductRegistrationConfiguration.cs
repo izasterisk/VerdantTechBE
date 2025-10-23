@@ -80,6 +80,7 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasDefaultValue(12);
 
         builder.Property(e => e.WeightKg)
+            .IsRequired()
             .HasPrecision(10, 3)
             .HasColumnType("decimal(10,3)")
             .HasColumnName("weight_kg");

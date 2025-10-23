@@ -39,7 +39,8 @@ namespace BLL.DTO.ProductRegistration
 
         public int WarrantyMonths { get; set; } = 12;
 
-        public decimal? WeightKg { get; set; }
+        [Required]
+        public decimal WeightKg { get; set; }
 
         public Dictionary<string, object>? DimensionsCm { get; set; }
 

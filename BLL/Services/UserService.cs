@@ -130,10 +130,14 @@ public class UserService : IUserService
         return _mapper.Map<UserResponseDTO>(user);
     }
 
-    public async Task<UserResponseDTO?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    public async Task<UserResponseDTO> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
-        return user == null ? null : _mapper.Map<UserResponseDTO>(user);
+        if (user == null)
+        {
+            throw new Exception($"Người dùng với ID {userId} không tồn tại.");
+        }
+        return _mapper.Map<UserResponseDTO>(user);
     }
 
     public async Task<PagedResponse<UserResponseDTO>> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)

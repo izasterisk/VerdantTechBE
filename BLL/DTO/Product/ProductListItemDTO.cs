@@ -23,7 +23,8 @@ namespace BLL.DTO.Product
         public string? PublicUrl { get; set; }
 
         public int WarrantyMonths { get; set; }
-        public decimal? WeightKg { get; set; }
+        
+        public decimal WeightKg { get; set; }
 
         // Ảnh (MediaLink)
         public List<MediaLinkItemDTO> Images { get; set; } = new();

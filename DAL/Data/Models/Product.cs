@@ -41,7 +41,7 @@ public partial class Product
     /// <summary>
     /// Technical specifications as key-value pairs (JSON)
     /// </summary>
-    public Dictionary<string, object> Specifications { get; set; }
+    public Dictionary<string, object> Specifications { get; set; } = new();
 
     /// <summary>
     /// Manual/guide URLs, comma-separated
@@ -59,7 +59,8 @@ public partial class Product
 
     public int StockQuantity { get; set; } = 0;
 
-    public decimal? WeightKg { get; set; }
+    [Required]
+    public decimal WeightKg { get; set; }
 
     /// <summary>
     /// {length, width, height} (JSON)

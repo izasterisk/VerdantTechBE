@@ -84,10 +84,6 @@ public class UserController : BaseController
         try
         {
             var user = await _userService.GetUserByIdAsync(id, GetCancellationToken());
-            
-            if (user == null)
-                return ErrorResponse($"Không tìm thấy người dùng với ID {id}", HttpStatusCode.NotFound);
-
             return SuccessResponse(user);
         }
         catch (Exception ex)

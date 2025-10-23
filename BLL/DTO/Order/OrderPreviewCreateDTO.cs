@@ -56,5 +56,5 @@ public class OrderPreviewCreateDTO
     
     [Required(ErrorMessage = "Đơn hàng phải có ít nhất một sản phẩm.")]
     [MinLength(1, ErrorMessage = "Đơn hàng phải có ít nhất một sản phẩm.")]
-    public List<OrderDetailsPreviewDTO> OrderDetails { get; set; } = new();
+    public List<OrderDetailsPreviewCreateDTO> OrderDetails { get; set; } = new();
 }

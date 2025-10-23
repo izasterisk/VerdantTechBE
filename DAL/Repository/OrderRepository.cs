@@ -61,7 +61,6 @@ public class OrderRepository : IOrderRepository
         {
             order.UpdatedAt = DateTime.UtcNow;
             var updatedOrder = await _orderRepository.UpdateAsync(order, cancellationToken);
-            
             await transaction.CommitAsync(cancellationToken);
             return updatedOrder;
         }
@@ -158,5 +157,11 @@ public class OrderRepository : IOrderRepository
     {
         var mediaLinks = await _mediaLinkRepository.GetAllByFilterAsync(m => m.OwnerId == productId && m.OwnerType == MediaOwnerType.Products, true, cancellationToken);
         return mediaLinks.OrderBy(m => m.SortOrder).ToList();
+    }
+    
+    public async Task<Product> UpdateProductAsync(Product product, CancellationToken cancellationToken = default)
+    {
+        product.UpdatedAt = DateTime.UtcNow;
+        return await _productRepository.UpdateAsync(product, cancellationToken);
     }
 }

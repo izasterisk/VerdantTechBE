@@ -36,6 +36,17 @@ public partial class Order
     [StringLength(500)]
     public string? Notes { get; set; }
 
+    [StringLength(20)]
+    public string CourierId { get; set; } = "";
+
+    public int Width { get; set; } = 0;
+
+    public int Height { get; set; } = 0;
+
+    public int Length { get; set; } = 0;
+
+    public int Weight { get; set; } = 0;
+
     [StringLength(500)]
     public string? CancelledReason { get; set; }
 
