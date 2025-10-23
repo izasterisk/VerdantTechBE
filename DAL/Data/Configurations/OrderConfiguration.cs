@@ -89,6 +89,28 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci");
             
+        builder.Property(e => e.CourierId)
+            .HasMaxLength(20)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("courier_id");
+            
+        builder.Property(e => e.Width)
+            .HasColumnType("int")
+            .HasColumnName("width");
+            
+        builder.Property(e => e.Height)
+            .HasColumnType("int")
+            .HasColumnName("height");
+            
+        builder.Property(e => e.Length)
+            .HasColumnType("int")
+            .HasColumnName("length");
+            
+        builder.Property(e => e.Weight)
+            .HasColumnType("int")
+            .HasColumnName("weight");
+            
         builder.Property(e => e.CancelledReason)
             .HasColumnType("text")
             .HasCharSet("utf8mb4")

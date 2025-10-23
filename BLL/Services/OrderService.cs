@@ -77,7 +77,7 @@ public class OrderService : IOrderService
             var h = product.DimensionsCm.GetValueOrDefault("height", 1m);
             (length, width, height) = OrderHelper.CalculatePackageDimensions(length, width, height, l, w, h, orderDetail.Quantity);
             subTotal += orderDetailResponse.Subtotal;
-            weight += productRaw.WeightKg.GetValueOrDefault() * orderDetail.Quantity * 1000;
+            weight += productRaw.WeightKg * orderDetail.Quantity * 1000; 
         }
         
         response.Subtotal = subTotal;
@@ -90,9 +90,14 @@ public class OrderService : IOrderService
         var fromAddress = await _addressRepository.GetAddressByIdAsync(1, cancellationToken);
         if (fromAddress == null)
             throw new KeyNotFoundException($"Địa chỉ gửi không tồn tại.");
+        
+        var (convertedWidth, convertedHeight, convertedLength, convertedWeight, convertedCod, convertedAmount) = 
+            OrderHelper.ConvertDimensionsToInt(width, height, length, weight, cod, response.TotalAmountBeforeShippingFee);
         var availableServices = await _courierApiClient.GetRatesAsync(fromAddress.DistrictCode, 
-            fromAddress.ProvinceCode, address.DistrictCode, address.ProvinceCode, cod, 
-            response.TotalAmountBeforeShippingFee, width, height, length, weight, cancellationToken);
+            fromAddress.ProvinceCode, address.DistrictCode, address.ProvinceCode, convertedCod, 
+            convertedAmount, convertedWidth, convertedHeight, convertedLength, convertedWeight, cancellationToken);
+        response.Width = convertedWidth; response.Height = convertedHeight;
+        response.Length = convertedLength; response.Weight = convertedWeight;
         response.ShippingDetails = _mapper.Map<List<ShippingDetailDTO>>(availableServices);
         OrderHelper.CacheOrderPreview(_memoryCache, response.OrderPreviewId, response);
         return response;
@@ -132,6 +137,9 @@ public class OrderService : IOrderService
         order.ShippingMethod = selectedShipping.Service;
         order.TotalAmount = orderPreview.TotalAmountBeforeShippingFee + order.ShippingFee;
         order.AddressId = orderPreview.Address.Id;
+        order.CourierId = dto.CourierId;
+        order.Width = orderPreview.Width; order.Height = orderPreview.Height;
+        order.Length = orderPreview.Length; order.Weight = orderPreview.Weight;
         
         var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, cancellationToken);
         var response = await _orderRepository.GetOrderByIdAsync(createdOrder.Id, cancellationToken);
@@ -177,13 +185,17 @@ public class OrderService : IOrderService
             var targetAddress = to.Address.FirstOrDefault(a => a.Id == order.AddressId);
             if (targetAddress == null)
                 throw new KeyNotFoundException("Địa chỉ không còn tồn tại.");
-            // Đưa địa chỉ này lên đầu tiên
-            to.Address.Insert(0, targetAddress);
-
-            int payer = 0;
-            // order.ShippingMethod = _courierApiClient.CreateShipmentAsync()
+            to.Address.Insert(0, targetAddress); // Đưa địa chỉ này lên đầu tiên
+            int payer = 1; int cod = 0;
+            if (order.OrderPaymentMethod == OrderPaymentMethod.COD)
+            {
+                payer = 0; // Người gửi trả phí
+                cod = (int)Math.Ceiling((double)order.TotalAmount);
+            }
+            order.TrackingNumber = await _courierApiClient.CreateShipmentAsync(order.CourierId, payer, from, to, cod, 
+                (int)Math.Ceiling((double)order.TotalAmount), order.Weight.ToString(), order.Width.ToString(), 
+                order.Height.ToString(), order.Length.ToString(), order.Notes ?? "", cancellationToken);
         }
-        
         order.Status = dto.Status;
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
         var response = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);

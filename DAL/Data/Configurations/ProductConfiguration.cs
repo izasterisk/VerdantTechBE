@@ -79,6 +79,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnName("discount_percentage");
             
         builder.Property(e => e.WeightKg)
+            .IsRequired()
             .HasPrecision(10, 3)
             .HasColumnName("weight_kg");
             

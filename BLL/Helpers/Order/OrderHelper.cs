@@ -14,8 +14,8 @@ public class OrderHelper
         [OrderStatus.Pending] = new() { OrderStatus.Processing, OrderStatus.Cancelled },
         [OrderStatus.Processing] = new() { OrderStatus.Cancelled, OrderStatus.Shipped },
         [OrderStatus.Shipped] = new() { OrderStatus.Delivered, OrderStatus.Cancelled },
-        [OrderStatus.Delivered] = new() { OrderStatus.Cancelled },
-        [OrderStatus.Cancelled] = new() { },
+        [OrderStatus.Delivered] = new() { OrderStatus.Cancelled, OrderStatus.Refunded },
+        [OrderStatus.Cancelled] = new() { OrderStatus.Refunded },
         [OrderStatus.Refunded] = new() { } 
     };
 
@@ -126,5 +126,22 @@ public class OrderHelper
     {
         var cacheKey = GenerateOrderPreviewCacheKey(orderPreviewId);
         memoryCache.Remove(cacheKey);
+    }
+
+    /// <summary>
+    /// Convert các giá trị decimal sang int cho API courier (GoShip).
+    /// Làm tròn lên bất kỳ phần thập phân nào (5.1 → 6).
+    /// </summary>
+    public static (int width, int height, int length, int weight, int cod, int amount) ConvertDimensionsToInt(
+        decimal width, decimal height, decimal length, decimal weight, decimal cod, decimal amount)
+    {
+        return (
+            (int)Math.Ceiling((double)width),
+            (int)Math.Ceiling((double)height),
+            (int)Math.Ceiling((double)length),
+            (int)Math.Ceiling((double)weight),
+            (int)Math.Ceiling((double)cod),
+            (int)Math.Ceiling((double)amount)
+        );
     }
 }

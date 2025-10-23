@@ -31,7 +31,7 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
     }
     
     public async Task<List<RateResponseDTO>> GetRatesAsync(string fromDistrict, string fromCity, string toDistrict, 
-        string toCity, decimal cod, decimal amount, decimal width, decimal height, decimal length, decimal weight, 
+        string toCity, int cod, int amount, int width, int height, int length, int weight, 
         CancellationToken cancellationToken = default)
     {
         try

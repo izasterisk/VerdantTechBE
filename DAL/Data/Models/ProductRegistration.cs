@@ -47,7 +47,8 @@ public partial class ProductRegistration
 
     public int WarrantyMonths { get; set; } = 12;
 
-    public decimal? WeightKg { get; set; }
+    [Required]
+    public decimal WeightKg { get; set; }
 
     /// <summary>
     /// {length, width, height} (JSON)

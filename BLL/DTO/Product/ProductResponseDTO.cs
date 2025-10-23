@@ -44,7 +44,8 @@ namespace BLL.DTO.Product
 
         public int StockQuantity { get; set; } = 0;
 
-        public decimal? WeightKg { get; set; }
+        [Required]
+        public decimal WeightKg { get; set; }
 
         public Dictionary<string, decimal> DimensionsCm { get; set; } = new();
 
