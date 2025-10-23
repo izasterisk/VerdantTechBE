@@ -67,6 +67,31 @@ public class OrderController : BaseController
     }
 
     /// <summary>
+    /// Cập nhật trạng thái đơn hàng hoặc hủy đơn hàng
+    /// </summary>
+    /// <param name="orderId">ID của đơn hàng</param>
+    /// <param name="dto">Thông tin cập nhật đơn hàng (trạng thái mới và lý do hủy nếu có)</param>
+    /// <returns>Thông tin đơn hàng sau khi cập nhật</returns>
+    [HttpPut("{orderId:long}")]
+    [EndpointSummary("Process Order")]
+    [EndpointDescription("Cập nhật trạng thái đơn hàng: Processing, Shipped, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
+    public async Task<ActionResult<APIResponse>> ProcessOrder([FromRoute] ulong orderId, [FromBody] OrderUpdateDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var order = await _orderService.ProcessOrderAsync(orderId, dto, GetCancellationToken());
+            return SuccessResponse(order, HttpStatusCode.OK);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Lấy danh sách tất cả đơn hàng với phân trang và lọc theo trạng thái
     /// </summary>
     /// <param name="page">Số trang (mặc định là 1)</param>
