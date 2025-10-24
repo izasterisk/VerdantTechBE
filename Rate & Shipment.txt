@@ -1,0 +1,342 @@
+1. Rate: https://api.goship.io/api/v1/fees-list
+Auth Type: Bearer Token.
+{
+    "address_from": {
+        "city_code": "700000",
+        "district_code": "702400"
+    },
+    "address_to": {
+        "city_code": "100000",
+        "district_code": "101700"
+    },
+    "parcel": {
+        "cod_amount": 0,
+        "length": 52,
+        "width": 12,
+        "height": 15,
+        "weight": 105
+    }
+}
+
+Response
+{
+    "code": 200,
+    "status": "success",
+    "data": {
+        "rates": [
+            {
+                "service_id": 12,
+                "service_mapping_id": "1",
+                "carrier_id": "9qln96om",
+                "carrier_name": "SPX Express",
+                "carrier_short_name": "shopee",
+                "carrier_logo": "https://api.goship.io/storage/images/carriers/2025_02_21_08_52_09_e12d137f692c0c98f5e9ea08c80d7a3f.png",
+                "carrier_note": null,
+                "service": "Tiêu chuẩn",
+                "expected_txt": "Dự kiến giao 3-5 ngày",
+                "service_description": "",
+                "hour_apply_txt": "",
+                "is_apply_only": false,
+                "parent": {
+                    "id": 12,
+                    "name": "Tiêu chuẩn",
+                    "short_name": "TC",
+                    "icon": "fa fa-truck",
+                    "priority": 2,
+                    "description": ""
+                },
+                "promotion_id": 0,
+                "discount": 0,
+                "weight_fee": 0,
+                "location_first_fee": 14000,
+                "location_step_fee": 0,
+                "remote_area_fee": 0,
+                "oil_fee": 0,
+                "location_fee": 14000,
+                "cod_fee": 0,
+                "service_fee": 1700,
+                "total_fee": 15700,
+                "total_amount": 15700,
+                "total_amount_carrier": 0,
+                "total_amount_shop": -15700,
+                "price_table_id": 4308,
+                "insurrance_fee": 0,
+                "return_fee": 7000,
+                "report": {
+                    "score_percent": 0,
+                    "success_percent": 94.7,
+                    "return_percent": 5.3,
+                    "avg_time_delivery": 70,
+                    "avg_time_delivery_format": "70H"
+                }
+            },
+            {
+                "service_id": 12,
+                "service_mapping_id": "12491",
+                "carrier_id": "9z82k8g2",
+                "carrier_name": "Best Express",
+                "carrier_short_name": "best",
+                "carrier_logo": "https://api.goship.io/storage/images/carriers/2022_06_13_16_34_44_badccf2a4495cd91623f437e2c29fe8d.png",
+                "carrier_note": null,
+                "service": "Tiêu chuẩn",
+                "expected_txt": "Dự kiến giao 4-6 ngày",
+                "service_description": "",
+                "hour_apply_txt": "",
+                "is_apply_only": false,
+                "parent": {
+                    "id": 12,
+                    "name": "Tiêu chuẩn",
+                    "short_name": "TC",
+                    "icon": "fa fa-truck",
+                    "priority": 2,
+                    "description": ""
+                },
+                "promotion_id": 0,
+                "discount": 0,
+                "weight_fee": 0,
+                "location_first_fee": 16000,
+                "location_step_fee": 0,
+                "remote_area_fee": 0,
+                "oil_fee": 0,
+                "location_fee": 16000,
+                "cod_fee": 0,
+                "service_fee": 1800,
+                "total_fee": 17800,
+                "total_amount": 17800,
+                "total_amount_carrier": 0,
+                "total_amount_shop": -17800,
+                "price_table_id": 4641,
+                "insurrance_fee": 0,
+                "return_fee": 8000,
+                "report": {
+                    "score_percent": 0,
+                    "success_percent": 96.7,
+                    "return_percent": 3.3,
+                    "avg_time_delivery": 0,
+                    "avg_time_delivery_format": 0
+                }
+            },
+            {
+                "service_id": 12,
+                "service_mapping_id": "53321",
+                "carrier_id": "rgl5x6jm",
+                "carrier_name": "Giao Hàng Nhanh (v3)",
+                "carrier_short_name": "ghnv3",
+                "carrier_logo": "https://api.goship.io/storage/images/carriers/2018_11_19_08_58_42_a44867924ab27607d9a5e12142d7503e.png",
+                "carrier_note": null,
+                "service": "Tiêu chuẩn",
+                "expected_txt": "Dự kiến giao 4-6 ngày",
+                "service_description": "",
+                "hour_apply_txt": "",
+                "is_apply_only": false,
+                "parent": {
+                    "id": 12,
+                    "name": "Tiêu chuẩn",
+                    "short_name": "TC",
+                    "icon": "fa fa-truck",
+                    "priority": 2,
+                    "description": ""
+                },
+                "promotion_id": 0,
+                "discount": 0,
+                "weight_fee": 0,
+                "location_first_fee": 24000,
+                "location_step_fee": 0,
+                "remote_area_fee": 0,
+                "oil_fee": 0,
+                "location_fee": 24000,
+                "cod_fee": 0,
+                "service_fee": 2200,
+                "total_fee": 26200,
+                "total_amount": 26200,
+                "total_amount_carrier": 0,
+                "total_amount_shop": -26200,
+                "price_table_id": 1563,
+                "insurrance_fee": 0,
+                "return_fee": 12000,
+                "report": {
+                    "score_percent": 0,
+                    "success_percent": 95.4,
+                    "return_percent": 4.6,
+                    "avg_time_delivery": 0,
+                    "avg_time_delivery_format": 0
+                }
+            },
+            {
+                "service_id": 12,
+                "service_mapping_id": "EXPRESS",
+                "carrier_id": "pa6bkg6o",
+                "carrier_name": "J&T Express 1",
+                "carrier_short_name": "jnt",
+                "carrier_logo": "https://api.goship.io/storage/images/carriers/2023_02_03_13_44_32_67d1487b1c775ea8fbf2c509bd86d8f4.png",
+                "carrier_note": null,
+                "service": "Tiêu chuẩn",
+                "expected_txt": "Dự kiến giao 3-5 ngày",
+                "service_description": "",
+                "hour_apply_txt": "",
+                "is_apply_only": false,
+                "parent": {
+                    "id": 12,
+                    "name": "Tiêu chuẩn",
+                    "short_name": "TC",
+                    "icon": "fa fa-truck",
+                    "priority": 2,
+                    "description": ""
+                },
+                "promotion_id": 0,
+                "discount": 0,
+                "weight_fee": 0,
+                "location_first_fee": 29000,
+                "location_step_fee": 0,
+                "remote_area_fee": 8700,
+                "oil_fee": 0,
+                "location_fee": 37700,
+                "cod_fee": 0,
+                "service_fee": 2885,
+                "total_fee": 40585,
+                "total_amount": 40585,
+                "total_amount_carrier": 0,
+                "total_amount_shop": -40585,
+                "price_table_id": 2952,
+                "insurrance_fee": 0,
+                "return_fee": 18850,
+                "report": {
+                    "score_percent": 0,
+                    "success_percent": 91.7,
+                    "return_percent": 8.3,
+                    "avg_time_delivery": 0,
+                    "avg_time_delivery_format": 0
+                }
+            }
+        ],
+        "convertion_weight": 1560,
+        "use_promotion": -1
+    }
+}
+
+2. Shipment: https://api.goship.io/api/v1/shipments
+Auth Type: Bearer Token.
+{
+    "id": 0,
+    "address_from": {
+        "city_code": "700000",
+        "district_code": "702400",
+        "ward_id": "9253",
+        "street": "xcbxcb"
+    },
+    "address_to": {
+        "city_code": "100000",
+        "district_code": "101700",
+        "ward_id": "378",
+        "street": "sdbgvsdbsd"
+    },
+    "picker": {
+        "name": "sadvdsav",
+        "phone": "09768573421"
+    },
+    "receiver": {
+        "name": "abc",
+        "phone": "0995784563"
+    },
+    "parcel": {
+        "name": "Nông nghiệp",
+        "quantity": 1,
+        "cod_amount": 0,
+        "length": 5250,
+        "width": 120,
+        "height": 150,
+        "weight": 10500000,
+        "amount": 0
+    },
+    "metadata": "Chỉ cho khách xem hàng, không cho thử",
+    "payer": 0,
+    "price_table_id": 1563,
+    "note_code": "CHOXEMHANGKHONGTHU",
+    "with_user_account": 0,
+    "client_id": 4067
+}
+
+Response
+{
+    "code": 200,
+    "status": "success",
+    "data": {
+        "id": "GS8YN94GZL",
+        "code": "GS8YN94GZL",
+        "client_id": 4067,
+        "sale_id": 0,
+        "shipper_id": 0,
+        "carrier_id": 17,
+        "service_id": 12,
+        "parcel_id": 919663,
+        "price_table_id": 1563,
+        "promotion_id": 0,
+        "shop_id": 10938,
+        "picker_id": 614661,
+        "address_from_id": 676122,
+        "receiver_id": 614673,
+        "address_to_id": 676278,
+        "address_return_id": 0,
+        "cod_amount": 0,
+        "cod_amount_carrier": 277826800,
+        "amount_for_cross": 277826800,
+        "amount_return_shop": 0,
+        "payer": 0,
+        "payers": null,
+        "payer_txt": "Khách trả",
+        "is_return": 0,
+        "is_part_delivery": 0,
+        "is_lost": 0,
+        "is_error": 0,
+        "location_fee": 264596000,
+        "cod_fee": 0,
+        "service_fee": 13230800,
+        "cod_fee_real": 0,
+        "total_fee": 277826800,
+        "total_fee_all": 0,
+        "total_fee_carrier": 0,
+        "insurrance_fee": 0,
+        "return_fee": 0,
+        "re_delivery_fee": 0,
+        "update_info_fee": 0,
+        "overweight_fee": 0,
+        "total_amount": 277826800,
+        "discount": 0,
+        "tracking_number": null,
+        "tracking_url": null,
+        "return_type": 0,
+        "return_type_txt": "Chuyển hoàn",
+        "return_types": null,
+        "metadata": "Chỉ cho khách xem hàng, không cho thử",
+        "note_update": null,
+        "updated_by": 0,
+        "auto_send": 0,
+        "status": 900,
+        "status_txt": "Đơn mới",
+        "is_deleted": false,
+        "is_accept": false,
+        "expected_delivery": 72,
+        "inner_province": 0,
+        "expected_delivery_date": "4-6 ngày",
+        "can_delete": true,
+        "can_hard_update": false,
+        "delivery_at": null,
+        "deleted_at": null,
+        "created_at": "24-10-2025 15:45",
+        "updated_at": "24-10-2025 15:45:14",
+        "source": "Shop",
+        "note_code": "CHOXEMHANGKHONGTHU",
+        "note_code_txt": "Cho xem hàng, không cho thử",
+        "order_client_id": null,
+        "can_update_cod_to_carrier": false,
+        "sorting_code": "",
+        "return_sorting_code": "",
+        "returned_at": null,
+        "returned_success": null,
+        "pickup_timer": 0,
+        "is_by_user_account": 0,
+        "carrier_service_id": "",
+        "count_print": 0,
+        "note_issue": null
+    }
+}

@@ -16,8 +16,8 @@ public class GoshipAddressApiClient : IGoshipAddressApiClient
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _baseUrl = Environment.GetEnvironmentVariable("GOSHIP_SANDBOX_MANAGE_API_ENDPOINT") ?? "https://sandbox.goship.io/api/v2";
-        _bearerToken = Environment.GetEnvironmentVariable("GOSHIP_TOKEN") ?? throw new InvalidOperationException("GOSHIP_TOKEN không được cấu hình trong .env file");
+        _baseUrl = Environment.GetEnvironmentVariable("GOSHIP_MANAGE_API_ENDPOINT_V1") ?? "https://api.goship.io/api/v1";
+        _bearerToken = Environment.GetEnvironmentVariable("GOSHIP_TOKEN_V1") ?? throw new InvalidOperationException("GOSHIP_TOKEN_V1 không được cấu hình trong .env file");
         _timeoutSeconds = int.Parse(Environment.GetEnvironmentVariable("TIME_OUT_SECONDS") ?? "10");
         
         // Configure HttpClient timeout and Bearer token
@@ -30,7 +30,7 @@ public class GoshipAddressApiClient : IGoshipAddressApiClient
     {
         try
         {
-            var url = $"{_baseUrl}/cities";
+            var url = $"{_baseUrl}/cities?limit=-1&sort=name:1";
             
             var response = await _httpClient.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
@@ -43,7 +43,7 @@ public class GoshipAddressApiClient : IGoshipAddressApiClient
             {
                 provinces.Add(new CourierProvinceResponseDTO
                 {
-                    ProvinceCode = item.GetProperty("id").GetString() ?? string.Empty,
+                    ProvinceCode = item.GetProperty("code").GetString() ?? string.Empty,
                     Name = item.GetProperty("name").GetString() ?? string.Empty
                 });
             }
@@ -61,25 +61,26 @@ public class GoshipAddressApiClient : IGoshipAddressApiClient
     {
         try
         {
-            var url = $"{_baseUrl}/cities/{cityId}/districts";
+            var url = $"{_baseUrl}/districts?limit=-1&sort=name:1";
             
             var response = await _httpClient.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();
             
             var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var dataElement = AddressApiHelpers.ParseGoshipResponse(jsonContent, "quận/huyện", cityId);
             
-            var districts = new List<CourierDistrictResponseDTO>();
-            foreach (var item in dataElement.EnumerateArray())
+            // Validate JSON content
+            if (string.IsNullOrWhiteSpace(jsonContent))
             {
-                districts.Add(new CourierDistrictResponseDTO
-                {
-                    DistrictCode = item.GetProperty("id").GetString() ?? string.Empty,
-                    Name = item.GetProperty("name").GetString() ?? string.Empty
-                });
+                throw new InvalidOperationException($"Response rỗng khi lấy dữ liệu quận/huyện (ProvinceCode: {cityId}).");
             }
             
-            return districts;
+            if (jsonContent.TrimStart().StartsWith("<"))
+            {
+                throw new InvalidOperationException($"API endpoint không khả dụng hoặc ProvinceCode {cityId} không đúng.");
+            }
+            
+            // Parse and filter districts using streaming approach
+            return AddressApiHelpers.ParseAndFilterDistricts(jsonContent, cityId);
         }
         catch (Exception ex)
         {
@@ -92,7 +93,7 @@ public class GoshipAddressApiClient : IGoshipAddressApiClient
     {
         try
         {
-            var url = $"{_baseUrl}/districts/{districtId}/wards";
+            var url = $"{_baseUrl}/wards?district_code={districtId}&limit=-1&sort=name:1";
             
             var response = await _httpClient.GetAsync(url, cancellationToken);
             response.EnsureSuccessStatusCode();

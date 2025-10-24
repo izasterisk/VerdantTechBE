@@ -50,6 +50,11 @@ public class OrderResponseDTO
 
     [StringLength(500, ErrorMessage = "Ghi chú không được vượt quá 500 ký tự.")]
     public string? Notes { get; set; }
+    
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public int Length { get; set; }
+    public int Weight { get; set; }
 
     [StringLength(500, ErrorMessage = "Lý do hủy không được vượt quá 500 ký tự.")]
     public string? CancelledReason { get; set; }

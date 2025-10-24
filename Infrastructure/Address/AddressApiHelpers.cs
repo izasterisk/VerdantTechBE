@@ -123,6 +123,80 @@ public static class AddressApiHelpers
     }
 
     /// <summary>
+    /// Parse và filter danh sách districts từ GoShip V1 API response theo province code
+    /// Sử dụng streaming approach với Utf8JsonReader để tiết kiệm bộ nhớ khi xử lý large JSON (27500+ items)
+    /// </summary>
+    /// <param name="jsonContent">JSON response từ GoShip API</param>
+    /// <param name="provinceCode">Province code để filter (ví dụ: "100000")</param>
+    /// <returns>Danh sách districts thuộc province code đã chọn</returns>
+    /// <exception cref="InvalidOperationException">Khi JSON không hợp lệ</exception>
+    public static List<CourierDistrictResponseDTO> ParseAndFilterDistricts(string jsonContent, string provinceCode)
+    {
+        var districts = new List<CourierDistrictResponseDTO>();
+        
+        // Parse JSON using Utf8JsonReader for memory efficiency
+        var bytes = System.Text.Encoding.UTF8.GetBytes(jsonContent);
+        var reader = new System.Text.Json.Utf8JsonReader(bytes);
+        
+        // Navigate to root object
+        if (!reader.Read() || reader.TokenType != System.Text.Json.JsonTokenType.StartObject)
+        {
+            throw new InvalidOperationException("JSON không đúng định dạng (không bắt đầu bằng object).");
+        }
+        
+        // Find "data" array
+        bool foundData = false;
+        while (reader.Read())
+        {
+            if (reader.TokenType == System.Text.Json.JsonTokenType.PropertyName && 
+                reader.GetString() == "data")
+            {
+                foundData = true;
+                reader.Read(); // Move to array start
+                
+                if (reader.TokenType != System.Text.Json.JsonTokenType.StartArray)
+                {
+                    throw new InvalidOperationException("Trường 'data' không phải là array.");
+                }
+                
+                // Stream through array elements
+                while (reader.Read() && reader.TokenType != System.Text.Json.JsonTokenType.EndArray)
+                {
+                    if (reader.TokenType == System.Text.Json.JsonTokenType.StartObject)
+                    {
+                        // Parse individual object
+                        using var doc = System.Text.Json.JsonDocument.ParseValue(ref reader);
+                        var element = doc.RootElement;
+                        
+                        // Check if city_code matches
+                        if (element.TryGetProperty("city_code", out var cityCodeProp))
+                        {
+                            var cityCode = cityCodeProp.GetString();
+                            if (cityCode == provinceCode)
+                            {
+                                // Map to DTO
+                                districts.Add(new CourierDistrictResponseDTO
+                                {
+                                    DistrictCode = element.GetProperty("code").GetString() ?? string.Empty,
+                                    Name = element.GetProperty("name").GetString() ?? string.Empty
+                                });
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        
+        if (!foundData)
+        {
+            throw new InvalidOperationException("Response không có trường 'data' khi lấy quận/huyện.");
+        }
+        
+        return districts;
+    }
+
+    /// <summary>
     /// Xử lý exception chung cho các API calls (HttpRequestException, TaskCanceledException, etc.)
     /// </summary>
     /// <param name="ex">Exception được throw</param>
