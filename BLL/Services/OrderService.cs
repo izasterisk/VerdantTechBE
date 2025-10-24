@@ -91,11 +91,11 @@ public class OrderService : IOrderService
         if (fromAddress == null)
             throw new KeyNotFoundException($"Địa chỉ gửi không tồn tại.");
         
-        var (convertedWidth, convertedHeight, convertedLength, convertedWeight, convertedCod, convertedAmount) = 
-            OrderHelper.ConvertDimensionsToInt(width, height, length, weight, cod, response.TotalAmountBeforeShippingFee);
+        var (convertedWidth, convertedHeight, convertedLength, convertedWeight, convertedCod) = 
+            OrderHelper.ConvertDimensionsToInt(width, height, length, weight, cod);
         var availableServices = await _courierApiClient.GetRatesAsync(fromAddress.DistrictCode, 
-            fromAddress.ProvinceCode, address.DistrictCode, address.ProvinceCode, convertedCod, 
-            convertedAmount, convertedWidth, convertedHeight, convertedLength, convertedWeight, cancellationToken);
+            fromAddress.ProvinceCode, address.DistrictCode, address.ProvinceCode, convertedCod, convertedWidth, 
+            convertedHeight, convertedLength, convertedWeight, cancellationToken);
         response.Width = convertedWidth; response.Height = convertedHeight;
         response.Length = convertedLength; response.Weight = convertedWeight;
         response.ShippingDetails = _mapper.Map<List<ShippingDetailDTO>>(availableServices);
@@ -109,9 +109,9 @@ public class OrderService : IOrderService
         var orderPreview = OrderHelper.GetOrderPreviewFromCache(_memoryCache, orderPreviewId);
         if (orderPreview == null)
             throw new KeyNotFoundException($"Đơn hàng xem trước với ID {orderPreviewId} đã hết hạn.");
-        var selectedShipping = orderPreview.ShippingDetails.FirstOrDefault(s => s.Id == dto.CourierId);
+        var selectedShipping = orderPreview.ShippingDetails.FirstOrDefault(s => s.PriceTableId == dto.PriceTableId);
         if (selectedShipping == null)
-            throw new KeyNotFoundException($"Dịch vụ vận chuyển với ID {dto.CourierId} không tồn tại trong danh sách dịch vụ khả dụng.");
+            throw new KeyNotFoundException($"Dịch vụ vận chuyển với ID {dto.PriceTableId} không tồn tại trong danh sách dịch vụ khả dụng.");
         
         List<OrderDetail> orderDetails = new();
         foreach (var orderDetail in orderPreview.OrderDetails)
@@ -137,7 +137,7 @@ public class OrderService : IOrderService
         order.ShippingMethod = selectedShipping.Service;
         order.TotalAmount = orderPreview.TotalAmountBeforeShippingFee + order.ShippingFee;
         order.AddressId = orderPreview.Address.Id;
-        order.CourierId = dto.CourierId;
+        order.CourierId = dto.PriceTableId;
         order.Width = orderPreview.Width; order.Height = orderPreview.Height;
         order.Length = orderPreview.Length; order.Weight = orderPreview.Weight;
         

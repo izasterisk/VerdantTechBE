@@ -20,8 +20,8 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
     {
         _httpClient = httpClient;
         _configuration = configuration;
-        _baseUrl = Environment.GetEnvironmentVariable("GOSHIP_SANDBOX_MANAGE_API_ENDPOINT") ?? "https://sandbox.goship.io/api/v2";
-        _bearerToken = Environment.GetEnvironmentVariable("GOSHIP_TOKEN") ?? throw new InvalidOperationException("GOSHIP_TOKEN không được cấu hình trong .env file");
+        _baseUrl = Environment.GetEnvironmentVariable("GOSHIP_MANAGE_API_ENDPOINT_V1") ?? "https://api.goship.io/api/v1";
+        _bearerToken = Environment.GetEnvironmentVariable("GOSHIP_TOKEN_V1") ?? throw new InvalidOperationException("GOSHIP_TOKEN_V1 không được cấu hình trong .env file");
         _timeoutSeconds = int.Parse(Environment.GetEnvironmentVariable("TIME_OUT_SECONDS") ?? "10");
         
         // Configure HttpClient timeout and Bearer token
@@ -30,37 +30,33 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _bearerToken);
     }
     
-    public async Task<List<RateResponseDTO>> GetRatesAsync(string fromDistrict, string fromCity, string toDistrict, 
-        string toCity, int cod, int amount, int width, int height, int length, int weight, 
+    public async Task<List<RateResponseDTO>> GetRatesAsync(string fromDistrictCode, string fromCityCode, string toDistrictCode, 
+        string toCityCode, int codAmount, int width, int height, int length, int weight, 
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var url = $"{_baseUrl}/rates";
+            var url = $"{_baseUrl}/fees-list";
             
             var requestBody = new
             {
-                shipment = new
+                address_from = new
                 {
-                    address_from = new
-                    {
-                        district = fromDistrict,
-                        city = fromCity
-                    },
-                    address_to = new
-                    {
-                        district = toDistrict,
-                        city = toCity
-                    },
-                    parcel = new
-                    {
-                        cod = cod,
-                        amount = amount,
-                        width = width,
-                        height = height,
-                        length = length,
-                        weight = weight
-                    }
+                    city_code = fromCityCode,
+                    district_code = fromDistrictCode
+                },
+                address_to = new
+                {
+                    city_code = toCityCode,
+                    district_code = toDistrictCode
+                },
+                parcel = new
+                {
+                    cod_amount = codAmount,
+                    length = length,
+                    width = width,
+                    height = height,
+                    weight = weight
                 }
             };
 
@@ -71,22 +67,44 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
             response.EnsureSuccessStatusCode();
             
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var dataElement = AddressApiHelpers.ParseGoshipResponse(responseContent, "rates");
+            var dataElement = AddressApiHelpers.ParseGoshipResponse(responseContent, "fees-list");
+            
+            // V1 API có nested structure: data.rates
+            if (!dataElement.TryGetProperty("rates", out var ratesElement))
+            {
+                throw new InvalidOperationException("Response không có trường 'rates' trong data.");
+            }
             
             var rates = JsonSerializer.Deserialize<List<RateResponse>>(
-                dataElement.GetRawText(), 
+                ratesElement.GetRawText(), 
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
             );
+            
             if (rates == null) return new List<RateResponseDTO>();
+            
             return rates.Select(rate => new RateResponseDTO
             {
-                Id = rate.Id,
+                ServiceId = rate.ServiceId,
+                ServiceMappingId = rate.ServiceMappingId,
+                CarrierId = rate.CarrierId,
                 CarrierName = rate.CarrierName,
-                CarrierLogo = rate.CarrierLogo,
                 CarrierShortName = rate.CarrierShortName,
+                CarrierLogo = rate.CarrierLogo,
+                CarrierNote = rate.CarrierNote,
                 Service = rate.Service,
-                Expected = rate.Expected,
+                ExpectedTxt = rate.ExpectedTxt,
+                ServiceDescription = rate.ServiceDescription,
+                HourApplyTxt = rate.HourApplyTxt,
                 IsApplyOnly = rate.IsApplyOnly,
+                Parent = rate.Parent != null ? new RateParentDTO
+                {
+                    Id = rate.Parent.Id,
+                    Name = rate.Parent.Name,
+                    ShortName = rate.Parent.ShortName,
+                    Icon = rate.Parent.Icon,
+                    Priority = rate.Parent.Priority,
+                    Description = rate.Parent.Description
+                } : null,
                 PromotionId = rate.PromotionId,
                 Discount = rate.Discount,
                 WeightFee = rate.WeightFee,
@@ -103,12 +121,20 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
                 TotalAmountShop = rate.TotalAmountShop,
                 PriceTableId = rate.PriceTableId,
                 InsurranceFee = rate.InsurranceFee,
-                ReturnFee = rate.ReturnFee
+                ReturnFee = rate.ReturnFee,
+                Report = rate.Report != null ? new RateReportDTO
+                {
+                    ScorePercent = rate.Report.ScorePercent,
+                    SuccessPercent = rate.Report.SuccessPercent,
+                    ReturnPercent = rate.Report.ReturnPercent,
+                    AvgTimeDelivery = rate.Report.AvgTimeDelivery,
+                    AvgTimeDeliveryFormat = rate.Report.AvgTimeDeliveryFormat
+                } : null
             }).ToList();
         }
         catch (Exception ex)
         {
-            AddressApiHelpers.HandleApiException(ex, "rates");
+            AddressApiHelpers.HandleApiException(ex, "fees-list");
             throw; 
         }
     }

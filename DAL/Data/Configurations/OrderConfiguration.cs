@@ -90,9 +90,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .UseCollation("utf8mb4_unicode_ci");
             
         builder.Property(e => e.CourierId)
-            .HasMaxLength(20)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnType("int")
             .HasColumnName("courier_id");
             
         builder.Property(e => e.Width)
