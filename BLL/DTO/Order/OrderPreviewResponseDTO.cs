@@ -70,11 +70,13 @@ public class OrderPreviewResponseDTO
 
 public class ShippingDetailDTO
 {
-    public string Id { get; set; } = string.Empty;
+    public int PriceTableId { get; set; }
     public string CarrierName { get; set; } = string.Empty;
-    public string? CarrierLogo { get; set; }
     public string CarrierShortName { get; set; } = string.Empty;
+    public string? CarrierLogo { get; set; }
     public string Service { get; set; } = string.Empty;
-    public string Expected { get; set; } = string.Empty;
+    public string ExpectedTxt { get; set; } = string.Empty;
+    public decimal TotalFee { get; set; }
     public decimal TotalAmount { get; set; }
+    public RateReportDTO? Report { get; set; }
 }

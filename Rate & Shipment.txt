@@ -217,7 +217,6 @@ Response
 2. Shipment: https://api.goship.io/api/v1/shipments
 Auth Type: Bearer Token.
 {
-    "id": 0,
     "address_from": {
         "city_code": "700000",
         "district_code": "702400",

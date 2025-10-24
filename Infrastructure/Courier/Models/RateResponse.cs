@@ -1,29 +1,111 @@
-﻿using System.Text.Json.Serialization;
+﻿
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Infrastructure.Courier.Models;
+/// <summary>
+/// Custom converter để xử lý trường hợp API trả về string hoặc number cho cùng một field
+/// Convert tất cả về string
+/// </summary>
+public class StringOrNumberConverter : JsonConverter<string>
+{
+    public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return reader.TokenType switch
+        {
+            JsonTokenType.String => reader.GetString(),
+            JsonTokenType.Number => reader.GetInt32().ToString(),
+            JsonTokenType.Null => null,
+            _ => reader.GetString()
+        };
+    }
+
+    public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value);
+    }
+}
+
+public class RateParent
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+    
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+    
+    [JsonPropertyName("short_name")]
+    public string ShortName { get; set; } = string.Empty;
+    
+    [JsonPropertyName("icon")]
+    public string Icon { get; set; } = string.Empty;
+    
+    [JsonPropertyName("priority")]
+    public int Priority { get; set; }
+    
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+}
+
+public class RateReport
+{
+    [JsonPropertyName("score_percent")]
+    public decimal ScorePercent { get; set; }
+
+    [JsonPropertyName("success_percent")]
+    public decimal SuccessPercent { get; set; }
+
+    [JsonPropertyName("return_percent")]
+    public decimal ReturnPercent { get; set; }
+
+    [JsonPropertyName("avg_time_delivery")]
+    public int AvgTimeDelivery { get; set; }
+
+    [JsonPropertyName("avg_time_delivery_format")]
+    [JsonConverter(typeof(StringOrNumberConverter))]
+    public string? AvgTimeDeliveryFormat { get; set; } = string.Empty;
+}
 
 public class RateResponse
 {
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
+    [JsonPropertyName("service_id")]
+    public int ServiceId { get; set; }
+    
+    [JsonPropertyName("service_mapping_id")]
+    public string ServiceMappingId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("carrier_id")]
+    public string CarrierId { get; set; } = string.Empty;
     
     [JsonPropertyName("carrier_name")]
     public string CarrierName { get; set; } = string.Empty;
     
+    [JsonPropertyName("carrier_short_name")]
+    public string CarrierShortName { get; set; } = string.Empty;
+    
     [JsonPropertyName("carrier_logo")]
     public string? CarrierLogo { get; set; }
     
-    [JsonPropertyName("carrier_short_name")]
-    public string CarrierShortName { get; set; } = string.Empty;
+    [JsonPropertyName("carrier_note")]
+    public string? CarrierNote { get; set; }
     
     [JsonPropertyName("service")]
     public string Service { get; set; } = string.Empty;
     
-    [JsonPropertyName("expected")]
-    public string Expected { get; set; } = string.Empty;
+    [JsonPropertyName("expected_txt")]
+    public string ExpectedTxt { get; set; } = string.Empty;
+    
+    [JsonPropertyName("service_description")]
+    public string ServiceDescription { get; set; } = string.Empty;
+    
+    [JsonPropertyName("hour_apply_txt")]
+    public string HourApplyTxt { get; set; } = string.Empty;
     
     [JsonPropertyName("is_apply_only")]
     public bool IsApplyOnly { get; set; }
+    
+    [JsonPropertyName("parent")]
+    public RateParent? Parent { get; set; }
     
     [JsonPropertyName("promotion_id")]
     public int PromotionId { get; set; }
@@ -75,4 +157,7 @@ public class RateResponse
     
     [JsonPropertyName("return_fee")]
     public decimal ReturnFee { get; set; }
+    
+    [JsonPropertyName("report")]
+    public RateReport? Report { get; set; }
 }

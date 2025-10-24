@@ -132,16 +132,15 @@ public class OrderHelper
     /// Convert các giá trị decimal sang int cho API courier (GoShip).
     /// Làm tròn lên bất kỳ phần thập phân nào (5.1 → 6).
     /// </summary>
-    public static (int width, int height, int length, int weight, int cod, int amount) ConvertDimensionsToInt(
-        decimal width, decimal height, decimal length, decimal weight, decimal cod, decimal amount)
+    public static (int width, int height, int length, int weight, int cod) ConvertDimensionsToInt(
+        decimal width, decimal height, decimal length, decimal weight, decimal cod)
     {
         return (
             (int)Math.Ceiling((double)width),
             (int)Math.Ceiling((double)height),
             (int)Math.Ceiling((double)length),
             (int)Math.Ceiling((double)weight),
-            (int)Math.Ceiling((double)cod),
-            (int)Math.Ceiling((double)amount)
+            (int)Math.Ceiling((double)cod)
         );
     }
 }
