@@ -100,7 +100,7 @@ public class OrderController : BaseController
     /// <returns>Danh sách đơn hàng với thông tin phân trang</returns>
     [HttpGet]
     [EndpointSummary("Get All Orders")]
-    [EndpointDescription("GET toàn bộ Order theo Status (Pending, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded). Hoặc không nhập status cũng được, trả về toàn bộ.")]
+    [EndpointDescription("GET toàn bộ Order theo Status (Pending, Paid, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded). Hoặc không nhập status cũng được, trả về toàn bộ.")]
     public async Task<ActionResult<APIResponse>> GetAllOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
     {
         try

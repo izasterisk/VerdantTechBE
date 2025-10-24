@@ -87,6 +87,25 @@ public class OrderRepository : IOrderRepository
         }
     }
     
+    public async Task UpdateListProductWithTransactionAsync(List<Product> products, CancellationToken cancellationToken = default)
+    {
+        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            foreach (var product in products)
+            {
+                product.UpdatedAt = DateTime.UtcNow;
+                await _productRepository.UpdateAsync(product, cancellationToken);
+            }
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+    
     public async Task<Order?> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         return await _orderRepository.GetWithRelationsAsync(
@@ -157,11 +176,5 @@ public class OrderRepository : IOrderRepository
     {
         var mediaLinks = await _mediaLinkRepository.GetAllByFilterAsync(m => m.OwnerId == productId && m.OwnerType == MediaOwnerType.Products, true, cancellationToken);
         return mediaLinks.OrderBy(m => m.SortOrder).ToList();
-    }
-    
-    public async Task<Product> UpdateProductAsync(Product product, CancellationToken cancellationToken = default)
-    {
-        product.UpdatedAt = DateTime.UtcNow;
-        return await _productRepository.UpdateAsync(product, cancellationToken);
     }
 }

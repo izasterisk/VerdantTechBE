@@ -114,6 +114,7 @@ public class OrderService : IOrderService
             throw new KeyNotFoundException($"Dịch vụ vận chuyển với ID {dto.PriceTableId} không tồn tại trong danh sách dịch vụ khả dụng.");
         
         List<OrderDetail> orderDetails = new();
+        List<Product> productsToUpdate = new();
         foreach (var orderDetail in orderPreview.OrderDetails)
         {
             orderDetails.Add(new OrderDetail
@@ -130,7 +131,7 @@ public class OrderService : IOrderService
             if (orderDetail.Quantity > productRaw.StockQuantity || productRaw.StockQuantity == 0)
                 throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.Product.Id} không còn đủ hàng so với yêu cầu của bạn. Vui lòng tạo đơn hàng mới.");
             productRaw.StockQuantity -= orderDetail.Quantity;
-            await _orderRepository.UpdateProductAsync(productRaw, cancellationToken);
+            productsToUpdate.Add(productRaw);
         }
         var order = _mapper.Map<Order>(orderPreview);
         order.ShippingFee = selectedShipping.TotalAmount;
@@ -141,6 +142,7 @@ public class OrderService : IOrderService
         order.Width = orderPreview.Width; order.Height = orderPreview.Height;
         order.Length = orderPreview.Length; order.Weight = orderPreview.Weight;
         
+        await _orderRepository.UpdateListProductWithTransactionAsync(productsToUpdate, cancellationToken);
         var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, cancellationToken);
         var response = await _orderRepository.GetOrderByIdAsync(createdOrder.Id, cancellationToken);
         if(response == null)
@@ -176,6 +178,10 @@ public class OrderService : IOrderService
         {
             order.CancelledAt = DateTime.UtcNow;
             order.CancelledReason = dto.CancelledReason;
+        }
+        if (dto.Status == OrderStatus.Paid)
+        {
+            // Validate thanh toán sẽ có sau này
         }
         if (dto.Status == OrderStatus.Shipped)
         {
