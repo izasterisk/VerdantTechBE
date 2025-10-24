@@ -74,7 +74,7 @@ public class OrderController : BaseController
     /// <returns>Thông tin đơn hàng sau khi cập nhật</returns>
     [HttpPut("{orderId:long}")]
     [EndpointSummary("Process Order")]
-    [EndpointDescription("Cập nhật trạng thái đơn hàng: Processing, Shipped, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
+    [EndpointDescription("Cập nhật trạng thái đơn hàng: Paid, Processing, Shipped, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
     public async Task<ActionResult<APIResponse>> ProcessOrder([FromRoute] ulong orderId, [FromBody] OrderUpdateDTO dto)
     {
         var validationResult = ValidateModel();
@@ -83,6 +83,26 @@ public class OrderController : BaseController
         try
         {
             var order = await _orderService.ProcessOrderAsync(orderId, dto, GetCancellationToken());
+            return SuccessResponse(order, HttpStatusCode.OK);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Lấy thông tin chi tiết một đơn hàng theo ID
+    /// </summary>
+    /// <param name="orderId">ID của đơn hàng</param>
+    /// <returns>Thông tin chi tiết đơn hàng</returns>
+    [HttpGet("{orderId:long}")]
+    [EndpointSummary("Get Order By ID")]
+    public async Task<ActionResult<APIResponse>> GetOrderById([FromRoute] ulong orderId)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderByIdAsync(orderId, GetCancellationToken());
             return SuccessResponse(order, HttpStatusCode.OK);
         }
         catch (Exception ex)

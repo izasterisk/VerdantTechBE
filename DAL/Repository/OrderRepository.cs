@@ -29,7 +29,7 @@ public class OrderRepository : IOrderRepository
         _mediaLinkRepository = mediaLinkRepository;
     }
     
-    public async Task<Order> CreateOrderWithTransactionAsync(Order order, List<OrderDetail> orderDetails, CancellationToken cancellationToken = default)
+    public async Task<Order> CreateOrderWithTransactionAsync(Order order, List<OrderDetail> orderDetails, List<Product> products, CancellationToken cancellationToken = default)
     {
         using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -38,7 +38,11 @@ public class OrderRepository : IOrderRepository
             order.UpdatedAt = DateTime.UtcNow;
             order.Status = OrderStatus.Pending;
             var createdOrder = await _orderRepository.CreateAsync(order, cancellationToken);
-            
+            foreach (var product in products)
+            {
+                product.UpdatedAt = DateTime.UtcNow;
+                await _productRepository.UpdateAsync(product, cancellationToken);
+            }
             foreach (var orderDetail in orderDetails)
             {
                 orderDetail.OrderId = createdOrder.Id;
@@ -87,33 +91,13 @@ public class OrderRepository : IOrderRepository
         }
     }
     
-    public async Task UpdateListProductWithTransactionAsync(List<Product> products, CancellationToken cancellationToken = default)
-    {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            foreach (var product in products)
-            {
-                product.UpdatedAt = DateTime.UtcNow;
-                await _productRepository.UpdateAsync(product, cancellationToken);
-            }
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
-    }
-    
     public async Task<Order?> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         return await _orderRepository.GetWithRelationsAsync(
             o => o.Id == orderId, 
             true,
             query => query.Include(o => o.OrderDetails)
-                .ThenInclude(o => o.Product)
-                .Include(o => o.Address),
+                .ThenInclude(o => o.Product),
             cancellationToken);
     }
     
@@ -158,6 +142,11 @@ public class OrderRepository : IOrderRepository
     public async Task<User?> GetActiveUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         return await _userRepository.GetAsync(o => o.Id == userId && o.IsVerified == true && o.DeletedAt == null, true, cancellationToken);
+    }
+    
+    public async Task<User?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    {
+        return await _userRepository.GetAsync(o => o.Id == userId, true, cancellationToken);
     }
     
     public async Task<bool> ValidateAddressBelongsToUserAsync(ulong addressId, ulong userId, CancellationToken cancellationToken = default)

@@ -9,6 +9,8 @@ public interface IOrderService
     
     Task<OrderResponseDTO> CreateOrderAsync(Guid orderPreviewId, OrderCreateDTO dto, CancellationToken cancellationToken = default);
     
+    Task<OrderResponseDTO> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default);
+    
     Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default);
 
     Task<OrderResponseDTO> ProcessOrderAsync(ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default);

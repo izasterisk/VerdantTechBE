@@ -112,6 +112,9 @@ public class OrderService : IOrderService
         var selectedShipping = orderPreview.ShippingDetails.FirstOrDefault(s => s.PriceTableId == dto.PriceTableId);
         if (selectedShipping == null)
             throw new KeyNotFoundException($"Dịch vụ vận chuyển với ID {dto.PriceTableId} không tồn tại trong danh sách dịch vụ khả dụng.");
+        var user = await _orderRepository.GetActiveUserByIdAsync(orderPreview.CustomerId, cancellationToken);
+        if (user == null)
+            throw new KeyNotFoundException($"Người dùng với ID {orderPreview.CustomerId} không tồn tại hoặc đã bị xóa.");
         
         List<OrderDetail> orderDetails = new();
         List<Product> productsToUpdate = new();
@@ -142,8 +145,7 @@ public class OrderService : IOrderService
         order.Width = orderPreview.Width; order.Height = orderPreview.Height;
         order.Length = orderPreview.Length; order.Weight = orderPreview.Weight;
         
-        await _orderRepository.UpdateListProductWithTransactionAsync(productsToUpdate, cancellationToken);
-        var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, cancellationToken);
+        var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, productsToUpdate, cancellationToken);
         var response = await _orderRepository.GetOrderByIdAsync(createdOrder.Id, cancellationToken);
         if(response == null)
             throw new InvalidOperationException("Không thể tạo đơn hàng, vui lòng liên hệ với Staff để được hỗ trợ.");
@@ -155,8 +157,9 @@ public class OrderService : IOrderService
                 product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
             }
         }
-        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(createdOrder.CustomerId, cancellationToken));
-        finalResponse.Address = orderPreview.Address;
+        
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(user);
+        finalResponse.Customer.Address.Insert(0, orderPreview.Address);
         OrderHelper.RemoveOrderPreviewFromCache(_memoryCache, orderPreviewId);
         return finalResponse;
     }
@@ -216,16 +219,36 @@ public class OrderService : IOrderService
             }
         }
         finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(response.CustomerId, cancellationToken));
-        finalResponse.Address = _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken));
+        finalResponse.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken)));
         return finalResponse;
+    }
+    
+    public async Task<OrderResponseDTO> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
+    {
+        var orderEntity = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        if (orderEntity == null)
+            throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
+        var item = _mapper.Map<OrderResponseDTO>(orderEntity);
+        if (item.OrderDetails != null)
+        {
+            foreach (var product in item.OrderDetails)
+            {
+                product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
+            }
+        }
+        item.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetUserByIdAsync(orderEntity.CustomerId, cancellationToken));
+        item.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(orderEntity.AddressId, cancellationToken)));
+        return item;
     }
     
     public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default)
     {
         var (orders, totalCount) = await _orderRepository.GetAllOrdersAsync(page, pageSize, status, cancellationToken);
-        var response = _mapper.Map<List<OrderResponseDTO>>(orders);
-        foreach (var item in response)
+        var response = new List<OrderResponseDTO>();
+        
+        foreach (var orderEntity in orders)
         {
+            var item = _mapper.Map<OrderResponseDTO>(orderEntity);
             if (item.OrderDetails != null)
             {
                 foreach (var product in item.OrderDetails)
@@ -233,7 +256,10 @@ public class OrderService : IOrderService
                     product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
                 }
             }
+            item.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(orderEntity.Address));
+            response.Add(item);
         }
+        
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
         return new PagedResponse<OrderResponseDTO>
         {

@@ -242,138 +242,392 @@ Các endpoint đều yêu cầu Bearer token.
     - Farm phải tồn tại và có địa chỉ.
     - `AddressHelper.ValidateAddressFields` yêu cầu các cặp tên/mã cùng null hoặc cùng có giá trị.
 #### OrderController (`/api/Order`)
-- `POST /api/Order/preview` (Authorize)
-  - Body `OrderPreviewCreateDTO`:
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | taxAmount | decimal | >= 0 |
-    | discountAmount | decimal | >= 0 |
-    | addressId | ulong | Required |
-    | orderPaymentMethod | OrderPaymentMethod | Required enum (Banking, COD, Rent) |
-    | notes | string? | Optional, tối đa 500 ký tự |
-    | orderDetails | List<OrderDetailPreviewCreateDTO> | Required, tối thiểu 1 item |
+**`POST /api/Order/preview`** (Authorize)  
+Tạo order preview để xem trước tổng tiền, phí ship và các dịch vụ vận chuyển khả dụng.
 
-  - `OrderDetailPreviewCreateDTO`:
+- Body `OrderPreviewCreateDTO`:
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | productId | ulong | Required |
-    | quantity | int | Required, >= 1 |
-    | discountAmount | decimal | >= 0 |
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | addressId | ulong | Required, > 0 |
+  | orderPaymentMethod | enum | Required: `Banking`, `COD`, `Rent` |
+  | taxAmount | decimal | >= 0 |
+  | discountAmount | decimal | >= 0 |
+  | notes | string? | Optional, max 500 ký tự |
+  | orderDetails | List<OrderDetailPreviewCreateDTO> | Required, min 1 item |
 
-  - Ràng buộc nghiệp vụ:
-    - User phải tồn tại.
-    - Địa chỉ phải tồn tại và thuộc user.
-    - Mỗi sản phẩm phải tồn tại; tự động tính subtotal, trọng lượng và kích thước cho shipping.
-    - Gọi Courier API lấy danh sách giao hàng, cache preview 10 phút.
+- `OrderDetailPreviewCreateDTO`:
 
-- `POST /api/Order/{orderPreviewId}` (Authorize)
-  - Path `orderPreviewId`: Guid.
-  - Body `OrderCreateDTO`:
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | productId | ulong | Required, > 0 |
+  | quantity | int | Required, >= 1 |
+  | discountAmount | decimal | >= 0 |
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | shippingDetailId | string | Required (chọn từ preview) |
+- Ràng buộc nghiệp vụ:
+  - User (từ JWT) phải tồn tại, `IsVerified == true`.
+  - `addressId` phải tồn tại và thuộc user (qua `UserAddress` hoặc `FarmProfile`).
+  - Mỗi `productId` phải tồn tại, `IsActive == true`, `StockQuantity >= quantity`.
+  - Nếu `orderPaymentMethod == Rent`: sản phẩm phải `ForRent == true`.
+  - Tự động tính: subtotal, dimensions, weight từ sản phẩm.
+  - Gọi GoShip API lấy rates, cache preview 10 phút với `OrderPreviewId` (Guid).
+- Exceptions:
+  - `KeyNotFoundException`: User/address/product không tồn tại, address không thuộc user.
+  - `InvalidOperationException`: Sản phẩm hết hàng, không cho thuê khi chọn Rent.
 
-  - Ràng buộc nghiệp vụ:
-    - Preview phải có trong cache và chưa hết hạn.
-    - `shippingDetailId` phải tồn tại trong preview; nếu COD thì COD = tổng tiền trước phí ship.
-    - Lưu order + order detail, trả về order mới.
+**`POST /api/Order/{orderPreviewId}`** (Authorize)  
+Tạo đơn hàng thực từ preview, chọn shipping service.
 
-- `PATCH /api/Order/{orderId}` (Authorize)
-  - Body `OrderUpdateDTO`:
+- Path: `orderPreviewId` (Guid)
+- Body `OrderCreateDTO`:
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | notes | string? | Optional, tối đa 500 ký tự |
-    | cancelledReason | string? | Optional, tối đa 500 ký tự |
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | priceTableId | string | Required (ID shipping service từ preview) |
 
-  - Ràng buộc nghiệp vụ:
-    - Order phải tồn tại.
-    - Nếu có `cancelledReason`, set status = `Cancelled`; từ chối nếu status hiện tại là `Shipped` hoặc `Delivered`.
-    - Nếu order bị xóa trong quá trình patch, service ném `OrderHelper.OrderDeletedException` -> controller trả 204.
+- Ràng buộc nghiệp vụ:
+  - Preview phải tồn tại trong cache (chưa hết 10 phút).
+  - `priceTableId` phải nằm trong `shippingDetails` của preview.
+  - User phải tồn tại, `IsVerified == true`.
+  - Sản phẩm phải còn đủ hàng (kiểm tra lại `StockQuantity`).
+  - Transaction: tạo Order + OrderDetail, trừ stock, commit.
+  - Xóa preview khỏi cache sau khi tạo thành công.
+- Exceptions:
+  - `KeyNotFoundException`: Preview hết hạn, priceTableId không hợp lệ, user/product không tồn tại.
+  - `InvalidOperationException`: Hết hàng, lỗi transaction.
 
-- `GET /api/Order/{orderId}` (Authorize)
-  - Trả về order chi tiết, 404 nếu không tồn tại.
+**`PUT /api/Order/{orderId}`** (Authorize)  
+Cập nhật trạng thái đơn hàng (Pending → Paid → Processing → Shipped → Delivered) hoặc hủy.
 
-- `GET /api/Order/me` (Authorize)
-  - Trả về danh sách order của user từ JWT.
+- Path: `orderId` (ulong)
+- Body `OrderUpdateDTO`:
 
-- `GET /api/Order/user/{userId}` (Authorize, Roles `Admin,Staff`)
-  - Trả về danh sách order của user bất kỳ.
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | status | enum | Required: `Pending`, `Paid`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
+  | cancelledReason | string? | Optional, max 500 ký tự |
 
-#### ProductCategoryController (`/api/ProductCategory`)
-- `POST /api/ProductCategory` (Authorize)
-  - Body `ProductCategoryCreateDTO`:
+- Ràng buộc nghiệp vụ:
+  - Order phải tồn tại.
+  - Nếu có `cancelledReason` → `status` phải là `Cancelled`.
+  - Validate chuyển trạng thái hợp lệ (`OrderHelper.ValidateOrderStatusTransition`): không lùi trạng thái, không chuyển từ Cancelled/Refunded.
+  - **Tác động theo status:**
+    - `Processing`: set `ConfirmedAt`.
+    - `Delivered`: set `DeliveredAt`.
+    - `Cancelled`: set `CancelledAt`, `CancelledReason`.
+    - `Shipped`: gọi GoShip API tạo shipment, lưu `TrackingNumber`. Nếu COD: payer=0, codAmount=totalAmount.
+  - Transaction: update order.
+- Exceptions:
+  - `KeyNotFoundException`: Order/address không tồn tại.
+  - `InvalidOperationException`: Cung cấp cancelledReason nhưng status không phải Cancelled, chuyển trạng thái không hợp lệ, lỗi GoShip API.
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | name | string | Required, tối đa 255 ký tự |
-    | parentId | ulong? | Optional, >= 1 |
-    | description | string? | Optional, tối đa 255 ký tự |
+**`GET /api/Order/{orderId}`** (Authorize)  
+Lấy chi tiết 1 đơn hàng.
 
-  - Ràng buộc nghiệp vụ:
-    - Tên category phải unique.
-    - Nếu có `parentId`, parent phải tồn tại và `IsActive = true`.
+- Path: `orderId` (ulong)
+- Response: `OrderResponseDTO` (customer, address, orderDetails với images).
+- Exceptions: `KeyNotFoundException` nếu order không tồn tại.
 
-- `GET /api/ProductCategory/{id}` (Authorize)
-  - Trả về category, 404 nếu không tồn tại.
+**`GET /api/Order`** (Authorize)  
+Danh sách đơn hàng (phân trang, lọc theo status).
 
-- `GET /api/ProductCategory` (Authorize)
-  - Trả về toàn bộ danh sách category.
+- Query params:
 
-- `PATCH /api/ProductCategory/{id}` (Authorize)
-  - Body `ProductCategoryUpdateDTO`:
+  | Param | Type | Default | Description |
+  | --- | --- | --- | --- |
+  | page | int | 1 | Trang hiện tại |
+  | pageSize | int | 10 | Số item/trang |
+  | status | string? | null | Lọc: `Pending`, `Paid`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | name | string? | tối đa 255 ký tự |
-    | parentId | ulong? | >= 1 |
-    | description | string? | tối đa 255 ký tự |
-    | isActive | bool? | Optional |
+- Ràng buộc nghiệp vụ:
+  - Parse `status` thành enum, bỏ qua nếu không hợp lệ.
+  - Eager load: OrderDetails, Product, Customer, Address.
+  - Mỗi order: `customer.address[0]` = địa chỉ order, `orderDetails[].product.images` đầy đủ.
+- Response: `PagedResponse<OrderResponseDTO>` (data, currentPage, pageSize, totalPages, totalRecords, hasNextPage, hasPreviousPage).
+- Exceptions: Không có (trả rỗng nếu không tìm thấy).
 
-  - Ràng buộc nghiệp vụ:
-    - Category phải tồn tại và đang active.
-    - Nếu đổi `name` cần unique, slug được cập nhật theo tên mới.
-    - Nếu đặt `parentId`:
-      - Không được đặt parent là chính nó.
-      - Không được đổi parent nếu category đang là cha của category khác.
-      - Parent phải tồn tại.
+#### ProductCertificateController (`/api/ProductCertificate`)
+
+**`POST /api/ProductCertificate/create`** (Authorize)  
+Vendor tạo chứng nhận sản phẩm.
+
+- Body `ProductCertificateCreateDTO`:
+
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | productId | ulong | Required, > 0 |
+  | certificateName | string | Required, max 255 ký tự |
+  | issuedBy | string | Required, max 255 ký tự |
+  | issuedDate | DateTime | Required |
+  | expiryDate | DateTime? | Optional |
+  | certificateUrl | string? | max 1000 ký tự |
+  | notes | string? | max 500 ký tự |
+
+- Ràng buộc nghiệp vụ:
+  - Không validate `productId` tồn tại (có thể tạo trước khi product được approve).
+  - Set `CreatedAt = DateTime.UtcNow`.
+- Response: `ProductCertificateResponseDTO`.
+- Exceptions:
+  - `ArgumentNullException`: DTO null.
+
+**`GET /api/ProductCertificate/get-by-product-id/{productId}`** (Authorize)  
+Lấy danh sách chứng nhận của sản phẩm.
+
+- Path: `productId` (ulong)
+- Response: `IReadOnlyList<ProductCertificateResponseDTO>`.
+- Exceptions:
+  - `ArgumentException`: `productId == 0`.
+
+**`GET /api/ProductCertificate/get-by-id/{id}`** (Authorize)  
+Lấy chứng nhận theo ID.
+
+- Path: `id` (ulong)
+- Response: `ProductCertificateResponseDTO` hoặc null.
+- Exceptions:
+  - `ArgumentException`: `id == 0`.
+
+**`PUT /api/ProductCertificate/update/{id}`** (Authorize)  
+Cập nhật chứng nhận sản phẩm.
+
+- Path: `id` (ulong)
+- Body `ProductCertificateUpdateDTO` (tất cả field optional, validation giống Create).
+- Ràng buộc nghiệp vụ:
+  - Certificate phải tồn tại.
+  - Set `UpdatedAt = DateTime.UtcNow`.
+  - Transaction: update certificate.
+- Response: `ProductCertificateResponseDTO`.
+- Exceptions:
+  - `ArgumentNullException`: DTO null.
+  - `KeyNotFoundException`: Certificate không tồn tại (từ repository).
+
+#### ProductRegistrationController (`/api/ProductRegistrations`)
+
+**`GET /api/ProductRegistrations`** (Authorize)  
+Danh sách đăng ký sản phẩm (phân trang).
+
+- Query: `page` (default 1), `pageSize` (default 20)
+- Response: `PagedResponse<ProductRegistrationReponseDTO>` (bao gồm images, certificates, manual URLs).
+- Exceptions: Không có.
+
+**`GET /api/ProductRegistrations/{id}`** (Authorize)  
+Chi tiết đăng ký sản phẩm.
+
+- Path: `id` (ulong)
+- Response: `ProductRegistrationReponseDTO` hoặc 404.
+- Exceptions: Không có (trả null nếu không tìm thấy).
+
+**`GET /api/ProductRegistrations/vendor/{vendorId}`** (Authorize)  
+Danh sách đăng ký theo vendor (phân trang).
+
+- Path: `vendorId` (ulong)
+- Query: `page`, `pageSize`
+- Response: `PagedResponse<ProductRegistrationReponseDTO>`.
+- Exceptions: Không có.
+
+**`POST /api/ProductRegistrations`** (Authorize)  
+Tạo đăng ký sản phẩm (multipart/form-data).
+
+- Content-Type: `multipart/form-data`
+- Form fields:
+  - `Data`: `ProductRegistrationCreateDTO` (JSON string trong form field hoặc bracket-form)
+  - `ManualFile`: IFormFile? (upload manual PDF)
+  - `Images`: List<IFormFile>? (ảnh sản phẩm)
+  - `Certificate`: List<IFormFile>? (file chứng chỉ)
+
+- `ProductRegistrationCreateDTO`:
+
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | vendorId | ulong | Required |
+  | categoryId | ulong | Required |
+  | proposedProductCode | string | Required, max 100 ký tự |
+  | proposedProductName | string | Required, max 255 ký tự |
+  | description | string? | max 500 ký tự |
+  | unitPrice | decimal | Required, > 0 |
+  | energyEfficiencyRating | string? | Parse thành int 0-5 |
+  | specifications | Dictionary<string, object>? | Parse từ JSON string hoặc bracket-form |
+  | warrantyMonths | int | >= 0 |
+  | weightKg | decimal | > 0 |
+  | dimensionsCm | { width, height, length } | Required, decimal > 0 |
+
+- Ràng buộc nghiệp vụ:
+  - `vendorId`, `categoryId` phải tồn tại.
+  - `energyEfficiencyRating`: parse thành int, phải 0-5 nếu có giá trị.
+  - `dimensionsCm` phải có đủ width/height/length.
+  - Upload files lên Cloudinary:
+    - `ManualFile` → `product-registrations/manuals` → lưu `manualUrl`, `manualPublicUrl`.
+    - `Images` → `product-registrations/images` → tạo `MediaLink` với `OwnerType=ProductRegistrations`.
+    - `Certificate` → `product-registrations/certificates` → tạo `MediaLink` với `OwnerType=ProductCertificates`.
+  - Set `Status = Pending`, `CreatedAt/UpdatedAt = DateTime.UtcNow`.
+  - Insert entity + MediaLinks trong transaction.
+- Response: `ProductRegistrationReponseDTO` đầy đủ (sau khi tạo + hydrate images/certificates).
+- Exceptions:
+  - `InvalidOperationException`: Vendor/Category không tồn tại, energyEfficiencyRating không hợp lệ (< 0 hoặc > 5), dimensions không hợp lệ.
+
+**`PUT /api/ProductRegistrations/{id}`** (Authorize)  
+Cập nhật đăng ký sản phẩm (multipart/form-data).
+
+- Path: `id` (ulong)
+- Content-Type: `multipart/form-data`
+- Form fields:
+  - `Data`: `ProductRegistrationUpdateDTO` (tất cả field optional, validation giống Create)
+  - `ManualFile`: IFormFile? (thay thế manual)
+  - `Images`: List<IFormFile>? (thêm ảnh mới)
+  - `Certificate`: List<IFormFile>? (thêm certificate mới)
+  - `RemoveImagePublicIds`: List<string>? (xóa ảnh cũ)
+  - `RemoveCertificatePublicIds`: List<string>? (xóa certificate cũ)
+
+- Ràng buộc nghiệp vụ:
+  - Registration phải tồn tại.
+  - Validate giống Create.
+  - Upload files mới lên Cloudinary.
+  - Xóa `MediaLink` với publicId trong remove lists.
+  - Update `UpdatedAt = DateTime.UtcNow`.
+- Response: `ProductRegistrationReponseDTO` đầy đủ (sau update).
+- Exceptions:
+  - `KeyNotFoundException`: Registration không tồn tại.
+  - `InvalidOperationException`: Validate fields không hợp lệ.
+
+**`PATCH /api/ProductRegistrations/{id}/status`** (Authorize)  
+Duyệt/từ chối đăng ký sản phẩm.
+
+- Path: `id` (ulong)
+- Body `ProductRegistrationChangeStatusDTO`:
+  ```json
+  {
+    "status": "Approved",  // Pending, Approved, Rejected
+    "rejectionReason": "...",  // Required nếu status = Rejected
+    "approvedBy": 123  // ulong, user ID của người duyệt
+  }
+  ```
+
+- Ràng buộc nghiệp vụ:
+  - Registration phải tồn tại.
+  - Nếu `status == Rejected`: `rejectionReason` bắt buộc.
+  - Nếu `status == Approved`: tự động tạo `Product` từ registration, copy thông tin sang bảng Products.
+- Response: 204 NoContent nếu thành công, 404 nếu không tìm thấy.
+- Exceptions:
+  - `KeyNotFoundException`: Registration không tồn tại.
+  - `InvalidOperationException`: Thiếu rejectionReason khi reject.
+
+**`DELETE /api/ProductRegistrations/{id}`** (Authorize)  
+Xóa đăng ký sản phẩm (và MediaLinks liên quan).
+
+- Path: `id` (ulong)
+- Response: 204 NoContent nếu thành công, 404 nếu không tồn tại.
+- Exceptions: Không có.
 
 #### ProductController (`/api/Product`)
-Các endpoint đều yêu cầu Bearer token.
-- `GET /api/Product/{id}`
-  - 404 nếu không tìm thấy.
 
-- `GET /api/Product`
-  - Trả về toàn bộ sản phẩm.
+**`GET /api/Product`** (Authorize)  
+Danh sách sản phẩm (phân trang).
 
-- `GET /api/Product/category/{id}`
-  - Trả về sản phẩm theo category id.
+- Query params:
 
-- `PUT /api/Product/{id}`
-  - Body `ProductUpdateDTO`:
+  | Param | Type | Default |
+  | --- | --- | --- |
+  | page | int | 1 |
+  | pageSize | int | 20 |
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | categoryId | ulong | Required |
-    | vendorId | ulong | Required |
-    | productCode | string | Required, tối đa 100 ký tự |
-    | productName | string | Required, tối đa 255 ký tự |
-    | description | string? | tối đa 500 ký tự |
-    | unitPrice | decimal | Required, > 0 |
-    | commissionRate | decimal | 0-100 |
-    | discountPercentage | decimal | 0-100 |
-    | energyEfficiencyRating | string? | tối đa 10 ký tự |
-    | specifications | Dictionary<string, object> | Optional |
-    | manualUrls | string? | tối đa 1000 ký tự |
-    | images | string? | tối đa 1000 ký tự |
-    | warrantyMonths | int | >= 1 |
-    | stockQuantity | int | >= 0 |
-    | weightKg | decimal? | Optional |
-    | dimensionsCm | Dictionary<string, decimal> | Optional (length/width/height) |
-    | isActive | bool | Mặc định true |
+- Response: `PagedResponse<ProductListItemDTO>` (thông tin cơ bản, thumbnail đầu tiên nếu có).
+- Exceptions: Không có.
+
+**`GET /api/Product/{id}`** (Authorize)  
+Chi tiết sản phẩm.
+
+- Path: `id` (long/ulong)
+- Response: `ProductResponseDTO` (đầy đủ thông tin, toàn bộ images).
+- Exceptions: 404 nếu không tồn tại.
+
+**`GET /api/Product/category/{categoryId}`** (Authorize)  
+Danh sách sản phẩm theo category (phân trang).
+
+- Path: `categoryId` (long/ulong)
+- Query: `page`, `pageSize`
+- Response: `PagedResponse<ProductListItemDTO>`.
+- Exceptions: Không có (trả rỗng nếu category không có sản phẩm).
+
+**`GET /api/Product/vendor/{vendorId}`** (Authorize)  
+Danh sách sản phẩm theo vendor (phân trang).
+
+- Path: `vendorId` (long/ulong)
+- Query: `page`, `pageSize`
+- Response: `PagedResponse<ProductListItemDTO>`.
+- Exceptions: Không có.
+
+**`PUT /api/Product/{id}`** (Authorize)  
+Cập nhật sản phẩm + quản lý ảnh (add/remove).
+
+- Path: `id` (long/ulong)
+- Body `UpdateRequest`:
+  ```json
+  {
+    "data": ProductUpdateDTO,
+    "addImages": [ { "imageUrl", "imagePublicId", "purpose", "sortOrder" }, ... ],
+    "removeImagePublicIds": [ "publicId1", "publicId2" ]
+  }
+  ```
+
+- `ProductUpdateDTO` (không cần `id` trong body, lấy từ route):
+
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | categoryId | ulong | Required |
+  | vendorId | ulong | Required |
+  | productCode | string | Required, max 100 ký tự |
+  | productName | string | Required, max 255 ký tự |
+  | description | string? | max 500 ký tự |
+  | unitPrice | decimal | Required, > 0 |
+  | commissionRate | decimal | 0-100 |
+  | discountPercentage | decimal | 0-100 |
+  | energyEfficiencyRating | string? | max 10 ký tự (parse thành int 0-5) |
+  | specifications | Dictionary<string, object>? | Optional |
+  | manualUrls | string? | max 1000 ký tự |
+  | publicUrl | string? | max 1000 ký tự |
+  | warrantyMonths | int | >= 0 |
+  | stockQuantity | int | >= 0 |
+  | weightKg | decimal? | Optional |
+  | dimensionsCm | { width, height, length }? | Optional, decimal |
+  | isActive | bool | Default true |
+  | viewCount | int | >= 0 |
+  | soldCount | int | >= 0 |
+  | ratingAverage | decimal | 0-5 |
+
+- Ràng buộc nghiệp vụ:
+  - Product phải tồn tại.
+  - `categoryId`, `vendorId` phải tồn tại.
+  - `energyEfficiencyRating` parse thành int nullable (0-5).
+  - Xóa ảnh: tìm `MediaLink` với `OwnerType=Products`, `OwnerId=productId`, `ImagePublicId` trong `removeImagePublicIds`.
+  - Thêm ảnh: insert `MediaLink` với `OwnerType=Products`, `OwnerId=productId`.
+  - Update `UpdatedAt = DateTime.UtcNow`.
+- Response: `ProductResponseDTO` đầy đủ (sau khi update + add/remove images).
+- Exceptions:
+  - `KeyNotFoundException`: Product không tồn tại.
+  - `InvalidOperationException`: Category/Vendor không tồn tại.
+
+**`PATCH /api/Product/{id}/emission`** (Authorize)  
+Cập nhật `CommissionRate` của sản phẩm.
+
+- Path: `id` (long/ulong)
+- Body `ProductUpdateEmissionDTO`:
+  ```json
+  {
+    "commissionRate": 0.05
+  }
+  ```
+- Ràng buộc nghiệp vụ:
+  - Product phải tồn tại.
+  - `commissionRate` phải 0-1 (0-100%).
+- Response: 204 NoContent nếu thành công, 404 nếu không tìm thấy.
+- Exceptions: `KeyNotFoundException`.
+
+**`DELETE /api/Product/{id}`** (Authorize)  
+Xóa sản phẩm (và có thể dọn ảnh `MediaLink` liên quan).
+
+- Path: `id` (long/ulong)
+- Response: 204 NoContent nếu thành công, 404 nếu không tồn tại.
+- Exceptions: Không có.
     | viewCount | long | Optional |
     | soldCount | long | Optional |
     | ratingAverage | decimal | 0-5 |

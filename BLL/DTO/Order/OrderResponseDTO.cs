@@ -36,7 +36,6 @@ public class OrderResponseDTO
 
     // [Required(ErrorMessage = "Địa chỉ giao hàng là bắt buộc.")]
     // public ulong AddressId { get; set; }
-    public AddressResponseDTO Address { get; set; } = null!;
 
     [Required(ErrorMessage = "Phương thức thanh toán là bắt buộc.")]
     [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Rent.")]
