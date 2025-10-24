@@ -186,15 +186,15 @@ public class OrderService : IOrderService
             if (targetAddress == null)
                 throw new KeyNotFoundException("Địa chỉ không còn tồn tại.");
             to.Address.Insert(0, targetAddress); // Đưa địa chỉ này lên đầu tiên
-            int payer = 1; int cod = 0;
+            int payer = 1; int codAmount = 0;
             if (order.OrderPaymentMethod == OrderPaymentMethod.COD)
             {
                 payer = 0; // Người gửi trả phí
-                cod = (int)Math.Ceiling((double)order.TotalAmount);
+                codAmount = (int)Math.Ceiling((double)order.TotalAmount);
             }
-            order.TrackingNumber = await _courierApiClient.CreateShipmentAsync(order.CourierId, payer, from, to, cod, 
-                (int)Math.Ceiling((double)order.TotalAmount), order.Weight.ToString(), order.Width.ToString(), 
-                order.Height.ToString(), order.Length.ToString(), order.Notes ?? "", cancellationToken);
+            order.TrackingNumber = await _courierApiClient.CreateShipmentAsync(from, to, codAmount, order.Length, 
+                order.Width, order.Height, order.Weight, (int)Math.Ceiling((double)order.TotalAmount), payer, 
+                order.CourierId, order.Notes ?? "" , cancellationToken);
         }
         order.Status = dto.Status;
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);

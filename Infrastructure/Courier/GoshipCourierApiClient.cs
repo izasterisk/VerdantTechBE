@@ -67,13 +67,7 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
             response.EnsureSuccessStatusCode();
             
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var dataElement = AddressApiHelpers.ParseGoshipResponse(responseContent, "fees-list");
-            
-            // V1 API có nested structure: data.rates
-            if (!dataElement.TryGetProperty("rates", out var ratesElement))
-            {
-                throw new InvalidOperationException("Response không có trường 'rates' trong data.");
-            }
+            var ratesElement = GoshipCourierApiHelpers.ParseFeesListResponse(responseContent);
             
             var rates = JsonSerializer.Deserialize<List<RateResponse>>(
                 ratesElement.GetRawText(), 
@@ -139,55 +133,64 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
         }
     }
     
-    public async Task<string> CreateShipmentAsync(string rate, int payer, UserResponseDTO from, UserResponseDTO to,
-        int cod, int amount, string weight, string width, string height, string length, string metadata,
-        CancellationToken cancellationToken = default)
+    public async Task<string> CreateShipmentAsync(UserResponseDTO from, UserResponseDTO to,
+        int codAmount, int length, int width, int height, int weight, int amount,
+        int payer, int priceTableId, string metadata, CancellationToken cancellationToken = default)
     {
         try
         {
             var url = $"{_baseUrl}/shipments";
-            
             // Lấy địa chỉ đầu tiên từ UserResponseDTO
             var addressFrom = from.Address.FirstOrDefault() 
                 ?? throw new InvalidOperationException("Người gửi không có địa chỉ.");
             var addressTo = to.Address.FirstOrDefault() 
                 ?? throw new InvalidOperationException("Người nhận không có địa chỉ.");
+            // Parse CommuneCode sang int cho ward_id
+            var wardIdFrom = GoshipCourierApiHelpers.ParseCommuneCodeToWardId(addressFrom.CommuneCode, "người gửi");
+            var wardIdTo = GoshipCourierApiHelpers.ParseCommuneCodeToWardId(addressTo.CommuneCode, "người nhận");
             
             var requestBody = new
             {
-                shipment = new
+                address_from = new
                 {
-                    rate = rate,
-                    payer = payer,
-                    address_from = new
-                    {
-                        name = from.FullName,
-                        phone = from.PhoneNumber ?? throw new InvalidOperationException("Người gửi không có số điện thoại."),
-                        street = addressFrom.LocationAddress ?? throw new InvalidOperationException("Địa chỉ người gửi không có thông tin đường."),
-                        ward = addressFrom.CommuneCode ?? throw new InvalidOperationException("Địa chỉ người gửi không có mã xã/phường."),
-                        district = addressFrom.DistrictCode ?? throw new InvalidOperationException("Địa chỉ người gửi không có mã quận/huyện."),
-                        city = addressFrom.ProvinceCode ?? throw new InvalidOperationException("Địa chỉ người gửi không có mã tỉnh/thành phố.")
-                    },
-                    address_to = new
-                    {
-                        name = to.FullName,
-                        phone = to.PhoneNumber ?? throw new InvalidOperationException("Người nhận không có số điện thoại."),
-                        street = addressTo.LocationAddress ?? throw new InvalidOperationException("Địa chỉ người nhận không có thông tin đường."),
-                        ward = addressTo.CommuneCode ?? throw new InvalidOperationException("Địa chỉ người nhận không có mã xã/phường."),
-                        district = addressTo.DistrictCode ?? throw new InvalidOperationException("Địa chỉ người nhận không có mã quận/huyện."),
-                        city = addressTo.ProvinceCode ?? throw new InvalidOperationException("Địa chỉ người nhận không có mã tỉnh/thành phố.")
-                    },
-                    parcel = new
-                    {
-                        cod = cod,
-                        amount = amount,
-                        weight = weight,
-                        width = width,
-                        height = height,
-                        length = length,
-                        metadata = metadata
-                    }
-                }
+                    city_code = addressFrom.ProvinceCode ?? throw new InvalidOperationException("Địa chỉ người gửi không có mã tỉnh/thành phố."),
+                    district_code = addressFrom.DistrictCode ?? throw new InvalidOperationException("Địa chỉ người gửi không có mã quận/huyện."),
+                    ward_id = wardIdFrom,
+                    street = addressFrom.LocationAddress ?? throw new InvalidOperationException("Địa chỉ người gửi không có thông tin đường.")
+                },
+                address_to = new
+                {
+                    city_code = addressTo.ProvinceCode ?? throw new InvalidOperationException("Địa chỉ người nhận không có mã tỉnh/thành phố."),
+                    district_code = addressTo.DistrictCode ?? throw new InvalidOperationException("Địa chỉ người nhận không có mã quận/huyện."),
+                    ward_id = wardIdTo,
+                    street = addressTo.LocationAddress ?? throw new InvalidOperationException("Địa chỉ người nhận không có thông tin đường.")
+                },
+                picker = new
+                {
+                    name = from.FullName,
+                    phone = from.PhoneNumber ?? throw new InvalidOperationException("Người gửi không có số điện thoại.")
+                },
+                receiver = new
+                {
+                    name = to.FullName,
+                    phone = to.PhoneNumber ?? throw new InvalidOperationException("Người nhận không có số điện thoại.")
+                },
+                parcel = new
+                {
+                    name = "Nông nghiệp",
+                    quantity = 1,
+                    cod_amount = codAmount,
+                    length = length,
+                    width = width,
+                    height = height,
+                    weight = weight,
+                    amount = amount
+                },
+                metadata = metadata,
+                payer = payer,
+                price_table_id = priceTableId,
+                note_code = "CHOXEMHANGKHONGTHU",
+                client_id = 4067
             };
 
             var jsonContent = JsonSerializer.Serialize(requestBody);
@@ -196,50 +199,7 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
             var response = await _httpClient.PostAsync(url, content, cancellationToken);
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             
-            // Validate response không phải HTML
-            if (responseContent.TrimStart().StartsWith("<"))
-            {
-                throw new HttpRequestException("API endpoint không khả dụng hoặc định dạng request không đúng. Server trả về HTML thay vì JSON.");
-            }
-            
-            // Parse JSON response
-            JsonDocument document;
-            try
-            {
-                document = JsonDocument.Parse(responseContent);
-            }
-            catch (JsonException ex)
-            {
-                throw new HttpRequestException($"Không thể parse JSON response từ GoShip API khi tạo shipment: {ex.Message}");
-            }
-            
-            var root = document.RootElement;
-            
-            // Kiểm tra code response
-            if (!root.TryGetProperty("code", out var codeElement) || codeElement.GetInt32() != 200)
-            {
-                var message = root.TryGetProperty("message", out var msgElement) 
-                    ? msgElement.GetString() 
-                    : "Unknown error";
-                    
-                // Lấy chi tiết lỗi validation nếu có
-                if (root.TryGetProperty("data", out var dataElement) && 
-                    dataElement.TryGetProperty("errors", out var errorsElement))
-                {
-                    var errorDetails = errorsElement.GetRawText();
-                    throw new HttpRequestException($"GoShip API error khi tạo shipment: {message}. Chi tiết: {errorDetails}");
-                }
-                
-                throw new HttpRequestException($"GoShip API error khi tạo shipment: {message}");
-            }
-            
-            // Lấy id từ response
-            if (!root.TryGetProperty("id", out var idElement))
-            {
-                throw new HttpRequestException("Response không có trường 'id' khi tạo shipment.");
-            }
-            
-            return idElement.GetString() ?? throw new HttpRequestException("Shipment ID là null.");
+            return GoshipCourierApiHelpers.ParseShipmentResponse(responseContent);
         }
         catch (TaskCanceledException)
         {

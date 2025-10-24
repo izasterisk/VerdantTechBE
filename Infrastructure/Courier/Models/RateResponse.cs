@@ -1,6 +1,30 @@
-﻿using System.Text.Json.Serialization;
+﻿
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Infrastructure.Courier.Models;
+/// <summary>
+/// Custom converter để xử lý trường hợp API trả về string hoặc number cho cùng một field
+/// Convert tất cả về string
+/// </summary>
+public class StringOrNumberConverter : JsonConverter<string>
+{
+    public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return reader.TokenType switch
+        {
+            JsonTokenType.String => reader.GetString(),
+            JsonTokenType.Number => reader.GetInt32().ToString(),
+            JsonTokenType.Null => null,
+            _ => reader.GetString()
+        };
+    }
+
+    public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value);
+    }
+}
 
 public class RateParent
 {
@@ -27,18 +51,19 @@ public class RateReport
 {
     [JsonPropertyName("score_percent")]
     public decimal ScorePercent { get; set; }
-    
+
     [JsonPropertyName("success_percent")]
     public decimal SuccessPercent { get; set; }
-    
+
     [JsonPropertyName("return_percent")]
     public decimal ReturnPercent { get; set; }
-    
+
     [JsonPropertyName("avg_time_delivery")]
     public int AvgTimeDelivery { get; set; }
-    
+
     [JsonPropertyName("avg_time_delivery_format")]
-    public string AvgTimeDeliveryFormat { get; set; } = string.Empty;
+    [JsonConverter(typeof(StringOrNumberConverter))]
+    public string? AvgTimeDeliveryFormat { get; set; } = string.Empty;
 }
 
 public class RateResponse

@@ -9,7 +9,7 @@ public interface IGoshipCourierApiClient
          string toCityCode, int codAmount, int width, int height, int length, int weight,
          CancellationToken cancellationToken = default);
 
-    Task<string> CreateShipmentAsync(string rate, int payer, UserResponseDTO from, UserResponseDTO to,
-        int cod, int amount, string weight, string width, string height, string length, string metadata,
-        CancellationToken cancellationToken = default);
+    Task<string> CreateShipmentAsync(UserResponseDTO from, UserResponseDTO to,
+        int codAmount, int length, int width, int height, int weight, int amount,
+        int payer, int priceTableId, string metadata, CancellationToken cancellationToken = default);
 }
