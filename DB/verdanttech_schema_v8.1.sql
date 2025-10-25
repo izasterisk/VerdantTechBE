@@ -488,8 +488,8 @@ CREATE TABLE order_details (
 CREATE TABLE payments (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     order_id BIGINT UNSIGNED NOT NULL,
-    payment_method ENUM('credit_card', 'debit_card', 'paypal', 'stripe', 'bank_transfer', 'cod') NOT NULL,
-    payment_gateway ENUM('stripe', 'paypal', 'vnpay', 'momo', 'manual') NOT NULL,
+    payment_method ENUM('credit_card', 'debit_card', 'stripe', 'cod', 'payos') NOT NULL,
+    payment_gateway ENUM('stripe', 'manual', 'payos') NOT NULL,
     gateway_payment_id VARCHAR(255) UNIQUE COMMENT 'ID giao dịch từ cổng thanh toán',
     amount DECIMAL(12,2) NOT NULL,
     status ENUM('pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded') DEFAULT 'pending',

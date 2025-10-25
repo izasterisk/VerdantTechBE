@@ -31,13 +31,11 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
                 v => v.ToString()
                     .ToLowerInvariant()
                     .Replace("creditcard", "credit_card")
-                    .Replace("debitcard", "debit_card")
-                    .Replace("banktransfer", "bank_transfer"),
+                    .Replace("debitcard", "debit_card"),
                 v => Enum.Parse<PaymentMethod>(v
                     .Replace("credit_card", "CreditCard")
-                    .Replace("debit_card", "DebitCard")
-                    .Replace("bank_transfer", "BankTransfer"), true))
-            .HasColumnType("enum('credit_card','debit_card','paypal','stripe','bank_transfer','cod')")
+                    .Replace("debit_card", "DebitCard"), true))
+            .HasColumnType("enum('credit_card','debit_card','stripe','cod','payos')")
             .IsRequired()
             .HasColumnName("payment_method");
             
@@ -45,7 +43,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasConversion(
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<PaymentGateway>(v, true))
-            .HasColumnType("enum('stripe','paypal','vnpay','momo','manual')")
+            .HasColumnType("enum('stripe','manual','payos')")
             .IsRequired()
             .HasColumnName("payment_gateway");
             

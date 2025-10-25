@@ -261,7 +261,7 @@ INSERT INTO `transactions` (`id`, `transaction_type`, `amount`, `currency`, `ord
 
 -- Insert Payments (v7.1 structure - removed old columns, added gateway_payment_id)
 INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `payment_gateway`, `gateway_payment_id`, `amount`, `status`, `gateway_response`, `created_at`, `updated_at`) VALUES
-(1, 1, 'bank_transfer', 'vnpay', 'VNP2025090801234567', 23000000.00, 'completed', '{"code": "00", "message": "Success", "bank": "VCB"}', '2025-09-08 10:00:00', '2025-09-08 11:30:00'),
+(1, 1, 'payos', 'payos', 'PAYOS2025090801234567', 23000000.00, 'completed', '{"code": "00", "message": "Success", "bank": "VCB"}', '2025-09-08 10:00:00', '2025-09-08 11:30:00'),
 (2, 2, 'credit_card', 'stripe', 'STR_2025090909876543', 1483500.00, 'completed', '{"id": "ch_abc123", "status": "succeeded"}', '2025-09-09 09:00:00', '2025-09-09 09:15:00'),
 (3, 3, 'cod', 'manual', 'COD2025090911001', 11240000.00, 'pending', '{}', '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
