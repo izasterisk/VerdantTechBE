@@ -18,13 +18,8 @@ public class PayOSApiClient : IPayOSApiClient
         _payOS = new Net.payOS.PayOS(clientId, apiKey, checksumKey);
     }
     
-    public async Task<CreatePaymentResult> CreatePaymentLinkAsync(long orderCode, int amount, string description, 
-        List<ItemData> items, string cancelUrl, string returnUrl)
+    public async Task<CreatePaymentResult> CreatePaymentLinkAsync(PaymentData paymentData)
     {
-        PaymentData paymentData = new PaymentData(
-            orderCode, amount, description, items, cancelUrl, returnUrl
-        );
-
         return await _payOS.createPaymentLink(paymentData);
     }
 

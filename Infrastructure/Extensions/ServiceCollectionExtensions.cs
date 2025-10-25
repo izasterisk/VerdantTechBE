@@ -47,7 +47,7 @@ public static class ServiceCollectionExtensions
     
     public static IServiceCollection AddPayOS(this IServiceCollection services)
     {
-        services.AddScoped<HttpClient>();
+        // services.AddScoped<HttpClient>();
         services.AddScoped<IPayOSApiClient, PayOSApiClient>();
         return services;
     }
