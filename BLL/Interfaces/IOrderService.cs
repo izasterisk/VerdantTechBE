@@ -13,5 +13,5 @@ public interface IOrderService
     
     Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default);
 
-    Task<OrderResponseDTO> ProcessOrderAsync(ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default);
+    Task<OrderResponseDTO> ProcessOrderAsync(ulong staffId, ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default);
 }

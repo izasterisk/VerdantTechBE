@@ -4,6 +4,7 @@ using Infrastructure.Email;
 using Infrastructure.Soil;
 using Infrastructure.Weather;
 using Infrastructure.Courier;
+using Infrastructure.Payment.PayOS;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Extensions;
@@ -43,6 +44,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGoshipAddressApiClient, GoshipAddressApiClient>();
         return services;
     }
+    
+    public static IServiceCollection AddPayOS(this IServiceCollection services)
+    {
+        // services.AddScoped<HttpClient>();
+        services.AddScoped<IPayOSApiClient, PayOSApiClient>();
+        return services;
+    }
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
@@ -51,6 +59,7 @@ public static class ServiceCollectionExtensions
         services.AddSoilGrids();
         services.AddCourier();
         services.AddAddress();
+        services.AddPayOS();
         return services;
     }
 }
