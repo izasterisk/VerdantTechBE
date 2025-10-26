@@ -13,4 +13,8 @@ public class PaymentResponseDTO
     public decimal Amount { get; set; }
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public Dictionary<string, object> GatewayResponse { get; set; } = new();
+    
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime UpdatedAt { get; set; }
 }

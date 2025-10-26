@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BLL.DTO.Payment.PayOS;
+using BLL.DTO.Transaction;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
 using DAL.Data;
@@ -101,8 +102,30 @@ public class PayOSService : IPayOSService
         ArgumentNullException.ThrowIfNull(webhookBody, $"{nameof(webhookBody)} rỗng.");
         WebhookData webhookData = _payOSApiClient.VerifyWebhookData(webhookBody);
         
-        
-        
+        var payment = await _paymentRepository.GetPaymentByGatewayPaymentIdAsync(webhookData.orderCode.ToString(), cancellationToken);
+        if (payment == null)
+            throw new KeyNotFoundException($"Không tìm thấy thanh toán với mã đơn hàng: {webhookData.orderCode}");
+
+        if (webhookData.code == "00" || webhookData.desc == "Thành công")
+        {
+            payment.Status = PaymentStatus.Completed;
+            payment.Order.Status = OrderStatus.Paid;
+            var transaction = new TransactionResponseDTO
+            {
+                TransactionType = TransactionType.PaymentIn,
+                Amount = webhookData.amount,
+                Currency = webhookData.currency,
+                OrderId = payment.OrderId,
+                UserId = payment.Order.CustomerId,
+                Status = TransactionStatus.Completed,
+                Note = $"Thanh toán đơn hàng #{payment.OrderId} qua PayOS",
+                GatewayPaymentId = webhookData.orderCode.ToString(),
+                CreatedBy = payment.Order.CustomerId,
+                CompletedAt = DateTime.UtcNow
+            };
+            await _paymentRepository.UpdateFullPaymentWithTransactionAsync(payment, payment.Order, 
+                _mapper.Map<DAL.Data.Models.Transaction>(transaction), cancellationToken);
+        }
         return webhookData;
     }
     

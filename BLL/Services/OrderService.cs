@@ -175,8 +175,12 @@ public class OrderService : IOrderService
         if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
             throw new InvalidOperationException("Khi cung cấp lý do hủy, trạng thái đơn hàng phải là 'Cancelled'.");
         OrderHelper.ValidateOrderStatusTransition(order.Status, dto.Status);
-        if(dto.Status == OrderStatus.Processing)
+        if (dto.Status == OrderStatus.Processing)
+        {
+            if(order.OrderPaymentMethod != OrderPaymentMethod.COD)
+                throw new InvalidOperationException("Đơn hàng không phải COD không thể chuyển sang 'Processing' nếu chưa 'Paid'.");
             order.ConfirmedAt = DateTime.UtcNow;
+        }
         if(dto.Status == OrderStatus.Delivered)
             order.DeliveredAt = DateTime.UtcNow;
         if (dto.Status == OrderStatus.Paid)
