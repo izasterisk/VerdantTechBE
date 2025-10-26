@@ -10,7 +10,9 @@ using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
 using BLL.DTO.ProductCertificate;
 using BLL.DTO.ProductRegistration;
+using BLL.DTO.Transaction;
 using BLL.DTO.User;
+using BLL.Services.Payment;
 using DAL.Data.Models;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
 
@@ -222,6 +224,10 @@ namespace BLL.Helpers
             CreateMap<DAL.Data.Models.Order, OrderResponseDTO>();
             CreateMap<OrderDetail, OrderDetailsResponseDTO>()
                 .ForMember(dest => dest.Product, opt => opt.MapFrom(src => src.Product));
+            
+            // ===================== PAYMENT =====================
+            CreateMap<Payment, PaymentResponseDTO>().ReverseMap();
+            CreateMap<Transaction, TransactionResponseDTO>().ReverseMap();
 
             // ===================== PRODUCT =====================
             CreateMap<BLL.DTO.Product.ProductCreateDTO, Product>().ReverseMap();

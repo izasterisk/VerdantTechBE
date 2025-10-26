@@ -138,19 +138,16 @@ public enum PaymentMethod
 {
     CreditCard,
     DebitCard,
-    Paypal,
     Stripe,
-    BankTransfer,
-    Cod
+    Cod,
+    Payos
 }
 
 public enum PaymentGateway
 {
     Stripe,
-    Paypal,
-    Vnpay,
-    Momo,
-    Manual
+    Manual,
+    Payos
 }
 
 public enum PaymentStatus

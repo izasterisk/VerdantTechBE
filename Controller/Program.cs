@@ -15,6 +15,7 @@ using BLL.DTO;
 using System.Net;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
+using BLL.Services.Payment;
 using Infrastructure.Cloudinary;
 using Microsoft.AspNetCore.Http.Features;
 using DAL.Repositories;
@@ -93,7 +94,9 @@ builder.Services.AddScoped<IRepository<OrderDetail>, Repository<OrderDetail>>();
 builder.Services.AddScoped<IRepository<ProductRegistration>, Repository<ProductRegistration>>();
 builder.Services.AddScoped<IRepository<MediaLink>, Repository<MediaLink>>();
 builder.Services.AddScoped<IRepository<ProductCertificate>, Repository<ProductCertificate>>();
-
+builder.Services.AddScoped<IRepository<ExportInventory>, Repository<ExportInventory>>();
+builder.Services.AddScoped<IRepository<Payment>, Repository<Payment>>();
+builder.Services.AddScoped<IRepository<Transaction>, Repository<Transaction>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -109,6 +112,9 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
 builder.Services.AddScoped<IProductRegistrationRepository, ProductRegistrationRepository>();
 builder.Services.AddScoped<IProductCertificateRepository, ProductCertificateRepository>();
+builder.Services.AddScoped<IExportInventoryRepository, ExportInventoryRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -123,6 +129,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 //builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IProductCertificateService, ProductCertificateService>();
 builder.Services.AddScoped<IProductRegistrationService, ProductRegistrationService>();
+builder.Services.AddScoped<IPayOSService, PayOSService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

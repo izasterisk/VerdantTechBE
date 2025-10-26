@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 namespace Controller.Controllers;
 
 [Route("api/[controller]")]
-[Authorize]
 public class OrderController : BaseController
 {
     private readonly IOrderService _orderService;
@@ -24,6 +23,7 @@ public class OrderController : BaseController
     /// <param name="dto">Thông tin đơn hàng preview</param>
     /// <returns>Thông tin preview đơn hàng bao gồm tính toán phí vận chuyển và thời gian giao hàng</returns>
     [HttpPost("preview")]
+    [Authorize]
     [EndpointSummary("Create Order Preview")]
     public async Task<ActionResult<APIResponse>> CreateOrderPreview([FromBody] OrderPreviewCreateDTO dto)
     {
@@ -49,6 +49,7 @@ public class OrderController : BaseController
     /// <param name="dto">Thông tin đơn hàng bao gồm dịch vụ vận chuyển đã chọn</param>
     /// <returns>Thông tin đơn hàng đã được tạo</returns>
     [HttpPost("{orderPreviewId:guid}")]
+    [Authorize]
     [EndpointSummary("Create Order")]
     public async Task<ActionResult<APIResponse>> CreateOrder([FromRoute] Guid orderPreviewId, [FromBody] OrderCreateDTO dto)
     {
@@ -73,6 +74,7 @@ public class OrderController : BaseController
     /// <param name="dto">Thông tin cập nhật đơn hàng (trạng thái mới và lý do hủy nếu có)</param>
     /// <returns>Thông tin đơn hàng sau khi cập nhật</returns>
     [HttpPut("{orderId:long}")]
+    [Authorize(Roles = "Admin, Staff")]
     [EndpointSummary("Process Order")]
     [EndpointDescription("Cập nhật trạng thái đơn hàng: Paid, Processing, Shipped, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
     public async Task<ActionResult<APIResponse>> ProcessOrder([FromRoute] ulong orderId, [FromBody] OrderUpdateDTO dto)
@@ -82,7 +84,8 @@ public class OrderController : BaseController
 
         try
         {
-            var order = await _orderService.ProcessOrderAsync(orderId, dto, GetCancellationToken());
+            var staffId = GetCurrentUserId();
+            var order = await _orderService.ProcessOrderAsync(staffId, orderId, dto, GetCancellationToken());
             return SuccessResponse(order, HttpStatusCode.OK);
         }
         catch (Exception ex)
@@ -97,6 +100,7 @@ public class OrderController : BaseController
     /// <param name="orderId">ID của đơn hàng</param>
     /// <returns>Thông tin chi tiết đơn hàng</returns>
     [HttpGet("{orderId:long}")]
+    [Authorize]
     [EndpointSummary("Get Order By ID")]
     public async Task<ActionResult<APIResponse>> GetOrderById([FromRoute] ulong orderId)
     {
@@ -119,6 +123,7 @@ public class OrderController : BaseController
     /// <param name="status">Trạng thái đơn hàng để lọc (không bắt buộc)</param>
     /// <returns>Danh sách đơn hàng với thông tin phân trang</returns>
     [HttpGet]
+    [Authorize(Roles = "Admin, Staff")]
     [EndpointSummary("Get All Orders")]
     [EndpointDescription("GET toàn bộ Order theo Status (Pending, Paid, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded). Hoặc không nhập status cũng được, trả về toàn bộ.")]
     public async Task<ActionResult<APIResponse>> GetAllOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)

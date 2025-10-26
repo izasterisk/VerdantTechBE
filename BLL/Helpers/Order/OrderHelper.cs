@@ -11,7 +11,7 @@ public class OrderHelper
     /// </summary>
     private static readonly Dictionary<OrderStatus, HashSet<OrderStatus>> AllowedOrderStatusTransitions = new()
     {
-        [OrderStatus.Pending] = new() { OrderStatus.Paid, OrderStatus.Cancelled },
+        [OrderStatus.Pending] = new() { OrderStatus.Paid, OrderStatus.Cancelled, OrderStatus.Processing },
         [OrderStatus.Paid] = new() { OrderStatus.Cancelled, OrderStatus.Processing },
         [OrderStatus.Processing] = new() { OrderStatus.Cancelled, OrderStatus.Shipped },
         [OrderStatus.Shipped] = new() { OrderStatus.Delivered, OrderStatus.Cancelled },

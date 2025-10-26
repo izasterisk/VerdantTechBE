@@ -22,10 +22,11 @@ public class OrderService : IOrderService
     private readonly IGoshipCourierApiClient _courierApiClient;
     private readonly IMemoryCache _memoryCache;
     private readonly IUserService _userService;
+    private readonly IExportInventoryRepository _exportInventoryRepository;
     
     public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository,
         IAddressRepository addressRepository, IGoshipCourierApiClient courierApiClient, IMemoryCache memoryCache,
-        IUserService userService)
+        IUserService userService, IExportInventoryRepository exportInventoryRepository)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
@@ -34,6 +35,7 @@ public class OrderService : IOrderService
         _courierApiClient = courierApiClient;
         _memoryCache = memoryCache;
         _userService = userService;
+        _exportInventoryRepository = exportInventoryRepository;
     }
 
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
@@ -164,7 +166,7 @@ public class OrderService : IOrderService
         return finalResponse;
     }
     
-    public async Task<OrderResponseDTO> ProcessOrderAsync(ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
+    public async Task<OrderResponseDTO> ProcessOrderAsync(ulong staffId, ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
@@ -173,18 +175,31 @@ public class OrderService : IOrderService
         if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
             throw new InvalidOperationException("Khi cung cấp lý do hủy, trạng thái đơn hàng phải là 'Cancelled'.");
         OrderHelper.ValidateOrderStatusTransition(order.Status, dto.Status);
-        if(dto.Status == OrderStatus.Processing)
+        if (dto.Status == OrderStatus.Processing)
+        {
+            if(order.OrderPaymentMethod != OrderPaymentMethod.COD)
+                throw new InvalidOperationException("Đơn hàng không phải COD không thể chuyển sang 'Processing' nếu chưa 'Paid'.");
             order.ConfirmedAt = DateTime.UtcNow;
+        }
         if(dto.Status == OrderStatus.Delivered)
             order.DeliveredAt = DateTime.UtcNow;
-        if (dto.Status == OrderStatus.Cancelled)
-        {
-            order.CancelledAt = DateTime.UtcNow;
-            order.CancelledReason = dto.CancelledReason;
-        }
         if (dto.Status == OrderStatus.Paid)
         {
             // Validate thanh toán sẽ có sau này
+        }
+        if (dto.Status == OrderStatus.Cancelled)
+        {
+            foreach (var orderDetail in order.OrderDetails)
+            {
+                var product = await _orderRepository.GetProductByIdAsync(orderDetail.ProductId, cancellationToken);
+                if(product != null)
+                {
+                    product.StockQuantity += orderDetail.Quantity;
+                    await _orderRepository.UpdateProductWithTransactionAsync(product, cancellationToken);
+                }
+            }
+            order.CancelledAt = DateTime.UtcNow;
+            order.CancelledReason = dto.CancelledReason;
         }
         if (dto.Status == OrderStatus.Shipped)
         {
@@ -204,6 +219,20 @@ public class OrderService : IOrderService
             order.TrackingNumber = await _courierApiClient.CreateShipmentAsync(from, to, codAmount, order.Length, 
                 order.Width, order.Height, order.Weight, (int)Math.Ceiling((double)order.TotalAmount), payer, 
                 order.CourierId, order.Notes ?? "" , cancellationToken);
+            
+            List<ExportInventory> exportInventories = new();
+            foreach (var orderDetail in order.OrderDetails)
+            {
+                exportInventories.Add(new ExportInventory
+                {
+                    ProductId = orderDetail.Product.Id,
+                    OrderId = order.Id,
+                    Quantity = orderDetail.Quantity,
+                    MovementType = MovementType.Sale,
+                    CreatedBy = staffId
+                });
+            }
+            await _exportInventoryRepository.CreateExportInventoryWithTransactionAsync(exportInventories, cancellationToken);
         }
         order.Status = dto.Status;
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);

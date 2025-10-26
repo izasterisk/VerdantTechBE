@@ -15,9 +15,6 @@ public partial class ExportInventory
 
     public int Quantity { get; set; }
 
-
-    public int BalanceAfter { get; set; }
-
     public MovementType MovementType { get; set; } = MovementType.Sale;
 
     [StringLength(500)]

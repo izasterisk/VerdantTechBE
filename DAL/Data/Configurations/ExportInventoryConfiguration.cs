@@ -35,11 +35,6 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
         builder.Property(e => e.Quantity)
             .IsRequired();
 
-
-        builder.Property(e => e.BalanceAfter)
-            .IsRequired()
-            .HasColumnName("balance_after");
-
         // Enum conversion for movement type
         builder.Property(e => e.MovementType)
             .HasConversion(
