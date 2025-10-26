@@ -279,11 +279,11 @@ INSERT INTO `batch_inventory` (`id`, `product_id`, `sku`, `vendor_id`, `batch_nu
 (5, 5, 'SKU_DR005_001', 5, 'BATCH005', 'LOT005', 15, 20000000.00, NULL, '2025-08-15', 'passed', 2, '2025-09-08 11:00:00', 'Drone phun thuốc nhập kho', '2025-09-08 10:00:00', '2025-09-09 09:00:00');
 
 -- Insert Export Inventory (v7.1 structure - removed unit_sale_price column, added updated_at)
-INSERT INTO `export_inventory` (`id`, `product_id`, `order_id`, `quantity`, `balance_after`, `movement_type`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 1, 4, 'sale', 'Máy cày bán cho khách hàng 1', 5, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(2, 3, 2, 10, 190, 'sale', 'Hạt giống bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(3, 4, 2, 3, 97, 'sale', 'Phân bón bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(4, 5, 3, 1, 14, 'sale', 'Drone phun thuốc cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
+INSERT INTO `export_inventory` (`id`, `product_id`, `order_id`, `quantity`, `movement_type`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 1, 'sale', 'Máy cày bán cho khách hàng 1', 5, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(2, 3, 2, 10, 'sale', 'Hạt giống bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(3, 4, 2, 3, 'sale', 'Phân bón bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(4, 5, 3, 1, 'sale', 'Drone phun thuốc cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
 -- Insert Product Reviews (v8.1 structure - removed images, use media_links table instead)
 INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `rating`, `title`, `comment`, `created_at`, `updated_at`) VALUES

@@ -17,7 +17,10 @@ public class OrderRepository : IOrderRepository
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<MediaLink> _mediaLinkRepository;
     
-    public OrderRepository(IOrderDetailRepository orderDetailRepository, IRepository<Order> orderRepository, VerdantTechDbContext dbContext, IRepository<User> userRepository, IRepository<UserAddress> userAddressRepository, IRepository<FarmProfile> farmProfileRepository, IRepository<Product> productRepository, IRepository<MediaLink> mediaLinkRepository)
+    public OrderRepository(IOrderDetailRepository orderDetailRepository,
+        IRepository<Order> orderRepository, VerdantTechDbContext dbContext, IRepository<User> userRepository,
+        IRepository<UserAddress> userAddressRepository, IRepository<FarmProfile> farmProfileRepository,
+        IRepository<Product> productRepository, IRepository<MediaLink> mediaLinkRepository)
     {
         _orderDetailRepository = orderDetailRepository;
         _orderRepository = orderRepository;
@@ -161,9 +164,30 @@ public class OrderRepository : IOrderRepository
         return await _productRepository.GetAsync(p => p.Id == productId && p.IsActive == true, true, cancellationToken);
     }
     
+    public async Task<Product?> GetProductByIdAsync(ulong productId, CancellationToken cancellationToken = default)
+    {
+        return await _productRepository.GetAsync(p => p.Id == productId, true, cancellationToken);
+    }
+    
     public async Task<List<MediaLink>> GetProductImagesByProductIdAsync(ulong productId, CancellationToken cancellationToken = default)
     {
         var mediaLinks = await _mediaLinkRepository.GetAllByFilterAsync(m => m.OwnerId == productId && m.OwnerType == MediaOwnerType.Products, true, cancellationToken);
         return mediaLinks.OrderBy(m => m.SortOrder).ToList();
+    }
+    
+    public async Task UpdateProductWithTransactionAsync(Product product, CancellationToken cancellationToken = default)
+    {
+        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            product.UpdatedAt = DateTime.UtcNow;
+            await _productRepository.UpdateAsync(product, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

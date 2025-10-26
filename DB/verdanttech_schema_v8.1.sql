@@ -579,7 +579,6 @@ CREATE TABLE export_inventory (
     product_id BIGINT UNSIGNED NOT NULL,
     order_id BIGINT UNSIGNED NULL COMMENT 'Đơn hàng gây ra chuyển động tồn kho này',
     quantity INT NOT NULL COMMENT 'Số lượng xuất',
-    balance_after INT NOT NULL COMMENT 'Số dư sau khi xuất',
     movement_type ENUM('sale', 'return to vendor', 'damage', 'loss', 'adjustment') DEFAULT 'sale',
     notes VARCHAR(500) NULL,
     created_by BIGINT UNSIGNED NOT NULL COMMENT 'Người nhập xuất kho',
