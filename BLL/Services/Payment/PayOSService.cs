@@ -1,4 +1,5 @@
-﻿using BLL.DTO.Payment.PayOS;
+﻿using AutoMapper;
+using BLL.DTO.Payment.PayOS;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
 using DAL.Data;
@@ -11,38 +12,112 @@ public class PayOSService : IPayOSService
 {
     private readonly IPayOSApiClient _payOSApiClient;
     private readonly IOrderRepository _orderRepository;
+    private readonly ITransactionRepository _transactionRepository;
+    private readonly IPaymentRepository _paymentRepository;
+    private readonly string _frontEndUrl;
+    private readonly IMapper _mapper;
     
-    public PayOSService(IPayOSApiClient payOSApiClient, IOrderRepository orderRepository)
+    public PayOSService(IPayOSApiClient payOSApiClient, IOrderRepository orderRepository, 
+        ITransactionRepository transactionRepository, IPaymentRepository paymentRepository, IMapper mapper)
     {
         _payOSApiClient = payOSApiClient;
         _orderRepository = orderRepository;
+        _transactionRepository = transactionRepository;
+        _paymentRepository = paymentRepository;
+        _mapper = mapper;
+        _frontEndUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ??
+                       throw new InvalidOperationException("FRONTEND_URL không được cấu hình trong .env file");
     }
     
     public async Task<CreatePaymentResult> CreatePaymentLinkAsync(ulong orderId, CreatePaymentDataDTO dto)
     {
+        var cancelUrl = $"{_frontEndUrl}/payos/cancel";
+        var returnUrl = $"{_frontEndUrl}/payos/return";
+        
         var order = await _orderRepository.GetOrderByIdAsync(orderId);
-        if (order == null || order.Status != OrderStatus.Paid)
+        if (order == null || order.Status != OrderStatus.Pending || order.OrderPaymentMethod == OrderPaymentMethod.COD)
         {
             throw new ArgumentException($"Đơn hàng với ID {orderId} không tồn tại hoặc không khả dụng để thanh toán.");
         }
+        List<ItemData> items = new();
+        foreach (var orderDetail in order.OrderDetails)
+        {
+            items.Add(new ItemData(
+                name: orderDetail.Product.ProductName,
+                quantity: orderDetail.Quantity,
+                price: (int)Math.Round(orderDetail.UnitPrice, MidpointRounding.AwayFromZero)
+            ));
+        }
+        long orderCode;
+        while (true)
+        {
+            orderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 100 + Random.Shared.Next(0, 99);
+            try
+            {
+                await _payOSApiClient.GetPaymentLinkInformationAsync(orderCode);
+            }
+            catch
+            {
+                break;
+            }
+        }
         PaymentData paymentData = new PaymentData(
-            orderCode: checked((long)order.Id),
+            orderCode: orderCode,
             amount: (int)Math.Round(order.TotalAmount, MidpointRounding.AwayFromZero),
             description: dto.Description,
-            items: dto.Items.Select(item => new ItemData(
-                name: item.Name,
-                quantity: item.Quantity,
-                price: item.Price
-            )).ToList(),
-            cancelUrl: dto.CancelUrl,
-            returnUrl: dto.ReturnUrl,
-            signature: dto.Signature,
-            buyerName: dto.BuyerName,
-            buyerEmail: dto.BuyerEmail,
-            buyerPhone: dto.BuyerPhone,
-            buyerAddress: dto.BuyerAddress,
-            expiredAt: dto.ExpiredAt
+            items: items,
+            cancelUrl: cancelUrl,
+            returnUrl: returnUrl
         );
-        return await _payOSApiClient.CreatePaymentLinkAsync(paymentData);
+        var createdPayment = await _payOSApiClient.CreatePaymentLinkAsync(paymentData);
+        var payment = new PaymentResponseDTO
+        {
+            OrderId = order.Id,
+            PaymentMethod = PaymentMethod.Payos,
+            PaymentGateway = PaymentGateway.Payos,
+            GatewayPaymentId = createdPayment.orderCode.ToString(),
+            Amount = createdPayment.amount,
+            Status = PaymentStatus.Pending,
+            GatewayResponse = new Dictionary<string, object>
+            {
+                { "bin", createdPayment.bin },
+                { "accountNumber", createdPayment.accountNumber },
+                { "amount", createdPayment.amount },
+                { "description", createdPayment.description },
+                { "orderCode", createdPayment.orderCode },
+                { "currency", createdPayment.currency },
+                { "paymentLinkId", createdPayment.paymentLinkId },
+                { "status", createdPayment.status },
+                { "expiredAt", createdPayment.expiredAt ?? 0 },
+                { "checkoutUrl", createdPayment.checkoutUrl },
+            }
+        };
+        await _paymentRepository.CreatePaymentWithTransactionAsync(_mapper.Map<DAL.Data.Models.Payment>(payment));
+        return createdPayment;
     }
+    
+    public async Task<WebhookData> HandlePayOSWebhookAsync(WebhookType webhookBody, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(webhookBody, $"{nameof(webhookBody)} rỗng.");
+        WebhookData webhookData = _payOSApiClient.VerifyWebhookData(webhookBody);
+        
+        
+        
+        return webhookData;
+    }
+    
+    public async Task ConfirmWebhookAsync(ConfirmWebhookDTO dto, CancellationToken cancellationToken = default)
+    {
+        await _payOSApiClient.ConfirmWebhookAsync(dto.WebhookUrl);
+    }
+    
+    // public async Task<PaymentLinkInformation> GetPaymentLinkInformationAsync(long orderCode)
+    // {
+    //     return await _payOSApiClient.GetPaymentLinkInformationAsync(orderCode);
+    // }
+    
+    // public async Task<PaymentLinkInformation> CancelPaymentLinkAsync(long orderCode)
+    // {
+    //     return await _payOSApiClient.CancelPaymentLinkAsync(orderCode);
+    // }
 }

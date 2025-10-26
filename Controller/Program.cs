@@ -94,7 +94,9 @@ builder.Services.AddScoped<IRepository<OrderDetail>, Repository<OrderDetail>>();
 builder.Services.AddScoped<IRepository<ProductRegistration>, Repository<ProductRegistration>>();
 builder.Services.AddScoped<IRepository<MediaLink>, Repository<MediaLink>>();
 builder.Services.AddScoped<IRepository<ProductCertificate>, Repository<ProductCertificate>>();
-
+builder.Services.AddScoped<IRepository<ExportInventory>, Repository<ExportInventory>>();
+builder.Services.AddScoped<IRepository<Payment>, Repository<Payment>>();
+builder.Services.AddScoped<IRepository<Transaction>, Repository<Transaction>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -111,6 +113,8 @@ builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
 builder.Services.AddScoped<IProductRegistrationRepository, ProductRegistrationRepository>();
 builder.Services.AddScoped<IProductCertificateRepository, ProductCertificateRepository>();
 builder.Services.AddScoped<IExportInventoryRepository, ExportInventoryRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();

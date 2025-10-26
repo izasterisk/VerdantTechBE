@@ -484,25 +484,6 @@ CREATE TABLE order_details (
     INDEX idx_order (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các mục trong đơn hàng';
 
--- Bảng thanh toán
-CREATE TABLE payments (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    order_id BIGINT UNSIGNED NOT NULL,
-    payment_method ENUM('credit_card', 'debit_card', 'stripe', 'cod', 'payos') NOT NULL,
-    payment_gateway ENUM('stripe', 'manual', 'payos') NOT NULL,
-    gateway_payment_id VARCHAR(255) UNIQUE COMMENT 'ID giao dịch từ cổng thanh toán',
-    amount DECIMAL(12,2) NOT NULL,
-    status ENUM('pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded') DEFAULT 'pending',
-    gateway_response JSON COMMENT 'Phản hồi thô từ cổng thanh toán',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
-    INDEX idx_order (order_id),
-    INDEX idx_gateway_payment (gateway_payment_id),
-    INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='phương thức và trạng thái thanh toán cho đơn hàng';
-
 -- Đánh giá và xếp hạng
 CREATE TABLE product_reviews (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -619,6 +600,26 @@ CREATE TABLE requests (
 -- =====================================================
 -- CÁC BẢNG ĐƠN HÀNG VÀ THANH TOÁN
 -- =====================================================
+
+-- Bảng thanh toán
+CREATE TABLE payments (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT UNSIGNED NOT NULL,
+    payment_method ENUM('credit_card', 'debit_card', 'stripe', 'cod', 'payos') NOT NULL,
+    payment_gateway ENUM('stripe', 'manual', 'payos') NOT NULL,
+    gateway_payment_id VARCHAR(255) UNIQUE COMMENT 'ID giao dịch từ cổng thanh toán',
+    amount DECIMAL(12,2) NOT NULL,
+    status ENUM('pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded') DEFAULT 'pending',
+    gateway_response JSON COMMENT 'Phản hồi thô từ cổng thanh toán',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
+    INDEX idx_order (order_id),
+    INDEX idx_gateway_payment (gateway_payment_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='phương thức và trạng thái thanh toán cho đơn hàng';
+
 
 -- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
 CREATE TABLE transactions (
