@@ -291,7 +291,7 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); //Phải tắt vì payOS gửi http request thay vì https
 
 // Enable CORS
 app.UseCors();
