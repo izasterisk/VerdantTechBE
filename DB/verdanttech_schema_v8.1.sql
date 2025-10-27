@@ -491,7 +491,6 @@ CREATE TABLE product_reviews (
     order_id BIGINT UNSIGNED NOT NULL,
     customer_id BIGINT UNSIGNED NOT NULL,
     rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    title VARCHAR(255),
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

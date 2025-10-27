@@ -286,7 +286,7 @@ INSERT INTO `export_inventory` (`id`, `product_id`, `order_id`, `quantity`, `mov
 (4, 5, 3, 1, 'sale', 'Drone phun thuốc cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
 -- Insert Product Reviews (v8.1 structure - removed images, use media_links table instead)
-INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `rating`, `title`, `comment`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 7, 5, 'Máy cày tuyệt vời!', 'Máy chạy êm, tiết kiệm điện và rất phù hợp với ruộng nhỏ của tôi. Chất lượng tốt, đóng gói cẩn thận.', '2025-09-09 16:00:00', '2025-09-09 16:00:00'),
-(2, 3, 2, 8, 4, 'Hạt giống chất lượng', 'Hạt giống nảy mầm tốt, tỷ lệ cao như quảng cáo. Cây trồng phát triển khỏe mạnh.', '2025-09-09 18:00:00', '2025-09-09 18:00:00'),
-(3, 4, 2, 8, 5, 'Phân compost chất lượng', 'Phân rất tốt, cây trồng phát triển nhanh sau khi bón. Mùi không quá nặng, dễ sử dụng.', '2025-09-09 19:00:00', '2025-09-09 19:00:00');
+INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 7, 5, 'Máy chạy êm, tiết kiệm điện và rất phù hợp với ruộng nhỏ của tôi. Chất lượng tốt, đóng gói cẩn thận.', '2025-09-09 16:00:00', '2025-09-09 16:00:00'),
+(2, 3, 2, 8, 4, 'Hạt giống nảy mầm tốt, tỷ lệ cao như quảng cáo. Cây trồng phát triển khỏe mạnh.', '2025-09-09 18:00:00', '2025-09-09 18:00:00'),
+(3, 4, 2, 8, 5, 'Phân rất tốt, cây trồng phát triển nhanh sau khi bón. Mùi không quá nặng, dễ sử dụng.', '2025-09-09 19:00:00', '2025-09-09 19:00:00');

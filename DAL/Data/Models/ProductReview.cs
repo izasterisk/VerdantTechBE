@@ -18,9 +18,6 @@ public partial class ProductReview
     [Range(1, 5)]
     public int Rating { get; set; }
 
-    [StringLength(255)]
-    public string? Title { get; set; }
-
     public string? Comment { get; set; }
 
     public DateTime CreatedAt { get; set; }

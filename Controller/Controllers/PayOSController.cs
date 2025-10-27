@@ -55,11 +55,13 @@ public class PayOSController : BaseController
         try
         {
             var webhookData = await _payOSService.HandlePayOSWebhookAsync(webhookBody, GetCancellationToken());
-            return SuccessResponse(new { message = "Webhook đã xử lý thành công.", data = webhookData });
+            return Ok(APIResponse.Success(new { message = "Webhook đã xử lý thành công.", data = webhookData }));
         }
         catch (Exception ex)
         {
-            return HandleException(ex);
+            // IMPORTANT: Always return 200 OK to PayOS, even on error
+            // PayOS requires 200 response to consider webhook delivered
+            return Ok(APIResponse.Error($"Webhook error: {ex.Message}", HttpStatusCode.OK));
         }
     }
 

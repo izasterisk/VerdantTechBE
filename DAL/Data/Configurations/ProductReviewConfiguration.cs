@@ -36,12 +36,6 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
         // Rating with check constraint equivalent
         builder.Property(e => e.Rating)
             .IsRequired();
-        
-        // Optional string fields
-        builder.Property(e => e.Title)
-            .HasMaxLength(255)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci");
             
         builder.Property(e => e.Comment)
             .HasColumnType("text")
