@@ -183,16 +183,16 @@ Tất cả API nằm trong base `/api/{ControllerName}` và trả về `APIRespo
 - `DELETE /api/CO2/{id}` (Authorize)
   - Hard delete; trả về thông báo thành công/thất bại.
 
-#### CourierController (`/api/Courier`)
+#### AddressController (`/api/Address`)
 Các endpoint đều yêu cầu Bearer token.
-- `GET /api/Courier/cities`
-  - Gọi Courier API, trả về danh sách tỉnh/thành.
+- `GET /api/Address/provinces`
+  - Gọi GoShip API, trả về danh sách tỉnh/thành.
 
-- `GET /api/Courier/districts/{cityId}`
-  - Path `cityId`: chuỗi 6 chữ số (service từ chối nếu sai định dạng).
+- `GET /api/Address/districts?provinceId={provinceId}`
+  - Query `provinceId`: chuỗi ID của tỉnh/thành.
 
-- `GET /api/Courier/wards/{districtId}`
-  - Path `districtId`: chuỗi 6 chữ số.
+- `GET /api/Address/communes?districtId={districtId}`
+  - Query `districtId`: chuỗi ID của quận/huyện.
 
 #### FarmProfileController (`/api/FarmProfile`)
 - `POST /api/FarmProfile` (Authorize)
@@ -346,6 +346,30 @@ Danh sách đơn hàng (phân trang, lọc theo status).
   - Mỗi order: `customer.address[0]` = địa chỉ order, `orderDetails[].product.images` đầy đủ.
 - Response: `PagedResponse<OrderResponseDTO>` (data, currentPage, pageSize, totalPages, totalRecords, hasNextPage, hasPreviousPage).
 - Exceptions: Không có (trả rỗng nếu không tìm thấy).
+
+#### ProductCategoryController (`/api/ProductCategory`)
+
+**`POST /api/ProductCategory`** (Authorize)
+Tạo danh mục sản phẩm mới.
+- Body `ProductCategoryCreateDTO`:
+  - `Name` (string, required, max 100)
+  - `Description` (string, optional, max 500)
+  - `ParentId` (ulong, optional)
+
+**`GET /api/ProductCategory`** (Authorize)
+Lấy danh sách tất cả danh mục sản phẩm.
+
+**`GET /api/ProductCategory/{id}`** (Authorize)
+Lấy thông tin danh mục sản phẩm theo ID.
+
+**`PATCH /api/ProductCategory/{id}`** (Authorize)
+Cập nhật danh mục sản phẩm.
+- Body `ProductCategoryUpdateDTO` (các trường giống Create nhưng optional).
+- Ràng buộc: Không thể gán `ParentId` nếu category đã là cha của một category khác.
+
+**`DELETE /api/ProductCategory/{id}`** (Authorize)
+Xóa một danh mục sản phẩm.
+- Ràng buộc: Không thể xóa nếu category là cha của một category khác.
 
 #### ProductCertificateController (`/api/ProductCertificate`)
 
@@ -694,14 +718,14 @@ Xóa sản phẩm (và có thể dọn ảnh `MediaLink` liên quan).
     - `AddressHelper.ValidateAddressFields` yêu cầu các cặp tên/mã đồng bộ.
 
 #### WeatherController (`/api/Weather`)
-Các endpoint đều yêu cầu Bearer token.
-- `GET /api/Weather/hourly/{farmId}`
-- `GET /api/Weather/daily/{farmId}`
-- `GET /api/Weather/current/{farmId}`
+- `GET /api/Weather/hourly/{farmId}` (Authorize)
+  - Lấy thông tin thời tiết dự báo theo giờ trong ngày cho farm.
 
-  - Ràng buộc nghiệp vụ chung:
-    - Farm profile phải tồn tại và có tọa độ lat/long.
-    - Gọi Weather API (hourly/daily/current); `TimeoutException` được ném thẳng, lỗi khác trả `InvalidOperationException` với thông điệp thân thiện.
+- `GET /api/Weather/daily/{farmId}` (Authorize)
+  - Lấy thông tin thời tiết dự báo cho 7 ngày tới cho farm.
+
+- `GET /api/Weather/current/{farmId}` (Authorize)
+  - Lấy thông tin thời tiết hiện tại của farm.
 
 #### Enum hợp lệ
 | Enum | Giá trị | Ghi chú |
@@ -757,3 +781,128 @@ Theo `VerdantTech_Project_Info.txt`, các hạng mục dự kiến:
 - Chuyên gia/Admin (Web Portal): phân quyền, giám sát hiệu năng, kiểm duyệt nội dung, đảm bảo độ chính xác AI.
 - AI & Tự động hóa: tích hợp Botpress, nhận diện bệnh cây qua dịch vụ CV, khuyến nghị canh tác theo pH/CO₂/thời tiết.
 - Environmental Monitoring Engine: cập nhật thời tiết 15 phút, cảm biến pH/độ ẩm (thiết kế API device ingestion).
+
+#### PayOSController (`/api/PayOS`)
+
+**`POST /api/PayOS/create/{orderId}`** (Authorize)
+Tạo link thanh toán PayOS cho một đơn hàng.
+- Path `orderId`: ID của đơn hàng.
+- Body `CreatePaymentDataDTO`:
+  - `productName` (string, required)
+  - `description` (string, required)
+  - `returnUrl` (string, required, URL)
+  - `cancelUrl` (string, required, URL)
+
+**`POST /api/PayOS/webhook`** (AllowAnonymous)
+Webhook nhận thông báo trạng thái thanh toán từ PayOS.
+
+**`POST /api/PayOS/confirm-webhook`** (Authorize)
+Xác nhận URL webhook với PayOS.
+- Body `ConfirmWebhookDTO`:
+  - `webhookUrl` (string, required, URL)
+
+#### OrderController (`/api/Order`)
+
+**`POST /api/Order/preview`** (Authorize)  
+Tạo order preview để xem trước tổng tiền, phí ship và các dịch vụ vận chuyển khả dụng.
+
+- Body `OrderPreviewCreateDTO`:
+
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | addressId | ulong | Required, > 0 |
+  | orderPaymentMethod | enum | Required: `Banking`, `COD`, `Rent` |
+  | taxAmount | decimal | >= 0 |
+  | discountAmount | decimal | >= 0 |
+  | notes | string? | Optional, max 500 ký tự |
+  | orderDetails | List<OrderDetailPreviewCreateDTO> | Required, min 1 item |
+
+- `OrderDetailPreviewCreateDTO`:
+
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | productId | ulong | Required, > 0 |
+  | quantity | int | Required, >= 1 |
+  | discountAmount | decimal | >= 0 |
+
+- Ràng buộc nghiệp vụ:
+  - User (từ JWT) phải tồn tại, `IsVerified == true`.
+  - `addressId` phải tồn tại và thuộc user (qua `UserAddress` hoặc `FarmProfile`).
+  - Mỗi `productId` phải tồn tại, `IsActive == true`, `StockQuantity >= quantity`.
+  - Nếu `orderPaymentMethod == Rent`: sản phẩm phải `ForRent == true`.
+  - Tự động tính: subtotal, dimensions, weight từ sản phẩm.
+  - Gọi GoShip API lấy rates, cache preview 10 phút với `OrderPreviewId` (Guid).
+- Exceptions:
+  - `KeyNotFoundException`: User/address/product không tồn tại, address không thuộc user.
+  - `InvalidOperationException`: Sản phẩm hết hàng, không cho thuê khi chọn Rent.
+
+**`POST /api/Order/{orderPreviewId}`** (Authorize)  
+Tạo đơn hàng thực từ preview, chọn shipping service.
+
+- Path: `orderPreviewId` (Guid)
+- Body `OrderCreateDTO`:
+
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | priceTableId | string | Required (ID shipping service từ preview) |
+
+- Ràng buộc nghiệp vụ:
+  - Preview phải tồn tại trong cache (chưa hết 10 phút).
+  - `priceTableId` phải nằm trong `shippingDetails` của preview.
+  - User phải tồn tại, `IsVerified == true`.
+  - Sản phẩm phải còn đủ hàng (kiểm tra lại `StockQuantity`).
+  - Transaction: tạo Order + OrderDetail, trừ stock, commit.
+  - Xóa preview khỏi cache sau khi tạo thành công.
+- Exceptions:
+  - `KeyNotFoundException`: Preview hết hạn, priceTableId không hợp lệ, user/product không tồn tại.
+  - `InvalidOperationException`: Hết hàng, lỗi transaction.
+
+**`PUT /api/Order/{orderId}`** (Authorize)  
+Cập nhật trạng thái đơn hàng (Pending → Paid → Processing → Shipped → Delivered) hoặc hủy.
+
+- Path: `orderId` (ulong)
+- Body `OrderUpdateDTO`:
+
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | status | enum | Required: `Pending`, `Paid`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
+  | cancelledReason | string? | Optional, max 500 ký tự |
+
+- Ràng buộc nghiệp vụ:
+  - Order phải tồn tại.
+  - Nếu có `cancelledReason` → `status` phải là `Cancelled`.
+  - Validate chuyển trạng thái hợp lệ (`OrderHelper.ValidateOrderStatusTransition`): không lùi trạng thái, không chuyển từ Cancelled/Refunded.
+  - **Tác động theo status:**
+    - `Processing`: set `ConfirmedAt`.
+    - `Delivered`: set `DeliveredAt`.
+    - `Cancelled`: set `CancelledAt`, `CancelledReason`.
+    - `Shipped`: gọi GoShip API tạo shipment, lưu `TrackingNumber`. Nếu COD: payer=0, codAmount=totalAmount.
+  - Transaction: update order.
+- Exceptions:
+  - `KeyNotFoundException`: Order/address không tồn tại.
+  - `InvalidOperationException`: Cung cấp cancelledReason nhưng status không phải Cancelled, chuyển trạng thái không hợp lệ, lỗi GoShip API.
+
+**`GET /api/Order/{orderId}`** (Authorize)  
+Lấy chi tiết 1 đơn hàng.
+
+- Path: `orderId` (ulong)
+- Response: `OrderResponseDTO` (customer, address, orderDetails với images).
+- Exceptions: `KeyNotFoundException` nếu order không tồn tại.
+
+**`GET /api/Order`** (Authorize)  
+Danh sách đơn hàng (phân trang, lọc theo status).
+
+- Query params:
+
+  | Param | Type | Default | Description |
+  | --- | --- | --- | --- |
+  | page | int | 1 | Trang hiện tại |
+  | pageSize | int | 10 | Số item/trang |
+  | status | string? | null | Lọc: `Pending`, `Paid`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
+
+- Ràng buộc nghiệp vụ:
+  - Parse `status` thành enum, bỏ qua nếu không hợp lệ.
+  - Eager load: OrderDetails, Product, Customer, Address.
+  - Mỗi order: `customer.address[0]` = địa chỉ order, `orderDetails[].product.images` đầy đủ.
+- Response: `PagedResponse<OrderResponseDTO>` (data, currentPage, pageSize, totalPages, totalRecords, hasNextPage, hasPreviousPage).
+- Exceptions: Không có (trả rỗng nếu không tìm thấy).
