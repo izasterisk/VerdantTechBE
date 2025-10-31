@@ -31,6 +31,7 @@ public class VerdantTechDbContext : DbContext
     public DbSet<Cart> Carts { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
     public DbSet<BatchInventory> BatchInventories { get; set; }
+    public DbSet<ProductSerial> ProductSerials { get; set; }
     public DbSet<ExportInventory> ExportInventories { get; set; }
     
     // Request Management DbSets
@@ -77,6 +78,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new CartConfiguration());
         modelBuilder.ApplyConfiguration(new CartItemConfiguration());
         modelBuilder.ApplyConfiguration(new BatchInventoryConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductSerialConfiguration());
         modelBuilder.ApplyConfiguration(new ExportInventoryConfiguration());
         modelBuilder.ApplyConfiguration(new RequestConfiguration());
         modelBuilder.ApplyConfiguration(new OrderConfiguration());

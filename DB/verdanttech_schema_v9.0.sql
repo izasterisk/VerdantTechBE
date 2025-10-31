@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 8.1
+-- Phiên bản: 9.0
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -553,24 +553,43 @@ CREATE TABLE batch_inventory (
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi tồn kho nhập - hàng vào với thông tin nhận hàng chi tiết';
 
+-- Quản lý số seri từng sản phẩm trong lô
+CREATE TABLE product_serials (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    batch_inventory_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL,
+    serial_number VARCHAR(255) UNIQUE NOT NULL COMMENT 'Số seri sản phẩm (có thể chứa chữ và số)',
+    status ENUM('stock', 'sold', 'refund') DEFAULT 'stock' COMMENT 'Trạng thái sản phẩm: stock (trong kho), sold (đã bán), refund (đã hoàn trả)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (batch_inventory_id) REFERENCES batch_inventory(id) ON DELETE RESTRICT,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
+    INDEX idx_batch (batch_inventory_id),
+    INDEX idx_product (product_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý số seri từng sản phẩm trong lô hàng';
+
 -- Theo dõi tồn kho bán hàng (hàng ra)
 CREATE TABLE export_inventory (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT UNSIGNED NOT NULL,
-    order_id BIGINT UNSIGNED NULL COMMENT 'Đơn hàng gây ra chuyển động tồn kho này',
-    quantity INT NOT NULL COMMENT 'Số lượng xuất',
+    product_serial_id BIGINT UNSIGNED NOT NULL COMMENT 'ID số seri sản phẩm được xuất',
+    order_id BIGINT UNSIGNED NULL COMMENT 'Đơn hàng gây ra xuất kho',
     movement_type ENUM('sale', 'return to vendor', 'damage', 'loss', 'adjustment') DEFAULT 'sale',
     notes VARCHAR(500) NULL,
-    created_by BIGINT UNSIGNED NOT NULL COMMENT 'Người nhập xuất kho',
+    created_by BIGINT UNSIGNED NOT NULL COMMENT 'Người thực hiện xuất kho',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
+    FOREIGN KEY (product_serial_id) REFERENCES product_serials(id) ON DELETE RESTRICT,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    UNIQUE KEY unique_serial_export (product_serial_id) COMMENT 'Mỗi serial chỉ xuất 1 lần',
     INDEX idx_product (product_id),
-    INDEX idx_order (order_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi tồn kho xuất - hàng ra với thông tin chi tiết';
+    INDEX idx_order (order_id),
+    INDEX idx_serial (product_serial_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi xuất kho từng sản phẩm với serial number cụ thể';
 
 -- =====================================================
 -- CÁC BẢNG QUẢN LÝ YÊU CẦU
@@ -692,42 +711,44 @@ CREATE TABLE cashouts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='bảng rút tiền cho vendor';
 
 -- =====================================================
--- TỔNG QUAN THAY ĐỔI v8.1 (từ v8.0)
+-- TỔNG QUAN THAY ĐỔI v9.0 (từ v8.1)
 -- =====================================================
 
--- I) TÁI CẤU TRÚC QUẢN LÝ MEDIA - TIẾP CẬN TẬP TRUNG
--- • Tạo bảng mới: media_links
---   - Lưu trữ tập trung cho tất cả media/hình ảnh trong hệ thống
---   - Hỗ trợ nhiều loại owner: vendor_certificates, chatbot_messages, products, 
---     product_registrations, product_certificates, product_reviews, forum_posts
---   - Các trường: id, owner_type (ENUM), owner_id, image_url, image_public_id, purpose (front/back/none), sort_order
---   - Đánh index cho: owner_type, owner_id, và composite (owner_type, owner_id)
---   - Cho phép quan hệ 1-nhiều: một thực thể có thể có nhiều media items
+-- I) QUẢN LÝ SỐ SERI SẢN PHẨM
+-- • Tạo bảng mới: product_serials
+--   - Quản lý từng số seri cụ thể của sản phẩm trong lô hàng
+--   - Các trường: id, batch_inventory_id, product_id, serial_number (VARCHAR - hỗ trợ chữ và số)
+--   - Trạng thái: status ENUM('stock', 'sold', 'refund') - mặc định 'stock'
+--     + stock: Sản phẩm đang trong kho
+--     + sold: Sản phẩm đã bán
+--     + refund: Sản phẩm đã hoàn trả
+--   - UNIQUE constraint trên serial_number để đảm bảo không trùng lặp
+--   - Index: batch_inventory_id, product_id
 
--- II) XÓA CÁC TRƯỜNG MEDIA TỪ CÁC BẢNG HIỆN TẠI
--- • vendor_certificates: Xóa certificate_url, public_url
--- • chatbot_messages: Xóa attachments, public_url
--- • products: Xóa trường images
--- • product_registrations: Xóa trường images
--- • product_certificates: Xóa certificate_url, public_url
--- • product_reviews: Xóa images, public_url
+-- II) CẢI TIẾN EXPORT_INVENTORY
+-- • Xóa trường: quantity (không còn cần thiết)
+-- • Thêm trường: product_serial_id (BIGINT UNSIGNED NOT NULL)
+--   - Foreign key tham chiếu đến product_serials(id)
+--   - UNIQUE constraint để đảm bảo mỗi serial chỉ xuất 1 lần
+-- • Mỗi record export_inventory đại diện cho 1 sản phẩm cụ thể với serial number riêng
+-- • Nếu bán 4 sản phẩm cùng loại → tạo 4 records export_inventory riêng biệt
 
--- III) THÊM PUBLIC_URL CHO TÀI LIỆU HƯỚNG DẪN
--- • products: Thêm public_url VARCHAR(500) - cho phép truy cập công khai manual_urls
--- • product_registrations: Thêm public_url VARCHAR(500) - cho phép truy cập công khai manual_urls
+-- III) LOGIC HOẠT ĐỘNG
+-- • Nhập hàng (batch_inventory):
+--   - Tạo 1 record batch với quantity = 100
+--   - Tạo 100 records trong product_serials (status='stock')
+-- • Xuất hàng (export_inventory):
+--   - Với mỗi sản phẩm: tạo 1 record export_inventory với product_serial_id
+--   - Cập nhật product_serials: status='sold'
+-- • Hoàn trả:
+--   - Cập nhật product_serials: status='refund'
+--   - Record export_inventory giữ nguyên để audit trail
 
--- IV) LƯU Ý MIGRATION DỮ LIỆU
--- • Tất cả dữ liệu hình ảnh/media hiện tại cần được migrate sang bảng media_links
--- • owner_type phải khớp với tên bảng nguồn
--- • owner_id phải tham chiếu đến primary key của bảng nguồn
--- • image_public_id bắt buộc cho tích hợp cloud storage (Cloudinary, AWS S3, etc.)
--- • sort_order cho phép kiểm soát thứ tự hiển thị hình ảnh
--- • purpose giúp phân biệt giữa hình ảnh chính (front) và phụ (back)
-
--- V) LỢI ÍCH CỦA QUẢN LÝ MEDIA TẬP TRUNG
--- • Xử lý media nhất quán trên tất cả các thực thể
--- • Dễ dàng triển khai các tính năng như tối ưu hóa ảnh, CDN, watermark
--- • Đơn giản hóa sao lưu và di chuyển file media
--- • Hỗ trợ tốt hơn cho nhiều hình ảnh mỗi thực thể
--- • Cấu trúc bảng sạch hơn không có trường URL phân cách bằng dấu phẩy
--- • Cải thiện hiệu suất truy vấn với indexing phù hợp
+-- IV) LỢI ÍCH
+-- • Truy vết chính xác từng sản phẩm qua số seri
+-- • Quản lý warranty và after-sales service theo serial number
+-- • Audit trail đầy đủ: biết sản phẩm nào bán cho ai, khi nào
+-- • Dễ dàng xử lý hoàn trả/bảo hành theo từng sản phẩm cụ thể
+-- • Hỗ trợ số seri dạng chữ và số (VD: SN-2024-ABC-12345)
+-- • Phòng chống gian lận: mỗi serial chỉ xuất được 1 lần
+-- • Quản lý trạng thái đơn giản hơn với ENUM thay vì nhiều boolean

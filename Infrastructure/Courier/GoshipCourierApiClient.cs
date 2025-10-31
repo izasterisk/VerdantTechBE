@@ -122,7 +122,7 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
                     SuccessPercent = rate.Report.SuccessPercent,
                     ReturnPercent = rate.Report.ReturnPercent,
                     AvgTimeDelivery = rate.Report.AvgTimeDelivery,
-                    AvgTimeDeliveryFormat = rate.Report.AvgTimeDeliveryFormat
+                    AvgTimeDeliveryFormat = rate.Report.AvgTimeDeliveryFormat ?? ""
                 } : null
             }).ToList();
         }

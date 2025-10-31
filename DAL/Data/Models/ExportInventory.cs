@@ -11,9 +11,9 @@ public partial class ExportInventory
 
     public ulong ProductId { get; set; }
 
-    public ulong? OrderId { get; set; }
+    public ulong ProductSerialId { get; set; }
 
-    public int Quantity { get; set; }
+    public ulong? OrderId { get; set; }
 
     public MovementType MovementType { get; set; } = MovementType.Sale;
 
@@ -29,6 +29,8 @@ public partial class ExportInventory
 
     // Navigation Properties
     public virtual Product Product { get; set; } = null!;
+    public virtual ProductSerial ProductSerial { get; set; } = null!;
     public virtual Order? Order { get; set; }
     public virtual User CreatedByNavigation { get; set; } = null!;
 }
+

@@ -1,5 +1,6 @@
--- SEEDER DATA FOR VERDANTTECH DATABASE v8.0
+-- SEEDER DATA FOR VERDANTTECH DATABASE v9.0
 -- All passwords are: $2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS
+-- Updated for schema v9.0: Added product_serials table for serial number tracking, updated export_inventory to reference product_serials
 -- Updated for schema v8.0: Removed address_id from users, added user_addresses junction table for many-to-many relationship
 -- Updated environmental_data table: renamed soil_ph to phh2o, removed soil_type enum, added new environmental measurement fields
 -- Dates adjusted to be recent as of 2025-09-22, ensured foreign key consistency
@@ -278,12 +279,81 @@ INSERT INTO `batch_inventory` (`id`, `product_id`, `sku`, `vendor_id`, `batch_nu
 (4, 4, 'SKU_FT004_001', 6, 'BATCH004', 'LOT004', 100, 60000.00, '2026-03-01', '2025-05-01', 'passed', 2, '2025-09-08 09:00:00', 'Phân bón nhập kho', '2025-09-08 08:00:00', '2025-09-08 08:00:00'),
 (5, 5, 'SKU_DR005_001', 5, 'BATCH005', 'LOT005', 15, 20000000.00, NULL, '2025-08-15', 'passed', 2, '2025-09-08 11:00:00', 'Drone phun thuốc nhập kho', '2025-09-08 10:00:00', '2025-09-09 09:00:00');
 
--- Insert Export Inventory (v7.1 structure - removed unit_sale_price column, added updated_at)
-INSERT INTO `export_inventory` (`id`, `product_id`, `order_id`, `quantity`, `movement_type`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 1, 'sale', 'Máy cày bán cho khách hàng 1', 5, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(2, 3, 2, 10, 'sale', 'Hạt giống bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(3, 4, 2, 3, 'sale', 'Phân bón bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(4, 5, 3, 1, 'sale', 'Drone phun thuốc cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
+-- Insert Product Serials (NEW in v9.0 - tracking individual serial numbers for products)
+INSERT INTO `product_serials` (`id`, `batch_inventory_id`, `product_id`, `serial_number`, `status`, `created_at`, `updated_at`) VALUES
+-- Product 1 (Máy Cày): 5 units from BATCH001
+(1, 1, 1, 'TC001-B001-001', 'sold', '2025-09-08 09:00:00', '2025-09-08 10:00:00'),
+(2, 1, 1, 'TC001-B001-002', 'stock', '2025-09-08 09:00:00', '2025-09-08 09:00:00'),
+(3, 1, 1, 'TC001-B001-003', 'stock', '2025-09-08 09:00:00', '2025-09-08 09:00:00'),
+(4, 1, 1, 'TC001-B001-004', 'stock', '2025-09-08 09:00:00', '2025-09-08 09:00:00'),
+(5, 1, 1, 'TC001-B001-005', 'stock', '2025-09-08 09:00:00', '2025-09-08 09:00:00'),
+
+-- Product 2 (Máy Gặt): 10 units from BATCH002
+(6, 2, 2, 'HV002-B002-001', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(7, 2, 2, 'HV002-B002-002', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(8, 2, 2, 'HV002-B002-003', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(9, 2, 2, 'HV002-B002-004', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(10, 2, 2, 'HV002-B002-005', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(11, 2, 2, 'HV002-B002-006', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(12, 2, 2, 'HV002-B002-007', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(13, 2, 2, 'HV002-B002-008', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(14, 2, 2, 'HV002-B002-009', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+(15, 2, 2, 'HV002-B002-010', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
+
+-- Product 3 (Hạt Giống): 10 sold from 200 units in BATCH003
+(16, 3, 3, 'SD003-B003-001', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(17, 3, 3, 'SD003-B003-002', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(18, 3, 3, 'SD003-B003-003', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(19, 3, 3, 'SD003-B003-004', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(20, 3, 3, 'SD003-B003-005', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(21, 3, 3, 'SD003-B003-006', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(22, 3, 3, 'SD003-B003-007', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(23, 3, 3, 'SD003-B003-008', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(24, 3, 3, 'SD003-B003-009', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+(25, 3, 3, 'SD003-B003-010', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
+-- Remaining 190 units available with status 'stock' (not listed here to keep seeder concise)
+
+-- Product 4 (Phân Bón): 3 sold from 100 units in BATCH004
+(26, 4, 4, 'FT004-B004-001', 'sold', '2025-09-08 08:00:00', '2025-09-09 09:00:00'),
+(27, 4, 4, 'FT004-B004-002', 'sold', '2025-09-08 08:00:00', '2025-09-09 09:00:00'),
+(28, 4, 4, 'FT004-B004-003', 'sold', '2025-09-08 08:00:00', '2025-09-09 09:00:00'),
+-- Remaining 97 units available with status 'stock' (not listed here to keep seeder concise)
+
+-- Product 5 (Drone): 1 sold from 15 units in BATCH005
+(29, 5, 5, 'DR005-B005-001', 'sold', '2025-09-08 10:00:00', '2025-09-09 11:00:00'),
+(30, 5, 5, 'DR005-B005-002', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(31, 5, 5, 'DR005-B005-003', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(32, 5, 5, 'DR005-B005-004', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(33, 5, 5, 'DR005-B005-005', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(34, 5, 5, 'DR005-B005-006', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(35, 5, 5, 'DR005-B005-007', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(36, 5, 5, 'DR005-B005-008', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(37, 5, 5, 'DR005-B005-009', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(38, 5, 5, 'DR005-B005-010', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(39, 5, 5, 'DR005-B005-011', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(40, 5, 5, 'DR005-B005-012', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(41, 5, 5, 'DR005-B005-013', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(42, 5, 5, 'DR005-B005-014', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(43, 5, 5, 'DR005-B005-015', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00');
+
+-- Insert Export Inventory (v9.0 structure - removed quantity, added product_serial_id for individual serial tracking)
+-- Each export record now represents ONE specific product with its serial number
+INSERT INTO `export_inventory` (`id`, `product_id`, `product_serial_id`, `order_id`, `movement_type`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+(1, 1, 1, 1, 'sale', 'Máy cày serial TC001-B001-001 bán cho khách hàng 1', 5, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(2, 3, 16, 2, 'sale', 'Hạt giống serial SD003-B003-001 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(3, 3, 17, 2, 'sale', 'Hạt giống serial SD003-B003-002 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(4, 3, 18, 2, 'sale', 'Hạt giống serial SD003-B003-003 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(5, 3, 19, 2, 'sale', 'Hạt giống serial SD003-B003-004 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(6, 3, 20, 2, 'sale', 'Hạt giống serial SD003-B003-005 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(7, 3, 21, 2, 'sale', 'Hạt giống serial SD003-B003-006 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(8, 3, 22, 2, 'sale', 'Hạt giống serial SD003-B003-007 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(9, 3, 23, 2, 'sale', 'Hạt giống serial SD003-B003-008 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(10, 3, 24, 2, 'sale', 'Hạt giống serial SD003-B003-009 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(11, 3, 25, 2, 'sale', 'Hạt giống serial SD003-B003-010 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(12, 4, 26, 2, 'sale', 'Phân bón serial FT004-B004-001 bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(13, 4, 27, 2, 'sale', 'Phân bón serial FT004-B004-002 bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(14, 4, 28, 2, 'sale', 'Phân bón serial FT004-B004-003 bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(15, 5, 29, 3, 'sale', 'Drone serial DR005-B005-001 cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
 -- Insert Product Reviews (v8.1 structure - removed images, use media_links table instead)
 INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES

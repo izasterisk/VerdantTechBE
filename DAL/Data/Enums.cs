@@ -229,6 +229,13 @@ public enum ConditionOnArrival
     Damaged
 }
 
+public enum ProductSerialStatus
+{
+    Stock,
+    Sold,
+    Refund
+}
+
 // =====================================================
 // MEDIA MANAGEMENT ENUMS (v8.1)
 // =====================================================

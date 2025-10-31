@@ -22,6 +22,11 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .IsRequired()
             .HasColumnName("product_id");
 
+        builder.Property(e => e.ProductSerialId)
+            .HasColumnType("bigint unsigned")
+            .IsRequired()
+            .HasColumnName("product_serial_id");
+
         builder.Property(e => e.OrderId)
             .HasColumnType("bigint unsigned")
             .HasColumnName("order_id");
@@ -30,10 +35,6 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasColumnType("bigint unsigned")
             .IsRequired()
             .HasColumnName("created_by");
-
-        // Required fields
-        builder.Property(e => e.Quantity)
-            .IsRequired();
 
         // Enum conversion for movement type
         builder.Property(e => e.MovementType)
@@ -70,6 +71,11 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasForeignKey(d => d.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(d => d.ProductSerial)
+            .WithOne(p => p.ExportInventory)
+            .HasForeignKey<ExportInventory>(d => d.ProductSerialId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(d => d.Order)
             .WithMany(p => p.ExportInventories)
             .HasForeignKey(d => d.OrderId)
@@ -80,6 +86,11 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasForeignKey(d => d.CreatedBy)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Unique constraint on product_serial_id
+        builder.HasIndex(e => e.ProductSerialId)
+            .IsUnique()
+            .HasDatabaseName("unique_serial_export");
+
         // Indexes
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");
@@ -87,7 +98,7 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
         builder.HasIndex(e => e.OrderId)
             .HasDatabaseName("idx_order");
 
-        builder.HasIndex(e => e.MovementType)
-            .HasDatabaseName("idx_movement_type");
+        builder.HasIndex(e => e.ProductSerialId)
+            .HasDatabaseName("idx_serial");
     }
 }

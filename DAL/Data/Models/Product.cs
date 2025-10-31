@@ -85,6 +85,7 @@ public partial class Product
     public virtual ProductCategory Category { get; set; } = null!;
     public virtual User Vendor { get; set; } = null!;
     public virtual ICollection<BatchInventory> BatchInventories { get; set; } = new List<BatchInventory>();
+    public virtual ICollection<ProductSerial> ProductSerials { get; set; } = new List<ProductSerial>();
     public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();

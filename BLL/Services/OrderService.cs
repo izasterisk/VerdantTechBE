@@ -227,7 +227,7 @@ public class OrderService : IOrderService
                 {
                     ProductId = orderDetail.Product.Id,
                     OrderId = order.Id,
-                    Quantity = orderDetail.Quantity,
+                    // Quantity = orderDetail.Quantity,
                     MovementType = MovementType.Sale,
                     CreatedBy = staffId
                 });

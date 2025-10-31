@@ -49,4 +49,5 @@ public partial class BatchInventory
     public virtual Product Product { get; set; } = null!;
     public virtual User? Vendor { get; set; }
     public virtual User? QualityCheckedByNavigation { get; set; }
+    public virtual ICollection<ProductSerial> ProductSerials { get; set; } = new List<ProductSerial>();
 }
