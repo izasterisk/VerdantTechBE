@@ -88,20 +88,24 @@ INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`,
 
 -- Insert Product Categories
 INSERT INTO `product_categories` (`id`, `parent_id`, `name`, `slug`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
+-- Parent Categories (Level 1)
 (1, NULL, 'Thiết Bị Nông Nghiệp', 'thiet-bi-nong-nghiep', 'Các loại máy móc và thiết bị phục vụ sản xuất nông nghiệp', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(2, 1, 'Máy Cày', 'may-cay', 'Máy cày và thiết bị làm đất', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(3, 1, 'Máy Gặt', 'may-gat', 'Máy gặt và thu hoạch', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(4, NULL, 'Hạt Giống', 'hat-giong', 'Hạt giống chất lượng cao', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(5, 4, 'Hạt Giống Rau', 'hat-giong-rau', 'Hạt giống rau củ hữu cơ', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(6, NULL, 'Phân Bón', 'phan-bon', 'Phân bón hữu cơ và hóa học', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00');
+(2, NULL, 'Hạt Giống', 'hat-giong', 'Hạt giống chất lượng cao', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(3, NULL, 'Phân Bón', 'phan-bon', 'Phân bón hữu cơ và hóa học', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+-- Child Categories (Level 2)
+(4, 1, 'Máy Cày', 'may-cay', 'Máy cày và thiết bị làm đất', 1, '2025-09-08 07:05:00', '2025-09-08 07:05:00'),
+(5, 1, 'Máy Gặt', 'may-gat', 'Máy gặt và thu hoạch', 1, '2025-09-08 07:10:00', '2025-09-08 07:10:00'),
+(6, 1, 'Máy Bay Nông Nghiệp', 'may-bay-nong-nghiep', 'Drone và thiết bị bay phục vụ nông nghiệp', 1, '2025-09-08 07:15:00', '2025-09-08 07:15:00'),
+(7, 2, 'Hạt Giống Rau', 'hat-giong-rau', 'Hạt giống rau củ hữu cơ', 1, '2025-09-08 07:20:00', '2025-09-08 07:20:00'),
+(8, 3, 'Phân Bón Hữu Cơ', 'phan-bon-huu-co', 'Phân bón hữu cơ từ thiên nhiên', 1, '2025-09-08 07:25:00', '2025-09-08 07:25:00');
 
 -- Insert Products (v8.1 structure - removed images, added public_url, use media_links table for images)
 INSERT INTO `products` (`id`, `category_id`, `vendor_id`, `product_code`, `product_name`, `slug`, `description`, `unit_price`, `commission_rate`, `discount_percentage`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `public_url`, `warranty_months`, `stock_quantity`, `weight_kg`, `dimensions_cm`, `is_active`, `for_rent`, `view_count`, `sold_count`, `rating_average`, `created_at`, `updated_at`) VALUES
-(1, 2, 5, 'TC001', 'Máy Cày Mini Điện VerdantTech V1', 'may-cay-mini-dien-verdanttech-v1', 'Máy cày mini sử dụng năng lượng điện, thân thiện với môi trường, phù hợp cho nông trại nhỏ.', 1000.00, 10.00, 5.00, 5, '{"power": "10kW", "battery": "48V 100Ah"}', 'manual_tc001.pdf', NULL, 24, 50, 500.000, '{"length": 250, "width": 120, "height": 150}', 1, 1, 120, 5, 4.60, '2025-09-08 07:00:00', '2025-09-09 07:00:00'),
-(2, 3, 5, 'HV002', 'Máy Gặt Lúa Tự Động VerdantTech H2', 'may-gat-lua-tu-dong-verdanttech-h2', 'Máy gặt lúa tự động với công nghệ AI, tiết kiệm thời gian và công sức.', 1000.00, 8.00, 5.00, 4, '{"engine": "Diesel 50HP", "capacity": "2 tons/hour"}', 'manual_hv002.pdf', NULL, 36, 10, 2500.000, '{"length": 450, "width": 200, "height": 250}', 1, 1, 85, 3, 4.80, '2025-09-08 07:15:00', '2025-09-09 07:15:00'),
-(3, 5, 6, 'SD003', 'Hạt Giống Rau Cải Xanh Hữu Cơ', 'hat-giong-rau-cai-xanh-huu-co', 'Hạt giống rau cải xanh hữu cơ, tỷ lệ nảy mầm cao, kháng bệnh tốt.', 1000.00, 5.00, 5.00, NULL, '{"germination_rate": "95%", "pack_size": "100g"}', 'manual_sd003.pdf', NULL, 0, 200, 0.100, '{"length": 10, "width": 5, "height": 2}', 1, 0, 200, 50, 4.50, '2025-09-08 07:30:00', '2025-09-09 07:30:00'),
-(4, 6, 6, 'FT004', 'Phân Bón Hữu Cơ Compost Premium', 'phan-bon-huu-co-compost-premium', 'Phân bón hữu cơ từ compost, giàu dinh dưỡng, an toàn cho đất và cây trồng.', 1000.00, 7.00, 5.00, NULL, '{"npk": "5-5-5", "weight": "25kg"}', 'manual_ft004.pdf', NULL, 0, 100, 25.000, '{"length": 50, "width": 30, "height": 10}', 1, 0, 150, 20, 4.70, '2025-09-08 07:45:00', '2025-09-09 07:45:00'),
-(5, 1, 5, 'DR005', 'Drone Phun Thuốc Thông Minh VerdantTech D3', 'drone-phun-thuoc-thong-minh-verdanttech-d3', 'Drone phun thuốc tự động với AI, chính xác cao, tiết kiệm thuốc.', 1000.00, 12.00, 5.00, 3, '{"flight_time": "30min", "capacity": "10L"}', 'manual_dr005.pdf', NULL, 12, 15, 5.000, '{"length": 100, "width": 100, "height": 50}', 1, 1, 90, 7, 4.40, '2025-09-08 08:00:00', '2025-09-09 08:00:00');
+(1, 4, 5, 'TC001', 'Máy Cày Mini Điện VerdantTech V1', 'may-cay-mini-dien-verdanttech-v1', 'Máy cày mini sử dụng năng lượng điện, thân thiện với môi trường, phù hợp cho nông trại nhỏ.', 1000.00, 10.00, 5.00, 5, '{"power": "10kW", "battery": "48V 100Ah"}', 'manual_tc001.pdf', NULL, 24, 50, 500.000, '{"length": 250, "width": 120, "height": 150}', 1, 1, 120, 5, 4.60, '2025-09-08 07:00:00', '2025-09-09 07:00:00'),
+(2, 5, 5, 'HV002', 'Máy Gặt Lúa Tự Động VerdantTech H2', 'may-gat-lua-tu-dong-verdanttech-h2', 'Máy gặt lúa tự động với công nghệ AI, tiết kiệm thời gian và công sức.', 1000.00, 8.00, 5.00, 4, '{"engine": "Diesel 50HP", "capacity": "2 tons/hour"}', 'manual_hv002.pdf', NULL, 36, 10, 2500.000, '{"length": 450, "width": 200, "height": 250}', 1, 1, 85, 3, 4.80, '2025-09-08 07:15:00', '2025-09-09 07:15:00'),
+(3, 7, 6, 'SD003', 'Hạt Giống Rau Cải Xanh Hữu Cơ', 'hat-giong-rau-cai-xanh-huu-co', 'Hạt giống rau cải xanh hữu cơ, tỷ lệ nảy mầm cao, kháng bệnh tốt.', 1000.00, 5.00, 5.00, NULL, '{"germination_rate": "95%", "pack_size": "100g"}', 'manual_sd003.pdf', NULL, 0, 200, 0.100, '{"length": 10, "width": 5, "height": 2}', 1, 0, 200, 50, 4.50, '2025-09-08 07:30:00', '2025-09-09 07:30:00'),
+(4, 8, 6, 'FT004', 'Phân Bón Hữu Cơ Compost Premium', 'phan-bon-huu-co-compost-premium', 'Phân bón hữu cơ từ compost, giàu dinh dưỡng, an toàn cho đất và cây trồng.', 1000.00, 7.00, 5.00, NULL, '{"npk": "5-5-5", "weight": "25kg"}', 'manual_ft004.pdf', NULL, 0, 100, 25.000, '{"length": 50, "width": 30, "height": 10}', 1, 0, 150, 20, 4.70, '2025-09-08 07:45:00', '2025-09-09 07:45:00'),
+(5, 6, 5, 'DR005', 'Drone Phun Thuốc Thông Minh VerdantTech D3', 'drone-phun-thuoc-thong-minh-verdanttech-d3', 'Drone phun thuốc tự động với AI, chính xác cao, tiết kiệm thuốc.', 1000.00, 12.00, 5.00, 3, '{"flight_time": "30min", "capacity": "10L"}', 'manual_dr005.pdf', NULL, 12, 15, 5.000, '{"length": 100, "width": 100, "height": 50}', 1, 1, 90, 7, 4.40, '2025-09-08 08:00:00', '2025-09-09 08:00:00');
 
 -- Insert Product Certificates (v8.1 structure - removed media fields, use media_links table instead)
 INSERT INTO `product_certificates` (`id`, `product_id`, `certification_code`, `certification_name`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
@@ -279,7 +283,9 @@ INSERT INTO `batch_inventory` (`id`, `product_id`, `sku`, `vendor_id`, `batch_nu
 (4, 4, 'SKU_FT004_001', 6, 'BATCH004', 'LOT004', 100, 60000.00, '2026-03-01', '2025-05-01', 'passed', 2, '2025-09-08 09:00:00', 'Phân bón nhập kho', '2025-09-08 08:00:00', '2025-09-08 08:00:00'),
 (5, 5, 'SKU_DR005_001', 5, 'BATCH005', 'LOT005', 15, 20000000.00, NULL, '2025-08-15', 'passed', 2, '2025-09-08 11:00:00', 'Drone phun thuốc nhập kho', '2025-09-08 10:00:00', '2025-09-09 09:00:00');
 
--- Insert Product Serials (NEW in v9.0 - tracking individual serial numbers for products)
+-- Insert Product Serials (NEW in v9.0 - tracking individual serial numbers for MACHINERY ONLY)
+-- Only products with serial numbers (machinery/equipment) are tracked here
+-- Products without serial (fertilizers, seeds) are tracked via lot_number in export_inventory
 INSERT INTO `product_serials` (`id`, `batch_inventory_id`, `product_id`, `serial_number`, `status`, `created_at`, `updated_at`) VALUES
 -- Product 1 (Máy Cày): 5 units from BATCH001
 (1, 1, 1, 'TC001-B001-001', 'sold', '2025-09-08 09:00:00', '2025-09-08 10:00:00'),
@@ -300,60 +306,52 @@ INSERT INTO `product_serials` (`id`, `batch_inventory_id`, `product_id`, `serial
 (14, 2, 2, 'HV002-B002-009', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
 (15, 2, 2, 'HV002-B002-010', 'stock', '2025-09-08 14:00:00', '2025-09-08 14:00:00'),
 
--- Product 3 (Hạt Giống): 10 sold from 200 units in BATCH003
-(16, 3, 3, 'SD003-B003-001', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(17, 3, 3, 'SD003-B003-002', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(18, 3, 3, 'SD003-B003-003', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(19, 3, 3, 'SD003-B003-004', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(20, 3, 3, 'SD003-B003-005', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(21, 3, 3, 'SD003-B003-006', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(22, 3, 3, 'SD003-B003-007', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(23, 3, 3, 'SD003-B003-008', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(24, 3, 3, 'SD003-B003-009', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
-(25, 3, 3, 'SD003-B003-010', 'sold', '2025-09-08 11:00:00', '2025-09-09 09:00:00'),
--- Remaining 190 units available with status 'stock' (not listed here to keep seeder concise)
+-- Product 3 (Hạt Giống): NO SERIAL - tracked via lot_number in export_inventory
+-- Product 4 (Phân Bón): NO SERIAL - tracked via lot_number in export_inventory
 
--- Product 4 (Phân Bón): 3 sold from 100 units in BATCH004
-(26, 4, 4, 'FT004-B004-001', 'sold', '2025-09-08 08:00:00', '2025-09-09 09:00:00'),
-(27, 4, 4, 'FT004-B004-002', 'sold', '2025-09-08 08:00:00', '2025-09-09 09:00:00'),
-(28, 4, 4, 'FT004-B004-003', 'sold', '2025-09-08 08:00:00', '2025-09-09 09:00:00'),
--- Remaining 97 units available with status 'stock' (not listed here to keep seeder concise)
+-- Product 5 (Drone): 15 units from BATCH005
+(16, 5, 5, 'DR005-B005-001', 'sold', '2025-09-08 10:00:00', '2025-09-09 11:00:00'),
+(17, 5, 5, 'DR005-B005-002', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(18, 5, 5, 'DR005-B005-003', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(19, 5, 5, 'DR005-B005-004', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(20, 5, 5, 'DR005-B005-005', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(21, 5, 5, 'DR005-B005-006', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(22, 5, 5, 'DR005-B005-007', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(23, 5, 5, 'DR005-B005-008', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(24, 5, 5, 'DR005-B005-009', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(25, 5, 5, 'DR005-B005-010', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(26, 5, 5, 'DR005-B005-011', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(27, 5, 5, 'DR005-B005-012', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(28, 5, 5, 'DR005-B005-013', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(29, 5, 5, 'DR005-B005-014', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
+(30, 5, 5, 'DR005-B005-015', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00');
 
--- Product 5 (Drone): 1 sold from 15 units in BATCH005
-(29, 5, 5, 'DR005-B005-001', 'sold', '2025-09-08 10:00:00', '2025-09-09 11:00:00'),
-(30, 5, 5, 'DR005-B005-002', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(31, 5, 5, 'DR005-B005-003', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(32, 5, 5, 'DR005-B005-004', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(33, 5, 5, 'DR005-B005-005', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(34, 5, 5, 'DR005-B005-006', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(35, 5, 5, 'DR005-B005-007', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(36, 5, 5, 'DR005-B005-008', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(37, 5, 5, 'DR005-B005-009', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(38, 5, 5, 'DR005-B005-010', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(39, 5, 5, 'DR005-B005-011', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(40, 5, 5, 'DR005-B005-012', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(41, 5, 5, 'DR005-B005-013', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(42, 5, 5, 'DR005-B005-014', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(43, 5, 5, 'DR005-B005-015', 'stock', '2025-09-08 10:00:00', '2025-09-08 10:00:00');
+-- Insert Export Inventory (v9.0 structure - supports both serial (machinery) and lot_number (fertilizers/seeds))
+-- Machinery: uses product_serial_id, lot_number = NULL
+-- Fertilizers/Seeds: uses lot_number, product_serial_id = NULL
+INSERT INTO `export_inventory` (`id`, `product_id`, `product_serial_id`, `lot_number`, `order_id`, `movement_type`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
+-- Product 1 (Máy cày): có serial number
+(1, 1, 1, NULL, 1, 'sale', 'Máy cày serial TC001-B001-001 bán cho khách hàng 1', 5, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
 
--- Insert Export Inventory (v9.0 structure - removed quantity, added product_serial_id for individual serial tracking)
--- Each export record now represents ONE specific product with its serial number
-INSERT INTO `export_inventory` (`id`, `product_id`, `product_serial_id`, `order_id`, `movement_type`, `notes`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 1, 'sale', 'Máy cày serial TC001-B001-001 bán cho khách hàng 1', 5, '2025-09-08 10:00:00', '2025-09-08 10:00:00'),
-(2, 3, 16, 2, 'sale', 'Hạt giống serial SD003-B003-001 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(3, 3, 17, 2, 'sale', 'Hạt giống serial SD003-B003-002 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(4, 3, 18, 2, 'sale', 'Hạt giống serial SD003-B003-003 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(5, 3, 19, 2, 'sale', 'Hạt giống serial SD003-B003-004 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(6, 3, 20, 2, 'sale', 'Hạt giống serial SD003-B003-005 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(7, 3, 21, 2, 'sale', 'Hạt giống serial SD003-B003-006 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(8, 3, 22, 2, 'sale', 'Hạt giống serial SD003-B003-007 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(9, 3, 23, 2, 'sale', 'Hạt giống serial SD003-B003-008 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(10, 3, 24, 2, 'sale', 'Hạt giống serial SD003-B003-009 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(11, 3, 25, 2, 'sale', 'Hạt giống serial SD003-B003-010 bán cho khách hàng 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(12, 4, 26, 2, 'sale', 'Phân bón serial FT004-B004-001 bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(13, 4, 27, 2, 'sale', 'Phân bón serial FT004-B004-002 bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(14, 4, 28, 2, 'sale', 'Phân bón serial FT004-B004-003 bán kèm hạt giống', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
-(15, 5, 29, 3, 'sale', 'Drone serial DR005-B005-001 cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
+-- Product 3 (Hạt giống): KHÔNG có serial, dùng lot_number
+(2, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 1', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(3, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(4, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 3', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(5, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 4', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(6, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 5', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(7, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 6', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(8, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 7', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(9, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 8', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(10, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 9', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(11, 3, NULL, 'LOT003', 2, 'sale', 'Hạt giống từ LOT003 - gói 10', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+
+-- Product 4 (Phân bón): KHÔNG có serial, dùng lot_number
+(12, 4, NULL, 'LOT004', 2, 'sale', 'Phân bón từ LOT004 - bao 1', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(13, 4, NULL, 'LOT004', 2, 'sale', 'Phân bón từ LOT004 - bao 2', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+(14, 4, NULL, 'LOT004', 2, 'sale', 'Phân bón từ LOT004 - bao 3', 6, '2025-09-09 09:00:00', '2025-09-09 09:00:00'),
+
+-- Product 5 (Drone): có serial number
+(15, 5, 16, NULL, 3, 'sale', 'Drone serial DR005-B005-001 cho nông dân 1', 5, '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
 -- Insert Product Reviews (v8.1 structure - removed images, use media_links table instead)
 INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `rating`, `comment`, `created_at`, `updated_at`) VALUES

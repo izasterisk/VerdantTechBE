@@ -24,8 +24,13 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
 
         builder.Property(e => e.ProductSerialId)
             .HasColumnType("bigint unsigned")
-            .IsRequired()
             .HasColumnName("product_serial_id");
+
+        builder.Property(e => e.LotNumber)
+            .HasMaxLength(100)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("lot_number");
 
         builder.Property(e => e.OrderId)
             .HasColumnType("bigint unsigned")
@@ -86,11 +91,6 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasForeignKey(d => d.CreatedBy)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Unique constraint on product_serial_id
-        builder.HasIndex(e => e.ProductSerialId)
-            .IsUnique()
-            .HasDatabaseName("unique_serial_export");
-
         // Indexes
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");
@@ -100,5 +100,8 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
 
         builder.HasIndex(e => e.ProductSerialId)
             .HasDatabaseName("idx_serial");
+
+        builder.HasIndex(e => e.LotNumber)
+            .HasDatabaseName("idx_lot");
     }
 }

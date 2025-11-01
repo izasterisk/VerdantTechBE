@@ -553,7 +553,7 @@ CREATE TABLE batch_inventory (
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi tồn kho nhập - hàng vào với thông tin nhận hàng chi tiết';
 
--- Quản lý số seri từng sản phẩm trong lô
+-- Quản lý số seri máy móc trong lô
 CREATE TABLE product_serials (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     batch_inventory_id BIGINT UNSIGNED NOT NULL,
@@ -573,7 +573,8 @@ CREATE TABLE product_serials (
 CREATE TABLE export_inventory (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT UNSIGNED NOT NULL,
-    product_serial_id BIGINT UNSIGNED NOT NULL COMMENT 'ID số seri sản phẩm được xuất',
+    product_serial_id BIGINT UNSIGNED NULL COMMENT 'ID số seri sản phẩm được xuất (cho máy móc/thiết bị)',
+    lot_number VARCHAR(100) NULL COMMENT 'Số lô sản xuất cho sản phẩm không có serial (phân bón, vật tư)',
     order_id BIGINT UNSIGNED NULL COMMENT 'Đơn hàng gây ra xuất kho',
     movement_type ENUM('sale', 'return to vendor', 'damage', 'loss', 'adjustment') DEFAULT 'sale',
     notes VARCHAR(500) NULL,
@@ -585,11 +586,11 @@ CREATE TABLE export_inventory (
     FOREIGN KEY (product_serial_id) REFERENCES product_serials(id) ON DELETE RESTRICT,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
-    UNIQUE KEY unique_serial_export (product_serial_id) COMMENT 'Mỗi serial chỉ xuất 1 lần',
     INDEX idx_product (product_id),
     INDEX idx_order (order_id),
-    INDEX idx_serial (product_serial_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi xuất kho từng sản phẩm với serial number cụ thể';
+    INDEX idx_serial (product_serial_id),
+    INDEX idx_lot (lot_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi xuất kho - hỗ trợ cả sản phẩm có serial (máy móc) và không có serial (phân bón)';
 
 -- =====================================================
 -- CÁC BẢNG QUẢN LÝ YÊU CẦU
@@ -714,9 +715,9 @@ CREATE TABLE cashouts (
 -- TỔNG QUAN THAY ĐỔI v9.0 (từ v8.1)
 -- =====================================================
 
--- I) QUẢN LÝ SỐ SERI SẢN PHẨM
+-- I) QUẢN LÝ SỐ SERI SẢN PHẨM (CHO MÁY MÓC/THIẾT BỊ)
 -- • Tạo bảng mới: product_serials
---   - Quản lý từng số seri cụ thể của sản phẩm trong lô hàng
+--   - Quản lý từng số seri cụ thể của sản phẩm máy móc trong lô hàng
 --   - Các trường: id, batch_inventory_id, product_id, serial_number (VARCHAR - hỗ trợ chữ và số)
 --   - Trạng thái: status ENUM('stock', 'sold', 'refund') - mặc định 'stock'
 --     + stock: Sản phẩm đang trong kho
@@ -725,30 +726,43 @@ CREATE TABLE cashouts (
 --   - UNIQUE constraint trên serial_number để đảm bảo không trùng lặp
 --   - Index: batch_inventory_id, product_id
 
--- II) CẢI TIẾN EXPORT_INVENTORY
+-- II) CẢI TIẾN EXPORT_INVENTORY (HỖ TRỢ CẢ MÁY MÓC VÀ PHÂN BÓN)
 -- • Xóa trường: quantity (không còn cần thiết)
--- • Thêm trường: product_serial_id (BIGINT UNSIGNED NOT NULL)
---   - Foreign key tham chiếu đến product_serials(id)
---   - UNIQUE constraint để đảm bảo mỗi serial chỉ xuất 1 lần
--- • Mỗi record export_inventory đại diện cho 1 sản phẩm cụ thể với serial number riêng
--- • Nếu bán 4 sản phẩm cùng loại → tạo 4 records export_inventory riêng biệt
+-- • Thay đổi: product_serial_id từ NOT NULL → NULL (linh hoạt)
+-- • Thêm trường mới: lot_number VARCHAR(100) NULL
+--   - Dùng cho sản phẩm không có serial (phân bón, vật tư)
+-- • Xóa UNIQUE constraint trên product_serial_id
+-- • Thêm INDEX cho lot_number
+-- • Logic validation (ở application layer):
+--   - Máy móc: có product_serial_id, lot_number = NULL
+--   - Phân bón: có lot_number, product_serial_id = NULL
+--   - Ít nhất 1 trong 2 phải có giá trị
 
 -- III) LOGIC HOẠT ĐỘNG
--- • Nhập hàng (batch_inventory):
---   - Tạo 1 record batch với quantity = 100
+-- A) Nhập hàng máy móc (có serial):
+--   - Tạo 1 record batch_inventory với quantity = 100
 --   - Tạo 100 records trong product_serials (status='stock')
--- • Xuất hàng (export_inventory):
---   - Với mỗi sản phẩm: tạo 1 record export_inventory với product_serial_id
+-- B) Nhập hàng phân bón (không có serial):
+--   - Chỉ tạo 1 record batch_inventory với quantity và lot_number
+--   - KHÔNG tạo records trong product_serials
+
+-- C) Xuất kho máy móc:
+--   - Tạo record export_inventory với product_serial_id
 --   - Cập nhật product_serials: status='sold'
--- • Hoàn trả:
---   - Cập nhật product_serials: status='refund'
---   - Record export_inventory giữ nguyên để audit trail
+-- D) Xuất kho phân bón:
+--   - Tạo record export_inventory với lot_number
+--   - Số lượng xuất được tracking qua số records có cùng lot_number
+
+-- E) Hoàn trả:
+--   - Máy móc: cập nhật product_serials status='refund'
+--   - Phân bón: tạo record mới với lot_number tương ứng
+--   - Export_inventory record giữ nguyên để audit trail
 
 -- IV) LỢI ÍCH
--- • Truy vết chính xác từng sản phẩm qua số seri
--- • Quản lý warranty và after-sales service theo serial number
--- • Audit trail đầy đủ: biết sản phẩm nào bán cho ai, khi nào
--- • Dễ dàng xử lý hoàn trả/bảo hành theo từng sản phẩm cụ thể
+-- • Linh hoạt quản lý cả sản phẩm có serial (máy móc) và không có serial (phân bón)
+-- • Truy vết chính xác từng máy móc qua số seri
+-- • Quản lý warranty và after-sales service theo serial number cho máy móc
+-- • Truy xuất nguồn gốc phân bón qua lot number (theo lô sản xuất)
+-- • Audit trail đầy đủ cho cả 2 loại sản phẩm
 -- • Hỗ trợ số seri dạng chữ và số (VD: SN-2024-ABC-12345)
--- • Phòng chống gian lận: mỗi serial chỉ xuất được 1 lần
--- • Quản lý trạng thái đơn giản hơn với ENUM thay vì nhiều boolean
+-- • Đơn giản hóa quản lý kho: không cần tạo serial cho từng bao phân bón

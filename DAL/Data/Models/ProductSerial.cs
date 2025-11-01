@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 namespace DAL.Data.Models;
 
 /// <summary>
-/// Quản lý số seri từng sản phẩm trong lô hàng
+/// Quản lý số seri từng sản phẩm máy móc/thiết bị trong lô hàng
 /// </summary>
 public partial class ProductSerial
 {
