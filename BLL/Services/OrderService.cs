@@ -165,6 +165,12 @@ public class OrderService : IOrderService
         OrderHelper.RemoveOrderPreviewFromCache(_memoryCache, orderPreviewId);
         return finalResponse;
     }
+
+    // public async Task<OrderResponseDTO> ShipOrderAsync(ulong staffId, ulong orderId, List<OrderDetailsShippingDTO> dto, CancellationToken cancellationToken = default)
+    // {
+    //     if(dto == null || dto.Count == 0)
+    //         throw new ArgumentNullException($"{nameof(dto)} rỗng.");
+    // }
     
     public async Task<OrderResponseDTO> ProcessOrderAsync(ulong staffId, ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
     {

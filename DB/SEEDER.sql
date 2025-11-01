@@ -24,7 +24,7 @@ INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone
 (3, 'staff2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Trần Thị Nhân Viên 2', '0901234569', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 07:00:00', NULL, NULL, '2025-09-22 08:00:00', '2025-09-22 07:00:00', NULL),
 (4, 'staff3@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Lê Văn Nhân Viên 3', '0901234570', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 06:30:00', NULL, NULL, '2025-09-22 08:30:00', '2025-09-22 06:30:00', NULL),
 -- Vendor users (NEW in v7)
-(5, 'vendor1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Thiết Bị Nông Nghiệp Xanh', '0901234571', 'MST123456789', 1, NULL, NULL, NULL, 'active', '2025-09-22 08:15:00', NULL, NULL, '2025-09-22 09:00:00', '2025-09-22 08:15:00', NULL),
+(5, 'vendor1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Máy Móc Nông Nghiệp Xanh', '0901234571', 'MST123456789', 1, NULL, NULL, NULL, 'active', '2025-09-22 08:15:00', NULL, NULL, '2025-09-22 09:00:00', '2025-09-22 08:15:00', NULL),
 (6, 'vendor2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Cửa Hàng Nông Sản Sạch VerdantTech', '0901234572', 'MST987654321', 1, NULL, NULL, NULL, 'active', '2025-09-22 08:10:00', NULL, NULL, '2025-09-22 09:30:00', '2025-09-22 08:10:00', NULL),
 -- Customer users
 (7, 'customer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Phạm Văn Khách Hàng 1', '0901234573', NULL, 1, NULL, NULL, NULL, 'active', '2025-09-22 08:15:00', NULL, NULL, '2025-09-22 09:00:00', '2025-09-22 08:15:00', NULL),
@@ -53,12 +53,12 @@ INSERT INTO `user_addresses` (`id`, `user_id`, `address_id`, `is_deleted`, `crea
 
 -- Insert Vendor Profiles (for vendor users)
 INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
-(1, 5, 'Công Ty Thiết Bị Nông Nghiệp Xanh', 'cong-ty-thiet-bi-nong-nghiep-xanh', 'BRN123456789', '2025-09-09 07:00:00', 1, '2025-09-08 08:00:00', '2025-09-09 07:00:00'),
+(1, 5, 'Công Ty Máy Móc Nông Nghiệp Xanh', 'cong-ty-may-moc-nong-nghiep-xanh', 'BRN123456789', '2025-09-09 07:00:00', 1, '2025-09-08 08:00:00', '2025-09-09 07:00:00'),
 (2, 6, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', '2025-09-09 06:30:00', 1, '2025-09-08 08:30:00', '2025-09-09 06:30:00');
 
 -- Insert Vendor Bank Accounts (v7.1 structure with direct bank_code and vendor_id referencing users table)
 INSERT INTO `vendor_bank_accounts` (`id`, `vendor_id`, `bank_code`, `account_number`, `account_holder`, `is_default`, `created_at`, `updated_at`) VALUES
-(1, 5, 'VCB', '1234567890', 'Công Ty Thiết Bị Nông Nghiệp Xanh', 1, '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
+(1, 5, 'VCB', '1234567890', 'Công Ty Máy Móc Nông Nghiệp Xanh', 1, '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
 (2, 6, 'ACB', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', 1, '2025-09-09 06:35:00', '2025-09-09 06:35:00');
 
 -- Insert Wallets (v7.1 structure - removed pending_withdraw, added last_transaction_id and last_updated_by)
@@ -86,26 +86,33 @@ INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`,
 (2, 10, 'Trang trại Hữu Cơ Long An', 8.25, 5, 'Rau củ, Trái cây, Thảo dược', 'Active', '2025-09-08 10:30:00', '2025-09-09 05:30:00'),
 (3, 9, 'Trang trại Thực nghiệm Mê Linh', 3.75, 9, 'Rau sạch, Hoa màu', 'Active', '2025-09-08 11:00:00', '2025-09-09 06:30:00');
 
--- Insert Product Categories
+-- Insert Product Categories 
+-- KHÔNG ĐƯỢC SỬA 3 CÁI ĐẦU TIÊN VÌ ĐÃ SET LOGIC CODE
 INSERT INTO `product_categories` (`id`, `parent_id`, `name`, `slug`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
 -- Parent Categories (Level 1)
-(1, NULL, 'Thiết Bị Nông Nghiệp', 'thiet-bi-nong-nghiep', 'Các loại máy móc và thiết bị phục vụ sản xuất nông nghiệp', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(2, NULL, 'Hạt Giống', 'hat-giong', 'Hạt giống chất lượng cao', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(3, NULL, 'Phân Bón', 'phan-bon', 'Phân bón hữu cơ và hóa học', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
--- Child Categories (Level 2)
-(4, 1, 'Máy Cày', 'may-cay', 'Máy cày và thiết bị làm đất', 1, '2025-09-08 07:05:00', '2025-09-08 07:05:00'),
-(5, 1, 'Máy Gặt', 'may-gat', 'Máy gặt và thu hoạch', 1, '2025-09-08 07:10:00', '2025-09-08 07:10:00'),
-(6, 1, 'Máy Bay Nông Nghiệp', 'may-bay-nong-nghiep', 'Drone và thiết bị bay phục vụ nông nghiệp', 1, '2025-09-08 07:15:00', '2025-09-08 07:15:00'),
-(7, 2, 'Hạt Giống Rau', 'hat-giong-rau', 'Hạt giống rau củ hữu cơ', 1, '2025-09-08 07:20:00', '2025-09-08 07:20:00'),
-(8, 3, 'Phân Bón Hữu Cơ', 'phan-bon-huu-co', 'Phân bón hữu cơ từ thiên nhiên', 1, '2025-09-08 07:25:00', '2025-09-08 07:25:00');
+(1, NULL, 'Thiết Bị Nông Nghiệp', 'thiet-bi-nong-nghiep', 'Các loại dụng cụ và công cụ nhỏ phục vụ nông nghiệp như cuốc, xẻng, máy cắt cỏ cầm tay', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(2, NULL, 'Máy Móc Nông Nghiệp', 'may-moc-nong-nghiep', 'Các loại máy móc hạng nặng phục vụ sản xuất nông nghiệp', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(3, NULL, 'Hạt Giống', 'hat-giong', 'Hạt giống chất lượng cao', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(4, NULL, 'Phân Bón', 'phan-bon', 'Phân bón hữu cơ và hóa học', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+-- Child Categories (Level 2) - Thiết Bị Nông Nghiệp
+(5, 1, 'Dụng Cụ Cầm Tay', 'dung-cu-cam-tay', 'Cuốc, xẻng, và các dụng cụ cầm tay khác', 1, '2025-09-08 07:05:00', '2025-09-08 07:05:00'),
+(6, 1, 'Máy Cắt Cỏ Cầm Tay', 'may-cat-co-cam-tay', 'Máy cắt cỏ cầm tay và thiết bị chăm sóc cỏ', 1, '2025-09-08 07:06:00', '2025-09-08 07:06:00'),
+-- Child Categories (Level 2) - Máy Móc Nông Nghiệp
+(7, 2, 'Máy Cày', 'may-cay', 'Máy cày và thiết bị làm đất', 1, '2025-09-08 07:10:00', '2025-09-08 07:10:00'),
+(8, 2, 'Máy Gặt', 'may-gat', 'Máy gặt và thu hoạch', 1, '2025-09-08 07:15:00', '2025-09-08 07:15:00'),
+(9, 2, 'Máy Bay Nông Nghiệp', 'may-bay-nong-nghiep', 'Drone và thiết bị bay phục vụ nông nghiệp', 1, '2025-09-08 07:20:00', '2025-09-08 07:20:00'),
+-- Child Categories (Level 2) - Hạt Giống
+(10, 3, 'Hạt Giống Rau', 'hat-giong-rau', 'Hạt giống rau củ hữu cơ', 1, '2025-09-08 07:25:00', '2025-09-08 07:25:00'),
+-- Child Categories (Level 2) - Phân Bón
+(11, 4, 'Phân Bón Hữu Cơ', 'phan-bon-huu-co', 'Phân bón hữu cơ từ thiên nhiên', 1, '2025-09-08 07:30:00', '2025-09-08 07:30:00');
 
 -- Insert Products (v8.1 structure - removed images, added public_url, use media_links table for images)
 INSERT INTO `products` (`id`, `category_id`, `vendor_id`, `product_code`, `product_name`, `slug`, `description`, `unit_price`, `commission_rate`, `discount_percentage`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `public_url`, `warranty_months`, `stock_quantity`, `weight_kg`, `dimensions_cm`, `is_active`, `for_rent`, `view_count`, `sold_count`, `rating_average`, `created_at`, `updated_at`) VALUES
-(1, 4, 5, 'TC001', 'Máy Cày Mini Điện VerdantTech V1', 'may-cay-mini-dien-verdanttech-v1', 'Máy cày mini sử dụng năng lượng điện, thân thiện với môi trường, phù hợp cho nông trại nhỏ.', 1000.00, 10.00, 5.00, 5, '{"power": "10kW", "battery": "48V 100Ah"}', 'manual_tc001.pdf', NULL, 24, 50, 500.000, '{"length": 250, "width": 120, "height": 150}', 1, 1, 120, 5, 4.60, '2025-09-08 07:00:00', '2025-09-09 07:00:00'),
-(2, 5, 5, 'HV002', 'Máy Gặt Lúa Tự Động VerdantTech H2', 'may-gat-lua-tu-dong-verdanttech-h2', 'Máy gặt lúa tự động với công nghệ AI, tiết kiệm thời gian và công sức.', 1000.00, 8.00, 5.00, 4, '{"engine": "Diesel 50HP", "capacity": "2 tons/hour"}', 'manual_hv002.pdf', NULL, 36, 10, 2500.000, '{"length": 450, "width": 200, "height": 250}', 1, 1, 85, 3, 4.80, '2025-09-08 07:15:00', '2025-09-09 07:15:00'),
-(3, 7, 6, 'SD003', 'Hạt Giống Rau Cải Xanh Hữu Cơ', 'hat-giong-rau-cai-xanh-huu-co', 'Hạt giống rau cải xanh hữu cơ, tỷ lệ nảy mầm cao, kháng bệnh tốt.', 1000.00, 5.00, 5.00, NULL, '{"germination_rate": "95%", "pack_size": "100g"}', 'manual_sd003.pdf', NULL, 0, 200, 0.100, '{"length": 10, "width": 5, "height": 2}', 1, 0, 200, 50, 4.50, '2025-09-08 07:30:00', '2025-09-09 07:30:00'),
-(4, 8, 6, 'FT004', 'Phân Bón Hữu Cơ Compost Premium', 'phan-bon-huu-co-compost-premium', 'Phân bón hữu cơ từ compost, giàu dinh dưỡng, an toàn cho đất và cây trồng.', 1000.00, 7.00, 5.00, NULL, '{"npk": "5-5-5", "weight": "25kg"}', 'manual_ft004.pdf', NULL, 0, 100, 25.000, '{"length": 50, "width": 30, "height": 10}', 1, 0, 150, 20, 4.70, '2025-09-08 07:45:00', '2025-09-09 07:45:00'),
-(5, 6, 5, 'DR005', 'Drone Phun Thuốc Thông Minh VerdantTech D3', 'drone-phun-thuoc-thong-minh-verdanttech-d3', 'Drone phun thuốc tự động với AI, chính xác cao, tiết kiệm thuốc.', 1000.00, 12.00, 5.00, 3, '{"flight_time": "30min", "capacity": "10L"}', 'manual_dr005.pdf', NULL, 12, 15, 5.000, '{"length": 100, "width": 100, "height": 50}', 1, 1, 90, 7, 4.40, '2025-09-08 08:00:00', '2025-09-09 08:00:00');
+(1, 7, 5, 'TC001', 'Máy Cày Mini Điện VerdantTech V1', 'may-cay-mini-dien-verdanttech-v1', 'Máy cày mini sử dụng năng lượng điện, thân thiện với môi trường, phù hợp cho nông trại nhỏ.', 1000.00, 10.00, 5.00, 5, '{"power": "10kW", "battery": "48V 100Ah"}', 'manual_tc001.pdf', NULL, 24, 50, 500.000, '{"length": 250, "width": 120, "height": 150}', 1, 1, 120, 5, 4.60, '2025-09-08 07:00:00', '2025-09-09 07:00:00'),
+(2, 8, 5, 'HV002', 'Máy Gặt Lúa Tự Động VerdantTech H2', 'may-gat-lua-tu-dong-verdanttech-h2', 'Máy gặt lúa tự động với công nghệ AI, tiết kiệm thời gian và công sức.', 1000.00, 8.00, 5.00, 4, '{"engine": "Diesel 50HP", "capacity": "2 tons/hour"}', 'manual_hv002.pdf', NULL, 36, 10, 2500.000, '{"length": 450, "width": 200, "height": 250}', 1, 1, 85, 3, 4.80, '2025-09-08 07:15:00', '2025-09-09 07:15:00'),
+(3, 10, 6, 'SD003', 'Hạt Giống Rau Cải Xanh Hữu Cơ', 'hat-giong-rau-cai-xanh-huu-co', 'Hạt giống rau cải xanh hữu cơ, tỷ lệ nảy mầm cao, kháng bệnh tốt.', 1000.00, 5.00, 5.00, NULL, '{"germination_rate": "95%", "pack_size": "100g"}', 'manual_sd003.pdf', NULL, 0, 200, 0.100, '{"length": 10, "width": 5, "height": 2}', 1, 0, 200, 50, 4.50, '2025-09-08 07:30:00', '2025-09-09 07:30:00'),
+(4, 11, 6, 'FT004', 'Phân Bón Hữu Cơ Compost Premium', 'phan-bon-huu-co-compost-premium', 'Phân bón hữu cơ từ compost, giàu dinh dưỡng, an toàn cho đất và cây trồng.', 1000.00, 7.00, 5.00, NULL, '{"npk": "5-5-5", "weight": "25kg"}', 'manual_ft004.pdf', NULL, 0, 100, 25.000, '{"length": 50, "width": 30, "height": 10}', 1, 0, 150, 20, 4.70, '2025-09-08 07:45:00', '2025-09-09 07:45:00'),
+(5, 9, 5, 'DR005', 'Drone Phun Thuốc Thông Minh VerdantTech D3', 'drone-phun-thuoc-thong-minh-verdanttech-d3', 'Drone phun thuốc tự động với AI, chính xác cao, tiết kiệm thuốc.', 1000.00, 12.00, 5.00, 3, '{"flight_time": "30min", "capacity": "10L"}', 'manual_dr005.pdf', NULL, 12, 15, 5.000, '{"length": 100, "width": 100, "height": 50}', 1, 1, 90, 7, 4.40, '2025-09-08 08:00:00', '2025-09-09 08:00:00');
 
 -- Insert Product Certificates (v8.1 structure - removed media fields, use media_links table instead)
 INSERT INTO `product_certificates` (`id`, `product_id`, `certification_code`, `certification_name`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
@@ -183,7 +190,7 @@ INSERT INTO `cart_items` (`id`, `cart_id`, `product_id`, `quantity`, `created_at
 -- Insert Forum Categories
 INSERT INTO `forum_categories` (`id`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'Kỹ Thuật Canh Tác', 'Thảo luận về các phương pháp canh tác bền vững và hữu cơ', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
-(2, 'Thiết Bị Nông Nghiệp', 'Chia sẻ kinh nghiệm sử dụng máy móc và thiết bị nông nghiệp xanh', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
+(2, 'Máy Móc & Thiết Bị Nông Nghiệp', 'Chia sẻ kinh nghiệm sử dụng máy móc hạng nặng và thiết bị nông nghiệp', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00'),
 (3, 'Phòng Trừ Sâu Bệnh', 'Các biện pháp phòng trừ sâu bệnh thân thiện với môi trường', 1, '2025-09-08 07:00:00', '2025-09-08 07:00:00');
 
 -- Insert Forum Posts (v7.1 structure - changed category_id to forum_category_id, removed last_activity_at column)

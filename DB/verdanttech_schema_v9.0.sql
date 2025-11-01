@@ -401,6 +401,42 @@ CREATE TABLE product_certificates (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do sản phẩm gắn kết để xác minh';
 
+-- Đánh giá và xếp hạng
+CREATE TABLE product_reviews (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT UNSIGNED NOT NULL,
+    order_id BIGINT UNSIGNED NOT NULL,
+    customer_id BIGINT UNSIGNED NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
+    UNIQUE KEY unique_product_order_customer (product_id, order_id, customer_id),
+    INDEX idx_product (product_id),
+    INDEX idx_customer (customer_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đánh giá và xếp hạng sản phẩm';
+
+-- Bảng quản lý media tập trung
+CREATE TABLE media_links (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts') NOT NULL,
+    owner_id BIGINT UNSIGNED NOT NULL,
+    image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
+    image_public_id VARCHAR(512) NOT NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
+    purpose ENUM('front', 'back', 'none') DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
+    sort_order INT NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_owner (owner_type, owner_id),
+    INDEX idx_owner_type (owner_type),
+    INDEX idx_owner_id (owner_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng quản lý media tập trung cho tất cả các thực thể';
+
 -- =========================
 -- Cart, Orders & payments
 -- =========================
@@ -483,42 +519,6 @@ CREATE TABLE order_details (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     INDEX idx_order (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các mục trong đơn hàng';
-
--- Đánh giá và xếp hạng
-CREATE TABLE product_reviews (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    product_id BIGINT UNSIGNED NOT NULL,
-    order_id BIGINT UNSIGNED NOT NULL,
-    customer_id BIGINT UNSIGNED NOT NULL,
-    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    comment TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
-    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
-    UNIQUE KEY unique_product_order_customer (product_id, order_id, customer_id),
-    INDEX idx_product (product_id),
-    INDEX idx_customer (customer_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đánh giá và xếp hạng sản phẩm';
-
--- Bảng quản lý media tập trung
-CREATE TABLE media_links (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts') NOT NULL,
-    owner_id BIGINT UNSIGNED NOT NULL,
-    image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
-    image_public_id VARCHAR(512) NOT NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
-    purpose ENUM('front', 'back', 'none') DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
-    sort_order INT NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    INDEX idx_owner (owner_type, owner_id),
-    INDEX idx_owner_type (owner_type),
-    INDEX idx_owner_id (owner_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng quản lý media tập trung cho tất cả các thực thể';
 
 -- =========================
 -- INVENTORY

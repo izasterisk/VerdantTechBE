@@ -49,15 +49,28 @@ namespace DAL.Repository
 
             return await _productCategoryRepository.AnyAsync(pc => pc.Name.ToUpper() == upperName, cancellationToken);
         }
-        
-        public async Task<bool> IsParentIdExistsAsync(ulong parentId, CancellationToken cancellationToken = default)
-        {
-            return await _productCategoryRepository.AnyAsync(pc => pc.Id == parentId, cancellationToken);
-        }
 
-        public async Task<bool> IsCategoryAlreadyAFatherAsync(ulong id, CancellationToken cancellationToken = default)
+        public async Task<bool> IsCategoryHasMoreThan2FatherAsync(ulong parentId, CancellationToken cancellationToken = default)
         {
-            return await _productCategoryRepository.AnyAsync(pc => pc.ParentId == id, cancellationToken);
+            int level = 0;
+            while (true)
+            {
+                level++;
+                if (level >= 3)
+                {
+                    return true;
+                }
+                var temp = await _productCategoryRepository.GetAsync(pc => pc.Id == parentId, true, cancellationToken);
+                if (temp == null || temp.IsActive == false)
+                {
+                    return true;
+                }
+                if (temp.ParentId == null)
+                {
+                    return false;
+                }
+                parentId = temp.ParentId.Value;
+            }
         }
     }
 }

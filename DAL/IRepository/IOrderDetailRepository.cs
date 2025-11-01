@@ -5,9 +5,6 @@ namespace DAL.IRepository;
 public interface IOrderDetailRepository
 {
     Task<OrderDetail> CreateOrderDetailAsync(OrderDetail orderDetail);
-    Task<OrderDetail> UpdateOrderDetailAsync(OrderDetail orderDetail);
-    Task<bool> DeleteOrderDetailAsync(OrderDetail orderDetail);
-    Task<OrderDetail?> GetOrderDetailByIdAsync(ulong orderDetailId, CancellationToken cancellationToken = default);
-    Task<bool> HasNoOrderDetailLeftAsync(ulong orderId, CancellationToken cancellationToken = default);
-    Task<bool> ValidateProductAlreadyExistsInOrderAsync(ulong orderId, ulong productId, CancellationToken cancellationToken = default);
+    Task<ulong> GetRootProductCategoryIdByProductIdAsync(ulong id, CancellationToken cancellationToken = default);
+
 }

@@ -34,4 +34,9 @@ public class ExportInventoryRepository : IExportInventoryRepository
             throw;
         }
     }
+    
+    public async Task<ExportInventory?> GetExportInventoryByIdAsync(ulong id, CancellationToken cancellationToken = default)
+    {
+        return await _exportInventoryRepository.GetAsync(e => e.Id == id, true, cancellationToken);
+    }
 }
