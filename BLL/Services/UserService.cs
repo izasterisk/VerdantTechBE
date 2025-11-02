@@ -72,7 +72,7 @@ public class UserService : IUserService
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         
-        var existingUser = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+        var existingUser = await _userRepository.GetUserWithAddressesByIdAsync(userId, cancellationToken);
         if (existingUser == null)
         {
             throw new Exception($"User with ID {userId} not found.");
@@ -96,14 +96,14 @@ public class UserService : IUserService
     public async Task<UserResponseDTO> CreateUserAddressAsync(ulong userId, UserAddressCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
-        var existingUser = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+        var existingUser = await _userRepository.GetUserWithAddressesByIdAsync(userId, cancellationToken);
         if (existingUser == null)
         {
             throw new Exception($"User with ID {userId} not found.");
         }
         Address address = _mapper.Map<Address>(dto);
         await _addressRepository.CreateUserAddressAsync(existingUser.Id, address, cancellationToken);
-        var updatedUser = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+        var updatedUser = await _userRepository.GetUserWithAddressesByIdAsync(userId, cancellationToken);
         return _mapper.Map<UserResponseDTO>(updatedUser);
     }
     
@@ -126,13 +126,13 @@ public class UserService : IUserService
         _mapper.Map(dto, existingUserAddress);
         var updatedUserAddress = await _addressRepository.UpdateUserAddressAsync(existingUserAddress, existingAddress, cancellationToken);
         
-        var user = await _userRepository.GetUserByIdAsync(updatedUserAddress.UserId, cancellationToken);
+        var user = await _userRepository.GetUserWithAddressesByIdAsync(updatedUserAddress.UserId, cancellationToken);
         return _mapper.Map<UserResponseDTO>(user);
     }
 
     public async Task<UserResponseDTO> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
+        var user = await _userRepository.GetUserWithAddressesByIdAsync(userId, cancellationToken);
         if (user == null)
         {
             throw new Exception($"Người dùng với ID {userId} không tồn tại.");

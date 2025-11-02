@@ -1,5 +1,7 @@
-﻿using DAL.Data.Models;
+﻿using System.Data;
+using DAL.Data.Models;
 using DAL.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repository;
 
@@ -9,17 +11,19 @@ public class OrderDetailRepository : IOrderDetailRepository
     private readonly IRepository<ProductSerial> _productSerialRepository;
     private readonly IRepository<ProductCategory> _productCategoryRepository;
     private readonly IRepository<Product> _productRepository;
+    private readonly IRepository<BatchInventory> _batchInventoryRepository;
     
-    public OrderDetailRepository(
-        IRepository<OrderDetail> orderDetailRepository,
+    public OrderDetailRepository(IRepository<OrderDetail> orderDetailRepository,
         IRepository<ProductSerial> productSerialRepository,
         IRepository<ProductCategory> productCategoryRepository,
-        IRepository<Product> productRepository)
+        IRepository<Product> productRepository,
+        IRepository<BatchInventory> batchInventoryRepository)
     {
         _orderDetailRepository = orderDetailRepository;
         _productSerialRepository = productSerialRepository;
         _productCategoryRepository = productCategoryRepository;
         _productRepository = productRepository;
+        _batchInventoryRepository = batchInventoryRepository;
     }
     
     public async Task<OrderDetail> CreateOrderDetailAsync(OrderDetail orderDetail)
@@ -48,5 +52,40 @@ public class OrderDetailRepository : IOrderDetailRepository
                 return category.Id;
             categoryId = category.ParentId.Value;
         }
+    }
+    
+    public async Task<ulong?> ValidateIdentifyNumberAsync(ulong productId, string? serialNumber, string? lotNumber, CancellationToken cancellationToken = default)
+    {
+        var product = await _productRepository.AnyAsync(p => p.Id == productId, cancellationToken);
+        if (product == false)
+            throw new KeyNotFoundException("Sản phẩm không tồn tại.");
+        var rootCategoryId = await GetRootProductCategoryIdByProductIdAsync(productId, cancellationToken);
+        if (rootCategoryId == 1)
+        {
+            if (serialNumber == null)
+                throw new InvalidExpressionException("Với danh mục máy móc bắt buộc phải có số sê-ri.");
+            var serial = await _productSerialRepository.GetWithRelationsAsync(
+                ps => ps.ProductId == productId && ps.SerialNumber.ToUpper() == serialNumber.ToUpper(),
+                true, 
+                query => query.Include(u => u.BatchInventory),
+                cancellationToken);
+            if(serial == null)
+                throw new KeyNotFoundException("Số sê-ri không tồn tại trong hệ thống hoặc số sê-ri không phải của sản phẩm này.");
+            if(lotNumber != null && serial.BatchInventory.LotNumber.ToUpper() != lotNumber.ToUpper())
+                throw new InvalidExpressionException($"Số lô nhận vào không đúng với số lô có trong hệ thống cho sản phẩm ID {productId}, số sê-ri {serialNumber}.");
+            return serial.Id;
+        }
+        if (rootCategoryId is 2 or 3 or 4)
+        {
+            if(lotNumber == null)
+                throw new InvalidExpressionException("Với danh mục vật tư bắt buộc phải có số lô.");
+            if (await _batchInventoryRepository.AnyAsync(bi => bi.ProductId == productId && bi.LotNumber.ToUpper() == lotNumber.ToUpper(), cancellationToken) == false)
+                throw new KeyNotFoundException("Số lô không tồn tại trong hệ thống hoặc số lô không phải của sản phẩm này.");
+        }
+        else
+        {
+            throw new KeyNotFoundException("Không thể xác định danh mục sản phẩm, vui lòng liên hệ Admin.");
+        }
+        return null;
     }
 }

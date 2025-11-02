@@ -98,6 +98,7 @@ builder.Services.AddScoped<IRepository<ExportInventory>, Repository<ExportInvent
 builder.Services.AddScoped<IRepository<Payment>, Repository<Payment>>();
 builder.Services.AddScoped<IRepository<Transaction>, Repository<Transaction>>();
 builder.Services.AddScoped<IRepository<ProductSerial>, Repository<ProductSerial>>();
+builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
