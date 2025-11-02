@@ -37,7 +37,7 @@ public class OrderService : IOrderService
         _memoryCache = memoryCache;
         _userService = userService;
         _exportInventoryRepository = exportInventoryRepository;
-        userRepository = userRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
@@ -163,7 +163,7 @@ public class OrderService : IOrderService
         }
         
         finalResponse.Customer = _mapper.Map<UserResponseDTO>(user);
-        finalResponse.Customer.Address.Insert(0, orderPreview.Address);
+        finalResponse.Customer.UserAddresses.Insert(0, orderPreview.Address);
         OrderHelper.RemoveOrderPreviewFromCache(_memoryCache, orderPreviewId);
         return finalResponse;
     }
@@ -209,10 +209,10 @@ public class OrderService : IOrderService
         
         var from = await _userService.GetUserByIdAsync(1, cancellationToken);
         var to = _mapper.Map<UserResponseDTO>(await _userRepository.GetUserByIdAsync(order.CustomerId, cancellationToken));
-        var targetAddress = _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken);
+        var targetAddress = await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken);
         if (targetAddress == null)
             throw new KeyNotFoundException("Địa chỉ không còn tồn tại.");
-        to.Address.Insert(0, _mapper.Map<AddressResponseDTO>(targetAddress)); // Đưa địa chỉ này lên đầu tiên
+        to.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(targetAddress)); // Đưa địa chỉ này lên đầu tiên
         
         int payer = 1; int codAmount = 0;
         if (order.OrderPaymentMethod == OrderPaymentMethod.COD)
@@ -225,8 +225,8 @@ public class OrderService : IOrderService
             order.CourierId, order.Notes ?? "" , cancellationToken);
         order.Status = OrderStatus.Shipped;
         
-        await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
         await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(exportInventories, cancellationToken);
+        await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
         
         var finalResponse = _mapper.Map<OrderResponseDTO>(order);
         if (finalResponse.OrderDetails != null)
@@ -237,7 +237,7 @@ public class OrderService : IOrderService
             }
         }
         finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(order.CustomerId, cancellationToken));
-        finalResponse.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken)));
+        finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken)));
         return finalResponse;
     }
     
@@ -290,7 +290,7 @@ public class OrderService : IOrderService
             }
         }
         finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(response.CustomerId, cancellationToken));
-        finalResponse.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken)));
+        finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken)));
         return finalResponse;
     }
     
@@ -308,7 +308,7 @@ public class OrderService : IOrderService
             }
         }
         item.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetUserByIdAsync(orderEntity.CustomerId, cancellationToken));
-        item.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(orderEntity.AddressId, cancellationToken)));
+        item.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(orderEntity.AddressId, cancellationToken)));
         return item;
     }
     
@@ -327,7 +327,7 @@ public class OrderService : IOrderService
                     product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
                 }
             }
-            item.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(orderEntity.Address));
+            item.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(orderEntity.Address));
             response.Add(item);
         }
         

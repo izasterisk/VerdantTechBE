@@ -103,7 +103,7 @@ public class OrderController : BaseController
     [HttpPut("{orderId:long}")]
     [Authorize(Roles = "Admin, Staff")]
     [EndpointSummary("Process Order")]
-    [EndpointDescription("Cập nhật trạng thái đơn hàng: Paid, Processing, Shipped, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
+    [EndpointDescription("Cập nhật trạng thái đơn hàng: Paid, Processing, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
     public async Task<ActionResult<APIResponse>> ProcessOrder([FromRoute] ulong orderId, [FromBody] OrderUpdateDTO dto)
     {
         var validationResult = ValidateModel();

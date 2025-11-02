@@ -35,5 +35,5 @@ public class UserResponseDTO
     public DateTime? DeletedAt { get; set; }
 
     // Danh sách địa chỉ của người dùng
-    public List<AddressResponseDTO> Address { get; set; } = new List<AddressResponseDTO>();
+    public List<AddressResponseDTO> UserAddresses { get; set; } = new List<AddressResponseDTO>();
 }

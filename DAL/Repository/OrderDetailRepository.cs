@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
@@ -69,8 +70,8 @@ public class OrderDetailRepository : IOrderDetailRepository
                 true, 
                 query => query.Include(u => u.BatchInventory),
                 cancellationToken);
-            if(serial == null)
-                throw new KeyNotFoundException("Số sê-ri không tồn tại trong hệ thống hoặc số sê-ri không phải của sản phẩm này.");
+            if(serial == null || serial.Status == ProductSerialStatus.Sold)
+                throw new KeyNotFoundException("Sản phẩm với số sê-ri này đã được bán hoặc số sê-ri không tồn tại trong hệ thống hoặc số sê-ri không phải của sản phẩm này.");
             if(lotNumber != null && serial.BatchInventory.LotNumber.ToUpper() != lotNumber.ToUpper())
                 throw new InvalidExpressionException($"Số lô nhận vào không đúng với số lô có trong hệ thống cho sản phẩm ID {productId}, số sê-ri {serialNumber}.");
             return serial.Id;
