@@ -18,11 +18,13 @@ public partial class BatchInventory
 
     public ulong? VendorId { get; set; }
 
+    [Required]
     [StringLength(100)]
-    public string? BatchNumber { get; set; }
+    public string BatchNumber { get; set; } = null!;
 
+    [Required]
     [StringLength(100)]
-    public string? LotNumber { get; set; }
+    public string LotNumber { get; set; } = null!;
 
     public int Quantity { get; set; }
 

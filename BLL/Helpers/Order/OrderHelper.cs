@@ -13,7 +13,7 @@ public class OrderHelper
     {
         [OrderStatus.Pending] = new() { OrderStatus.Paid, OrderStatus.Cancelled, OrderStatus.Processing },
         [OrderStatus.Paid] = new() { OrderStatus.Cancelled, OrderStatus.Processing },
-        [OrderStatus.Processing] = new() { OrderStatus.Cancelled, OrderStatus.Shipped },
+        [OrderStatus.Processing] = new() { OrderStatus.Cancelled },
         [OrderStatus.Shipped] = new() { OrderStatus.Delivered, OrderStatus.Cancelled },
         [OrderStatus.Delivered] = new() { OrderStatus.Cancelled, OrderStatus.Refunded },
         [OrderStatus.Cancelled] = new() { OrderStatus.Refunded },

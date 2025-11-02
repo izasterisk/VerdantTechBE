@@ -68,6 +68,33 @@ public class OrderController : BaseController
     }
 
     /// <summary>
+    /// Xuất kho và gán số serial/số lô cho sản phẩm trong đơn hàng trước khi ship
+    /// </summary>
+    /// <param name="orderId">ID của đơn hàng</param>
+    /// <param name="dtos">Danh sách sản phẩm với số serial hoặc số lô</param>
+    /// <returns>Thông tin đơn hàng sau khi xuất kho</returns>
+    [HttpPost("{orderId:long}/ship")]
+    [Authorize(Roles = "Admin, Staff")]
+    [EndpointSummary("Ship Order")]
+    [EndpointDescription("Gửi sản phẩm đi, nếu là máy móc category ID = 1 thì chỉ cần nhập số seri, tất cả các loại khác (category ID != 1) thì chỉ cần nhập số lô không cần seri.")]
+    public async Task<ActionResult<APIResponse>> ShipOrder([FromRoute] ulong orderId, [FromBody] List<OrderDetailsShippingDTO> dtos)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var staffId = GetCurrentUserId();
+            var order = await _orderService.ShipOrderAsync(staffId, orderId, dtos, GetCancellationToken());
+            return SuccessResponse(order, HttpStatusCode.OK);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Cập nhật trạng thái đơn hàng hoặc hủy đơn hàng
     /// </summary>
     /// <param name="orderId">ID của đơn hàng</param>
@@ -76,7 +103,7 @@ public class OrderController : BaseController
     [HttpPut("{orderId:long}")]
     [Authorize(Roles = "Admin, Staff")]
     [EndpointSummary("Process Order")]
-    [EndpointDescription("Cập nhật trạng thái đơn hàng: Paid, Processing, Shipped, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
+    [EndpointDescription("Cập nhật trạng thái đơn hàng: Paid, Processing, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
     public async Task<ActionResult<APIResponse>> ProcessOrder([FromRoute] ulong orderId, [FromBody] OrderUpdateDTO dto)
     {
         var validationResult = ValidateModel();
