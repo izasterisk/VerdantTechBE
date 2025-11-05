@@ -60,6 +60,12 @@ namespace BLL.DTO.ProductRegistration
         [Required(ErrorMessage = "Kích thước sản phẩm là bắt buộc")]
         public required DimensionsDTO DimensionsCm { get; set; }
 
+        [Required, StringLength(50)]
+        public string CertificationCode { get; set; } = null!;
+
+        [Required, StringLength(255)]
+        public string CertificationName { get; set; } = null!;
+
         //// Manual lưu ở field riêng, controller set sau khi upload
         //[JsonIgnore] 
         ////[BindNever] [SwaggerSchema(ReadOnly = true)]

@@ -1,4 +1,5 @@
 ﻿using BLL.DTO.MediaLink;
+using BLL.DTO.ProductCertificate;
 using DAL.Data;
 using System;
 using System.Collections.Generic;
@@ -55,6 +56,10 @@ namespace BLL.DTO.ProductRegistration
 
         // Trả media ra dạng list
         public List<MediaLinkItemDTO> ProductImages { get; set; } = new();
+
+        public string? CertificationCode { get; set; }
+        public string? CertificationName { get; set; }
+        public List<ProductCertificateResponseDTO> Certificates { get; set; } = new();
         public List<MediaLinkItemDTO> CertificateFiles { get; set; }  = new();
 
     }
