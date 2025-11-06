@@ -23,8 +23,6 @@ public partial class VendorBankAccount
     [StringLength(255)]
     public string AccountHolder { get; set; } = null!;
 
-    public bool IsDefault { get; set; } = false;
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

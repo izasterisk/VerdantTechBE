@@ -1,4 +1,5 @@
-﻿using Net.payOS.Types;
+﻿using BLL.DTO.Payment;
+using Net.payOS.Types;
 
 namespace BLL.Interfaces.Infrastructure;
 
@@ -28,4 +29,9 @@ public interface IPayOSApiClient
     /// Confirm webhook URL với PayOS
     /// </summary>
     Task ConfirmWebhookAsync(string webhookUrl);
+
+    /// <summary>
+    /// Lấy danh sách tất cả các ngân hàng được hỗ trợ từ VietQR API
+    /// </summary>
+    Task<List<BankInfoDTO>> GetAllSupportedBanksAsync(CancellationToken cancellationToken = default);
 }

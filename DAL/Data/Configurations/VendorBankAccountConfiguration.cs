@@ -42,10 +42,6 @@ public class VendorBankAccountConfiguration : IEntityTypeConfiguration<VendorBan
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("account_holder");
 
-        builder.Property(e => e.IsDefault)
-            .HasDefaultValue(false)
-            .HasColumnName("is_default");
-
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -67,7 +63,6 @@ public class VendorBankAccountConfiguration : IEntityTypeConfiguration<VendorBan
             .HasDatabaseName("unique_vendor_bank_account");
 
         builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
-        builder.HasIndex(e => new { e.VendorId, e.IsDefault }).HasDatabaseName("idx_vendor_default");
     }
 }
 
