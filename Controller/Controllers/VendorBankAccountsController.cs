@@ -76,17 +76,17 @@ public class VendorBankAccountsController : BaseController
     /// <summary>
     /// Lấy danh sách tất cả tài khoản ngân hàng của vendor
     /// </summary>
-    /// <param name="vendorId">ID của vendor</param>
+    /// <param name="userId">ID của vendor</param>
     /// <returns>Danh sách tài khoản ngân hàng</returns>
-    [HttpGet("vendor/{vendorId}")]
+    [HttpGet("vendor/{userId}")]
     [Authorize(Roles = "Vendor,Admin,Staff")]
     [EndpointSummary("Get All Vendor Bank Accounts")]
     [EndpointDescription("Lấy danh sách tất cả tài khoản ngân hàng của vendor theo ID. Vendor, Admin và Staff có quyền truy cập.")]
-    public async Task<ActionResult<APIResponse>> GetAllVendorBankAccountsByVendorId(ulong vendorId)
+    public async Task<ActionResult<APIResponse>> GetAllVendorBankAccountsByVendorId(ulong userId)
     {
         try
         {
-            var accounts = await _vendorBankAccountsService.GetAllVendorBankAccountsByVendorIdAsync(vendorId, GetCancellationToken());
+            var accounts = await _vendorBankAccountsService.GetAllVendorBankAccountsByVendorIdAsync(userId, GetCancellationToken());
             return SuccessResponse(accounts);
         }
         catch (Exception ex)
