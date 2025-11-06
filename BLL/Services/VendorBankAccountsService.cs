@@ -1,5 +1,7 @@
-﻿using AutoMapper;
+﻿using System.Data;
+using AutoMapper;
 using BLL.DTO.VendorBankAccount;
+using BLL.Helpers.VendorBankAccounts;
 using BLL.Interfaces;
 using DAL.Data;
 using DAL.Data.Models;
@@ -26,7 +28,8 @@ public class VendorBankAccountsService : IVendorBankAccountsService
     public async Task<VendorBankAccountResponseDTO> CreateVendorBankAccountAsync(ulong userId, VendorBankAccountCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
-
+        VendorBankAccountsHelper.ValidateBankCode(dto.BankCode);
+        
         var vendor = await _userRepository.GetUserByIdAsync(userId, cancellationToken);
         if (vendor == null || vendor.Role != UserRole.Vendor)
         {
@@ -42,15 +45,28 @@ public class VendorBankAccountsService : IVendorBankAccountsService
     public async Task<VendorBankAccountResponseDTO> UpdateVendorBankAccountAsync(ulong accountId, VendorBankAccountUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
-
+        if(dto.BankCode != null)
+            VendorBankAccountsHelper.ValidateBankCode(dto.BankCode);
+        
         var existingAccount = await _vendorBankAccountsRepository.GetVendorBankAccountByIdAsync(accountId, cancellationToken);
-
         _mapper.Map(dto, existingAccount);
+        if (dto.AccountNumber != null || dto.AccountHolder != null)
+        {
+            if (await _vendorBankAccountsRepository.ValidateImportedBankAccount(existingAccount.VendorId, 
+                    existingAccount.AccountNumber, existingAccount.AccountHolder, cancellationToken) == true)
+                throw new DuplicateNameException("Tài khoản doanh nghiệp đã có sẵn tài khoản ngân hàng như này.");
+        }
         var updatedAccount = await _vendorBankAccountsRepository.UpdateVendorBankAccountWithTransactionAsync(
             existingAccount,
             cancellationToken);
 
         return _mapper.Map<VendorBankAccountResponseDTO>(updatedAccount);
+    }
+
+    public async Task<bool> DeleteVendorBankAccountAsync(ulong accountId, CancellationToken cancellationToken = default)
+    {
+        var existingAccount = await _vendorBankAccountsRepository.GetVendorBankAccountByIdAsync(accountId, cancellationToken);
+        return await _vendorBankAccountsRepository.DeleteVendorBankAccountWithTransactionAsync(existingAccount, cancellationToken);
     }
 
     public async Task<List<VendorBankAccountResponseDTO>> GetAllVendorBankAccountsByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default)

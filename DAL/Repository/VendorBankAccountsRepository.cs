@@ -51,10 +51,34 @@ public class VendorBankAccountsRepository : IVendorBankAccountsRepository
             throw;
         }
     }
+
+    public async Task<bool> DeleteVendorBankAccountWithTransactionAsync(VendorBankAccount account, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var result = await _vendorBankAccountRepository.DeleteAsync(account, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
     
     public async Task<VendorBankAccount> GetVendorBankAccountByIdAsync(ulong id, CancellationToken cancellationToken = default) =>
         await _vendorBankAccountRepository.GetAsync(vba => vba.Id == id, useNoTracking: true, cancellationToken) ??
         throw new KeyNotFoundException("Không tồn tại tài khoản ngân hàng với ID này.");
+
+    public async Task<bool> ValidateImportedBankAccount(ulong vendorId, string accountNumber, string accountHolder,
+        CancellationToken cancellationToken = default)
+    {
+        return await _vendorBankAccountRepository.AnyAsync(v => v.AccountNumber == accountNumber
+            && string.Equals(v.AccountHolder, accountHolder, StringComparison.OrdinalIgnoreCase) 
+            && v.VendorId == vendorId, cancellationToken);
+    }
     
     public async Task<List<VendorBankAccount>> GetAllVendorBankAccountsByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
         await _vendorBankAccountRepository.GetAllByFilterAsync(

@@ -74,6 +74,28 @@ public class VendorBankAccountsController : BaseController
     }
 
     /// <summary>
+    /// Xóa tài khoản ngân hàng của vendor
+    /// </summary>
+    /// <param name="accountId">ID của tài khoản ngân hàng</param>
+    /// <returns>Kết quả xóa</returns>
+    [HttpDelete("{accountId}")]
+    [Authorize(Roles = "Vendor,Admin")]
+    [EndpointSummary("Delete Vendor Bank Account")]
+    [EndpointDescription("Xóa tài khoản ngân hàng của vendor. Chỉ Vendor (chủ tài khoản) và Admin mới có quyền thực hiện.")]
+    public async Task<ActionResult<APIResponse>> DeleteVendorBankAccount(ulong accountId)
+    {
+        try
+        {
+            var result = await _vendorBankAccountsService.DeleteVendorBankAccountAsync(accountId, GetCancellationToken());
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Lấy danh sách tất cả tài khoản ngân hàng của vendor
     /// </summary>
     /// <param name="userId">ID của vendor</param>
