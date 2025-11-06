@@ -61,10 +61,10 @@ INSERT INTO `vendor_bank_accounts` (`id`, `vendor_id`, `bank_code`, `account_num
 (1, 5, 'VCB', '1234567890', 'Công Ty Máy Móc Nông Nghiệp Xanh', 1, '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
 (2, 6, 'ACB', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', 1, '2025-09-09 06:35:00', '2025-09-09 06:35:00');
 
--- Insert Wallets (v7.1 structure - removed pending_withdraw, added last_transaction_id and last_updated_by)
-INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `last_transaction_id`, `last_updated_by`, `created_at`, `updated_at`) VALUES
-(1, 5, 10000000.00, NULL, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
-(2, 6, 2500000.00, NULL, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00');
+-- Insert Wallets (v9.0 structure - removed last_transaction_id)
+INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `last_updated_by`, `created_at`, `updated_at`) VALUES
+(1, 5, 10000000.00, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
+(2, 6, 2500000.00, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00');
 
 -- Insert Vendor Certificates (v8.1 structure - removed media fields, use media_links table instead)
 INSERT INTO `vendor_certificates` (`id`, `vendor_id`, `certification_code`, `certification_name`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES

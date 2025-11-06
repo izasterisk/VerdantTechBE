@@ -104,16 +104,20 @@ public class OrderRepository : IOrderRepository
             cancellationToken);
     }
     
-    public async Task<List<Order>> GetAllOrdersByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    public async Task<(List<Order>, int totalCount)> GetAllOrdersByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        return await _orderRepository.GetAllWithRelationsByFilterAsync(
+        return await _orderRepository.GetPaginatedWithRelationsAsync(
+            page, 
+            pageSize, 
             o => o.CustomerId == userId, 
-            true,
-            query => query.Include(o => o.OrderDetails)
+            useNoTracking: true, 
+            orderBy: query => query.OrderByDescending(o => o.CreatedAt),
+            includeFunc: query => query.Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
                 .Include(o => o.Address)
                 .Include(o => o.Customer),
-            cancellationToken);
+            cancellationToken
+        );
     }
     
     public async Task<(List<Order>, int totalCount)> GetAllOrdersAsync(int page, int pageSize, string? status = null, CancellationToken cancellationToken = default)

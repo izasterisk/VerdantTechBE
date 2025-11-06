@@ -25,10 +25,6 @@ public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
             .HasDefaultValue(0.00m)
             .HasColumnName("balance");
 
-        builder.Property(e => e.LastTransactionId)
-            .HasColumnType("bigint unsigned")
-            .HasColumnName("last_transaction_id");
-
         builder.Property(e => e.LastUpdatedBy)
             .HasColumnType("bigint unsigned")
             .HasColumnName("last_updated_by");
@@ -46,11 +42,6 @@ public class WalletConfiguration : IEntityTypeConfiguration<Wallet>
         builder.HasOne(d => d.Vendor)
             .WithOne(p => p.WalletAsVendor)
             .HasForeignKey<Wallet>(d => d.VendorId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(d => d.LastTransaction)
-            .WithMany(t => t.WalletsAsLastTransaction)
-            .HasForeignKey(d => d.LastTransactionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.LastUpdatedByNavigation)

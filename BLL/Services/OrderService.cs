@@ -24,10 +24,12 @@ public class OrderService : IOrderService
     private readonly IUserService _userService;
     private readonly IExportInventoryRepository _exportInventoryRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IWalletRepository _walletRepository;
     
     public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository,
         IAddressRepository addressRepository, IGoshipCourierApiClient courierApiClient, IMemoryCache memoryCache,
-        IUserService userService, IExportInventoryRepository exportInventoryRepository, IUserRepository userRepository)
+        IUserService userService, IExportInventoryRepository exportInventoryRepository, IUserRepository userRepository, 
+        IWalletRepository walletRepository)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
@@ -38,6 +40,7 @@ public class OrderService : IOrderService
         _userService = userService;
         _exportInventoryRepository = exportInventoryRepository;
         _userRepository = userRepository;
+        _walletRepository = walletRepository;
     }
 
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
@@ -256,8 +259,21 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException("Đơn hàng không phải COD không thể chuyển sang 'Processing' nếu chưa 'Paid'.");
             order.ConfirmedAt = DateTime.UtcNow;
         }
-        if(dto.Status == OrderStatus.Delivered)
+        if (dto.Status == OrderStatus.Delivered)
+        {
             order.DeliveredAt = DateTime.UtcNow;
+            foreach (var orderDetail in order.OrderDetails)
+            {
+                if (orderDetail.Product.CommissionRate != 0)
+                {
+                    var wallet = await _walletRepository.GetWalletByVendorIdAsync(orderDetail.Product.VendorId, cancellationToken);
+                    wallet.Balance += orderDetail.Quantity * orderDetail.Subtotal * orderDetail.Product.CommissionRate;
+                    wallet.LastUpdatedBy = staffId;
+                    await _walletRepository.UpdateWalletWithTransactionAsync(wallet,  cancellationToken);
+                }
+                
+            }
+        }
         if (dto.Status == OrderStatus.Paid)
         {
             // Validate thanh toán sẽ có sau này
@@ -315,6 +331,38 @@ public class OrderService : IOrderService
     public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default)
     {
         var (orders, totalCount) = await _orderRepository.GetAllOrdersAsync(page, pageSize, status, cancellationToken);
+        var response = new List<OrderResponseDTO>();
+        
+        foreach (var orderEntity in orders)
+        {
+            var item = _mapper.Map<OrderResponseDTO>(orderEntity);
+            if (item.OrderDetails != null)
+            {
+                foreach (var product in item.OrderDetails)
+                {
+                    product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
+                }
+            }
+            item.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(orderEntity.Address));
+            response.Add(item);
+        }
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<OrderResponseDTO>
+        {
+            Data = response,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
+    }
+
+    public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var (orders, totalCount) = await _orderRepository.GetAllOrdersByUserIdAsync(userId, page, pageSize, cancellationToken);
         var response = new List<OrderResponseDTO>();
         
         foreach (var orderEntity in orders)

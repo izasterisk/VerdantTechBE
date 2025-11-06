@@ -674,12 +674,10 @@ CREATE TABLE wallets (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     vendor_id BIGINT UNSIGNED NOT NULL UNIQUE,
     balance DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Số dư khả dụng',
-    last_transaction_id BIGINT UNSIGNED NULL COMMENT 'Giao dịch gần nhất ảnh hưởng đến số dư',
     last_updated_by BIGINT UNSIGNED NULL COMMENT 'Người dùng thực hiện thay đổi số dư gần nhất',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
-    FOREIGN KEY (last_transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
     FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_vendor (vendor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ví nhà cung cấp theo dõi số dư';
