@@ -39,4 +39,6 @@ public class WalletService : IWalletService
         await _walletRepository.UpdateWalletAndOrderDetailsWithTransactionAsync(update, wallet, cancellationToken);
         return _mapper.Map<WalletResponseDTO>(await _walletRepository.GetWalletByUserIdWithRelationsAsync(userId, cancellationToken));
     }
+    
+    
 }

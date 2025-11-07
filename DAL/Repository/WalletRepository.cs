@@ -22,23 +22,12 @@ public class WalletRepository : IWalletRepository
         _vendorProfileRepository =  vendorProfileRepository;
     }
 
-    public async Task<Wallet> CreateWalletWithTransactionAsync(Wallet wallet, CancellationToken cancellationToken = default)
+    public async Task<Wallet> CreateWalletAsync(Wallet wallet, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            wallet.CreatedAt = DateTime.UtcNow;
-            wallet.UpdatedAt = DateTime.UtcNow;
+        wallet.CreatedAt = DateTime.UtcNow;
+        wallet.UpdatedAt = DateTime.UtcNow;
 
-            var createdWallet = await _walletRepository.CreateAsync(wallet, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return createdWallet;
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        return await _walletRepository.CreateAsync(wallet, cancellationToken);
     }
 
     public async Task<Wallet> UpdateWalletAndOrderDetailsWithTransactionAsync(List<OrderDetail> orderDetails, Wallet wallet, CancellationToken cancellationToken = default)
@@ -75,7 +64,7 @@ public class WalletRepository : IWalletRepository
                 VendorId = vendorId,
                 Balance = 0
             };
-            var created = await CreateWalletWithTransactionAsync(create, cancellationToken);
+            var created = await CreateWalletAsync(create, cancellationToken);
             wallet = await _walletRepository.GetWithRelationsAsync(w => w.Id == created.Id,
                 useNoTracking: false,
                 query => query.Include(w => w.Vendor), cancellationToken);
@@ -95,7 +84,7 @@ public class WalletRepository : IWalletRepository
             var create = new Wallet();
             create.VendorId = vendorId;
             create.Balance = 0;
-            w = await CreateWalletWithTransactionAsync(create, cancellationToken);
+            w = await CreateWalletAsync(create, cancellationToken);
         }
         return w;
     }

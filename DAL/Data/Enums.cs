@@ -191,6 +191,13 @@ public enum CashoutStatus
     Cancelled
 }
 
+public enum CashoutReferenceType
+{
+    VendorWithdrawal,
+    Refund,
+    AdminAdjustment
+}
+
 public enum CashoutType
 {
     CommissionPayout,

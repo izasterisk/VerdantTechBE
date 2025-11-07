@@ -25,8 +25,7 @@ public partial class Cashout
     [StringLength(255)]
     public string? GatewayTransactionId { get; set; }
 
-    [StringLength(50)]
-    public string? ReferenceType { get; set; }
+    public CashoutReferenceType? ReferenceType { get; set; }
 
     public ulong? ReferenceId { get; set; }
 

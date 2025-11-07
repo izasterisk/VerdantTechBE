@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 9.0
+-- Phiên bản: 9.1
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -692,7 +692,7 @@ CREATE TABLE cashouts (
     status ENUM('pending','processing','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
     reason VARCHAR(255) NULL COMMENT 'Lý do hoặc mục đích của khoản rút tiền (ví dụ: Thanh toán hoa hồng, Hoàn tiền)',
     gateway_transaction_id VARCHAR(255) NULL COMMENT 'ID giao dịch cổng thanh toán bên ngoài',
-    reference_type VARCHAR(50) NULL COMMENT 'Loại tham chiếu (đơn hàng, yêu cầu, v.v.)',
+    reference_type ENUM('vendor_withdrawal', 'refund', 'admin_adjustment') NULL COMMENT 'Loại tham chiếu: vendor_withdrawal (vendor rút tiền), refund (hoàn tiền cho khách), admin_adjustment (điều chỉnh bởi admin)',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu',
     notes VARCHAR(500) NULL,
     processed_by BIGINT UNSIGNED NULL COMMENT 'Admin đã xử lý lần rút tiền này',
@@ -706,8 +706,27 @@ CREATE TABLE cashouts (
     UNIQUE KEY idx_unique_gateway_transaction (gateway_transaction_id),
     INDEX idx_vendor (vendor_id),
     INDEX idx_status (status),
-    INDEX idx_transaction (transaction_id)
+    INDEX idx_transaction (transaction_id),
+    INDEX idx_reference (reference_type, reference_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='bảng rút tiền cho vendor';
+
+-- =====================================================
+-- TỔNG QUAN THAY ĐỔI v9.1 (từ v9.0)
+-- =====================================================
+
+-- V) CẢI TIẾN BẢNG CASHOUTS - REFERENCE_TYPE ENUM
+-- • Thay đổi: reference_type từ VARCHAR(50) → ENUM('vendor_withdrawal', 'refund', 'admin_adjustment')
+-- • Lợi ích:
+--   - Đảm bảo data integrity: chỉ cho phép 3 giá trị hợp lệ
+--   - Tối ưu storage: ENUM chỉ tốn 1-2 bytes thay vì VARCHAR 50 bytes
+--   - Tăng performance: index và query nhanh hơn
+--   - Dễ maintain: rõ ràng các loại cashout được hỗ trợ
+-- • Các giá trị ENUM:
+--   + vendor_withdrawal: Vendor tự rút tiền từ ví (hoa hồng tích lũy)
+--   + refund: Hoàn tiền cho khách hàng (từ yêu cầu hoàn tiền)
+--   + admin_adjustment: Admin điều chỉnh số dư ví thủ công (sửa lỗi, bồi thường)
+-- • Thêm INDEX mới: idx_reference (reference_type, reference_id)
+--   - Tối ưu query theo loại reference và ID tham chiếu
 
 -- =====================================================
 -- TỔNG QUAN THAY ĐỔI v9.0 (từ v8.1)

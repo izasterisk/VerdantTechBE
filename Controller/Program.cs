@@ -101,6 +101,7 @@ builder.Services.AddScoped<IRepository<ProductSerial>, Repository<ProductSerial>
 builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
 builder.Services.AddScoped<IRepository<Wallet>, Repository<Wallet>>();
 builder.Services.AddScoped<IRepository<VendorBankAccount>, Repository<VendorBankAccount>>();
+builder.Services.AddScoped<IRepository<Cashout>, Repository<Cashout>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -121,6 +122,7 @@ builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IVendorBankAccountsRepository, VendorBankAccountsRepository>();
+builder.Services.AddScoped<ICashoutRepository, CashoutRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
