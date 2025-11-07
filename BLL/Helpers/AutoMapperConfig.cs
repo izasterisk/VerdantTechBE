@@ -13,6 +13,7 @@ using BLL.DTO.ProductRegistration;
 using BLL.DTO.Transaction;
 using BLL.DTO.User;
 using BLL.DTO.VendorBankAccount;
+using BLL.DTO.Wallet;
 using BLL.Services.Payment;
 using DAL.Data.Models;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
@@ -41,6 +42,9 @@ namespace BLL.Helpers
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<VendorBankAccount, VendorBankAccountResponseDTO>().ReverseMap();
 
+            // ===================== WALLET MAPPINGS =====================
+            CreateMap<WalletResponseDTO, Wallet>().ReverseMap();
+            
             // ===================== FARM PROFILE =====================
             CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();
             CreateMap<FarmProfile, FarmProfileResponseDTO>().ReverseMap();

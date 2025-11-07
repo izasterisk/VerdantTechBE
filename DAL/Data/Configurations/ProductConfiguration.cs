@@ -167,6 +167,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.HasIndex(e => e.CategoryId)
             .HasDatabaseName("idx_category");
             
+        builder.HasIndex(e => e.VendorId)
+            .HasDatabaseName("idx_vendor");
+            
         // Full text index (updated for v7.1)
         builder.HasIndex(e => new { e.ProductName, e.Description })
             .HasAnnotation("MySql:FullTextIndex", true)

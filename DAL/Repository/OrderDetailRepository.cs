@@ -27,10 +27,10 @@ public class OrderDetailRepository : IOrderDetailRepository
         _batchInventoryRepository = batchInventoryRepository;
     }
     
-    public async Task<OrderDetail> CreateOrderDetailAsync(OrderDetail orderDetail)
+    public async Task<OrderDetail> CreateOrderDetailAsync(OrderDetail orderDetail, CancellationToken cancellationToken = default)
     {
-        orderDetail.CreatedAt = DateTime.UtcNow;
-        return await _orderDetailRepository.CreateAsync(orderDetail);
+        orderDetail.UpdatedAt = DateTime.UtcNow;
+        return await _orderDetailRepository.CreateAsync(orderDetail, cancellationToken);
     }
     
     public async Task<ulong> GetRootProductCategoryIdByProductIdAsync(ulong id, CancellationToken cancellationToken = default)
