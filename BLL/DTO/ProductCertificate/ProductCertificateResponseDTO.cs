@@ -1,4 +1,5 @@
-﻿using DAL.Data;
+﻿using BLL.DTO.MediaLink;
+using DAL.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -31,5 +32,6 @@ namespace BLL.DTO.ProductCertificate
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }
+        public List<MediaLinkItemDTO> Files { get; set; } = new();
     }
 }

@@ -255,6 +255,7 @@ public enum MediaPurpose
 {
     None,
     Front,
-    Back
+    Back,
+    CertificatePdf
 }
 

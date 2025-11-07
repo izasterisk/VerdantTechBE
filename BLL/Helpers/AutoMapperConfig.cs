@@ -208,7 +208,8 @@ namespace BLL.Helpers
 
             CreateMap<ProductCertificateUpdateDTO, ProductCertificate>()
                 .ForMember(d => d.Id, opt => opt.Ignore())
-                .ForMember(d => d.CreatedAt, opt => opt.Ignore());
+                .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<ProductCertificate, ProductCertificateResponseDTO>();
 
             // ===================== ORDER =====================

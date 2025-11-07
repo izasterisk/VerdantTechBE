@@ -1,4 +1,5 @@
 ﻿using DAL.Data;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -12,17 +13,12 @@ namespace BLL.DTO.ProductCertificate
     {
         [Required(ErrorMessage = "Mã sản phẩm không được để trống")]
         public ulong ProductId { get; set; }
-
         [Required(ErrorMessage = "Mã chứng chỉ không được để trống")]
-        [StringLength(50,ErrorMessage ="Mã chứng chỉ không được vượt quá 50 ký tự")]
         public string CertificationCode { get; set; } = null!;
 
         [Required(ErrorMessage = "Tên chứng chỉ không được để trống")]
-        [StringLength(255,ErrorMessage = "Tên chứng chỉ không được vượt quá 255 ký tự")]
         public string CertificationName { get; set; } = null!;
 
-        [StringLength(500, ErrorMessage = "Lý do từ chối không được vượt quá 500 ký tự")]
-        public string? RejectionReason { get; set; }
 
     }
 }

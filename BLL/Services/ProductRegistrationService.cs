@@ -580,7 +580,7 @@ namespace BLL.Services
                     OwnerId = 0, // repo sẽ set OwnerId sau khi có Id
                     ImagePublicId = i.ImagePublicId,
                     ImageUrl = i.ImageUrl,
-                    Purpose = ParsePurpose(i.Purpose),
+                    Purpose = MediaPurpose.CertificatePdf,
                     SortOrder = ++sort,
                     CreatedAt = now,
                     UpdatedAt = now
