@@ -17,7 +17,8 @@ public class OrderHelper
         [OrderStatus.Shipped] = new() { OrderStatus.Delivered, OrderStatus.Cancelled },
         [OrderStatus.Delivered] = new() { OrderStatus.Cancelled, OrderStatus.Refunded },
         [OrderStatus.Cancelled] = new() { OrderStatus.Refunded },
-        [OrderStatus.Refunded] = new() { } 
+        [OrderStatus.Refunded] = new() { },
+        [OrderStatus.Finished] = new() { } 
     };
 
     /// <summary>

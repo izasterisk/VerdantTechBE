@@ -123,6 +123,7 @@ public enum OrderStatus
     Paid,
     Shipped,
     Delivered,
+    Finished,
     Cancelled,
     Refunded
 }
