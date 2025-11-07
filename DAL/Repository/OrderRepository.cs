@@ -34,7 +34,7 @@ public class OrderRepository : IOrderRepository
     
     public async Task<Order> CreateOrderWithTransactionAsync(Order order, List<OrderDetail> orderDetails, List<Product> products, CancellationToken cancellationToken = default)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             order.CreatedAt = DateTime.UtcNow;
@@ -49,7 +49,7 @@ public class OrderRepository : IOrderRepository
             foreach (var orderDetail in orderDetails)
             {
                 orderDetail.OrderId = createdOrder.Id;
-                await _orderDetailRepository.CreateOrderDetailAsync(orderDetail);
+                await _orderDetailRepository.CreateOrderDetailAsync(orderDetail, cancellationToken);
             }
             await transaction.CommitAsync(cancellationToken);
             return createdOrder;
@@ -63,7 +63,7 @@ public class OrderRepository : IOrderRepository
     
     public async Task<Order> UpdateOrderWithTransactionAsync(Order order, CancellationToken cancellationToken = default)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             order.UpdatedAt = DateTime.UtcNow;
@@ -80,7 +80,7 @@ public class OrderRepository : IOrderRepository
     
     public async Task<bool> DeleteOrderWithTransactionAsync(Order order, CancellationToken cancellationToken = default)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             var updatedOrder = await _orderRepository.DeleteAsync(order, cancellationToken);

@@ -205,7 +205,7 @@ public class OrderService : IOrderService
         foreach (var kvp in productQuantities)
         {
             if (kvp.Value != 0)
-                throw new InvalidOperationException($"Sản phẩm với ID {kvp.Key} đang được xuất ít hơn số lượng trong đơn hàng.");
+                throw new InvalidOperationException($"Sản phẩm với ID {kvp.Key} đang được xuất khác với số lượng trong đơn hàng.");
         }
         
         var from = await _userService.GetUserByIdAsync(1, cancellationToken);

@@ -20,28 +20,23 @@ public class WalletService : IWalletService
         _orderRepository = orderRepository;
     }
 
-    public async Task<WalletResponseDTO> GetWalletBalanceAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    public async Task<WalletResponseDTO> ProcessWalletCreditsAsync(ulong userId, CancellationToken cancellationToken = default)
     {
-        var wallet = await _walletRepository.GetWalletByVendorIdWithRelationsAsync(vendorId, cancellationToken);
-        var orders = await _walletRepository.GetAllDeliveredOrdersAsync(cancellationToken);
+        if (await _walletRepository.ValidateVendorQualified(userId, cancellationToken) == false)
+            throw new KeyNotFoundException("Người dùng không tồn tại hoặc không phải vendor.");
+        
+        var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
+        var orderDetails = await _walletRepository.GetAllOrderDetailsAvailableForCreditAsync(userId, cancellationToken);
         decimal balance = 0;
-        List<Order> update = new List<Order>();
-        foreach (var order in orders)
+        List<OrderDetail> update = new List<OrderDetail>();
+        foreach (var orderDetail in orderDetails)
         {
-            foreach (var orderDetail in order.OrderDetails)
-            {
-                if (orderDetail.Product.VendorId == vendorId)
-                {
-                    order.Status = OrderStatus.Finished;
-                    update.Add(order);
-                    if(orderDetail.Product.CommissionRate != 0)
-                        balance += orderDetail.Subtotal * ((100 - orderDetail.Product.CommissionRate) / 100);
-                }
-            }
+            orderDetail.IsWalletCredited = true;
+            update.Add(orderDetail);
+            balance += orderDetail.Subtotal * ((100 - orderDetail.Product.CommissionRate) / 100);
         }
         wallet.Balance += balance;
-        await _walletRepository.UpdateOrdersWithTransactionAsync(update, cancellationToken);
-        await _walletRepository.UpdateWalletWithTransactionAsync(wallet, cancellationToken);
-        return _mapper.Map<WalletResponseDTO>(wallet);
+        await _walletRepository.UpdateWalletAndOrderDetailsWithTransactionAsync(update, wallet, cancellationToken);
+        return _mapper.Map<WalletResponseDTO>(await _walletRepository.GetWalletByUserIdWithRelationsAsync(userId, cancellationToken));
     }
 }

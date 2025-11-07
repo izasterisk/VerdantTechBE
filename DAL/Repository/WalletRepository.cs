@@ -11,13 +11,15 @@ public class WalletRepository : IWalletRepository
     private readonly IRepository<Order> _orderRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IRepository<OrderDetail> _orderDetailRepository;
+    private readonly IRepository<VendorProfile> _vendorProfileRepository;
 
-    public WalletRepository(VerdantTechDbContext context, IRepository<Wallet> walletRepository, IRepository<Order> orderRepository, IRepository<OrderDetail> orderDetailRepository)
+    public WalletRepository(VerdantTechDbContext context, IRepository<VendorProfile> vendorProfileRepository, IRepository<Wallet> walletRepository, IRepository<Order> orderRepository, IRepository<OrderDetail> orderDetailRepository)
     {
         _walletRepository = walletRepository;
         _orderRepository = orderRepository;
         _dbContext = context;
         _orderDetailRepository = orderDetailRepository;
+        _vendorProfileRepository =  vendorProfileRepository;
     }
 
     public async Task<Wallet> CreateWalletWithTransactionAsync(Wallet wallet, CancellationToken cancellationToken = default)
@@ -39,11 +41,16 @@ public class WalletRepository : IWalletRepository
         }
     }
 
-    public async Task<Wallet> UpdateWalletWithTransactionAsync(Wallet wallet, CancellationToken cancellationToken = default)
+    public async Task<Wallet> UpdateWalletAndOrderDetailsWithTransactionAsync(List<OrderDetail> orderDetails, Wallet wallet, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            foreach (var orderDetail in orderDetails)
+            {
+                orderDetail.UpdatedAt = DateTime.UtcNow;
+                await _orderDetailRepository.UpdateAsync(orderDetail, cancellationToken);
+            }
             wallet.UpdatedAt = DateTime.UtcNow;
             var updatedWallet = await _walletRepository.UpdateAsync(wallet, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -55,27 +62,8 @@ public class WalletRepository : IWalletRepository
             throw;
         }
     }
-    
-    public async Task UpdateOrdersWithTransactionAsync(List<Order> orders, CancellationToken cancellationToken = default)
-    {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            foreach (var order in orders)
-            {
-                order.UpdatedAt = DateTime.UtcNow;
-                await _orderRepository.UpdateAsync(order, cancellationToken);
-            }
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
-    }
 
-    public async Task<Wallet> GetWalletByVendorIdWithRelationsAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    public async Task<Wallet> GetWalletByUserIdWithRelationsAsync(ulong vendorId, CancellationToken cancellationToken = default)
     {
         var wallet = await _walletRepository.GetWithRelationsAsync(w => w.VendorId == vendorId,
             useNoTracking: false,
@@ -96,13 +84,12 @@ public class WalletRepository : IWalletRepository
                 throw new InvalidOperationException($"Không thể tạo hoặc tải ví cho vendor ID {vendorId}");
             }
         }
-        
         return wallet;
     }
         
-    public async Task<Wallet> GetWalletByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    public async Task<Wallet> GetWalletByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default)
     {
-        var w = await _walletRepository.GetAsync(w => w.VendorId == vendorId, useNoTracking: true, cancellationToken);
+        var w = await _walletRepository.GetAsync(w => w.VendorId == vendorId, useNoTracking: false, cancellationToken);
         if (w == null)
         {
             var create = new Wallet();
@@ -113,13 +100,13 @@ public class WalletRepository : IWalletRepository
         return w;
     }
     
-    public async Task<bool> IsWalletExistsByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _walletRepository.AnyAsync(w => w.VendorId == vendorId, cancellationToken);
-
-    public async Task<List<Order>> GetAllDeliveredOrdersAsync(CancellationToken cancellationToken = default) =>
-        await _orderRepository.GetAllWithRelationsByFilterAsync(o => o.Status == OrderStatus.Delivered, 
-            true, 
-            includeFunc: query => query.Include(o => o.OrderDetails)
-                .ThenInclude(od => od.Product), cancellationToken);
+    public async Task<List<OrderDetail>> GetAllOrderDetailsAvailableForCreditAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
+        await _orderDetailRepository.GetAllWithRelationsByFilterAsync(o => o.IsWalletCredited == false 
+            && o.UpdatedAt.AddDays(7) < DateTime.UtcNow && o.Product.VendorId == vendorId, 
+            false, 
+            includeFunc: query => query.Include(od => od.Product), cancellationToken);
     
+    public async Task<bool> ValidateVendorQualified(ulong userId, CancellationToken cancellationToken = default) =>
+        await _vendorProfileRepository.AnyAsync(w => w.UserId == userId && w.VerifiedAt != null 
+            && w.VerifiedBy != null, cancellationToken);
 }
