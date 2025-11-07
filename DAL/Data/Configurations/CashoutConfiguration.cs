@@ -55,9 +55,11 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasMaxLength(255);
 
         builder.Property(e => e.ReferenceType)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToString().ToLowerInvariant().Replace("withdrawal", "_withdrawal").Replace("adjustment", "_adjustment") : null,
+                v => string.IsNullOrEmpty(v) ? null : Enum.Parse<CashoutReferenceType>(v.Replace("_", ""), true))
             .HasColumnName("reference_type")
-            .HasColumnType("varchar(50)")
-            .HasMaxLength(50);
+            .HasColumnType("enum('vendor_withdrawal','refund','admin_adjustment')");
 
         builder.Property(e => e.ReferenceId)
             .HasColumnName("reference_id")

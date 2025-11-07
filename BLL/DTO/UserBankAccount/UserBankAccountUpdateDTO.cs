@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BLL.DTO.VendorBankAccount;
+namespace BLL.DTO.UserBankAccount;
 
-public class VendorBankAccountUpdateDTO
+public class UserBankAccountUpdateDTO
 {
     [StringLength(20, ErrorMessage = "Mã ngân hàng không được vượt quá 20 ký tự")]
     public string? BankCode { get; set; }

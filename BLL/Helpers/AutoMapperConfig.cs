@@ -12,7 +12,7 @@ using BLL.DTO.ProductCertificate;
 using BLL.DTO.ProductRegistration;
 using BLL.DTO.Transaction;
 using BLL.DTO.User;
-using BLL.DTO.VendorBankAccount;
+using BLL.DTO.UserBankAccount;
 using BLL.DTO.Wallet;
 using BLL.Services.Payment;
 using DAL.Data.Models;
@@ -36,11 +36,11 @@ namespace BLL.Helpers
             CreateMap<UserAddressUpdateDTO, Address>().ReverseMap();
             CreateMap<UserAddressUpdateDTO, UserAddress>().ReverseMap();
 
-            // ===================== VENDOR BANK ACCOUNT MAPPINGS =====================
-            CreateMap<VendorBankAccountCreateDTO, VendorBankAccount>().ReverseMap();
-            CreateMap<VendorBankAccountUpdateDTO, VendorBankAccount>()
+            // ===================== USER BANK ACCOUNT MAPPINGS =====================
+            CreateMap<UserBankAccountCreateDTO, UserBankAccount>().ReverseMap();
+            CreateMap<UserBankAccountUpdateDTO, UserBankAccount>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-            CreateMap<VendorBankAccount, VendorBankAccountResponseDTO>().ReverseMap();
+            CreateMap<UserBankAccount, UserBankAccountResponseDTO>().ReverseMap();
 
             // ===================== WALLET MAPPINGS =====================
             CreateMap<WalletResponseDTO, Wallet>().ReverseMap();

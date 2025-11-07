@@ -1,10 +1,10 @@
-namespace BLL.DTO.VendorBankAccount;
+namespace BLL.DTO.UserBankAccount;
 
-public class VendorBankAccountResponseDTO
+public class UserBankAccountResponseDTO
 {
     public ulong Id { get; set; }
 
-    public ulong VendorId { get; set; }
+    public ulong UserId { get; set; }
 
     public string BankCode { get; set; } = null!;
 

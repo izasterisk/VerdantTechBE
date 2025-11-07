@@ -25,8 +25,7 @@ public partial class Cashout
     [StringLength(255)]
     public string? GatewayTransactionId { get; set; }
 
-    [StringLength(50)]
-    public string? ReferenceType { get; set; }
+    public CashoutReferenceType? ReferenceType { get; set; }
 
     public ulong? ReferenceId { get; set; }
 
@@ -44,6 +43,6 @@ public partial class Cashout
     // Navigation Properties
     public virtual User Vendor { get; set; } = null!;
     public virtual Transaction? Transaction { get; set; }
-    public virtual VendorBankAccount BankAccount { get; set; } = null!;
+    public virtual UserBankAccount BankAccount { get; set; } = null!;
     public virtual User? ProcessedByNavigation { get; set; }
 }

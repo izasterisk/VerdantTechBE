@@ -1,45 +1,45 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
 using BLL.DTO;
-using BLL.DTO.VendorBankAccount;
+using BLL.DTO.UserBankAccount;
 using System.Net;
 
 namespace Controller.Controllers;
 
 [Route("api/[controller]")]
-public class VendorBankAccountsController : BaseController
+public class UserBankAccountsController : BaseController
 {
-    private readonly IVendorBankAccountsService _vendorBankAccountsService;
+    private readonly IUserBankAccountsService _userBankAccountsService;
     private readonly IPayOSApiClient _payOSApiClient;
 
-    public VendorBankAccountsController(
-        IVendorBankAccountsService vendorBankAccountsService,
+    public UserBankAccountsController(
+        IUserBankAccountsService userBankAccountsService,
         IPayOSApiClient payOSApiClient)
     {
-        _vendorBankAccountsService = vendorBankAccountsService;
+        _userBankAccountsService = userBankAccountsService;
         _payOSApiClient = payOSApiClient;
     }
 
     /// <summary>
-    /// Tạo tài khoản ngân hàng mới cho vendor
+    /// Tạo tài khoản ngân hàng mới cho người dùng
     /// </summary>
-    /// <param name="userId">ID của vendor</param>
+    /// <param name="userId">ID của người dùng</param>
     /// <param name="dto">Thông tin tài khoản ngân hàng cần tạo</param>
     /// <returns>Thông tin tài khoản ngân hàng đã tạo</returns>
-    [HttpPost("vendor/{userId}")]
-    [Authorize(Roles = "Vendor,Admin")]
-    [EndpointSummary("Create Vendor Bank Account")]
-    [EndpointDescription("Tạo tài khoản ngân hàng mới cho vendor. Chỉ Vendor (chủ tài khoản) và Admin mới có quyền thực hiện.")]
-    public async Task<ActionResult<APIResponse>> CreateVendorBankAccount(ulong userId, [FromBody] VendorBankAccountCreateDTO dto)
+    [HttpPost("user/{userId}")]
+    [Authorize(Roles = "Customer,Vendor,Admin")]
+    [EndpointSummary("Create User Bank Account")]
+    [EndpointDescription("Tạo tài khoản ngân hàng mới cho người dùng. Chỉ người dùng (chủ tài khoản) và Admin mới có quyền thực hiện.")]
+    public async Task<ActionResult<APIResponse>> CreateUserBankAccount(ulong userId, [FromBody] UserBankAccountCreateDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
 
         try
         {
-            var account = await _vendorBankAccountsService.CreateVendorBankAccountAsync(userId, dto, GetCancellationToken());
+            var account = await _userBankAccountsService.CreateUserBankAccountAsync(userId, dto, GetCancellationToken());
             return SuccessResponse(account, HttpStatusCode.Created);
         }
         catch (Exception ex)
@@ -49,22 +49,22 @@ public class VendorBankAccountsController : BaseController
     }
 
     /// <summary>
-    /// Cập nhật tài khoản ngân hàng của vendor
+    /// Cập nhật tài khoản ngân hàng của người dùng
     /// </summary>
     /// <param name="accountId">ID của tài khoản ngân hàng</param>
     /// <param name="dto">Thông tin tài khoản ngân hàng cần cập nhật</param>
     /// <returns>Thông tin tài khoản ngân hàng đã cập nhật</returns>
     [HttpPatch("{accountId}")]
-    [Authorize(Roles = "Vendor,Admin")]
-    [EndpointSummary("Update Vendor Bank Account")]
-    public async Task<ActionResult<APIResponse>> UpdateVendorBankAccount(ulong accountId, [FromBody] VendorBankAccountUpdateDTO dto)
+    [Authorize(Roles = "Customer,Vendor,Admin")]
+    [EndpointSummary("Update User Bank Account")]
+    public async Task<ActionResult<APIResponse>> UpdateUserBankAccount(ulong accountId, [FromBody] UserBankAccountUpdateDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
 
         try
         {
-            var account = await _vendorBankAccountsService.UpdateVendorBankAccountAsync(accountId, dto, GetCancellationToken());
+            var account = await _userBankAccountsService.UpdateUserBankAccountAsync(accountId, dto, GetCancellationToken());
             return SuccessResponse(account);
         }
         catch (Exception ex)
@@ -74,19 +74,19 @@ public class VendorBankAccountsController : BaseController
     }
 
     /// <summary>
-    /// Xóa tài khoản ngân hàng của vendor
+    /// Xóa tài khoản ngân hàng của người dùng
     /// </summary>
     /// <param name="accountId">ID của tài khoản ngân hàng</param>
     /// <returns>Kết quả xóa</returns>
     [HttpDelete("{accountId}")]
-    [Authorize(Roles = "Vendor,Admin")]
-    [EndpointSummary("Delete Vendor Bank Account")]
-    [EndpointDescription("Xóa tài khoản ngân hàng của vendor. Chỉ Vendor (chủ tài khoản) và Admin mới có quyền thực hiện.")]
-    public async Task<ActionResult<APIResponse>> DeleteVendorBankAccount(ulong accountId)
+    [Authorize(Roles = "Customer,Vendor,Admin")]
+    [EndpointSummary("Delete User Bank Account")]
+    [EndpointDescription("Xóa tài khoản ngân hàng của người dùng. Chỉ người dùng (chủ tài khoản) và Admin mới có quyền thực hiện.")]
+    public async Task<ActionResult<APIResponse>> DeleteUserBankAccount(ulong accountId)
     {
         try
         {
-            var result = await _vendorBankAccountsService.DeleteVendorBankAccountAsync(accountId, GetCancellationToken());
+            var result = await _userBankAccountsService.DeleteUserBankAccountAsync(accountId, GetCancellationToken());
             return SuccessResponse(result);
         }
         catch (Exception ex)
@@ -96,19 +96,19 @@ public class VendorBankAccountsController : BaseController
     }
 
     /// <summary>
-    /// Lấy danh sách tất cả tài khoản ngân hàng của vendor
+    /// Lấy danh sách tất cả tài khoản ngân hàng của người dùng
     /// </summary>
-    /// <param name="userId">ID của vendor</param>
+    /// <param name="userId">ID của người dùng</param>
     /// <returns>Danh sách tài khoản ngân hàng</returns>
-    [HttpGet("vendor/{userId}")]
-    [Authorize(Roles = "Vendor,Admin,Staff")]
-    [EndpointSummary("Get All Vendor Bank Accounts")]
-    [EndpointDescription("Lấy danh sách tất cả tài khoản ngân hàng của vendor theo ID. Vendor, Admin và Staff có quyền truy cập.")]
-    public async Task<ActionResult<APIResponse>> GetAllVendorBankAccountsByVendorId(ulong userId)
+    [HttpGet("user/{userId}")]
+    [Authorize(Roles = "Customer,Vendor,Admin,Staff")]
+    [EndpointSummary("Get All User Bank Accounts")]
+    [EndpointDescription("Lấy danh sách tất cả tài khoản ngân hàng của người dùng theo ID. Người dùng, Admin và Staff có quyền truy cập.")]
+    public async Task<ActionResult<APIResponse>> GetAllUserBankAccountsByUserId(ulong userId)
     {
         try
         {
-            var accounts = await _vendorBankAccountsService.GetAllVendorBankAccountsByVendorIdAsync(userId, GetCancellationToken());
+            var accounts = await _userBankAccountsService.GetAllUserBankAccountsByUserIdAsync(userId, GetCancellationToken());
             return SuccessResponse(accounts);
         }
         catch (Exception ex)
