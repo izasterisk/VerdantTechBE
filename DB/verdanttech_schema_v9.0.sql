@@ -469,7 +469,7 @@ CREATE TABLE cart_items (
 CREATE TABLE orders (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT UNSIGNED NOT NULL,
-    status ENUM('pending', 'processing', 'paid', 'shipped', 'delivered', 'finished', 'cancelled', 'refunded') DEFAULT 'pending',
+    status ENUM('pending', 'processing', 'paid', 'shipped', 'delivered', 'cancelled', 'refunded') DEFAULT 'pending',
     subtotal DECIMAL(12,2) NOT NULL,
     tax_amount DECIMAL(12,2) DEFAULT 0.00,
     shipping_fee DECIMAL(12,2) DEFAULT 0.00,
@@ -511,11 +511,13 @@ CREATE TABLE order_details (
     unit_price DECIMAL(12,2) NOT NULL,
     discount_amount DECIMAL(12,2) DEFAULT 0.00,
     subtotal DECIMAL(12,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    is_wallet_credited BOOLEAN DEFAULT FALSE COMMENT 'Đã cộng tiền vào ví vendor chưa',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
 
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
-    INDEX idx_order (order_id)
+    INDEX idx_order (order_id),
+    INDEX idx_wallet_credited_updated (is_wallet_credited, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các mục trong đơn hàng';
 
 -- =========================

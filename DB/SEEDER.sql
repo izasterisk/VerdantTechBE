@@ -255,13 +255,13 @@ INSERT INTO `orders` (`id`, `customer_id`, `status`, `subtotal`, `tax_amount`, `
 (4, 10, 'pending', 8500000.00, 425000.00, 150000.00, 680000.00, 8395000.00, 5, 'Banking', 'standard', 'STD20250910001', 'Giao hàng trong giờ hành chính', 2, 100, 120, 200, 800000, NULL, NULL, '2025-09-10 09:00:00', NULL, NULL, '2025-09-10 08:00:00', '2025-09-10 09:00:00');
 
 -- Insert Order Details
-INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `unit_price`, `discount_amount`, `subtotal`, `created_at`) VALUES
-(1, 1, 1, 1, 25000000.00, 2500000.00, 22500000.00, '2025-09-08 10:00:00'),
-(2, 2, 3, 10, 150000.00, 0.00, 1500000.00, '2025-09-09 09:00:00'),
-(3, 2, 4, 3, 85000.00, 38250.00, 216750.00, '2025-09-09 09:00:00'),
-(4, 3, 5, 1, 12000000.00, 960000.00, 11040000.00, '2025-09-09 11:00:00'),
-(5, 4, 3, 50, 50000.00, 500000.00, 2500000.00, '2025-09-10 08:00:00'),
-(6, 4, 4, 80, 90000.00, 180000.00, 7200000.00, '2025-09-10 08:00:00');
+INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `unit_price`, `discount_amount`, `subtotal`, `is_wallet_credited`, `updated_at`) VALUES
+(1, 1, 1, 1, 25000000.00, 2500000.00, 22500000.00, 0, '2025-09-08 10:00:00'),
+(2, 2, 3, 10, 150000.00, 0.00, 1500000.00, 0, '2025-09-09 09:00:00'),
+(3, 2, 4, 3, 85000.00, 38250.00, 216750.00, 0, '2025-09-09 09:00:00'),
+(4, 3, 5, 1, 12000000.00, 960000.00, 11040000.00, 0, '2025-09-09 11:00:00'),
+(5, 4, 3, 50, 50000.00, 500000.00, 2500000.00, 0, '2025-09-10 08:00:00'),
+(6, 4, 4, 80, 90000.00, 180000.00, 7200000.00, 0, '2025-09-10 08:00:00');
 
 -- Insert Transactions (v7.1 structure - completely restructured)
 INSERT INTO `transactions` (`id`, `transaction_type`, `amount`, `currency`, `order_id`, `user_id`, `status`, `note`, `gateway_payment_id`, `created_by`, `processed_by`, `created_at`, `completed_at`, `updated_at`) VALUES

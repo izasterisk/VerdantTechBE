@@ -29,7 +29,7 @@ public class OrderDetailRepository : IOrderDetailRepository
     
     public async Task<OrderDetail> CreateOrderDetailAsync(OrderDetail orderDetail)
     {
-        orderDetail.CreatedAt = DateTime.UtcNow;
+        orderDetail.UpdatedAt = DateTime.UtcNow;
         return await _orderDetailRepository.CreateAsync(orderDetail);
     }
     

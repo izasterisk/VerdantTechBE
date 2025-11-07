@@ -21,7 +21,9 @@ public partial class OrderDetail
 
     public decimal Subtotal { get; set; }
 
-    public DateTime CreatedAt { get; set; }
+    public bool IsWalletCredited { get; set; } = false;
+
+    public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
     public virtual Order Order { get; set; } = null!;

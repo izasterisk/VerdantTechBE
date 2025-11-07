@@ -28,7 +28,9 @@ public class OrderDetailsResponseDTO
     [Range(0, double.MaxValue, ErrorMessage = "Thành tiền không được âm.")]
     public decimal Subtotal { get; set; }
 
-    [Required(ErrorMessage = "Ngày tạo là bắt buộc.")]
+    public bool IsWalletCredited { get; set; } = false;
+
+    [Required(ErrorMessage = "Ngày cập nhật là bắt buộc.")]
     [DataType(DataType.DateTime)]
-    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
