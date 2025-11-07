@@ -8,12 +8,16 @@ namespace DAL.Repository;
 public class WalletRepository : IWalletRepository
 {
     private readonly IRepository<Wallet> _walletRepository;
+    private readonly IRepository<Order> _orderRepository;
     private readonly VerdantTechDbContext _dbContext;
+    private readonly IRepository<OrderDetail> _orderDetailRepository;
 
-    public WalletRepository(VerdantTechDbContext context)
+    public WalletRepository(VerdantTechDbContext context, IRepository<Wallet> walletRepository, IRepository<Order> orderRepository, IRepository<OrderDetail> orderDetailRepository)
     {
-        _walletRepository = new Repository<Wallet>(context);
+        _walletRepository = walletRepository;
+        _orderRepository = orderRepository;
         _dbContext = context;
+        _orderDetailRepository = orderDetailRepository;
     }
 
     public async Task<Wallet> CreateWalletWithTransactionAsync(Wallet wallet, CancellationToken cancellationToken = default)
@@ -52,18 +56,51 @@ public class WalletRepository : IWalletRepository
         }
     }
 
-    public async Task<Wallet?> GetWalletByVendorIdWithRelationsAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _walletRepository.GetWithRelationsAsync(
-            w => w.VendorId == vendorId,
+    public async Task<Wallet> GetWalletByVendorIdWithRelationsAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    {
+        var wallet = await _walletRepository.GetWithRelationsAsync(w => w.VendorId == vendorId,
             useNoTracking: true,
-            query => query.Include(w => w.Vendor),
-            cancellationToken);
-    
-    public async Task<Wallet> GetWalletByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _walletRepository.GetAsync(w => w.VendorId == vendorId, useNoTracking: true, cancellationToken) ??
-        throw new KeyNotFoundException("Ví của vendor này không tồn tại, hãy liên hệ staff.");
+            query => query.Include(w => w.Vendor), cancellationToken);
+        if (wallet == null)
+        {
+            var create = new Wallet
+            {
+                VendorId = vendorId,
+                Balance = 0
+            };
+            var created = await CreateWalletWithTransactionAsync(create, cancellationToken);
+            wallet = await _walletRepository.GetWithRelationsAsync(w => w.Id == created.Id,
+                useNoTracking: true,
+                query => query.Include(w => w.Vendor), cancellationToken);
+            if (wallet == null)
+            {
+                throw new InvalidOperationException($"Không thể tạo hoặc tải ví cho vendor ID {vendorId}");
+            }
+        }
         
+        return wallet;
+    }
+        
+    public async Task<Wallet> GetWalletByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    {
+        var w = await _walletRepository.GetAsync(w => w.VendorId == vendorId, useNoTracking: true, cancellationToken);
+        if (w == null)
+        {
+            var create = new Wallet();
+            create.VendorId = vendorId;
+            create.Balance = 0;
+            w = await CreateWalletWithTransactionAsync(create, cancellationToken);
+        }
+        return w;
+    }
     
     public async Task<bool> IsWalletExistsByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
         await _walletRepository.AnyAsync(w => w.VendorId == vendorId, cancellationToken);
+
+    public async Task<List<Order>> GetAllDeliveredOrdersAsync(CancellationToken cancellationToken = default) =>
+        await _orderRepository.GetAllWithRelationsByFilterAsync(o => o.Status == OrderStatus.Delivered, 
+            true, 
+            includeFunc: query => query.Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product), cancellationToken);
+    
 }

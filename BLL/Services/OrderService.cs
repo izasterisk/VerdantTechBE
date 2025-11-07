@@ -67,8 +67,6 @@ public class OrderService : IOrderService
                 throw new KeyNotFoundException($"Sản phẩm với ID {orderDetail.ProductId} không tồn tại hoặc đã bị xóa.");
             if (orderDetail.Quantity > productRaw.StockQuantity || productRaw.StockQuantity == 0)
                 throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} không còn đủ hàng so với yêu cầu trong đơn hàng của bạn.");
-            if (dto.OrderPaymentMethod == OrderPaymentMethod.Rent && productRaw.ForRent == false)
-                throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} không thể thuê.");
             var product = _mapper.Map<ProductResponseDTO>(productRaw);
             product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(orderDetail.ProductId, cancellationToken));
             OrderDetailsPreviewResponseDTO orderDetailResponse = new()
@@ -262,17 +260,16 @@ public class OrderService : IOrderService
         if (dto.Status == OrderStatus.Delivered)
         {
             order.DeliveredAt = DateTime.UtcNow;
-            foreach (var orderDetail in order.OrderDetails)
-            {
-                if (orderDetail.Product.CommissionRate != 0)
-                {
-                    var wallet = await _walletRepository.GetWalletByVendorIdAsync(orderDetail.Product.VendorId, cancellationToken);
-                    wallet.Balance += orderDetail.Quantity * orderDetail.Subtotal * orderDetail.Product.CommissionRate;
-                    wallet.LastUpdatedBy = staffId;
-                    await _walletRepository.UpdateWalletWithTransactionAsync(wallet,  cancellationToken);
-                }
-                
-            }
+            // foreach (var orderDetail in order.OrderDetails)
+            // {
+            //     if (orderDetail.Product.CommissionRate != 0)
+            //     {
+            //         var wallet = await _walletRepository.GetWalletByVendorIdAsync(orderDetail.Product.VendorId, cancellationToken);
+            //         wallet.Balance += orderDetail.Quantity * orderDetail.Subtotal * orderDetail.Product.CommissionRate;
+            //         wallet.LastUpdatedBy = staffId;
+            //         await _walletRepository.UpdateWalletWithTransactionAsync(wallet,  cancellationToken);
+            //     }
+            // }
         }
         if (dto.Status == OrderStatus.Paid)
         {

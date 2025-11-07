@@ -130,8 +130,7 @@ public enum OrderStatus
 public enum OrderPaymentMethod
 {
     Banking,
-    COD,
-    Rent
+    COD
 }
 
 public enum PaymentMethod

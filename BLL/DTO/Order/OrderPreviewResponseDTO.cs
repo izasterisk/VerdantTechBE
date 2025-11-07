@@ -34,7 +34,7 @@ public class OrderPreviewResponseDTO
     // public ulong AddressId { get; set; }
 
     [Required(ErrorMessage = "Phương thức thanh toán là bắt buộc.")]
-    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Rent.")]
+    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD.")]
     public OrderPaymentMethod OrderPaymentMethod { get; set; }
 
     // [MaxLength(100, ErrorMessage = "Phương thức vận chuyển không được vượt quá 100 ký tự.")]

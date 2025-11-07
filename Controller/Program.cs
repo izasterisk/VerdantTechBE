@@ -99,7 +99,7 @@ builder.Services.AddScoped<IRepository<Payment>, Repository<Payment>>();
 builder.Services.AddScoped<IRepository<Transaction>, Repository<Transaction>>();
 builder.Services.AddScoped<IRepository<ProductSerial>, Repository<ProductSerial>>();
 builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
-builder.Services.AddScoped<IRepository<WalletRepository>, Repository<WalletRepository>>();
+builder.Services.AddScoped<IRepository<Wallet>, Repository<Wallet>>();
 builder.Services.AddScoped<IRepository<VendorBankAccount>, Repository<VendorBankAccount>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
@@ -137,6 +137,7 @@ builder.Services.AddScoped<IProductCertificateService, ProductCertificateService
 builder.Services.AddScoped<IProductRegistrationService, ProductRegistrationService>();
 builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<IVendorBankAccountsService, VendorBankAccountsService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
