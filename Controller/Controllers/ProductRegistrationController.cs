@@ -119,51 +119,33 @@ namespace Controller.Controllers
             var certDtos = new List<MediaLinkItemDTO>();
             if (req.Certificate is { Count: > 0 })
             {
-                var ups = await _cloud.UploadManyAsync(req.Certificate, "product-registrations/certificates", ct);
+                // (tuỳ chọn) chặn file không phải PDF
+                var pdfs = req.Certificate.Where(f =>
+                    string.Equals(f.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) ||
+                    f.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+
+                var ups = await _cloud.UploadManyAsync(pdfs, "product-registrations/certificates", ct);
                 certDtos = ups.Select((x, i) => new MediaLinkItemDTO
                 {
                     ImagePublicId = x.PublicId,
-                    ImageUrl = x.Url,
-                    Purpose = "none",
+                    ImageUrl = x.PublicUrl,     // ✅ dùng PublicUrl
+                    Purpose = "CertificatePdf",// ✅ gắn đúng purpose
                     SortOrder = i + 1
                 }).ToList();
             }
 
-            //if (Request.HasFormContentType)
-            //{
-            //    var keys = string.Join(", ", Request.Form.Keys);
-            //    _logger.LogInformation("FORM keys: {Keys}", keys);
-
-            //    if (Request.Form.TryGetValue("Data.Specifications", out var raw1))
-            //        _logger.LogInformation("Data.Specifications (raw) = {Raw}", raw1.ToString());
-
-            //    if (Request.Form.TryGetValue("Specifications", out var raw2))
-            //        _logger.LogInformation("Specifications (raw) = {Raw}", raw2.ToString());
-
-            //    // đếm số key dạng bracket
-            //    var bracketCount = Request.Form.Keys.Count(k =>
-            //        k.StartsWith("Data.Specifications[", StringComparison.OrdinalIgnoreCase) ||
-            //        k.StartsWith("Specifications[", StringComparison.OrdinalIgnoreCase));
-            //    _logger.LogInformation("Bracket-form spec keys count = {Count}", bracketCount);
-            //}
-
-            //// Bind Specifications (JSON/ bracket-form)
-            //BindSpecsFromFormIfAny(Request, out var specs);
-            //if (specs != null)
-            //{
-            //    LogDict("Controller parsed specs", specs);
-            //    req.Data.Specifications = specs;
-            //}
-            //else
-            //{
-            //    _logger.LogInformation("Controller parsed specs = null (không tìm thấy trong form)");
-            //}
-
-            var created = await _service.CreateAsync(req.Data, manualUrl, manualPublicUrl, imagesDto, certDtos, ct);
+            var created = await _service.CreateAsync(
+                req.Data,
+                manualUrl, manualPublicUrl,
+                imagesDto,
+                certDtos,    // ✅ truyền vào
+                ct
+            );
             return Ok(created);
-        }
+        } 
 
-        // ========= UPDATE =========
+            // ========= UPDATE =========
 
         [HttpPut("{id:long}")]
         [Consumes("multipart/form-data")]
@@ -200,45 +182,34 @@ namespace Controller.Controllers
             var addCertificates = new List<MediaLinkItemDTO>();
             if (req.Certificate is { Count: > 0 })
             {
-                var ups = await _cloud.UploadManyAsync(req.Certificate, "product-registrations/certificates", ct);
+                var pdfs = req.Certificate.Where(f =>
+                    string.Equals(f.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) ||
+                    f.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+
+                var ups = await _cloud.UploadManyAsync(pdfs, "product-registrations/certificates", ct);
                 addCertificates = ups.Select((x, i) => new MediaLinkItemDTO
                 {
                     ImagePublicId = x.PublicId,
-                    ImageUrl = x.Url,
-                    Purpose = "none",
+                    ImageUrl = x.PublicUrl,     // ✅ dùng PublicUrl
+                    Purpose = "CertificatePdf",// ✅ gắn đúng purpose
                     SortOrder = i + 1
                 }).ToList();
             }
 
             var removedImages = req.RemoveImagePublicIds ?? new List<string>();
             var removedCerts = req.RemoveCertificatePublicIds ?? new List<string>();
-            try
-            {
-                var updated = await _service.UpdateAsync(
-                    req.Data, manualUrl, manualPublicUrl,
-                    addImages, addCertificates, removedImages, removedCerts, ct);
-                return Ok(updated);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound("Đơn đăng ký không tồn tại.");
-            }
 
-            //// Bind Specifications (JSON/ bracket-form)
-            //BindSpecsFromFormIfAny(Request, out var specs);
-            //if (specs != null) req.Data.Specifications = specs;
-
-            //try
-            //{
-            //    var updated = await _service.UpdateAsync(req.Data, manualUrl, manualPublicUrl,
-            //                                             addImages, addCertificates,
-            //                                             removedImages, removedCerts, ct);
-            //    return Ok(updated);
-            //}
-            //catch (KeyNotFoundException)
-            //{
-            //    return NotFound("Đơn đăng ký không tồn tại.");
-            //}
+            var updated = await _service.UpdateAsync(
+                req.Data,
+                manualUrl, manualPublicUrl,
+                addImages,
+                addCertificates,           // ✅ truyền vào
+                removedImages,
+                removedCerts,
+                ct
+            );
+            return Ok(updated);
         }
 
         // ========= CHANGE STATUS / DELETE =========

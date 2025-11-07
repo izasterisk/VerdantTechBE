@@ -19,7 +19,7 @@ namespace Infrastructure.Cloudinary
         private readonly CloudinaryOptions _opts;
 
         private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase)
-        { "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "ico", "svg" };
+        { "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "ico", "svg", "pdf" };
 
         public CloudinaryService(IOptions<CloudinaryOptions> opts)
         {

@@ -61,6 +61,12 @@ namespace BLL.DTO.ProductRegistration
         [Required(ErrorMessage = "Kích thước sản phẩm là bắt buộc")]
         public required DimensionsDTO DimensionsCm { get; set; }
 
+        [StringLength(50)]
+        public string? CertificationCode { get; set; }
+
+        [StringLength(255)]
+        public string? CertificationName { get; set; }
+
         //// Manual mới (nếu upload) – controller set
         //public string? ManualUrl { get; set; }
         //public string? ManualPublicUrl { get; set; }
