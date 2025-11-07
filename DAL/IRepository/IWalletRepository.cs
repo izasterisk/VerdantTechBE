@@ -10,4 +10,5 @@ public interface IWalletRepository
     Task<bool> IsWalletExistsByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<Wallet> GetWalletByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<List<Order>> GetAllDeliveredOrdersAsync(CancellationToken cancellationToken = default);
+    Task UpdateOrdersWithTransactionAsync(List<Order> orders, CancellationToken cancellationToken = default);
 }

@@ -55,11 +55,30 @@ public class WalletRepository : IWalletRepository
             throw;
         }
     }
+    
+    public async Task UpdateOrdersWithTransactionAsync(List<Order> orders, CancellationToken cancellationToken = default)
+    {
+        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            foreach (var order in orders)
+            {
+                order.UpdatedAt = DateTime.UtcNow;
+                await _orderRepository.UpdateAsync(order, cancellationToken);
+            }
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 
     public async Task<Wallet> GetWalletByVendorIdWithRelationsAsync(ulong vendorId, CancellationToken cancellationToken = default)
     {
         var wallet = await _walletRepository.GetWithRelationsAsync(w => w.VendorId == vendorId,
-            useNoTracking: true,
+            useNoTracking: false,
             query => query.Include(w => w.Vendor), cancellationToken);
         if (wallet == null)
         {
@@ -70,7 +89,7 @@ public class WalletRepository : IWalletRepository
             };
             var created = await CreateWalletWithTransactionAsync(create, cancellationToken);
             wallet = await _walletRepository.GetWithRelationsAsync(w => w.Id == created.Id,
-                useNoTracking: true,
+                useNoTracking: false,
                 query => query.Include(w => w.Vendor), cancellationToken);
             if (wallet == null)
             {
