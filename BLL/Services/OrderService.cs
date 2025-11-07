@@ -23,10 +23,11 @@ public class OrderService : IOrderService
     private readonly IMemoryCache _memoryCache;
     private readonly IUserService _userService;
     private readonly IExportInventoryRepository _exportInventoryRepository;
+    private readonly IUserRepository _userRepository;
     
     public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository,
         IAddressRepository addressRepository, IGoshipCourierApiClient courierApiClient, IMemoryCache memoryCache,
-        IUserService userService, IExportInventoryRepository exportInventoryRepository)
+        IUserService userService, IExportInventoryRepository exportInventoryRepository, IUserRepository userRepository)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
@@ -36,6 +37,7 @@ public class OrderService : IOrderService
         _memoryCache = memoryCache;
         _userService = userService;
         _exportInventoryRepository = exportInventoryRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
@@ -161,16 +163,83 @@ public class OrderService : IOrderService
         }
         
         finalResponse.Customer = _mapper.Map<UserResponseDTO>(user);
-        finalResponse.Customer.Address.Insert(0, orderPreview.Address);
+        finalResponse.Customer.UserAddresses.Insert(0, orderPreview.Address);
         OrderHelper.RemoveOrderPreviewFromCache(_memoryCache, orderPreviewId);
         return finalResponse;
     }
 
-    // public async Task<OrderResponseDTO> ShipOrderAsync(ulong staffId, ulong orderId, List<OrderDetailsShippingDTO> dto, CancellationToken cancellationToken = default)
-    // {
-    //     if(dto == null || dto.Count == 0)
-    //         throw new ArgumentNullException($"{nameof(dto)} rỗng.");
-    // }
+    public async Task<OrderResponseDTO> ShipOrderAsync(ulong staffId, ulong orderId, List<OrderDetailsShippingDTO> dtos, CancellationToken cancellationToken = default)
+    {
+        if(dtos == null || dtos.Count == 0)
+            throw new ArgumentNullException($"{nameof(dtos)} rỗng.");
+        var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        if (order == null)
+            throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
+        
+        Dictionary<ulong, int> productQuantities = new();
+        foreach (var orderDetail in order.OrderDetails)
+        {
+            productQuantities[orderDetail.ProductId] = orderDetail.Quantity;
+        }
+        List<ExportInventory> exportInventories = new();
+        foreach (var dto in dtos)
+        {
+            if (!productQuantities.ContainsKey(dto.ProductId))
+                throw new InvalidOperationException($"Sản phẩm với ID {dto.ProductId} không nằm trong đơn hàng này.");
+            if (productQuantities[dto.ProductId] <= 0)
+                throw new InvalidOperationException($"Yêu cầu xuất hàng đang nhiều hơn số lượng hàng trong đơn mà khách hàng yêu cầu, đề nghị kiểm tra lại.");
+            productQuantities[dto.ProductId]--;
+
+            var serialNumber = await _orderDetailRepository.ValidateIdentifyNumberAsync(dto.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
+            exportInventories.Add(new ExportInventory
+            {
+                ProductId = dto.ProductId,
+                ProductSerialId = serialNumber,
+                LotNumber = dto.LotNumber,
+                OrderId = order.Id,
+                MovementType = MovementType.Sale,
+                CreatedBy = staffId
+            });
+        }
+        foreach (var kvp in productQuantities)
+        {
+            if (kvp.Value != 0)
+                throw new InvalidOperationException($"Sản phẩm với ID {kvp.Key} đang được xuất ít hơn số lượng trong đơn hàng.");
+        }
+        
+        var from = await _userService.GetUserByIdAsync(1, cancellationToken);
+        var to = _mapper.Map<UserResponseDTO>(await _userRepository.GetUserByIdAsync(order.CustomerId, cancellationToken));
+        var targetAddress = await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken);
+        if (targetAddress == null)
+            throw new KeyNotFoundException("Địa chỉ không còn tồn tại.");
+        to.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(targetAddress)); // Đưa địa chỉ này lên đầu tiên
+        
+        int payer = 1; int codAmount = 0;
+        if (order.OrderPaymentMethod == OrderPaymentMethod.COD)
+        {
+            payer = 0; // Người gửi trả phí
+            codAmount = (int)Math.Ceiling((double)order.TotalAmount);
+        }
+        order.TrackingNumber = await _courierApiClient.CreateShipmentAsync(from, to, codAmount, order.Length, 
+            order.Width, order.Height, order.Weight, (int)Math.Ceiling((double)order.TotalAmount), payer, 
+            order.CourierId, order.Notes ?? "" , cancellationToken);
+        order.Status = OrderStatus.Shipped;
+        
+        await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(exportInventories, cancellationToken);
+        await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
+        
+        var finalResponse = _mapper.Map<OrderResponseDTO>(order);
+        if (finalResponse.OrderDetails != null)
+        {
+            foreach (var product in finalResponse.OrderDetails)
+            {
+                product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
+            }
+        }
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(order.CustomerId, cancellationToken));
+        finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken)));
+        return finalResponse;
+    }
     
     public async Task<OrderResponseDTO> ProcessOrderAsync(ulong staffId, ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
     {
@@ -207,39 +276,6 @@ public class OrderService : IOrderService
             order.CancelledAt = DateTime.UtcNow;
             order.CancelledReason = dto.CancelledReason;
         }
-        if (dto.Status == OrderStatus.Shipped)
-        {
-            var from = await _userService.GetUserByIdAsync(1, cancellationToken);
-            var to = await _userService.GetUserByIdAsync(order.CustomerId, cancellationToken);
-            
-            var targetAddress = to.Address.FirstOrDefault(a => a.Id == order.AddressId);
-            if (targetAddress == null)
-                throw new KeyNotFoundException("Địa chỉ không còn tồn tại.");
-            to.Address.Insert(0, targetAddress); // Đưa địa chỉ này lên đầu tiên
-            int payer = 1; int codAmount = 0;
-            if (order.OrderPaymentMethod == OrderPaymentMethod.COD)
-            {
-                payer = 0; // Người gửi trả phí
-                codAmount = (int)Math.Ceiling((double)order.TotalAmount);
-            }
-            order.TrackingNumber = await _courierApiClient.CreateShipmentAsync(from, to, codAmount, order.Length, 
-                order.Width, order.Height, order.Weight, (int)Math.Ceiling((double)order.TotalAmount), payer, 
-                order.CourierId, order.Notes ?? "" , cancellationToken);
-            
-            List<ExportInventory> exportInventories = new();
-            foreach (var orderDetail in order.OrderDetails)
-            {
-                exportInventories.Add(new ExportInventory
-                {
-                    ProductId = orderDetail.Product.Id,
-                    OrderId = order.Id,
-                    // Quantity = orderDetail.Quantity,
-                    MovementType = MovementType.Sale,
-                    CreatedBy = staffId
-                });
-            }
-            await _exportInventoryRepository.CreateExportInventoryWithTransactionAsync(exportInventories, cancellationToken);
-        }
         order.Status = dto.Status;
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
         var response = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
@@ -254,7 +290,7 @@ public class OrderService : IOrderService
             }
         }
         finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(response.CustomerId, cancellationToken));
-        finalResponse.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken)));
+        finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken)));
         return finalResponse;
     }
     
@@ -272,7 +308,7 @@ public class OrderService : IOrderService
             }
         }
         item.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetUserByIdAsync(orderEntity.CustomerId, cancellationToken));
-        item.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(orderEntity.AddressId, cancellationToken)));
+        item.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(orderEntity.AddressId, cancellationToken)));
         return item;
     }
     
@@ -291,7 +327,7 @@ public class OrderService : IOrderService
                     product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
                 }
             }
-            item.Customer.Address.Insert(0, _mapper.Map<AddressResponseDTO>(orderEntity.Address));
+            item.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(orderEntity.Address));
             response.Add(item);
         }
         

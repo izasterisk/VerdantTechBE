@@ -28,8 +28,7 @@ namespace BLL.Helpers
             CreateMap<UserUpdateDTO, User>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
-            CreateMap<UserResponseDTO, User>().ReverseMap()
-                .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.UserAddresses));
+            CreateMap<User, UserResponseDTO>().ReverseMap();
 
             CreateMap<UserAddressCreateDTO, Address>().ReverseMap();
             CreateMap<UserAddressUpdateDTO, Address>().ReverseMap();

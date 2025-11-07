@@ -45,19 +45,22 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
             .IsRequired()
             .HasColumnName("unit_cost_price");
 
-        // Optional fields
+        // Required fields
         builder.Property(e => e.BatchNumber)
             .HasMaxLength(100)
+            .IsRequired()
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("batch_number");
 
         builder.Property(e => e.LotNumber)
             .HasMaxLength(100)
+            .IsRequired()
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("lot_number");
 
+        // Optional fields
         builder.Property(e => e.Notes)
             .HasMaxLength(500)
             .HasCharSet("utf8mb4")

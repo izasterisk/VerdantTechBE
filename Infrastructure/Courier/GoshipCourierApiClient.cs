@@ -141,9 +141,9 @@ public class GoshipCourierApiClient : IGoshipCourierApiClient
         {
             var url = $"{_baseUrl}/shipments";
             // Lấy địa chỉ đầu tiên từ UserResponseDTO
-            var addressFrom = from.Address.FirstOrDefault() 
+            var addressFrom = from.UserAddresses.FirstOrDefault() 
                 ?? throw new InvalidOperationException("Người gửi không có địa chỉ.");
-            var addressTo = to.Address.FirstOrDefault() 
+            var addressTo = to.UserAddresses.FirstOrDefault() 
                 ?? throw new InvalidOperationException("Người nhận không có địa chỉ.");
             // Parse CommuneCode sang int cho ward_id
             var wardIdFrom = GoshipCourierApiHelpers.ParseCommuneCodeToWardId(addressFrom.CommuneCode, "người gửi");

@@ -125,7 +125,7 @@ public class AuthService : IAuthService
     
     public async Task LogoutAsync(ulong userId, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetUserByIdAsync(userId, cancellationToken)
+        var user = await _userRepository.GetUserWithAddressesByIdAsync(userId, cancellationToken)
             ?? throw new InvalidOperationException(AuthConstants.USER_NOT_FOUND);
         
         if (!string.IsNullOrEmpty(user.RefreshToken))

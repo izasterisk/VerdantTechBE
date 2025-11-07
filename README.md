@@ -347,6 +347,38 @@ Danh sách đơn hàng (phân trang, lọc theo status).
 - Response: `PagedResponse<OrderResponseDTO>` (data, currentPage, pageSize, totalPages, totalRecords, hasNextPage, hasPreviousPage).
 - Exceptions: Không có (trả rỗng nếu không tìm thấy).
 
+**`POST /api/Order/{orderId}/ship`** (Authorize, Roles: Admin, Staff)  
+Xuất kho và gán số serial/số lô cho sản phẩm trong đơn hàng trước khi ship.
+
+- Path: `orderId` (ulong)
+- Body: `List<OrderDetailsShippingDTO>`
+
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | productId | ulong | Required, >= 1 |
+  | serialNumber | string? | Optional, max 50 ký tự (bắt buộc với máy móc - category 1,2) |
+  | lotNumber | string? | Optional, max 50 ký tự (bắt buộc với vật tư - category 3,4) |
+
+- Ràng buộc nghiệp vụ:
+  - Order phải tồn tại.
+  - Tạo Dictionary từ `order.OrderDetails` để theo dõi số lượng sản phẩm.
+  - Mỗi `productId` trong DTO phải:
+    - Tồn tại trong đơn hàng (có trong Dictionary).
+    - Chưa xuất đủ số lượng (quantity > 0).
+    - Có số serial (category 1,2) hoặc số lô (category 3,4) hợp lệ (so sánh case-insensitive với `.ToUpper()`).
+  - Sau khi duyệt hết DTO, kiểm tra Dictionary:
+    - Tất cả sản phẩm phải có quantity = 0 (đã xuất đủ).
+  - Tạo `ExportInventory` với `MovementType=Sale`, `CreatedBy=staffId` (từ JWT).
+- Response: `OrderResponseDTO` sau khi xuất kho thành công.
+- Exceptions:
+  - `ArgumentNullException`: DTO null hoặc rỗng.
+  - `KeyNotFoundException`: Order không tồn tại, số serial/lô không tồn tại hoặc không thuộc sản phẩm.
+  - `InvalidOperationException`: 
+    - Sản phẩm không nằm trong đơn hàng.
+    - Xuất nhiều hơn số lượng đã đặt.
+    - Xuất ít hơn số lượng đã đặt (kiểm tra cuối).
+    - Thiếu số serial (category 1,2) hoặc số lô (category 3,4).
+
 #### ProductCategoryController (`/api/ProductCategory`)
 
 **`POST /api/ProductCategory`** (Authorize)
