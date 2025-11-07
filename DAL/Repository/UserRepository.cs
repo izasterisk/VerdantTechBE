@@ -90,7 +90,7 @@ public class UserRepository : IUserRepository
     public async Task<User> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetAsync(u => u.Id == userId && u.IsVerified && u.Status == UserStatus.Active, useNoTracking: true, cancellationToken);
-        return user ?? throw new KeyNotFoundException("Người dùng không tồn tại hoặc đã bị xóa. Vui lòng đổi trạng thái thành cancel.");;
+        return user ?? throw new KeyNotFoundException("Người dùng không tồn tại hoặc đã bị xóa.");
     }
     
     public async Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)

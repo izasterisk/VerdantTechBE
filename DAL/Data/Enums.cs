@@ -198,14 +198,6 @@ public enum CashoutReferenceType
     AdminAdjustment
 }
 
-public enum CashoutType
-{
-    CommissionPayout,
-    VendorPayment,
-    Expense,
-    Refund
-}
-
 // =====================================================
 // INVENTORY ENUMS
 // =====================================================

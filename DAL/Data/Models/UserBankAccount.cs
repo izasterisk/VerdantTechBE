@@ -3,13 +3,13 @@ using System.ComponentModel.DataAnnotations;
 namespace DAL.Data.Models;
 
 /// <summary>
-/// Bank accounts of vendor profiles
+/// Bank accounts for all users (customers and vendors)
 /// </summary>
-public partial class VendorBankAccount
+public partial class UserBankAccount
 {
     public ulong Id { get; set; }
 
-    public ulong VendorId { get; set; }
+    public ulong UserId { get; set; }
 
     [Required]
     [StringLength(20)]
@@ -28,8 +28,6 @@ public partial class VendorBankAccount
     public DateTime UpdatedAt { get; set; }
 
     // Navigation
-    public virtual User Vendor { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
     public virtual ICollection<Cashout> Cashouts { get; set; } = new List<Cashout>();
 }
-
-

@@ -43,6 +43,6 @@ public partial class Cashout
     // Navigation Properties
     public virtual User Vendor { get; set; } = null!;
     public virtual Transaction? Transaction { get; set; }
-    public virtual VendorBankAccount BankAccount { get; set; } = null!;
+    public virtual UserBankAccount BankAccount { get; set; } = null!;
     public virtual User? ProcessedByNavigation { get; set; }
 }

@@ -14,7 +14,7 @@ public class VerdantTechDbContext : DbContext
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<FarmProfile> FarmProfiles { get; set; }
     public DbSet<VendorProfile> VendorProfiles { get; set; }
-    public DbSet<VendorBankAccount> VendorBankAccounts { get; set; }
+    public DbSet<UserBankAccount> UserBankAccounts { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
     
     // Certificate DbSets
@@ -67,7 +67,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserAddressConfiguration());
         modelBuilder.ApplyConfiguration(new FarmProfileConfiguration());
         modelBuilder.ApplyConfiguration(new VendorProfileConfiguration());
-        modelBuilder.ApplyConfiguration(new VendorBankAccountConfiguration());
+        modelBuilder.ApplyConfiguration(new UserBankAccountConfiguration());
         modelBuilder.ApplyConfiguration(new WalletConfiguration());
         modelBuilder.ApplyConfiguration(new VendorCertificateConfiguration());
         modelBuilder.ApplyConfiguration(new ProductCertificateConfiguration());

@@ -56,8 +56,8 @@ INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `busines
 (1, 5, 'Công Ty Máy Móc Nông Nghiệp Xanh', 'cong-ty-may-moc-nong-nghiep-xanh', 'BRN123456789', '2025-09-09 07:00:00', 1, '2025-09-08 08:00:00', '2025-09-09 07:00:00'),
 (2, 6, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', '2025-09-09 06:30:00', 1, '2025-09-08 08:30:00', '2025-09-09 06:30:00');
 
--- Insert Vendor Bank Accounts (v9.0 structure - removed is_default field)
-INSERT INTO `vendor_bank_accounts` (`id`, `vendor_id`, `bank_code`, `account_number`, `account_holder`, `created_at`, `updated_at`) VALUES
+-- Insert User Bank Accounts (v9.1 structure - renamed from vendor_bank_accounts to user_bank_accounts, now supports all users)
+INSERT INTO `user_bank_accounts` (`id`, `user_id`, `bank_code`, `account_number`, `account_holder`, `created_at`, `updated_at`) VALUES
 (1, 5, 'VCB', '1234567890', 'Công Ty Máy Móc Nông Nghiệp Xanh', '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
 (2, 6, 'ACB', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', '2025-09-09 06:35:00', '2025-09-09 06:35:00');
 
