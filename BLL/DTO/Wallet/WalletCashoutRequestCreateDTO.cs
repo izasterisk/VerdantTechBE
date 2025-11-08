@@ -3,10 +3,10 @@ using DAL.Data;
 
 namespace BLL.DTO.Wallet;
 
-public class VendorCashoutCreateDTO
+public class WalletCashoutRequestCreateDTO
 {
-    [Required(ErrorMessage = "Vendor ID is required")]
-    public ulong VendorId { get; set; }
+    // [Required(ErrorMessage = "Vendor ID is required")]
+    // public ulong VendorId { get; set; }
 
     // public ulong? TransactionId { get; set; }
 
@@ -16,6 +16,8 @@ public class VendorCashoutCreateDTO
     [Required(ErrorMessage = "Amount is required")]
     [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
     public decimal Amount { get; set; }
+    
+    // public CashoutStatus Status { get; set; } = CashoutStatus.Pending;
 
     [StringLength(255, ErrorMessage = "Reason cannot exceed 255 characters")]
     public string? Reason { get; set; }
@@ -31,4 +33,10 @@ public class VendorCashoutCreateDTO
     public string? Notes { get; set; }
 
     // public ulong? ProcessedBy { get; set; }
+    
+    // public DateTime? ProcessedAt { get; set; }
+
+    // public DateTime CreatedAt { get; set; }
+
+    // public DateTime UpdatedAt { get; set; }
 }

@@ -4,5 +4,6 @@ namespace DAL.IRepository;
 
 public interface ICashoutRepository
 {
-    Task<Cashout> CreateCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default);
+    Task<Cashout> CreateCashoutForWalletCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default);
+    Task<bool> DeleteCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default);
 }

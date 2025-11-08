@@ -8,17 +8,41 @@ public class CashoutRepository : ICashoutRepository
 {
     private readonly IRepository<Cashout> _cashoutRepository;
     private readonly VerdantTechDbContext _dbContext;
+    private readonly IWalletRepository _walletRepository;
     
-    public CashoutRepository(VerdantTechDbContext context, IRepository<Cashout> cashoutRepository)
+    public CashoutRepository(VerdantTechDbContext dbContext, IRepository<Cashout> cashoutRepository,
+        IWalletRepository walletRepository)
     {
-        _dbContext = context;
+        _dbContext = dbContext;
         _cashoutRepository = cashoutRepository;
+        _walletRepository = walletRepository;
     }
 
-    public async Task<Cashout> CreateCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default)
+    public async Task<Cashout> CreateCashoutForWalletCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default)
     {
-        cashout.CreatedAt = DateTime.UtcNow;
-        cashout.UpdatedAt = DateTime.UtcNow;
-        return await _cashoutRepository.CreateAsync(cashout, cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var existing = await _walletRepository.GetWalletCashoutRequestByUserIdAsync(cashout.VendorId, cancellationToken);
+            if (existing != null)
+                throw new InvalidOperationException(
+                    "Yêu cầu rút tiền đang chờ xử lý, vui lòng chờ đến khi yêu cầu trước được xử lý. " +
+                    "Mỗi tài khoản chỉ được tồn tại 1 yêu cầu chưa được xử lý.");
+            cashout.CreatedAt = DateTime.UtcNow;
+            cashout.UpdatedAt = DateTime.UtcNow;
+            var result = await _cashoutRepository.CreateAsync(cashout, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default)
+    {
+        return await _cashoutRepository.DeleteAsync(cashout, cancellationToken);
     }
 }

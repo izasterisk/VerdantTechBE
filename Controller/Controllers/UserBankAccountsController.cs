@@ -29,9 +29,8 @@ public class UserBankAccountsController : BaseController
     /// <param name="dto">Thông tin tài khoản ngân hàng cần tạo</param>
     /// <returns>Thông tin tài khoản ngân hàng đã tạo</returns>
     [HttpPost("user/{userId}")]
-    [Authorize(Roles = "Customer,Vendor,Admin")]
+    [Authorize]
     [EndpointSummary("Create User Bank Account")]
-    [EndpointDescription("Tạo tài khoản ngân hàng mới cho người dùng. Chỉ người dùng (chủ tài khoản) và Admin mới có quyền thực hiện.")]
     public async Task<ActionResult<APIResponse>> CreateUserBankAccount(ulong userId, [FromBody] UserBankAccountCreateDTO dto)
     {
         var validationResult = ValidateModel();
@@ -55,7 +54,7 @@ public class UserBankAccountsController : BaseController
     /// <param name="dto">Thông tin tài khoản ngân hàng cần cập nhật</param>
     /// <returns>Thông tin tài khoản ngân hàng đã cập nhật</returns>
     [HttpPatch("{accountId}")]
-    [Authorize(Roles = "Customer,Vendor,Admin")]
+    [Authorize]
     [EndpointSummary("Update User Bank Account")]
     public async Task<ActionResult<APIResponse>> UpdateUserBankAccount(ulong accountId, [FromBody] UserBankAccountUpdateDTO dto)
     {

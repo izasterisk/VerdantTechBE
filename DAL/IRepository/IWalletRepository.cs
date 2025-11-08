@@ -10,4 +10,6 @@ public interface IWalletRepository
     Task<Wallet> GetWalletByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<List<OrderDetail>> GetAllOrderDetailsAvailableForCreditAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<bool> ValidateVendorQualified(ulong userId, CancellationToken cancellationToken = default);
+    Task<Cashout?> GetWalletCashoutRequestByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
+    Task<Cashout?> GetWalletCashoutRequestWithRelationsByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
 }

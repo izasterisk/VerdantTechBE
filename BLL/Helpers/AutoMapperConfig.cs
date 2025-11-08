@@ -44,6 +44,9 @@ namespace BLL.Helpers
 
             // ===================== WALLET MAPPINGS =====================
             CreateMap<WalletResponseDTO, Wallet>().ReverseMap();
+            CreateMap<WalletCashoutRequestResponseDTO, Cashout>().ReverseMap();
+            CreateMap<WalletCashoutRequestResponseDTO, UserBankAccount>().ReverseMap();
+            CreateMap<WalletCashoutRequestCreateDTO, Cashout>().ReverseMap();
             
             // ===================== FARM PROFILE =====================
             CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();
