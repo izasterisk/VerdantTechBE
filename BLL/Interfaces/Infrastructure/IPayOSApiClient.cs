@@ -34,4 +34,5 @@ public interface IPayOSApiClient
     /// Lấy danh sách tất cả các ngân hàng được hỗ trợ từ VietQR API
     /// </summary>
     Task<List<BankInfoDTO>> GetAllSupportedBanksAsync(CancellationToken cancellationToken = default);
+    Task<(string IPv4, string IPv6)> GetIPAddressAsync(CancellationToken cancellationToken = default);
 }

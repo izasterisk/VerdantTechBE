@@ -140,6 +140,7 @@ builder.Services.AddScoped<IProductRegistrationService, ProductRegistrationServi
 builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<IUserBankAccountsService, UserBankAccountsService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<ICashoutService, CashoutService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

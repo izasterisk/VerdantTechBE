@@ -15,11 +15,11 @@ public class PayOSApiClient : IPayOSApiClient
     {
         _httpClient = httpClient;
         var clientId = Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID") 
-                       ?? throw new InvalidOperationException("PAYOS_CLIENT_ID not found in environment variables");
+                       ?? throw new InvalidOperationException("Không tìm thấy PAYOS_CLIENT_ID trong biến môi trường");
         var apiKey = Environment.GetEnvironmentVariable("PAYOS_API_KEY") 
-                     ?? throw new InvalidOperationException("PAYOS_API_KEY not found in environment variables");
+                     ?? throw new InvalidOperationException("Không tìm thấy PAYOS_API_KEY trong biến môi trường");
         var checksumKey = Environment.GetEnvironmentVariable("PAYOS_CHECKSUM_KEY") 
-                          ?? throw new InvalidOperationException("PAYOS_CHECKSUM_KEY not found in environment variables");
+                          ?? throw new InvalidOperationException("Không tìm thấy PAYOS_CHECKSUM_KEY trong biến môi trường");
         _payOS = new Net.payOS.PayOS(clientId, apiKey, checksumKey);
     }
     
@@ -92,11 +92,56 @@ public class PayOSApiClient : IPayOSApiClient
         }
         catch (HttpRequestException ex)
         {
-            throw new InvalidOperationException($"Failed to get banks from VietQR API: {ex.Message}", ex);
+            throw new InvalidOperationException($"Không thể lấy danh sách ngân hàng từ VietQR API: {ex.Message}", ex);
         }
         catch (JsonException ex)
         {
-            throw new InvalidOperationException($"Failed to parse bank response: {ex.Message}", ex);
+            throw new InvalidOperationException($"Không thể phân tích dữ liệu ngân hàng: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<(string IPv4, string IPv6)> GetIPAddressAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var ipv4Url = "https://api.ipify.org?format=json";
+            var ipv6Url = "https://api64.ipify.org?format=json";
+            
+            // Call both APIs in parallel
+            var ipv4Task = _httpClient.GetAsync(ipv4Url, cancellationToken);
+            var ipv6Task = _httpClient.GetAsync(ipv6Url, cancellationToken);
+            
+            await Task.WhenAll(ipv4Task, ipv6Task);
+            
+            var ipv4Response = await ipv4Task;
+            var ipv6Response = await ipv6Task;
+            
+            ipv4Response.EnsureSuccessStatusCode();
+            ipv6Response.EnsureSuccessStatusCode();
+            
+            var ipv4Content = await ipv4Response.Content.ReadAsStringAsync(cancellationToken);
+            var ipv6Content = await ipv6Response.Content.ReadAsStringAsync(cancellationToken);
+            
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            
+            using var ipv4Doc = JsonDocument.Parse(ipv4Content);
+            using var ipv6Doc = JsonDocument.Parse(ipv6Content);
+            
+            var ipv4 = ipv4Doc.RootElement.GetProperty("ip").GetString() ?? string.Empty;
+            var ipv6 = ipv6Doc.RootElement.GetProperty("ip").GetString() ?? string.Empty;
+            
+            return (ipv4, ipv6);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException($"Không thể lấy địa chỉ IP từ API: {ex.Message}", ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"Không thể phân tích dữ liệu địa chỉ IP: {ex.Message}", ex);
         }
     }
 }
