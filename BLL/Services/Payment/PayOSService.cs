@@ -110,12 +110,11 @@ public class PayOSService : IPayOSService
         {
             payment.Status = PaymentStatus.Completed;
             payment.Order.Status = OrderStatus.Paid;
-            var transaction = new TransactionResponseDTO
+            var transaction = new TransactionCreateDTO
             {
                 TransactionType = TransactionType.PaymentIn,
                 Amount = webhookData.amount,
                 Currency = webhookData.currency,
-                OrderId = payment.OrderId,
                 UserId = payment.Order.CustomerId,
                 Status = TransactionStatus.Completed,
                 Note = $"Thanh toán đơn hàng #{payment.OrderId} qua PayOS",

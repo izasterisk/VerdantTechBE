@@ -1,4 +1,5 @@
-﻿using BLL.DTO.UserBankAccount;
+﻿using BLL.DTO.User;
+using BLL.DTO.UserBankAccount;
 using DAL.Data;
 
 namespace BLL.DTO.Wallet;
@@ -8,6 +9,7 @@ public class WalletCashoutRequestResponseDTO
     public ulong Id { get; set; }
 
     // public ulong VendorId { get; set; }
+    public UserResponseDTO User { get; set; } = null!;
 
     // public ulong? TransactionId { get; set; }
 
@@ -16,15 +18,13 @@ public class WalletCashoutRequestResponseDTO
     
     public decimal Amount { get; set; }
 
-    public CashoutStatus Status { get; set; } = CashoutStatus.Pending;
+    public CashoutStatus Status { get; set; } = CashoutStatus.Processing;
 
     public string? Reason { get; set; }
 
-    // public string? GatewayTransactionId { get; set; }
+    public CashoutReferenceType? ReferenceType { get; set; }
 
-    // public CashoutReferenceType? ReferenceType { get; set; }
-
-    // public ulong? ReferenceId { get; set; }
+    public ulong? ReferenceId { get; set; }
 
     public string? Notes { get; set; }
 

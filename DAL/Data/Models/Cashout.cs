@@ -17,13 +17,10 @@ public partial class Cashout
 
     public decimal Amount { get; set; }
 
-    public CashoutStatus Status { get; set; } = CashoutStatus.Pending;
+    public CashoutStatus Status { get; set; } = CashoutStatus.Processing;
 
     [StringLength(255)]
     public string? Reason { get; set; }
-
-    [StringLength(255)]
-    public string? GatewayTransactionId { get; set; }
 
     public CashoutReferenceType? ReferenceType { get; set; }
 
