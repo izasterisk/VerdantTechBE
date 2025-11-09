@@ -98,12 +98,12 @@ public class WalletService : IWalletService
         if (walletCashout.Status != CashoutStatus.Processing)
             throw new InvalidOperationException("Yêu cầu rút tiền này đã được xử lý.");
         
-        // var categories = new List<string> { "WalletCashout" };
-        // var cashoutResponse = await _payOSApiClient.CreateCashoutAsync(
-        //     _mapper.Map<UserBankAccountResponseDTO>(walletCashout.BankAccount), 
-        //     (int)Math.Ceiling(walletCashout.Amount), 
-        //     $"WalletCashout", 
-        //     categories, cancellationToken);
+        var categories = new List<string> { "WalletCashout" };
+        var cashoutResponse = await _payOSApiClient.CreateCashoutAsync(
+            _mapper.Map<UserBankAccountResponseDTO>(walletCashout.BankAccount), 
+            (int)Math.Ceiling(walletCashout.Amount), 
+            $"WalletCashout", 
+            categories, cancellationToken);
         Transaction transaction = new Transaction
         {
             TransactionType = TransactionType.WalletCashout,
@@ -112,7 +112,7 @@ public class WalletService : IWalletService
             UserId = userId,
             Status = TransactionStatus.Completed,
             Note = $"Rút tiền từ ví người bán với yêu cầu ID {walletCashout.Id}",
-            GatewayPaymentId = "cashoutResponse.Id",
+            GatewayPaymentId = cashoutResponse.Id,
             CreatedBy = userId,
             ProcessedBy = staffId,
             CompletedAt = DateTime.UtcNow

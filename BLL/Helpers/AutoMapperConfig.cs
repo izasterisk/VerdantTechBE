@@ -50,7 +50,8 @@ namespace BLL.Helpers
             CreateMap<WalletCashoutRequestCreateDTO, Cashout>().ReverseMap();
             
             CreateMap<Cashout, WalletCashoutResponseDTO>()
-                .ForMember(dest => dest.ProcessedBy, opt => opt.MapFrom(src => src.ProcessedByNavigation));
+                .ForMember(dest => dest.ProcessedBy, opt => opt.MapFrom(src => src.ProcessedByNavigation));            
+            CreateMap<Transaction, WalletTransactionResponseDTO>();
             
             // ===================== FARM PROFILE =====================
             CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();

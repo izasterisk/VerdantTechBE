@@ -25,9 +25,9 @@ public class WalletCashoutResponseDTO
 
     public string? Reason { get; set; }
 
-    public CashoutReferenceType? ReferenceType { get; set; }
+    // public CashoutReferenceType? ReferenceType { get; set; }
 
-    public ulong? ReferenceId { get; set; }
+    // public ulong? ReferenceId { get; set; }
 
     public string? Notes { get; set; }
 
@@ -59,8 +59,8 @@ public class WalletTransactionResponseDTO
 
     public string? GatewayPaymentId { get; set; }
 
-    public ulong? CreatedBy { get; set; }
-    public ulong? ProcessedBy { get; set; }
+    // public ulong? CreatedBy { get; set; }
+    // public ulong? ProcessedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
