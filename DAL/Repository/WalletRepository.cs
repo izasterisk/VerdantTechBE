@@ -114,5 +114,18 @@ public class WalletRepository : IWalletRepository
             && c.ReferenceType == CashoutReferenceType.VendorWithdrawal, true, 
             query => query.Include(u => u.BankAccount), cancellationToken);
     
-    
+    public async Task<(List<Cashout>, int totalCount)> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        return await _cashoutRepository.GetPaginatedWithRelationsAsync(
+            page,
+            pageSize,
+            c => c.Status == CashoutStatus.Pending 
+                && c.ProcessedAt == null && c.ProcessedBy == null 
+                && c.ReferenceType == CashoutReferenceType.VendorWithdrawal,
+            useNoTracking: true,
+            orderBy: query => query.OrderByDescending(c => c.CreatedAt),
+            includeFunc: query => query.Include(c => c.BankAccount).ThenInclude(u => u.User),
+            cancellationToken
+        );
+    }
 }

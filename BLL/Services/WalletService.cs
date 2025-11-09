@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BLL.DTO;
 using BLL.DTO.Wallet;
 using BLL.Interfaces;
 using DAL.Data;
@@ -83,5 +84,22 @@ public class WalletService : IWalletService
         if (existingCashout == null)
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");
         return await _cashoutRepository.DeleteCashoutAsync(existingCashout, cancellationToken);
+    }
+    
+    public async Task<PagedResponse<WalletCashoutGetAllResponseDTO>> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var (cashouts, totalCount) = await _walletRepository.GetAllWalletCashoutRequestAsync(page, pageSize, cancellationToken);
+        var cashoutDtos = _mapper.Map<List<WalletCashoutGetAllResponseDTO>>(cashouts);
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<WalletCashoutGetAllResponseDTO>
+        {
+            Data = cashoutDtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
     }
 }

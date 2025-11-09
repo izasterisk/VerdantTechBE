@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
+using BLL.DTO.Cashout;
 using BLL.DTO.Payment;
+using BLL.DTO.UserBankAccount;
 using BLL.Interfaces.Infrastructure;
 using Infrastructure.Payment.PayOS.Models;
 using Net.payOS.Types;
@@ -10,6 +12,7 @@ public class PayOSApiClient : IPayOSApiClient
 {
     private readonly Net.payOS.PayOS _payOS;
     private readonly HttpClient _httpClient;
+    private readonly string _merchantHost = "https://api-merchant.payos.vn";
     
     public PayOSApiClient(HttpClient httpClient)
     {
@@ -142,6 +145,158 @@ public class PayOSApiClient : IPayOSApiClient
         catch (JsonException ex)
         {
             throw new InvalidOperationException($"Không thể phân tích dữ liệu địa chỉ IP: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<decimal> GetBalanceAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var url = $"{_merchantHost}/v1/payouts-account/balance";
+            
+            var clientId = Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID_PAYOUT") 
+                           ?? throw new InvalidOperationException("Không tìm thấy PAYOS_CLIENT_ID_PAYOUT trong biến môi trường");
+            var apiKey = Environment.GetEnvironmentVariable("PAYOS_API_KEY_PAYOUT") 
+                         ?? throw new InvalidOperationException("Không tìm thấy PAYOS_API_KEY_PAYOUT trong biến môi trường");
+            
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("x-client-id", clientId);
+            request.Headers.Add("x-api-key", apiKey);
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            
+            using var jsonDoc = JsonDocument.Parse(responseContent);
+            var root = jsonDoc.RootElement;
+            
+            var code = root.GetProperty("code").GetString();
+            var desc = root.GetProperty("desc").GetString();
+            
+            if (code != "00")
+            {
+                throw new InvalidOperationException(desc ?? "Không thể lấy thông tin số dư từ PayOS");
+            }
+            
+            var data = root.GetProperty("data");
+            var balanceString = data.GetProperty("balance").GetString() ?? "0";
+            
+            if (!decimal.TryParse(balanceString, out var balance))
+            {
+                throw new InvalidOperationException("Không thể phân tích giá trị số dư");
+            }
+            
+            return balance;
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException($"Không thể kết nối tới PayOS API: {ex.Message}", ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"Không thể phân tích dữ liệu số dư: {ex.Message}", ex);
+        }
+    }
+
+    public async Task<PayOSCashoutResponseDTO> CreateCashoutAsync(UserBankAccountResponseDTO bankAccount, int amount, 
+        string description, List<string> categories, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var url = $"{_merchantHost}/v1/payouts";
+            
+            var clientId = Environment.GetEnvironmentVariable("PAYOS_CLIENT_ID_PAYOUT") 
+                           ?? throw new InvalidOperationException("Không tìm thấy PAYOS_CLIENT_ID_PAYOUT trong biến môi trường");
+            var apiKey = Environment.GetEnvironmentVariable("PAYOS_API_KEY_PAYOUT") 
+                         ?? throw new InvalidOperationException("Không tìm thấy PAYOS_API_KEY_PAYOUT trong biến môi trường");
+            var checksumKey = Environment.GetEnvironmentVariable("PAYOS_CHECKSUM_KEY_PAYOUT") 
+                              ?? throw new InvalidOperationException("Không tìm thấy PAYOS_CHECKSUM_KEY_PAYOUT trong biến môi trường");
+            
+            // Generate reference ID and idempotency key
+            var referenceId = PayOSApiClientHelpers.GenerateReferenceId();
+            var idempotencyKey = PayOSApiClientHelpers.GenerateIdempotencyKey();
+            
+            // Create request body
+            var requestBody = new Dictionary<string, object?>
+            {
+                { "referenceId", referenceId },
+                { "amount", amount },
+                { "description", description },
+                { "toBin", bankAccount.BankCode },
+                { "toAccountNumber", bankAccount.AccountNumber },
+                { "category", categories }
+            };
+            
+            // Create signature
+            var signature = PayOSApiClientHelpers.CreateSignature(checksumKey, requestBody);
+            
+            // Create HTTP request
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Headers.Add("x-client-id", clientId);
+            request.Headers.Add("x-api-key", apiKey);
+            request.Headers.Add("x-signature", signature);
+            request.Headers.Add("x-idempotency-key", idempotencyKey);
+            
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            request.Content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            
+            var cashoutResponse = JsonSerializer.Deserialize<CashoutResponse>(responseContent, options);
+            
+            if (cashoutResponse == null)
+            {
+                throw new InvalidOperationException("Không thể phân tích phản hồi từ PayOS");
+            }
+            
+            if (cashoutResponse.Code != "00")
+            {
+                throw new InvalidOperationException(cashoutResponse.Desc ?? "Không thể tạo lệnh rút tiền từ PayOS");
+            }
+            
+            if (cashoutResponse.Data == null || cashoutResponse.Data.Transactions == null || !cashoutResponse.Data.Transactions.Any())
+            {
+                throw new InvalidOperationException("Không có giao dịch nào được tạo");
+            }
+            
+            // Map first transaction to DTO
+            var transaction = cashoutResponse.Data.Transactions.First();
+            
+            return new PayOSCashoutResponseDTO
+            {
+                Id = transaction.Id,
+                ReferenceId = transaction.ReferenceId,
+                Amount = transaction.Amount,
+                Description = transaction.Description,
+                ToBin = transaction.ToBin,
+                ToAccountNumber = transaction.ToAccountNumber,
+                ToAccountName = transaction.ToAccountName,
+                Reference = transaction.Reference,
+                TransactionDatetime = transaction.TransactionDatetime,
+                ErrorMessage = transaction.ErrorMessage,
+                ErrorCode = transaction.ErrorCode,
+                State = transaction.State
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new InvalidOperationException($"Không thể kết nối tới PayOS API: {ex.Message}", ex);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"Không thể phân tích dữ liệu cashout: {ex.Message}", ex);
         }
     }
 }

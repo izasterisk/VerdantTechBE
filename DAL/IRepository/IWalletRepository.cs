@@ -12,4 +12,5 @@ public interface IWalletRepository
     Task<bool> ValidateVendorQualified(ulong userId, CancellationToken cancellationToken = default);
     Task<Cashout?> GetWalletCashoutRequestByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<Cashout?> GetWalletCashoutRequestWithRelationsByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
+    Task<(List<Cashout>, int totalCount)> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default);
 }

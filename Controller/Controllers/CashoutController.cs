@@ -37,4 +37,26 @@ public class CashoutController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Lấy số dư tài khoản PayOS Payout
+    /// </summary>
+    /// <returns>Số dư tài khoản</returns>
+    [HttpGet("balance")]
+    [Authorize(Roles = "Admin,Staff")]
+    [EndpointSummary("Get PayOS Payout Balance")]
+    [EndpointDescription("Lấy số dư tài khoản PayOS Payout để xử lý cashout.")]
+    public async Task<ActionResult<APIResponse>> GetBalance()
+    {
+        try
+        {
+            var balance = await _cashoutService.GetBalanceAsync(GetCancellationToken());
+            var result = new { Balance = balance };
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

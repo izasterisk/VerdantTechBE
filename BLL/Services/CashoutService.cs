@@ -24,4 +24,9 @@ public class CashoutService : ICashoutService
     {
         return await _payOSApiClient.GetIPAddressAsync(cancellationToken);
     }
+
+    public async Task<decimal> GetBalanceAsync(CancellationToken cancellationToken = default)
+    {
+        return await _payOSApiClient.GetBalanceAsync(cancellationToken);
+    }
 }

@@ -1,4 +1,5 @@
-﻿using BLL.DTO.UserBankAccount;
+﻿using BLL.DTO.User;
+using BLL.DTO.UserBankAccount;
 using DAL.Data;
 
 namespace BLL.DTO.Wallet;
@@ -35,4 +36,10 @@ public class WalletCashoutRequestResponseDTO
     public DateTime CreatedAt { get; set; }
 
     // public DateTime UpdatedAt { get; set; }
+}
+
+public class WalletCashoutGetAllResponseDTO
+{
+    public UserResponseDTO User { get; set; } = null!;
+    public WalletCashoutRequestResponseDTO CashoutRequest { get; set; } = null!;
 }

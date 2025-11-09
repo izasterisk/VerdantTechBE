@@ -88,6 +88,36 @@ public class WalletController : BaseController
     }
 
     /// <summary>
+    /// Lấy danh sách tất cả yêu cầu rút tiền với phân trang
+    /// </summary>
+    /// <param name="page">Số trang (mặc định: 1)</param>
+    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
+    /// <returns>Danh sách yêu cầu rút tiền có phân trang</returns>
+    [HttpGet("cashout-requests")]
+    [Authorize(Roles = "Admin,Staff")]
+    [EndpointSummary("Get All Cashout Requests")]
+    [EndpointDescription("Lấy danh sách tất cả yêu cầu rút tiền đang pending với phân trang. Chỉ Admin/Staff mới có quyền. Mẫu: /api/Wallet/cashout-requests?page=1&pageSize=10")]
+    public async Task<ActionResult<APIResponse>> GetAllCashoutRequests([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        try
+        {
+            // Validate pagination parameters
+            if (page < 1)
+                return ErrorResponse("Page number must be greater than 0");
+
+            if (pageSize < 1 || pageSize > 100)
+                return ErrorResponse("Page size must be between 1 and 100");
+
+            var cashoutRequests = await _walletService.GetAllWalletCashoutRequestAsync(page, pageSize, GetCancellationToken());
+            return SuccessResponse(cashoutRequests);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Xóa yêu cầu rút tiền đang pending
     /// </summary>
     /// <returns>Kết quả xóa</returns>
