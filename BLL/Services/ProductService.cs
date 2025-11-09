@@ -231,22 +231,32 @@ namespace BLL.Services
         {
             if (ids.Count == 0) return;
 
+            // ✅ CHỈ LẤY ẢNH ĐẦU TIÊN (SortOrder nhỏ nhất) cho mỗi Product
             var images = await _db.MediaLinks.AsNoTracking()
                 .Where(m => m.OwnerType == MediaOwnerType.Products && ids.Contains(m.OwnerId))
-                .OrderBy(m => m.OwnerId).ThenBy(m => m.SortOrder)
+                .GroupBy(m => m.OwnerId)
+                .Select(g => g.OrderBy(m => m.SortOrder).FirstOrDefault())
+                .Where(m => m != null)
                 .ToListAsync(ct);
 
-            var firstByOwner = images
-                .GroupBy(m => m.OwnerId)
-                .ToDictionary(g => g.Key, g => g.FirstOrDefault());
-
             var byId = rows.ToDictionary(x => x.Id);
-            foreach (var kv in firstByOwner)
+
+            foreach (var img in images)
             {
-                if (kv.Value == null) continue;
-                if (!byId.TryGetValue(kv.Key, out var row)) continue;
-                // có thể mở rộng DTO list-item để có Thumbnail nếu bạn muốn
-                // row.ThumbnailUrl = kv.Value.ImageUrl;
+                if (!byId.TryGetValue(img.OwnerId, out var row)) continue;
+
+                // ✅ CHỈ GÁN 1 ẢNH VÀO MẢNG
+                row.Images = new List<MediaLinkItemDTO>
+        {
+            new MediaLinkItemDTO
+            {
+                Id = img.Id,
+                ImagePublicId = img.ImagePublicId,
+                ImageUrl = img.ImageUrl,
+                Purpose = img.Purpose.ToString().ToLowerInvariant(),
+                SortOrder = img.SortOrder
+            }
+        };
             }
         }
     }
