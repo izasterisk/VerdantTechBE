@@ -44,12 +44,13 @@ namespace BLL.Helpers
 
             // ===================== WALLET MAPPINGS =====================
             CreateMap<WalletResponseDTO, Wallet>().ReverseMap();
-            CreateMap<WalletCashoutRequestResponseDTO, Cashout>().ReverseMap();
             CreateMap<WalletCashoutRequestResponseDTO, UserBankAccount>().ReverseMap();
-            CreateMap<Cashout, WalletCashoutGetAllResponseDTO>()
-                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.BankAccount.User))
-                .ForMember(dest => dest.CashoutRequest, opt => opt.MapFrom(src => src));
+            CreateMap<Cashout, WalletCashoutRequestResponseDTO>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.BankAccount.User));
             CreateMap<WalletCashoutRequestCreateDTO, Cashout>().ReverseMap();
+            
+            CreateMap<Cashout, WalletCashoutResponseDTO>()
+                .ForMember(dest => dest.ProcessedBy, opt => opt.MapFrom(src => src.ProcessedByNavigation));
             
             // ===================== FARM PROFILE =====================
             CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();
@@ -244,7 +245,7 @@ namespace BLL.Helpers
             
             // ===================== PAYMENT =====================
             CreateMap<Payment, PaymentResponseDTO>().ReverseMap();
-            CreateMap<Transaction, TransactionResponseDTO>().ReverseMap();
+            CreateMap<Transaction, TransactionCreateDTO>().ReverseMap();
 
             // ===================== PRODUCT =====================
             CreateMap<BLL.DTO.Product.ProductCreateDTO, Product>().ReverseMap();

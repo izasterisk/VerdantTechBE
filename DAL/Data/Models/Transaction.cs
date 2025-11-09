@@ -16,11 +16,10 @@ public partial class Transaction
     [StringLength(3)]
     public string Currency { get; set; } = "VND";
 
-    public ulong? OrderId { get; set; }
     public ulong UserId { get; set; }
 
     // Status and metadata
-    public TransactionStatus Status { get; set; } = TransactionStatus.Pending;
+    public TransactionStatus Status { get; set; } = TransactionStatus.Completed;
 
     [StringLength(255)]
     public string Note { get; set; } = null!;
@@ -36,10 +35,9 @@ public partial class Transaction
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual Order? Order { get; set; }
     public virtual User User { get; set; } = null!;
     public virtual User? CreatedByNavigation { get; set; }
     public virtual User? ProcessedByNavigation { get; set; }
     public virtual ICollection<Cashout> Cashouts { get; set; } = new List<Cashout>();
-    public virtual ICollection<Wallet> WalletsAsLastTransaction { get; set; } = new List<Wallet>();
 }
+

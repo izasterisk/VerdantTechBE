@@ -138,4 +138,27 @@ public class WalletController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Xử lý yêu cầu rút tiền qua PayOS
+    /// </summary>
+    /// <param name="userId">ID của vendor</param>
+    /// <returns>Thông tin cashout đã được xử lý</returns>
+    [HttpPost("{userId}/process-cashout")]
+    [Authorize(Roles = "Admin,Staff")]
+    [EndpointSummary("Process Cashout Request via PayOS")]
+    [EndpointDescription("Xử lý yêu cầu rút tiền của vendor tự động qua PayOS. Chỉ Admin/Staff mới có quyền.")]
+    public async Task<ActionResult<APIResponse>> ProcessCashoutRequest(ulong userId)
+    {
+        try
+        {
+            var staffId = GetCurrentUserId();
+            var cashoutResponse = await _walletService.ProcessWalletCashoutRequestByPayOSAsync(staffId, userId, GetCancellationToken());
+            return SuccessResponse(cashoutResponse);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

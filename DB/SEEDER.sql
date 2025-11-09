@@ -58,8 +58,8 @@ INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `busines
 
 -- Insert User Bank Accounts (v9.1 structure - renamed from vendor_bank_accounts to user_bank_accounts, now supports all users)
 INSERT INTO `user_bank_accounts` (`id`, `user_id`, `bank_code`, `account_number`, `account_holder`, `created_at`, `updated_at`) VALUES
-(1, 5, 'VCB', '1234567890', 'Công Ty Máy Móc Nông Nghiệp Xanh', '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
-(2, 6, 'ACB', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', '2025-09-09 06:35:00', '2025-09-09 06:35:00');
+(1, 5, '970436', '1045069359', 'Công Ty Máy Móc Nông Nghiệp Xanh', '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
+(2, 6, '970436', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', '2025-09-09 06:35:00', '2025-09-09 06:35:00');
 
 -- Insert Wallets (v9.0 structure - removed last_transaction_id)
 INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `last_updated_by`, `created_at`, `updated_at`) VALUES
@@ -263,13 +263,13 @@ INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `unit_p
 (5, 4, 3, 50, 50000.00, 500000.00, 2500000.00, 0, '2025-09-10 08:00:00'),
 (6, 4, 4, 80, 90000.00, 180000.00, 7200000.00, 0, '2025-09-10 08:00:00');
 
--- Insert Transactions (v7.1 structure - completely restructured)
-INSERT INTO `transactions` (`id`, `transaction_type`, `amount`, `currency`, `order_id`, `user_id`, `status`, `note`, `gateway_payment_id`, `created_by`, `processed_by`, `created_at`, `completed_at`, `updated_at`) VALUES
-(1, 'payment_in', 23000000.00, 'VND', 1, 7, 'completed', 'Payment for order #1 - Máy cày', 'VNP20250908001', 7, 1, '2025-09-08 11:30:00', '2025-09-08 11:30:00', '2025-09-08 11:30:00'),
-(2, 'payment_in', 1483500.00, 'VND', 2, 8, 'completed', 'Payment for order #2 - Hạt giống và phân bón', 'MOMO20250909001', 8, 1, '2025-09-09 09:15:00', '2025-09-09 09:15:00', '2025-09-09 09:15:00'),
-(3, 'payment_in', 11240000.00, 'VND', 3, 9, 'pending', 'Payment for order #3 - Drone phun thuốc', 'COD2025090911001', 9, NULL, '2025-09-09 11:00:00', NULL, '2025-09-09 11:00:00'),
-(4, 'commission', 2000000.00, 'VND', 1, 5, 'completed', 'Commission from sale of product #1', NULL, 1, 2, '2025-09-09 15:00:00', '2025-09-09 15:00:00', '2025-09-09 15:00:00'),
-(5, 'commission', 147000.00, 'VND', 2, 6, 'completed', 'Commission from sale of products #3 and #4', NULL, 1, 2, '2025-09-09 16:00:00', '2025-09-09 16:00:00', '2025-09-09 16:00:00');
+-- Insert Transactions (v9.1 structure - removed order_id, removed pending status)
+INSERT INTO `transactions` (`id`, `transaction_type`, `amount`, `currency`, `user_id`, `status`, `note`, `gateway_payment_id`, `created_by`, `processed_by`, `created_at`, `completed_at`, `updated_at`) VALUES
+(1, 'payment_in', 23000000.00, 'VND', 7, 'completed', 'Payment for order #1 - Máy cày', 'VNP20250908001', 7, 1, '2025-09-08 11:30:00', '2025-09-08 11:30:00', '2025-09-08 11:30:00'),
+(2, 'payment_in', 1483500.00, 'VND', 8, 'completed', 'Payment for order #2 - Hạt giống và phân bón', 'MOMO20250909001', 8, 1, '2025-09-09 09:15:00', '2025-09-09 09:15:00', '2025-09-09 09:15:00'),
+(3, 'payment_in', 11240000.00, 'VND', 9, 'completed', 'Payment for order #3 - Drone phun thuốc', 'COD2025090911001', 9, 1, '2025-09-09 11:00:00', '2025-09-09 11:00:00', '2025-09-09 11:00:00'),
+(4, 'wallet_cashout', 2000000.00, 'VND', 5, 'completed', 'Cashout from wallet for vendor #5', NULL, 1, 2, '2025-09-09 15:00:00', '2025-09-09 15:00:00', '2025-09-09 15:00:00'),
+(5, 'wallet_cashout', 147000.00, 'VND', 6, 'completed', 'Cashout from wallet for vendor #6', NULL, 1, 2, '2025-09-09 16:00:00', '2025-09-09 16:00:00', '2025-09-09 16:00:00');
 
 -- Insert Payments (v7.1 structure - removed old columns, added gateway_payment_id)
 INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `payment_gateway`, `gateway_payment_id`, `amount`, `status`, `gateway_response`, `created_at`, `updated_at`) VALUES
@@ -277,10 +277,10 @@ INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `payment_gateway`, `
 (2, 2, 'credit_card', 'stripe', 'STR_2025090909876543', 1483500.00, 'completed', '{"id": "ch_abc123", "status": "succeeded"}', '2025-09-09 09:00:00', '2025-09-09 09:15:00'),
 (3, 3, 'cod', 'manual', 'COD2025090911001', 11240000.00, 'pending', '{}', '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
--- Insert Cashouts (v9.0 structure - reference_type changed to ENUM)
-INSERT INTO `cashouts` (`id`, `vendor_id`, `transaction_id`, `bank_account_id`, `amount`, `status`, `reason`, `gateway_transaction_id`, `reference_type`, `reference_id`, `notes`, `processed_by`, `created_at`, `processed_at`, `updated_at`) VALUES
-(1, 5, 4, 1, 2000000.00, 'pending', 'Commission payout', NULL, 'vendor_withdrawal', 1, 'Hoa hồng từ đơn hàng #1', NULL, '2025-09-09 15:30:00', NULL, '2025-09-09 15:30:00'),
-(2, 6, 5, 2, 147000.00, 'completed', 'Commission payout', 'CASHOUT2025090916001', 'vendor_withdrawal', 2, 'Hoa hồng từ đơn hàng #2', 2, '2025-09-09 16:30:00', '2025-09-09 16:30:00', '2025-09-09 16:30:00');
+-- Insert Cashouts (v9.1 structure - removed pending status, default processing)
+INSERT INTO `cashouts` (`id`, `vendor_id`, `transaction_id`, `bank_account_id`, `amount`, `status`, `reason`, `reference_type`, `reference_id`, `notes`, `processed_by`, `created_at`, `processed_at`, `updated_at`) VALUES
+(1, 5, 4, 1, 2000.00, 'processing', 'Commission payout', 'vendor_withdrawal', 1, 'Hoa hồng từ đơn hàng #1', NULL, '2025-09-09 15:30:00', NULL, '2025-09-09 15:30:00'),
+(2, 6, 5, 2, 2000.00, 'completed', 'Commission payout', 'vendor_withdrawal', 2, 'Hoa hồng từ đơn hàng #2', 2, '2025-09-09 16:30:00', '2025-09-09 16:30:00', '2025-09-09 16:30:00');
 
 -- Insert Batch Inventory (v7.1 structure - changed vendor_profile_id to vendor_id)
 INSERT INTO `batch_inventory` (`id`, `product_id`, `sku`, `vendor_id`, `batch_number`, `lot_number`, `quantity`, `unit_cost_price`, `expiry_date`, `manufacturing_date`, `quality_check_status`, `quality_checked_by`, `quality_checked_at`, `notes`, `created_at`, `updated_at`) VALUES

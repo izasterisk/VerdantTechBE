@@ -271,12 +271,12 @@ public class PayOSApiClient : IPayOSApiClient
                 throw new InvalidOperationException("Không có giao dịch nào được tạo");
             }
             
-            // Map first transaction to DTO
+            // Map first transaction to DTO (use batch ID instead of transaction ID)
             var transaction = cashoutResponse.Data.Transactions.First();
             
             return new PayOSCashoutResponseDTO
             {
-                Id = transaction.Id,
+                Id = cashoutResponse.Data.Id, // Use batch ID from Data
                 ReferenceId = transaction.ReferenceId,
                 Amount = transaction.Amount,
                 Description = transaction.Description,

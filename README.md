@@ -779,7 +779,7 @@ Xóa sản phẩm (và có thể dọn ảnh `MediaLink` liên quan).
 | `PaymentMethod` | CreditCard, DebitCard, Paypal, Stripe, BankTransfer, Cod | Hiện chưa expose qua controller |
 | `PaymentGateway` | Stripe, Paypal, Vnpay, Momo, Manual | Giữ cho module thanh toán |
 | `PaymentStatus` | Pending, Processing, Completed, Failed, Refunded, PartiallyRefunded | Trả về từ module payment |
-| `TransactionType` | PaymentIn, Cashout, WalletCredit, WalletDebit, Commission, Refund, Adjustment | Tài chính |
+| `TransactionType` | PaymentIn, WalletCashout, Refund, Adjustment | Tài chính |
 | `TransactionStatus` | Pending, Completed, Failed, Cancelled | Tài chính |
 | `CashoutStatus` | Pending, Processing, Completed, Failed, Cancelled | Tài chính |
 | `CashoutType` | CommissionPayout, VendorPayment, Expense, Refund | Tài chính |

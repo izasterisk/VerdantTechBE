@@ -643,12 +643,11 @@ CREATE TABLE payments (
 -- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
 CREATE TABLE transactions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    transaction_type ENUM('payment_in', 'cashout', 'wallet_credit', 'wallet_debit', 'commission', 'refund', 'adjustment') NOT NULL,
+    transaction_type ENUM('payment_in', 'wallet_cashout', 'refund', 'adjustment') NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'VND',
-    order_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng đơn hàng',
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người dùng liên quan đến giao dịch này (khách hàng hoặc nhà cung cấp)',
-    status ENUM('pending','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
+    status ENUM('completed','failed','cancelled') NOT NULL DEFAULT 'completed',
     note VARCHAR(255) NOT NULL COMMENT 'Mô tả có thể đọc được',
     gateway_payment_id VARCHAR(255) NULL COMMENT 'ID giao dịch từ cổng thanh toán',    
     created_by BIGINT UNSIGNED NULL COMMENT 'Người dùng khởi tạo giao dịch này',
@@ -657,14 +656,12 @@ CREATE TABLE transactions (
     completed_at TIMESTAMP NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
     
     INDEX idx_user (user_id),
     INDEX idx_type_status (transaction_type, status),
-    INDEX idx_order (order_id),
     INDEX idx_gateway_payment (gateway_payment_id),
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sổ cái tài chính trung tâm - nguồn sự thật duy nhất cho tất cả chuyển động tiền tệ';
@@ -689,9 +686,8 @@ CREATE TABLE cashouts (
     transaction_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng giao dịch để đảm bảo tính nhất quán',
     bank_account_id BIGINT UNSIGNED NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
-    status ENUM('pending','processing','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
+    status ENUM('processing','completed','failed','cancelled') NOT NULL DEFAULT 'processing',
     reason VARCHAR(255) NULL COMMENT 'Lý do hoặc mục đích của khoản rút tiền (ví dụ: Thanh toán hoa hồng, Hoàn tiền)',
-    gateway_transaction_id VARCHAR(255) NULL COMMENT 'ID giao dịch cổng thanh toán bên ngoài',
     reference_type ENUM('vendor_withdrawal', 'refund', 'admin_adjustment') NULL COMMENT 'Loại tham chiếu: vendor_withdrawal (vendor rút tiền), refund (hoàn tiền cho khách), admin_adjustment (điều chỉnh bởi admin)',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu',
     notes VARCHAR(500) NULL,
@@ -703,7 +699,6 @@ CREATE TABLE cashouts (
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
     FOREIGN KEY (bank_account_id) REFERENCES user_bank_accounts(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
-    UNIQUE KEY idx_unique_gateway_transaction (gateway_transaction_id),
     INDEX idx_vendor (vendor_id),
     INDEX idx_status (status),
     INDEX idx_transaction (transaction_id),

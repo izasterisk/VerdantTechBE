@@ -23,14 +23,12 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
                 v => v.ToString()
                     .ToLowerInvariant()
                     .Replace("paymentin", "payment_in")
-                    .Replace("walletcredit", "wallet_credit")
-                    .Replace("walletdebit", "wallet_debit"),
+                    .Replace("walletcashout", "wallet_cashout"),
                 v => Enum.Parse<TransactionType>(v
                     .Replace("payment_in", "PaymentIn")
-                    .Replace("wallet_credit", "WalletCredit")
-                    .Replace("wallet_debit", "WalletDebit"), true))
+                    .Replace("wallet_cashout", "WalletCashout"), true))
             .HasColumnName("transaction_type")
-            .HasColumnType("enum('payment_in','cashout','wallet_credit','wallet_debit','commission','refund','adjustment')")
+            .HasColumnType("enum('payment_in','wallet_cashout','refund','adjustment')")
             .IsRequired();
 
         builder.Property(e => e.Amount)
@@ -44,10 +42,6 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasMaxLength(3)
             .HasDefaultValue("VND");
 
-        builder.Property(e => e.OrderId)
-            .HasColumnName("order_id")
-            .HasColumnType("bigint unsigned");
-
         builder.Property(e => e.UserId)
             .HasColumnName("user_id")
             .HasColumnType("bigint unsigned")
@@ -59,8 +53,8 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<TransactionStatus>(v, true))
             .HasColumnName("status")
-            .HasColumnType("enum('pending','completed','failed','cancelled')")
-            .HasDefaultValue(TransactionStatus.Pending);
+            .HasColumnType("enum('completed','failed','cancelled')")
+            .HasDefaultValue(TransactionStatus.Completed);
 
         builder.Property(e => e.Note)
             .HasColumnName("note")
@@ -97,11 +91,6 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
         // Foreign keys
-        builder.HasOne(e => e.Order)
-            .WithMany(o => o.Transactions)
-            .HasForeignKey(e => e.OrderId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(e => e.User)
             .WithMany(u => u.TransactionsAsUser)
             .HasForeignKey(e => e.UserId)
@@ -120,7 +109,6 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
         // Indexes
         builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
         builder.HasIndex(e => new { e.TransactionType, e.Status }).HasDatabaseName("idx_type_status");
-        builder.HasIndex(e => e.OrderId).HasDatabaseName("idx_order");
         builder.HasIndex(e => e.GatewayPaymentId).HasDatabaseName("idx_gateway_payment");
         builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created");
     }

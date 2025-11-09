@@ -166,17 +166,13 @@ public enum PaymentStatus
 public enum TransactionType
 {
     PaymentIn,
-    Cashout,
-    WalletCredit,
-    WalletDebit,
-    Commission,
+    WalletCashout,
     Refund,
     Adjustment
 }
 
 public enum TransactionStatus
 {
-    Pending,
     Completed,
     Failed,
     Cancelled
@@ -184,7 +180,6 @@ public enum TransactionStatus
 
 public enum CashoutStatus
 {
-    Pending,
     Processing,
     Completed,
     Failed,

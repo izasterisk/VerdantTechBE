@@ -41,16 +41,11 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<CashoutStatus>(v, true))
             .HasColumnName("status")
-            .HasColumnType("enum('pending','processing','completed','failed','cancelled')")
-            .HasDefaultValue(CashoutStatus.Pending);
+            .HasColumnType("enum('processing','completed','failed','cancelled')")
+            .HasDefaultValue(CashoutStatus.Processing);
 
         builder.Property(e => e.Reason)
             .HasColumnName("reason")
-            .HasColumnType("varchar(255)")
-            .HasMaxLength(255);
-
-        builder.Property(e => e.GatewayTransactionId)
-            .HasColumnName("gateway_transaction_id")
             .HasColumnType("varchar(255)")
             .HasMaxLength(255);
 
@@ -110,14 +105,9 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(e => e.GatewayTransactionId)
-            .IsUnique()
-            .HasDatabaseName("idx_unique_gateway_transaction");
-
         builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
         builder.HasIndex(e => e.TransactionId).HasDatabaseName("idx_transaction");
         builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
-        builder.HasIndex(e => e.TransactionId).HasDatabaseName("idx_transaction");
         builder.HasIndex(e => e.ProcessedAt).HasDatabaseName("idx_processed");
         builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId }).HasDatabaseName("idx_reference");
     }
