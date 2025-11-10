@@ -10,6 +10,7 @@ using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
 using BLL.DTO.ProductCertificate;
 using BLL.DTO.ProductRegistration;
+using BLL.DTO.Request;
 using BLL.DTO.Transaction;
 using BLL.DTO.User;
 using BLL.DTO.UserBankAccount;
@@ -264,6 +265,12 @@ namespace BLL.Helpers
                     o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue
                                         ? s.EnergyEfficiencyRating.Value.ToString()
                                         : null));
+
+            // ===================== REQUEST =====================
+            CreateMap<RequestCreateDTO, Request>().ReverseMap();
+            CreateMap<Request, RequestResponseDTO>()
+                .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation));
+            CreateMap<MediaLink, RequestImageDTO>().ReverseMap();
         }
     }
 }

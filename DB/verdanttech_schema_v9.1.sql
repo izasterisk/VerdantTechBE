@@ -421,7 +421,7 @@ CREATE TABLE product_reviews (
 -- Bảng quản lý media tập trung
 CREATE TABLE media_links (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts') NOT NULL,
+    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
     image_public_id VARCHAR(512) NOT NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
@@ -603,7 +603,7 @@ CREATE TABLE requests (
     request_type ENUM('refund_request', 'support_request') NOT NULL,
     title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề/chủ đề yêu cầu',
     description TEXT NOT NULL COMMENT 'Mô tả chi tiết về yêu cầu',
-    status ENUM('pending', 'in_review', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',
+    status ENUM('pending', 'in_review', 'approved', 'rejected', 'cancelled') DEFAULT 'pending',
     reply_notes TEXT NULL,
     processed_by BIGINT UNSIGNED NULL COMMENT 'Admin/nhân viên đã xử lý yêu cầu',
     processed_at TIMESTAMP NULL,

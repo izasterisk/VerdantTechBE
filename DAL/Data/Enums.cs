@@ -100,7 +100,6 @@ public enum RequestStatus
     InReview,
     Approved,
     Rejected,
-    Completed,
     Cancelled
 }
 
@@ -241,7 +240,8 @@ public enum MediaOwnerType
     ProductRegistrations,
     ProductCertificates,
     ProductReviews,
-    ForumPosts
+    ForumPosts,
+    Request
 }
 
 public enum MediaPurpose

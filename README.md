@@ -636,6 +636,65 @@ Xoá sản phẩm (và có thể dọn ảnh `MediaLink` liên quan).
 - Response: 204 NoContent nếu thành công, 404 nếu không tồn tại.
 - Exceptions: Không có.
 
+#### RequestTicketController (`/api/RequestTicket`)
+Quản lý các yêu cầu hỗ trợ (support request) hoặc yêu cầu hoàn tiền (refund request).
+
+**`POST /api/RequestTicket`** (Authorize, Roles: Customer,Vendor)
+Tạo một "request ticket" mới.
+- Body `RequestCreateDTO`:
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | requestType | enum | Required: `RefundRequest`, `SupportRequest` |
+  | title | string | Required, 3-255 ký tự |
+  | description | string | Required, 10-2000 ký tự |
+  | images | List<MediaLinkItemDTO>? | Optional, danh sách ảnh đính kèm |
+- Ràng buộc nghiệp vụ:
+  - `UserId` được lấy từ JWT.
+  - Status mặc định là `Pending`.
+  - Nếu có `images`, các ảnh sẽ được lưu và liên kết với request ticket.
+- Response: `RequestResponseDTO`.
+
+**`GET /api/RequestTicket/{requestId}`** (Authorize, Roles: Admin,Staff,Customer,Vendor)
+Lấy thông tin chi tiết một request ticket.
+- Path: `requestId` (ulong).
+- Ràng buộc nghiệp vụ:
+  - User phải là chủ sở hữu ticket hoặc là Admin/Staff.
+- Response: `RequestResponseDTO` (bao gồm cả ảnh).
+
+**`GET /api/RequestTicket/user/{userId}`** (Authorize, Roles: Admin,Staff,Customer,Vendor)
+Lấy tất cả request tickets của một user.
+- Path: `userId` (ulong).
+- Ràng buộc nghiệp vụ:
+  - User phải là chính user đó hoặc là Admin/Staff.
+- Response: `List<RequestResponseDTO>`.
+
+**`GET /api/RequestTicket`** (Authorize, Roles: Admin,Staff)
+Lấy danh sách tất cả request tickets với filter và phân trang.
+- Query params:
+  | Param | Type | Default | Description |
+  | --- | --- | --- | --- |
+  | page | int | 1 | Trang hiện tại |
+  | pageSize | int | 10 | Số item/trang (max 100) |
+  | requestType | enum? | null | Lọc theo `RefundRequest` hoặc `SupportRequest` |
+  | requestStatus | enum? | null | Lọc theo `Pending`, `InReview`, `Approved`, `Rejected`, `Cancelled` |
+- Response: `PagedResponse<RequestResponseDTO>`.
+
+**`PUT /api/RequestTicket/{requestId}/process`** (Authorize, Roles: Admin,Staff)
+Xử lý một request ticket.
+- Path: `requestId` (ulong).
+- Body `RequestUpdateDTO`:
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | status | enum | Required: `InReview`, `Approved`, `Rejected`, `Cancelled` |
+  | replyNotes | string? | Required nếu status là `Approved`, `Rejected`, `Cancelled` |
+- Ràng buộc nghiệp vụ:
+  - Chỉ có thể xử lý các ticket có status là `Pending` hoặc `InReview`.
+  - Không thể cập nhật trạng thái ngược về `Pending`.
+  - Khi chuyển sang `InReview`, không được phép có `replyNotes`.
+  - Khi chuyển sang các trạng thái cuối (`Approved`, `Rejected`, `Cancelled`), `replyNotes` là bắt buộc.
+  - `ProcessedBy` và `ProcessedAt` sẽ được tự động gán.
+- Response: `RequestResponseDTO` sau khi đã cập nhật.
+
 #### UserBankAccountsController (`/api/UserBankAccounts`)
 Các endpoint đều yêu cầu Bearer token.
 

@@ -53,7 +53,7 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
                 v => Enum.Parse<RequestStatus>(v
                     .Replace("in_review", "InReview"), true))
             .HasColumnName("status")
-            .HasColumnType("enum('pending','in_review','approved','rejected','completed','cancelled')")
+            .HasColumnType("enum('pending','in_review','approved','rejected','cancelled')")
             .HasDefaultValue(RequestStatus.Pending);
 
         builder.Property(e => e.ReplyNotes)
