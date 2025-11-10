@@ -19,9 +19,6 @@ public partial class Cashout
 
     public CashoutStatus Status { get; set; } = CashoutStatus.Processing;
 
-    [StringLength(255)]
-    public string? Reason { get; set; }
-
     public CashoutReferenceType? ReferenceType { get; set; }
 
     public ulong? ReferenceId { get; set; }

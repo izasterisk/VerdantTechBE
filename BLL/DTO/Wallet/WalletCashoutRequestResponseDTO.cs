@@ -20,8 +20,6 @@ public class WalletCashoutRequestResponseDTO
 
     public CashoutStatus Status { get; set; } = CashoutStatus.Processing;
 
-    public string? Reason { get; set; }
-
     public CashoutReferenceType? ReferenceType { get; set; }
 
     public ulong? ReferenceId { get; set; }

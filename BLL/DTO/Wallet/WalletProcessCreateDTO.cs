@@ -7,6 +7,10 @@ public class WalletProcessCreateDTO
 {
     [EnumDataType(typeof(CashoutStatus), ErrorMessage = "Trạng thái phải là 1 trong 'completed','failed','cancelled'.")]
     public CashoutStatus Status { get; set; }
-
-    public string? Reason { get; set; }
+    
+    [StringLength(255, MinimumLength = 2, ErrorMessage = "Mã giao dịch phải ít hơn 255 ký tự")]
+    public string? GatewayPaymentId { get; set; }
+    
+    [StringLength(255, MinimumLength = 2, ErrorMessage = "Lý do phải ít hơn 255 ký tự")]
+    public string? CancelReason { get; set; }
 }

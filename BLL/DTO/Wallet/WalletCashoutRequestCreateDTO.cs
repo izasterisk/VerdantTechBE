@@ -19,9 +19,6 @@ public class WalletCashoutRequestCreateDTO
     
     // public CashoutStatus Status { get; set; } = CashoutStatus.Pending;
 
-    [StringLength(255, ErrorMessage = "Reason cannot exceed 255 characters")]
-    public string? Reason { get; set; }
-
     // [StringLength(255, ErrorMessage = "Gateway transaction ID cannot exceed 255 characters")]
     // public string? GatewayTransactionId { get; set; }
 

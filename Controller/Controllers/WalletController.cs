@@ -118,6 +118,37 @@ public class WalletController : BaseController
     }
 
     /// <summary>
+    /// Lấy danh sách yêu cầu rút tiền của một vendor cụ thể với phân trang
+    /// </summary>
+    /// <param name="userId">ID của vendor</param>
+    /// <param name="page">Số trang (mặc định: 1)</param>
+    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
+    /// <returns>Danh sách yêu cầu rút tiền của vendor có phân trang</returns>
+    [HttpGet("{userId}/cashout-requests")]
+    [Authorize(Roles = "Admin,Staff,Vendor")]
+    [EndpointSummary("Get All Cashout Requests By User")]
+    [EndpointDescription("Lấy danh sách tất cả yêu cầu rút tiền của một vendor cụ thể với phân trang. Mẫu: /api/Wallet/{userId}/cashout-requests?page=1&pageSize=10")]
+    public async Task<ActionResult<APIResponse>> GetAllCashoutRequestsByUserId(ulong userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        try
+        {
+            // Validate pagination parameters
+            if (page < 1)
+                return ErrorResponse("Page number must be greater than 0");
+
+            if (pageSize < 1 || pageSize > 100)
+                return ErrorResponse("Page size must be between 1 and 100");
+
+            var cashoutRequests = await _walletService.GetAllWalletCashoutRequestByUserIdAsync(userId, page, pageSize, GetCancellationToken());
+            return SuccessResponse(cashoutRequests);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Xóa yêu cầu rút tiền đang pending
     /// </summary>
     /// <returns>Kết quả xóa</returns>
@@ -132,6 +163,34 @@ public class WalletController : BaseController
             var userId = GetCurrentUserId();
             var result = await _walletService.DeleteWalletCashoutRequestAsync(userId, GetCancellationToken());
             return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Xử lý yêu cầu rút tiền thủ công
+    /// </summary>
+    /// <param name="userId">ID của vendor</param>
+    /// <param name="dto">Thông tin xử lý (status, gatewayPaymentId)</param>
+    /// <returns>Thông tin cashout đã được xử lý</returns>
+    [HttpPost("{userId}/process-cashout-manual")]
+    [Authorize(Roles = "Admin,Staff")]
+    [EndpointSummary("Process Cashout Request Manually")]
+    [EndpointDescription("Xử lý yêu cầu rút tiền của vendor thủ công. Chỉ Admin/Staff mới có quyền. Status có thể là: Completed, Failed, Cancelled. " +
+                         "Completed bắt buộc có gatewayPaymentId, Failed/Cancelled bắt buộc có CancelReason.")]
+    public async Task<ActionResult<APIResponse>> ProcessCashoutRequestManual(ulong userId, [FromBody] WalletProcessCreateDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var staffId = GetCurrentUserId();
+            var cashoutResponse = await _walletService.ProcessWalletCashoutRequestAsync(staffId, userId, dto, GetCancellationToken());
+            return SuccessResponse(cashoutResponse);
         }
         catch (Exception ex)
         {

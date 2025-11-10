@@ -44,11 +44,6 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasColumnType("enum('processing','completed','failed','cancelled')")
             .HasDefaultValue(CashoutStatus.Processing);
 
-        builder.Property(e => e.Reason)
-            .HasColumnName("reason")
-            .HasColumnType("varchar(255)")
-            .HasMaxLength(255);
-
         builder.Property(e => e.ReferenceType)
             .HasConversion(
                 v => v.HasValue ? v.Value.ToString().ToLowerInvariant().Replace("withdrawal", "_withdrawal").Replace("adjustment", "_adjustment") : null,

@@ -687,7 +687,6 @@ CREATE TABLE cashouts (
     bank_account_id BIGINT UNSIGNED NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
     status ENUM('processing','completed','failed','cancelled') NOT NULL DEFAULT 'processing',
-    reason VARCHAR(255) NULL COMMENT 'Lý do hoặc mục đích của khoản rút tiền (ví dụ: Thanh toán hoa hồng, Hoàn tiền)',
     reference_type ENUM('vendor_withdrawal', 'refund', 'admin_adjustment') NULL COMMENT 'Loại tham chiếu: vendor_withdrawal (vendor rút tiền), refund (hoàn tiền cho khách), admin_adjustment (điều chỉnh bởi admin)',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu',
     notes VARCHAR(500) NULL,

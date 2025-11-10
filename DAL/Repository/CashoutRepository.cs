@@ -40,6 +40,24 @@ public class CashoutRepository : ICashoutRepository
             throw;
         }
     }
+    
+    public async Task<Cashout> UpdateCashoutWithTransactionAsync(Cashout cashout, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            cashout.UpdatedAt = DateTime.UtcNow;
+            var c = await _cashoutRepository.UpdateAsync(cashout, cancellationToken);
+            
+            await transaction.CommitAsync(cancellationToken);
+            return c;
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
 
     public async Task<bool> DeleteCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default)
     {

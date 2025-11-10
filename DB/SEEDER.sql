@@ -278,9 +278,9 @@ INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `payment_gateway`, `
 (3, 3, 'cod', 'manual', 'COD2025090911001', 11240000.00, 'pending', '{}', '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
 -- Insert Cashouts (v9.1 structure - removed pending status, default processing)
-INSERT INTO `cashouts` (`id`, `vendor_id`, `transaction_id`, `bank_account_id`, `amount`, `status`, `reason`, `reference_type`, `reference_id`, `notes`, `processed_by`, `created_at`, `processed_at`, `updated_at`) VALUES
-(1, 5, 4, 1, 2000.00, 'processing', 'Commission payout', 'vendor_withdrawal', 1, 'Hoa hồng từ đơn hàng #1', NULL, '2025-09-09 15:30:00', NULL, '2025-09-09 15:30:00'),
-(2, 6, 5, 2, 2000.00, 'completed', 'Commission payout', 'vendor_withdrawal', 2, 'Hoa hồng từ đơn hàng #2', 2, '2025-09-09 16:30:00', '2025-09-09 16:30:00', '2025-09-09 16:30:00');
+INSERT INTO `cashouts` (`id`, `vendor_id`, `transaction_id`, `bank_account_id`, `amount`, `status`, `reference_type`, `reference_id`, `notes`, `processed_by`, `created_at`, `processed_at`, `updated_at`) VALUES
+(1, 5, 4, 1, 2000.00, 'processing', 'vendor_withdrawal', 1, 'Hoa hồng từ đơn hàng #1', NULL, '2025-09-09 15:30:00', NULL, '2025-09-09 15:30:00'),
+(2, 6, 5, 2, 2000.00, 'completed', 'vendor_withdrawal', 2, 'Hoa hồng từ đơn hàng #2', 2, '2025-09-09 16:30:00', '2025-09-09 16:30:00', '2025-09-09 16:30:00');
 
 -- Insert Batch Inventory (v7.1 structure - changed vendor_profile_id to vendor_id)
 INSERT INTO `batch_inventory` (`id`, `product_id`, `sku`, `vendor_id`, `batch_number`, `lot_number`, `quantity`, `unit_cost_price`, `expiry_date`, `manufacturing_date`, `quality_check_status`, `quality_checked_by`, `quality_checked_at`, `notes`, `created_at`, `updated_at`) VALUES
