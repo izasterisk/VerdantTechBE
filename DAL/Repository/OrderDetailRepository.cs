@@ -33,6 +33,24 @@ public class OrderDetailRepository : IOrderDetailRepository
         return await _orderDetailRepository.CreateAsync(orderDetail, cancellationToken);
     }
     
+    public async Task<List<OrderDetail>> GetListedOrderDetailsByIdAsync(List<ulong> orderDetailIds, CancellationToken cancellationToken = default)
+    {
+        List<OrderDetail> result = new List<OrderDetail>();
+        foreach (var orderDetailId in orderDetailIds)
+        {
+            var orderDetail = await _orderDetailRepository.GetWithRelationsAsync(o => o.Id == orderDetailId,
+                 true, func => func.Include(od => od.Product),
+                 cancellationToken) ?? 
+            throw new KeyNotFoundException($"Không tìm thấy chi tiết đơn hàng với ID {orderDetailId}.");
+            
+            result.Add(orderDetail);
+            if (result[0].OrderId != orderDetail.OrderId)
+                throw new InvalidOperationException($"2 Order Detail nhận vào không cùng 1 đơn hàng.");
+        }
+        return result;
+    }
+        
+    
     public async Task<ulong> GetRootProductCategoryIdByProductIdAsync(ulong id, CancellationToken cancellationToken = default)
     {
         var product = await _productRepository.GetAsync(p => p.Id == id, true, cancellationToken);

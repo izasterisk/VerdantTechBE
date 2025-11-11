@@ -676,7 +676,7 @@ Lấy danh sách tất cả request tickets với filter và phân trang.
   | page | int | 1 | Trang hiện tại |
   | pageSize | int | 10 | Số item/trang (max 100) |
   | requestType | enum? | null | Lọc theo `RefundRequest` hoặc `SupportRequest` |
-  | requestStatus | enum? | null | Lọc theo `Pending`, `InReview`, `Approved`, `Rejected`, `Cancelled` |
+  | requestStatus | enum? | null | Lọc theo `Pending`, `InReview`, `Approved`, `Rejected`, `Completed`, `Cancelled` |
 - Response: `PagedResponse<RequestResponseDTO>`.
 
 **`PUT /api/RequestTicket/{requestId}/process`** (Authorize, Roles: Admin,Staff)
@@ -685,13 +685,13 @@ Xử lý một request ticket.
 - Body `RequestUpdateDTO`:
   | Field | Type | Validation |
   | --- | --- | --- |
-  | status | enum | Required: `InReview`, `Approved`, `Rejected`, `Cancelled` |
-  | replyNotes | string? | Required nếu status là `Approved`, `Rejected`, `Cancelled` |
+  | status | enum | Required: `InReview`, `Approved`, `Rejected`, `Completed`, `Cancelled` |
+  | replyNotes | string? | Required nếu status là `Approved`, `Rejected`, `Completed`, `Cancelled` |
 - Ràng buộc nghiệp vụ:
   - Chỉ có thể xử lý các ticket có status là `Pending` hoặc `InReview`.
   - Không thể cập nhật trạng thái ngược về `Pending`.
   - Khi chuyển sang `InReview`, không được phép có `replyNotes`.
-  - Khi chuyển sang các trạng thái cuối (`Approved`, `Rejected`, `Cancelled`), `replyNotes` là bắt buộc.
+  - Khi chuyển sang các trạng thái cuối (`Approved`, `Rejected`, `Completed`, `Cancelled`), `replyNotes` là bắt buộc.
   - `ProcessedBy` và `ProcessedAt` sẽ được tự động gán.
 - Response: `RequestResponseDTO` sau khi đã cập nhật.
 

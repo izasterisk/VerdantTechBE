@@ -47,7 +47,8 @@ namespace BLL.Helpers
             CreateMap<WalletResponseDTO, Wallet>().ReverseMap();
             CreateMap<WalletCashoutRequestResponseDTO, UserBankAccount>().ReverseMap();
             CreateMap<Cashout, WalletCashoutRequestResponseDTO>()
-                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.BankAccount.User));
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.BankAccount.User))
+                .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation));
             CreateMap<WalletCashoutRequestCreateDTO, Cashout>().ReverseMap();
             
             CreateMap<Cashout, WalletCashoutResponseDTO>()

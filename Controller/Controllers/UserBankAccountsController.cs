@@ -48,31 +48,6 @@ public class UserBankAccountsController : BaseController
     }
 
     /// <summary>
-    /// Cập nhật tài khoản ngân hàng của người dùng
-    /// </summary>
-    /// <param name="accountId">ID của tài khoản ngân hàng</param>
-    /// <param name="dto">Thông tin tài khoản ngân hàng cần cập nhật</param>
-    /// <returns>Thông tin tài khoản ngân hàng đã cập nhật</returns>
-    [HttpPatch("{accountId}")]
-    [Authorize]
-    [EndpointSummary("Update User Bank Account")]
-    public async Task<ActionResult<APIResponse>> UpdateUserBankAccount(ulong accountId, [FromBody] UserBankAccountUpdateDTO dto)
-    {
-        var validationResult = ValidateModel();
-        if (validationResult != null) return validationResult;
-
-        try
-        {
-            var account = await _userBankAccountsService.UpdateUserBankAccountAsync(accountId, dto, GetCancellationToken());
-            return SuccessResponse(account);
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex);
-        }
-    }
-
-    /// <summary>
     /// Xóa tài khoản ngân hàng của người dùng
     /// </summary>
     /// <param name="accountId">ID của tài khoản ngân hàng</param>

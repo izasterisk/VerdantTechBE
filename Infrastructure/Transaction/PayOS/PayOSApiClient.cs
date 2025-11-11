@@ -263,7 +263,12 @@ public class PayOSApiClient : IPayOSApiClient
             
             if (cashoutResponse.Code != "00")
             {
-                throw new InvalidOperationException(cashoutResponse.Desc ?? "Không thể tạo lệnh rút tiền từ PayOS");
+                var errorCode = cashoutResponse.Data?.Transactions?.FirstOrDefault()?.ErrorCode ?? "N/A";
+                var errorMessage = cashoutResponse.Data?.Transactions?.FirstOrDefault()?.ErrorMessage ?? "Lỗi không xác định";
+                throw new InvalidOperationException(
+                    $"Yêu cầu rút tiền qua PayOS không thành công. " +
+                    $"Mô tả: {cashoutResponse.Desc}. " +
+                    $"Mã lỗi: {errorCode}, Tin nhắn lỗi: {errorMessage}");
             }
             
             if (cashoutResponse.Data == null || cashoutResponse.Data.Transactions == null || !cashoutResponse.Data.Transactions.Any())

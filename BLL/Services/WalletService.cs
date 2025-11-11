@@ -54,6 +54,7 @@ public class WalletService : IWalletService
     public async Task<WalletCashoutRequestResponseDTO> CreateWalletCashoutRequestAsync(ulong userId,
         WalletCashoutRequestCreateDTO dto, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         if (await _walletRepository.ValidateVendorQualified(userId, cancellationToken) == false)
             throw new KeyNotFoundException("Người dùng không tồn tại hoặc không đủ điều kiện.");
         var bankAccount = await _userBankAccountsRepository.GetUserBankAccountByIdAsync(dto.BankAccountId, cancellationToken);
@@ -79,6 +80,7 @@ public class WalletService : IWalletService
     
     public async Task<WalletCashoutResponseDTO> ProcessWalletCashoutRequestAsync(ulong staffId, ulong userId, WalletProcessCreateDTO dto, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         var walletCashout = await _walletRepository.GetWalletCashoutRequestWithRelationsByUserIdAsync(userId, cancellationToken);
         if (walletCashout == null)
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");

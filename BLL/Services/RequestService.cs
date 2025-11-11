@@ -28,7 +28,7 @@ public class RequestService : IRequestService
         
         var created = await _requestRepository.CreateRequestWithTransactionAsync(request, images, cancellationToken);
         var responseDto = _mapper.Map<RequestResponseDTO>(await _requestRepository.GetRequestByIdWithRelationsAsync(created.Id, cancellationToken));
-        if(dto.Images != null)
+        if(dto.Images != null && dto.Images.Count > 0)
         {
             var imgs = await _requestRepository.GetAllImagesByRequestIdAsync(created.Id, cancellationToken);
             responseDto.Images = _mapper.Map<List<RequestImageDTO>>(imgs);
@@ -42,11 +42,11 @@ public class RequestService : IRequestService
         if(request.Status != RequestStatus.Pending && request.Status != RequestStatus.InReview)
             throw new InvalidOperationException("Chỉ có thể xử lý các yêu cầu ở trạng thái Pending hoặc InReview.");
         
-        if(dto.Status == RequestStatus.Pending)
-            throw new InvalidOperationException("Không thể cập nhật trạng thái về Pending.");
+        if(dto.Status == RequestStatus.Pending || dto.Status == RequestStatus.Completed)
+            throw new InvalidOperationException("Không thể cập nhật trạng thái về Pending hoặc Completed.");
         if(dto.Status == RequestStatus.InReview && dto.ReplyNotes != null)
             throw new InvalidOperationException("Không thể thêm ghi chú trả lời khi cập nhật trạng thái thành InReview.");
-        if(dto.Status == RequestStatus.Rejected || dto.Status == RequestStatus.Approved || dto.Status == RequestStatus.Cancelled)
+        if(dto.Status == RequestStatus.Rejected || dto.Status == RequestStatus.Approved || dto.Status == RequestStatus.Completed || dto.Status == RequestStatus.Cancelled)
         {
             if(string.IsNullOrWhiteSpace(dto.ReplyNotes) || dto.ReplyNotes == null)
                 throw new InvalidOperationException($"Ghi chú trả lời là bắt buộc khi cập nhật trạng thái thành {dto.Status}.");

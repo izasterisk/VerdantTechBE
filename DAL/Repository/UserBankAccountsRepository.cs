@@ -35,23 +35,6 @@ public class UserBankAccountsRepository : IUserBankAccountsRepository
         }
     }
 
-    public async Task<UserBankAccount> UpdateUserBankAccountWithTransactionAsync(UserBankAccount bankAccount, CancellationToken cancellationToken = default)
-    {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            bankAccount.UpdatedAt = DateTime.UtcNow;
-            var result = await _userBankAccountRepository.UpdateAsync(bankAccount, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return result;
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
-    }
-
     public async Task<bool> DeleteUserBankAccountWithTransactionAsync(UserBankAccount account, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);

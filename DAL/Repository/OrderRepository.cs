@@ -78,23 +78,13 @@ public class OrderRepository : IOrderRepository
         }
     }
     
-    public async Task<bool> DeleteOrderWithTransactionAsync(Order order, CancellationToken cancellationToken = default)
+    public async Task<Order> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            var updatedOrder = await _orderRepository.DeleteAsync(order, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return updatedOrder;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        return await _orderRepository.GetAsync(o => o.Id == orderId, true, cancellationToken) ?? 
+               throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID {orderId}.");
     }
     
-    public async Task<Order?> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
+    public async Task<Order?> GetOrderWithRelationsByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         return await _orderRepository.GetWithRelationsAsync(
             o => o.Id == orderId, 

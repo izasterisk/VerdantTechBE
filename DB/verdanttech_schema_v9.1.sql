@@ -603,7 +603,7 @@ CREATE TABLE requests (
     request_type ENUM('refund_request', 'support_request') NOT NULL,
     title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề/chủ đề yêu cầu',
     description TEXT NOT NULL COMMENT 'Mô tả chi tiết về yêu cầu',
-    status ENUM('pending', 'in_review', 'approved', 'rejected', 'cancelled') DEFAULT 'pending',
+    status ENUM('pending', 'in_review', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',
     reply_notes TEXT NULL,
     processed_by BIGINT UNSIGNED NULL COMMENT 'Admin/nhân viên đã xử lý yêu cầu',
     processed_at TIMESTAMP NULL,
@@ -666,19 +666,6 @@ CREATE TABLE transactions (
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sổ cái tài chính trung tâm - nguồn sự thật duy nhất cho tất cả chuyển động tiền tệ';
 
--- Ví cho nhà cung cấp (một ví cho một nhà cung cấp)
-CREATE TABLE wallets (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vendor_id BIGINT UNSIGNED NOT NULL UNIQUE,
-    balance DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Số dư khả dụng',
-    last_updated_by BIGINT UNSIGNED NULL COMMENT 'Người dùng thực hiện thay đổi số dư gần nhất',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
-    FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_vendor (vendor_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ví nhà cung cấp theo dõi số dư';
-
 -- Bảng rút tiền (tiền ra - thanh toán cho nhà cung cấp, chi phí)
 CREATE TABLE cashouts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -703,6 +690,19 @@ CREATE TABLE cashouts (
     INDEX idx_transaction (transaction_id),
     INDEX idx_reference (reference_type, reference_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='bảng rút tiền cho vendor';
+
+-- Ví cho nhà cung cấp (một ví cho một nhà cung cấp)
+CREATE TABLE wallets (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    balance DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Số dư khả dụng',
+    last_updated_by BIGINT UNSIGNED NULL COMMENT 'Người dùng thực hiện thay đổi số dư gần nhất',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_vendor (vendor_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ví nhà cung cấp theo dõi số dư';
 
 -- =====================================================
 -- TỔNG QUAN THAY ĐỔI v9.1 (từ v9.0)

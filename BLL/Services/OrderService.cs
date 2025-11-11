@@ -151,7 +151,7 @@ public class OrderService : IOrderService
         order.Length = orderPreview.Length; order.Weight = orderPreview.Weight;
         
         var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, productsToUpdate, cancellationToken);
-        var response = await _orderRepository.GetOrderByIdAsync(createdOrder.Id, cancellationToken);
+        var response = await _orderRepository.GetOrderWithRelationsByIdAsync(createdOrder.Id, cancellationToken);
         if(response == null)
             throw new InvalidOperationException("Không thể tạo đơn hàng, vui lòng liên hệ với Staff để được hỗ trợ.");
         var finalResponse = _mapper.Map<OrderResponseDTO>(response);
@@ -173,7 +173,7 @@ public class OrderService : IOrderService
     {
         if(dtos == null || dtos.Count == 0)
             throw new ArgumentNullException($"{nameof(dtos)} rỗng.");
-        var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (order == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
         
@@ -245,7 +245,7 @@ public class OrderService : IOrderService
     public async Task<OrderResponseDTO> ProcessOrderAsync(ulong staffId, ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (order == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
         if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
@@ -291,7 +291,7 @@ public class OrderService : IOrderService
         }
         order.Status = dto.Status;
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
-        var response = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        var response = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if(response == null)
             throw new InvalidOperationException("Không thể cập nhật đơn hàng, vui lòng liên hệ với Staff để được hỗ trợ.");
         var finalResponse = _mapper.Map<OrderResponseDTO>(response);
@@ -309,7 +309,7 @@ public class OrderService : IOrderService
     
     public async Task<OrderResponseDTO> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
-        var orderEntity = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        var orderEntity = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (orderEntity == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
         var item = _mapper.Map<OrderResponseDTO>(orderEntity);

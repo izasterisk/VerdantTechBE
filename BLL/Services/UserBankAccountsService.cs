@@ -30,30 +30,15 @@ public class UserBankAccountsService : IUserBankAccountsService
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         VendorBankAccountsHelper.ValidateBankCode(dto.BankCode);
         await _userRepository.GetUserByIdAsync(userId, cancellationToken);
-
+        if (await _userBankAccountsRepository.ValidateImportedBankAccount(userId, dto.AccountNumber, dto.AccountHolder, cancellationToken))
+        {
+            throw new DuplicateNameException("Tài khoản ngân hàng đã tồn tại.");
+        }
+        
         var userBankAccount = _mapper.Map<UserBankAccount>(dto);
         userBankAccount.UserId = userId;
         var createdAccount = await _userBankAccountsRepository.CreateUserBankAccountWithTransactionAsync(userBankAccount, cancellationToken);
         return _mapper.Map<UserBankAccountResponseDTO>(createdAccount);
-    }
-
-    public async Task<UserBankAccountResponseDTO> UpdateUserBankAccountAsync(ulong accountId, UserBankAccountUpdateDTO dto, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        if(dto.BankCode != null)
-            VendorBankAccountsHelper.ValidateBankCode(dto.BankCode);
-        
-        var existingAccount = await _userBankAccountsRepository.GetUserBankAccountByIdAsync(accountId, cancellationToken);
-        _mapper.Map(dto, existingAccount);
-        if (dto.AccountNumber != null || dto.AccountHolder != null)
-        {
-            if (await _userBankAccountsRepository.ValidateImportedBankAccount(existingAccount.UserId, 
-                    existingAccount.AccountNumber, existingAccount.AccountHolder, cancellationToken) == true)
-                throw new DuplicateNameException("Người dùng đã có sẵn tài khoản ngân hàng như này.");
-        }
-        var updatedAccount = await _userBankAccountsRepository.UpdateUserBankAccountWithTransactionAsync(
-            existingAccount, cancellationToken);
-        return _mapper.Map<UserBankAccountResponseDTO>(updatedAccount);
     }
 
     public async Task<bool> DeleteUserBankAccountAsync(ulong accountId, CancellationToken cancellationToken = default)

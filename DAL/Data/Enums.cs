@@ -100,6 +100,7 @@ public enum RequestStatus
     InReview,
     Approved,
     Rejected,
+    Completed,
     Cancelled
 }
 

@@ -97,7 +97,6 @@ public class ProductResponseDTO
 
 public class ProductImageResponseDTO
 {
-    public ulong Id { get; set; }
     public string ImageUrl { get; set; } = null!;
     public int SortOrder { get; set; }
 }

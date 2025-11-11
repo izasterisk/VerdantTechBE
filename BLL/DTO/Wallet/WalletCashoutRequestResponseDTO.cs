@@ -27,10 +27,11 @@ public class WalletCashoutRequestResponseDTO
     public string? Notes { get; set; }
 
     // public ulong? ProcessedBy { get; set; }
+    public UserResponseDTO ProcessedBy { get; set; } = null!;
     
-    // public DateTime? ProcessedAt { get; set; }
+    public DateTime? ProcessedAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
-    // public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

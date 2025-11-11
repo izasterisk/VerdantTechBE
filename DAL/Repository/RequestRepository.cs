@@ -77,7 +77,7 @@ public class RequestRepository : IRequestRepository
     public async Task<Request> GetRequestByIdAsync(ulong id, CancellationToken cancellationToken = default)
     {
         return await _requestRepository.GetAsync(r => r.Id == id, true, cancellationToken)
-               ?? throw new KeyNotFoundException($"Request với ID {id} không tồn tại.");
+            ?? throw new KeyNotFoundException($"Request với ID {id} không tồn tại.");
     }
     
     public async Task<(List<Request>, int totalCount)> GetAllRequestByFiltersAsync(int page, int pageSize, 
@@ -117,7 +117,8 @@ public class RequestRepository : IRequestRepository
     
     public async Task<List<MediaLink>> GetAllImagesByRequestIdAsync(ulong requestId, CancellationToken cancellationToken = default)
     {
-        return await _mediaLinkRepository.GetAllByFilterAsync(ml => ml.OwnerType == MediaOwnerType.Request 
-            && ml.OwnerId == requestId, true, cancellationToken);
+        var mediaLinks = await _mediaLinkRepository.GetAllByFilterAsync(ml => ml.OwnerType == MediaOwnerType.Request 
+            && ml.OwnerId == requestId, true, cancellationToken);        
+        return mediaLinks.OrderBy(ml => ml.SortOrder).ToList();
     }
 }
