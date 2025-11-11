@@ -45,7 +45,7 @@ public class OrderDetailRepository : IOrderDetailRepository
             
             result.Add(orderDetail);
             if (result[0].OrderId != orderDetail.OrderId)
-                throw new InvalidOperationException($"2 Order Detail nhận vào không cùng 1 đơn hàng.");
+                throw new InvalidOperationException($"Order Details nhận vào không cùng 1 đơn hàng.");
         }
         return result;
     }

@@ -87,7 +87,7 @@ public class UserRepository : IUserRepository
             query => query.Include(u => u.UserAddresses).ThenInclude(ua => ua.Address),
             cancellationToken);
     
-    public async Task<User> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    public async Task<User> GetVerifiedAndActiveUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetAsync(u => u.Id == userId && u.IsVerified && u.Status == UserStatus.Active, useNoTracking: true, cancellationToken);
         return user ?? throw new KeyNotFoundException("Người dùng không tồn tại hoặc đã bị xóa.");

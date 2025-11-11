@@ -68,9 +68,9 @@ public class WalletService : IWalletService
             throw new InvalidOperationException("Vì lý do kinh tế làm ơn chỉ rút 2000.");
         
         var cashout = _mapper.Map<Cashout>(dto);
-        cashout.VendorId = userId; cashout.Status = CashoutStatus.Processing;
+        cashout.UserId = userId; cashout.Status = CashoutStatus.Processing;
         cashout.ReferenceType = CashoutReferenceType.VendorWithdrawal; cashout.ReferenceId = wallet.Id;
-        await _cashoutRepository.CreateCashoutForWalletCashoutAsync(cashout, cancellationToken);
+        await _cashoutRepository.CreateWalletCashoutAsync(cashout, cancellationToken);
         
         var createdCashout = await _walletRepository.GetWalletCashoutRequestWithRelationsByUserIdAsync(userId, cancellationToken);
         if (createdCashout == null)
@@ -117,10 +117,10 @@ public class WalletService : IWalletService
         {
             walletCashout.Notes = dto.CancelReason ?? 
                 throw new InvalidOperationException("Khi hủy yêu cầu rút tiền, lý do hủy phải tồn tại.");
-            c = await _cashoutRepository.UpdateCashoutWithTransactionAsync(walletCashout, cancellationToken);
+            c = await _cashoutRepository.UpdateCashoutAsync(walletCashout, cancellationToken);
         }
         
-        var finalResponse = await _walletRepository.GetWalletCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
+        var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
         return _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
     }
     
@@ -164,8 +164,10 @@ public class WalletService : IWalletService
         
         var c = await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(transaction, walletCashout, wallet, cancellationToken);
         
-        var finalResponse = await _walletRepository.GetWalletCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
-        return _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
+        var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
+        var mapped = _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
+        mapped.ToAccountName = cashoutResponse.ToAccountName;
+        return mapped;
     }
     
     public async Task<WalletCashoutRequestResponseDTO> GetWalletCashoutRequestAsync(ulong userId, CancellationToken cancellationToken = default)

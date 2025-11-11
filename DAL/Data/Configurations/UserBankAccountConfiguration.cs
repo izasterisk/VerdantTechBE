@@ -34,11 +34,9 @@ public class UserBankAccountConfiguration : IEntityTypeConfiguration<UserBankAcc
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(e => e.AccountHolder)
-            .HasColumnName("account_holder")
-            .HasColumnType("varchar(255)")
-            .HasMaxLength(255)
-            .IsRequired();
+        builder.Property(e => e.IsActive)
+            .HasDefaultValue(true)
+            .HasColumnName("is_active");
 
         builder.Property(e => e.CreatedAt)
             .HasColumnName("created_at")
@@ -63,5 +61,7 @@ public class UserBankAccountConfiguration : IEntityTypeConfiguration<UserBankAcc
 
         // Index
         builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
+
+        builder.HasIndex(e => e.IsActive).HasDatabaseName("idx_is_active");
     }
 }

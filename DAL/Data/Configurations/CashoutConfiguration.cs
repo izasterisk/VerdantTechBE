@@ -17,8 +17,8 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
 
-        builder.Property(e => e.VendorId)
-            .HasColumnName("vendor_id")
+        builder.Property(e => e.UserId)
+            .HasColumnName("user_id")
             .HasColumnType("bigint unsigned")
             .IsRequired();
 
@@ -79,9 +79,9 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
         // Foreign keys
-        builder.HasOne(e => e.Vendor)
-            .WithMany(v => v.CashoutsAsVendor)
-            .HasForeignKey(e => e.VendorId)
+        builder.HasOne(e => e.User)
+            .WithMany(v => v.CashoutsAsUser)
+            .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(e => e.BankAccount)
@@ -100,7 +100,7 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
+        builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
         builder.HasIndex(e => e.TransactionId).HasDatabaseName("idx_transaction");
         builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
         builder.HasIndex(e => e.ProcessedAt).HasDatabaseName("idx_processed");

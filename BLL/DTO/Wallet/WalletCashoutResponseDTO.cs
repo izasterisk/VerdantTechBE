@@ -18,6 +18,7 @@ public class WalletCashoutResponseDTO
 
     // public ulong BankAccountId { get; set; }
     public UserBankAccountResponseDTO BankAccount { get; set; } = null!;
+    public string? ToAccountName { get; set; }
 
     // public decimal Amount { get; set; }
 

@@ -16,5 +16,4 @@ public interface IWalletRepository
     Task<Cashout?> GetWalletCashoutRequestWithRelationsByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<(List<Cashout>, int totalCount)> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default);
     Task<(List<Cashout>, int totalCount)> GetAllWalletCashoutRequestByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default);
-    Task<Cashout?> GetWalletCashoutRequestWithRelationsByIdAsync(ulong cashoutId, CancellationToken cancellationToken = default);
 }

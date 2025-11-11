@@ -74,6 +74,7 @@ public partial class User
     public virtual ICollection<Transaction> TransactionsProcessed { get; set; } = new List<Transaction>();
     public virtual ICollection<Transaction> TransactionsAsUser { get; set; } = new List<Transaction>();
     public virtual ICollection<Cashout> CashoutsProcessed { get; set; } = new List<Cashout>();
+    public virtual ICollection<Cashout> CashoutsAsUser { get; set; } = new List<Cashout>();
     public virtual ICollection<UserBankAccount> UserBankAccounts { get; set; } = new List<UserBankAccount>();
         
     // Vendor-related relationships (when user is vendor)
@@ -81,7 +82,6 @@ public partial class User
     public virtual ICollection<ProductRegistration> ProductRegistrationsAsVendor { get; set; } = new List<ProductRegistration>();
     public virtual ICollection<VendorCertificate> VendorCertificates { get; set; } = new List<VendorCertificate>();
     public virtual ICollection<BatchInventory> BatchInventoriesAsVendor { get; set; } = new List<BatchInventory>();
-    public virtual ICollection<Cashout> CashoutsAsVendor { get; set; } = new List<Cashout>();
     public virtual Wallet? WalletAsVendor { get; set; }
     
     // Verification relationships

@@ -23,6 +23,7 @@ public class UserBankAccountsRepository : IUserBankAccountsRepository
         {
             bankAccount.CreatedAt = DateTime.UtcNow;
             bankAccount.UpdatedAt = DateTime.UtcNow;
+            bankAccount.IsActive = true;
 
             var createdAccount = await _userBankAccountRepository.CreateAsync(bankAccount, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -35,12 +36,14 @@ public class UserBankAccountsRepository : IUserBankAccountsRepository
         }
     }
 
-    public async Task<bool> DeleteUserBankAccountWithTransactionAsync(UserBankAccount account, CancellationToken cancellationToken = default)
+    public async Task<bool> SoftDeleteUserBankAccountWithTransactionAsync(UserBankAccount account, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            await _userBankAccountRepository.DeleteAsync(account, cancellationToken);
+            account.IsActive = false;
+            account.UpdatedAt = DateTime.UtcNow;
+            await _userBankAccountRepository.UpdateAsync(account, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return true;
         }
@@ -53,14 +56,18 @@ public class UserBankAccountsRepository : IUserBankAccountsRepository
     
     public async Task<UserBankAccount> GetUserBankAccountByIdAsync(ulong id, CancellationToken cancellationToken = default) =>
         await _userBankAccountRepository.GetAsync(uba => uba.Id == id, useNoTracking: true, cancellationToken) ??
-        throw new KeyNotFoundException("Không tồn tại tài khoản ngân hàng với ID này.");
+            throw new KeyNotFoundException("Không tồn tại tài khoản ngân hàng với ID này.");
 
-    public async Task<bool> ValidateImportedBankAccount(ulong userId, string accountNumber, string accountHolder,
-        CancellationToken cancellationToken = default)
+    public async Task<bool> ValidateImportedBankAccount(ulong userId, string accountNumber, CancellationToken cancellationToken = default)
     {
         return await _userBankAccountRepository.AnyAsync(u => u.AccountNumber == accountNumber
-            && string.Equals(u.AccountHolder, accountHolder, StringComparison.OrdinalIgnoreCase) 
-            && u.UserId == userId, cancellationToken);
+            && u.UserId == userId && u.IsActive == true, cancellationToken);
+    }
+    
+    public async Task<UserBankAccount?> GetExistedBankAccount(ulong userId, string accountNumber, CancellationToken cancellationToken = default)
+    {
+        return await _userBankAccountRepository.GetAsync(u => u.AccountNumber == accountNumber
+            && u.UserId == userId && u.IsActive == true, true, cancellationToken);
     }
     
     public async Task<List<UserBankAccount>> GetAllUserBankAccountsByUserIdAsync(ulong userId, CancellationToken cancellationToken = default) =>

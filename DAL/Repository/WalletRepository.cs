@@ -136,23 +136,16 @@ public class WalletRepository : IWalletRepository
             && w.VerifiedBy != null, cancellationToken);
     
     public async Task<Cashout?> GetWalletCashoutRequestByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _cashoutRepository.GetAsync(c => c.VendorId == vendorId && c.Status == CashoutStatus.Processing
+        await _cashoutRepository.GetAsync(c => c.UserId == vendorId && c.Status == CashoutStatus.Processing
             && c.ProcessedAt == null && c.ProcessedBy == null 
             && c.ReferenceType == CashoutReferenceType.VendorWithdrawal, true, cancellationToken);
     
     public async Task<Cashout?> GetWalletCashoutRequestWithRelationsByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _cashoutRepository.GetWithRelationsAsync(c => c.VendorId == vendorId && c.Status == CashoutStatus.Processing 
+        await _cashoutRepository.GetWithRelationsAsync(c => c.UserId == vendorId && c.Status == CashoutStatus.Processing 
             && c.ProcessedAt == null && c.ProcessedBy == null 
             && c.ReferenceType == CashoutReferenceType.VendorWithdrawal, true, 
             query => query.Include(u => u.BankAccount)
                 .ThenInclude(u => u.User), cancellationToken);
-    
-    public async Task<Cashout?> GetWalletCashoutRequestWithRelationsByIdAsync(ulong cashoutId, CancellationToken cancellationToken = default) =>
-        await _cashoutRepository.GetWithRelationsAsync(c => c.Id == cashoutId, true, 
-            query => query.Include(u => u.Vendor)
-                .Include(u => u.Transaction)
-                .Include(u => u.BankAccount)
-                .Include(u => u.ProcessedByNavigation), cancellationToken);
     
     public async Task<(List<Cashout>, int totalCount)> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default)
     {
@@ -172,7 +165,7 @@ public class WalletRepository : IWalletRepository
         return await _cashoutRepository.GetPaginatedWithRelationsAsync(
             page,
             pageSize,
-            c => c.VendorId == userId && c.ReferenceType == CashoutReferenceType.VendorWithdrawal,
+            c => c.UserId == userId && c.ReferenceType == CashoutReferenceType.VendorWithdrawal,
             useNoTracking: true,
             orderBy: query => query.OrderByDescending(c => c.CreatedAt),
             includeFunc: query => query.Include(c => c.BankAccount)
