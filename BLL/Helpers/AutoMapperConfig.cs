@@ -39,8 +39,6 @@ namespace BLL.Helpers
 
             // ===================== USER BANK ACCOUNT MAPPINGS =====================
             CreateMap<UserBankAccountCreateDTO, UserBankAccount>().ReverseMap();
-            CreateMap<UserBankAccountUpdateDTO, UserBankAccount>()
-                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<UserBankAccount, UserBankAccountResponseDTO>().ReverseMap();
 
             // ===================== WALLET MAPPINGS =====================

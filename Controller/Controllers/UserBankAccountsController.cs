@@ -48,19 +48,19 @@ public class UserBankAccountsController : BaseController
     }
 
     /// <summary>
-    /// Xóa tài khoản ngân hàng của người dùng
+    /// Vô hiệu hóa tài khoản ngân hàng của người dùng (soft delete)
     /// </summary>
     /// <param name="accountId">ID của tài khoản ngân hàng</param>
-    /// <returns>Kết quả xóa</returns>
-    [HttpDelete("{accountId}")]
-    [Authorize(Roles = "Customer,Vendor,Admin")]
-    [EndpointSummary("Delete User Bank Account")]
-    [EndpointDescription("Xóa tài khoản ngân hàng của người dùng. Chỉ người dùng (chủ tài khoản) và Admin mới có quyền thực hiện.")]
+    /// <returns>Kết quả vô hiệu hóa</returns>
+    [HttpPatch("{accountId}/deactivate")]
+    [Authorize(Roles = "Staff,Vendor,Admin")]
+    [EndpointSummary("Soft Delete User Bank Account")]
+    [EndpointDescription("Vô hiệu hóa tài khoản ngân hàng của người dùng (không xóa tài khoản hoàn toàn khỏi DB).")]
     public async Task<ActionResult<APIResponse>> DeleteUserBankAccount(ulong accountId)
     {
         try
         {
-            var result = await _userBankAccountsService.DeleteUserBankAccountAsync(accountId, GetCancellationToken());
+            var result = await _userBankAccountsService.SoftDeleteUserBankAccountAsync(accountId, GetCancellationToken());
             return SuccessResponse(result);
         }
         catch (Exception ex)

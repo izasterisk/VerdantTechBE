@@ -119,12 +119,13 @@ CREATE TABLE user_bank_accounts (
     user_id BIGINT UNSIGNED NOT NULL,
     bank_code VARCHAR(20) NOT NULL,
     account_number VARCHAR(50) NOT NULL,
-    account_holder VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     UNIQUE KEY unique_user_bank_account (user_id, account_number),
-    INDEX idx_user (user_id)
+    INDEX idx_user (user_id),
+    INDEX idx_is_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tài khoản ngân hàng của người dùng (cả customer và vendor)';
 
 -- =====================================================
@@ -669,7 +670,7 @@ CREATE TABLE transactions (
 -- Bảng rút tiền (tiền ra - thanh toán cho nhà cung cấp, chi phí)
 CREATE TABLE cashouts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vendor_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
     transaction_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng giao dịch để đảm bảo tính nhất quán',
     bank_account_id BIGINT UNSIGNED NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
@@ -681,11 +682,11 @@ CREATE TABLE cashouts (
     processed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
     FOREIGN KEY (bank_account_id) REFERENCES user_bank_accounts(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_vendor (vendor_id),
+    INDEX idx_user (user_id),
     INDEX idx_status (status),
     INDEX idx_transaction (transaction_id),
     INDEX idx_reference (reference_type, reference_id)

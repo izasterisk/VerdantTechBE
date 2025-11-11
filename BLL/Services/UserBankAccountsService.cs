@@ -30,7 +30,7 @@ public class UserBankAccountsService : IUserBankAccountsService
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         VendorBankAccountsHelper.ValidateBankCode(dto.BankCode);
         await _userRepository.GetUserByIdAsync(userId, cancellationToken);
-        if (await _userBankAccountsRepository.ValidateImportedBankAccount(userId, dto.AccountNumber, dto.AccountHolder, cancellationToken))
+        if (await _userBankAccountsRepository.ValidateImportedBankAccount(userId, dto.AccountNumber, cancellationToken))
         {
             throw new DuplicateNameException("Tài khoản ngân hàng đã tồn tại.");
         }
@@ -41,10 +41,10 @@ public class UserBankAccountsService : IUserBankAccountsService
         return _mapper.Map<UserBankAccountResponseDTO>(createdAccount);
     }
 
-    public async Task<bool> DeleteUserBankAccountAsync(ulong accountId, CancellationToken cancellationToken = default)
+    public async Task<bool> SoftDeleteUserBankAccountAsync(ulong accountId, CancellationToken cancellationToken = default)
     {
         var existingAccount = await _userBankAccountsRepository.GetUserBankAccountByIdAsync(accountId, cancellationToken);
-        return await _userBankAccountsRepository.DeleteUserBankAccountWithTransactionAsync(existingAccount, cancellationToken);
+        return await _userBankAccountsRepository.SoftDeleteUserBankAccountWithTransactionAsync(existingAccount, cancellationToken);
     }
 
     public async Task<List<UserBankAccountResponseDTO>> GetAllUserBankAccountsByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)

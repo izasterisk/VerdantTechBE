@@ -57,9 +57,9 @@ INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `busines
 (2, 6, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', '2025-09-09 06:30:00', 1, '2025-09-08 08:30:00', '2025-09-09 06:30:00');
 
 -- Insert User Bank Accounts (v9.1 structure - renamed from vendor_bank_accounts to user_bank_accounts, now supports all users)
-INSERT INTO `user_bank_accounts` (`id`, `user_id`, `bank_code`, `account_number`, `account_holder`, `created_at`, `updated_at`) VALUES
-(1, 5, '970436', '1045069359', 'Công Ty Máy Móc Nông Nghiệp Xanh', '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
-(2, 6, '970436', '0987654321', 'Cửa Hàng Nông Sản Sạch VerdantTech', '2025-09-09 06:35:00', '2025-09-09 06:35:00');
+INSERT INTO `user_bank_accounts` (`id`, `user_id`, `bank_code`, `account_number`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 5, '970436', '1045069359', 1, '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
+(2, 6, '970436', '0987654321', 1, '2025-09-09 06:35:00', '2025-09-09 06:35:00');
 
 -- Insert Wallets (v9.0 structure - removed last_transaction_id)
 INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `last_updated_by`, `created_at`, `updated_at`) VALUES
@@ -277,8 +277,8 @@ INSERT INTO `payments` (`id`, `order_id`, `payment_method`, `payment_gateway`, `
 (2, 2, 'credit_card', 'stripe', 'STR_2025090909876543', 1483500.00, 'completed', '{"id": "ch_abc123", "status": "succeeded"}', '2025-09-09 09:00:00', '2025-09-09 09:15:00'),
 (3, 3, 'cod', 'manual', 'COD2025090911001', 11240000.00, 'pending', '{}', '2025-09-09 11:00:00', '2025-09-09 11:00:00');
 
--- Insert Cashouts (v9.1 structure - removed pending status, default processing)
-INSERT INTO `cashouts` (`id`, `vendor_id`, `transaction_id`, `bank_account_id`, `amount`, `status`, `reference_type`, `reference_id`, `notes`, `processed_by`, `created_at`, `processed_at`, `updated_at`) VALUES
+-- Insert Cashouts (v9.1 structure - removed pending status, default processing, changed vendor_id to user_id)
+INSERT INTO `cashouts` (`id`, `user_id`, `transaction_id`, `bank_account_id`, `amount`, `status`, `reference_type`, `reference_id`, `notes`, `processed_by`, `created_at`, `processed_at`, `updated_at`) VALUES
 (1, 5, 4, 1, 2000.00, 'processing', 'vendor_withdrawal', 1, 'Hoa hồng từ đơn hàng #1', NULL, '2025-09-09 15:30:00', NULL, '2025-09-09 15:30:00'),
 (2, 6, 5, 2, 2000.00, 'completed', 'vendor_withdrawal', 2, 'Hoa hồng từ đơn hàng #2', 2, '2025-09-09 16:30:00', '2025-09-09 16:30:00', '2025-09-09 16:30:00');
 
