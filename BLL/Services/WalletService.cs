@@ -165,7 +165,9 @@ public class WalletService : IWalletService
         var c = await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(transaction, walletCashout, wallet, cancellationToken);
         
         var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
-        return _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
+        var mapped = _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
+        mapped.ToAccountName = cashoutResponse.ToAccountName;
+        return mapped;
     }
     
     public async Task<WalletCashoutRequestResponseDTO> GetWalletCashoutRequestAsync(ulong userId, CancellationToken cancellationToken = default)

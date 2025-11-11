@@ -9,14 +9,16 @@ public class CashoutRepository : ICashoutRepository
 {
     private readonly IRepository<Cashout> _cashoutRepository;
     private readonly IRepository<Transaction> _transactionRepository;
+    private readonly IRepository<Order> _orderRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IWalletRepository _walletRepository;
     
     public CashoutRepository(IRepository<Cashout> cashoutRepository, IRepository<Transaction> transactionRepository,
-        VerdantTechDbContext dbContext, IWalletRepository walletRepository)
+        IRepository<Order> orderRepository, VerdantTechDbContext dbContext, IWalletRepository walletRepository)
     {
         _cashoutRepository = cashoutRepository;
         _transactionRepository = transactionRepository;
+        _orderRepository = orderRepository;
         _dbContext = dbContext;
         _walletRepository = walletRepository;
     }
@@ -50,12 +52,16 @@ public class CashoutRepository : ICashoutRepository
         return await _cashoutRepository.UpdateAsync(cashout, cancellationToken);
     }
 
-    public async Task<Cashout> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr,
+    public async Task<Cashout> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr, Order order,
         CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            order.UpdatedAt = DateTime.UtcNow;
+            order.Status = OrderStatus.Refunded;
+            await  _orderRepository.UpdateAsync(order, cancellationToken);
+            
             tr.CreatedAt = DateTime.UtcNow;
             tr.UpdatedAt = DateTime.UtcNow;
             var createdTransaction =  await _transactionRepository.CreateAsync(tr, cancellationToken);

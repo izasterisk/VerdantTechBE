@@ -209,7 +209,7 @@ public class OrderService : IOrderService
         }
         
         var from = await _userService.GetUserByIdAsync(1, cancellationToken);
-        var to = _mapper.Map<UserResponseDTO>(await _userRepository.GetUserByIdAsync(order.CustomerId, cancellationToken));
+        var to = _mapper.Map<UserResponseDTO>(await _userRepository.GetVerifiedAndActiveUserByIdAsync(order.CustomerId, cancellationToken));
         var targetAddress = await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken);
         if (targetAddress == null)
             throw new KeyNotFoundException("Địa chỉ không còn tồn tại.");
@@ -260,21 +260,9 @@ public class OrderService : IOrderService
         if (dto.Status == OrderStatus.Delivered)
         {
             order.DeliveredAt = DateTime.UtcNow;
-            // foreach (var orderDetail in order.OrderDetails)
-            // {
-            //     if (orderDetail.Product.CommissionRate != 0)
-            //     {
-            //         var wallet = await _walletRepository.GetWalletByVendorIdAsync(orderDetail.Product.VendorId, cancellationToken);
-            //         wallet.Balance += orderDetail.Quantity * orderDetail.Subtotal * orderDetail.Product.CommissionRate;
-            //         wallet.LastUpdatedBy = staffId;
-            //         await _walletRepository.UpdateWalletWithTransactionAsync(wallet,  cancellationToken);
-            //     }
-            // }
         }
         if (dto.Status == OrderStatus.Paid)
-        {
-            // Validate thanh toán sẽ có sau này
-        }
+            throw new InvalidCastException("Không thể chuyển trạng thái đơn hàng thành 'Paid', đây là quá trình tự động.");
         if (dto.Status == OrderStatus.Cancelled)
         {
             foreach (var orderDetail in order.OrderDetails)

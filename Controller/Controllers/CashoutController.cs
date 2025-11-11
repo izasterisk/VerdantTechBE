@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using BLL.Interfaces;
 using BLL.DTO;
+using BLL.DTO.Cashout;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 
@@ -53,6 +54,33 @@ public class CashoutController : BaseController
             var balance = await _cashoutService.GetBalanceAsync(GetCancellationToken());
             var result = new { Balance = balance };
             return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Xử lý hoàn tiền cho yêu cầu refund qua PayOS
+    /// </summary>
+    /// <param name="requestId">ID của yêu cầu refund</param>
+    /// <param name="dto">Thông tin hoàn tiền</param>
+    /// <returns>Thông tin cashout refund đã được xử lý</returns>
+    [HttpPost("refund/{requestId}")]
+    [Authorize(Roles = "Admin,Staff")]
+    [EndpointSummary("Process Refund Request via PayOS")]
+    [EndpointDescription("Yêu cầu phải có status Approved và type RefundRequest. Đơn hàng phải đã giao và chưa quá 7 ngày.")]
+    public async Task<ActionResult<APIResponse>> ProcessRefundRequest(ulong requestId, [FromBody] RefundCreateDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var staffId = GetCurrentUserId();
+            var refundResponse = await _cashoutService.CreateCashoutRefundByPayOSAsync(staffId, requestId, dto, GetCancellationToken());
+            return SuccessResponse(refundResponse);
         }
         catch (Exception ex)
         {
