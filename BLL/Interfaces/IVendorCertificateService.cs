@@ -10,8 +10,8 @@ namespace BLL.Interfaces
 {
     public interface IVendorCertificateService
     {
-        Task<IReadOnlyList<VendorCertificateResponseDTO>> CreateAsync(VendorCertificateCreateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, CancellationToken ct = default)
-        Task<VendorCertificateResponseDTO> UpdateAsync(VendorCertificateUpdateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, List<string> removedCertificates, CancellationToken ct = default)
+        Task<IReadOnlyList<VendorCertificateResponseDTO>> CreateAsync(VendorCertificateCreateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, CancellationToken ct = default);
+        Task<VendorCertificateResponseDTO> UpdateAsync(VendorCertificateUpdateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, List<string> removedCertificates, CancellationToken ct = default);
         //Task<VendorCertificateResponseDTO> UpdateAsync(ulong id, VendorCertificateUpdateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, List<string> removedCertificates, CancellationToken ct = default);
         //Task<VendorCertificateResponseDTO> CreateAsync(VendorCertificateCreateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, CancellationToken ct = default);
         Task<VendorCertificateResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default);
