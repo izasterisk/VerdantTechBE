@@ -98,7 +98,7 @@ builder.Services.AddScoped<IRepository<ExportInventory>, Repository<ExportInvent
 builder.Services.AddScoped<IRepository<Payment>, Repository<Payment>>();
 builder.Services.AddScoped<IRepository<Transaction>, Repository<Transaction>>();
 builder.Services.AddScoped<IRepository<ProductSerial>, Repository<ProductSerial>>();
-builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
+//builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -117,6 +117,8 @@ builder.Services.AddScoped<IProductCertificateRepository, ProductCertificateRepo
 builder.Services.AddScoped<IExportInventoryRepository, ExportInventoryRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IVendorCertificateRepository, VendorCertificateRepository>();
+builder.Services.AddScoped<IVendorProfileRepository, VendorProfileRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -132,6 +134,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IProductCertificateService, ProductCertificateService>();
 builder.Services.AddScoped<IProductRegistrationService, ProductRegistrationService>();
 builder.Services.AddScoped<IPayOSService, PayOSService>();
+builder.Services.AddScoped<IVendorCertificateService, VendorCertificateService>();
+builder.Services.AddScoped<IVendorProfileService, VendorProfileService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
