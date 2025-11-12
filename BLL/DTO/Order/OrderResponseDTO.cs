@@ -38,7 +38,7 @@ public class OrderResponseDTO
     // public ulong AddressId { get; set; }
 
     [Required(ErrorMessage = "Phương thức thanh toán là bắt buộc.")]
-    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD, Rent.")]
+    [EnumDataType(typeof(OrderPaymentMethod), ErrorMessage = "Phương thức thanh toán không hợp lệ. Chỉ chấp nhận: Banking, COD.")]
     public OrderPaymentMethod OrderPaymentMethod { get; set; }
 
     [StringLength(100, ErrorMessage = "Phương thức giao hàng không được vượt quá 100 ký tự.")]
@@ -97,7 +97,6 @@ public class ProductResponseDTO
 
 public class ProductImageResponseDTO
 {
-    public ulong Id { get; set; }
     public string ImageUrl { get; set; } = null!;
     public int SortOrder { get; set; }
 }

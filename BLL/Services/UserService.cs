@@ -29,7 +29,7 @@ public class UserService : IUserService
 
     public async Task<UserResponseDTO> CreateUserAsync(UserCreateDTO dto, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         
         var emailExists = await _userRepository.CheckEmailExistsAsync(dto.Email, cancellationToken);
         if (emailExists)
@@ -45,7 +45,7 @@ public class UserService : IUserService
     
     public async Task<UserResponseDTO> CreateStaffAsync(StaffCreateDTO dto, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         
         var emailExists = await _userRepository.CheckEmailExistsAsync(dto.Email, cancellationToken);
         if (emailExists)
@@ -70,7 +70,7 @@ public class UserService : IUserService
     
     public async Task<UserResponseDTO> UpdateUserAsync(ulong userId, UserUpdateDTO dto, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         
         var existingUser = await _userRepository.GetUserWithAddressesByIdAsync(userId, cancellationToken);
         if (existingUser == null)
@@ -95,7 +95,7 @@ public class UserService : IUserService
     
     public async Task<UserResponseDTO> CreateUserAddressAsync(ulong userId, UserAddressCreateDTO dto, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         var existingUser = await _userRepository.GetUserWithAddressesByIdAsync(userId, cancellationToken);
         if (existingUser == null)
         {
@@ -109,7 +109,7 @@ public class UserService : IUserService
     
     public async Task<UserResponseDTO> UpdateUserAddressByAddressIdAsync(ulong addressId, UserAddressUpdateDTO dto, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
+        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         
         var existingAddress = await _addressRepository.GetAddressByIdAsync(addressId, cancellationToken);
         if (existingAddress == null)

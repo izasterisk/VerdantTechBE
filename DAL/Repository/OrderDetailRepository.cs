@@ -27,11 +27,29 @@ public class OrderDetailRepository : IOrderDetailRepository
         _batchInventoryRepository = batchInventoryRepository;
     }
     
-    public async Task<OrderDetail> CreateOrderDetailAsync(OrderDetail orderDetail)
+    public async Task<OrderDetail> CreateOrderDetailAsync(OrderDetail orderDetail, CancellationToken cancellationToken = default)
     {
-        orderDetail.CreatedAt = DateTime.UtcNow;
-        return await _orderDetailRepository.CreateAsync(orderDetail);
+        orderDetail.UpdatedAt = DateTime.UtcNow;
+        return await _orderDetailRepository.CreateAsync(orderDetail, cancellationToken);
     }
+    
+    public async Task<List<OrderDetail>> GetListedOrderDetailsByIdAsync(List<ulong> orderDetailIds, CancellationToken cancellationToken = default)
+    {
+        List<OrderDetail> result = new List<OrderDetail>();
+        foreach (var orderDetailId in orderDetailIds)
+        {
+            var orderDetail = await _orderDetailRepository.GetWithRelationsAsync(o => o.Id == orderDetailId,
+                 true, func => func.Include(od => od.Product),
+                 cancellationToken) ?? 
+            throw new KeyNotFoundException($"Không tìm thấy chi tiết đơn hàng với ID {orderDetailId}.");
+            
+            result.Add(orderDetail);
+            if (result[0].OrderId != orderDetail.OrderId)
+                throw new InvalidOperationException($"Order Details nhận vào không cùng 1 đơn hàng.");
+        }
+        return result;
+    }
+        
     
     public async Task<ulong> GetRootProductCategoryIdByProductIdAsync(ulong id, CancellationToken cancellationToken = default)
     {

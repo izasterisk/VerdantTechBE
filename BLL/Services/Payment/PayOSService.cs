@@ -35,7 +35,7 @@ public class PayOSService : IPayOSService
         var cancelUrl = $"{_frontEndUrl}/payos/cancel";
         var returnUrl = $"{_frontEndUrl}/payos/return";
         
-        var order = await _orderRepository.GetOrderByIdAsync(orderId);
+        var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId);
         if (order == null || order.Status != OrderStatus.Pending || order.OrderPaymentMethod == OrderPaymentMethod.COD)
         {
             throw new ArgumentException($"Đơn hàng với ID {orderId} không tồn tại hoặc không khả dụng để thanh toán.");
@@ -110,12 +110,11 @@ public class PayOSService : IPayOSService
         {
             payment.Status = PaymentStatus.Completed;
             payment.Order.Status = OrderStatus.Paid;
-            var transaction = new TransactionResponseDTO
+            var transaction = new TransactionCreateDTO
             {
                 TransactionType = TransactionType.PaymentIn,
                 Amount = webhookData.amount,
                 Currency = webhookData.currency,
-                OrderId = payment.OrderId,
                 UserId = payment.Order.CustomerId,
                 Status = TransactionStatus.Completed,
                 Note = $"Thanh toán đơn hàng #{payment.OrderId} qua PayOS",

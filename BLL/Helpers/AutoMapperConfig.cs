@@ -10,8 +10,11 @@ using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
 using BLL.DTO.ProductCertificate;
 using BLL.DTO.ProductRegistration;
+using BLL.DTO.Request;
 using BLL.DTO.Transaction;
 using BLL.DTO.User;
+using BLL.DTO.UserBankAccount;
+using BLL.DTO.Wallet;
 using BLL.Services.Payment;
 using DAL.Data.Models;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
@@ -34,6 +37,22 @@ namespace BLL.Helpers
             CreateMap<UserAddressUpdateDTO, Address>().ReverseMap();
             CreateMap<UserAddressUpdateDTO, UserAddress>().ReverseMap();
 
+            // ===================== USER BANK ACCOUNT MAPPINGS =====================
+            CreateMap<UserBankAccountCreateDTO, UserBankAccount>().ReverseMap();
+            CreateMap<UserBankAccount, UserBankAccountResponseDTO>().ReverseMap();
+
+            // ===================== WALLET MAPPINGS =====================
+            CreateMap<WalletResponseDTO, Wallet>().ReverseMap();
+            CreateMap<WalletCashoutRequestResponseDTO, UserBankAccount>().ReverseMap();
+            CreateMap<Cashout, WalletCashoutRequestResponseDTO>()
+                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.BankAccount.User))
+                .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation));
+            CreateMap<WalletCashoutRequestCreateDTO, Cashout>().ReverseMap();
+            
+            CreateMap<Cashout, WalletCashoutResponseDTO>()
+                .ForMember(dest => dest.ProcessedBy, opt => opt.MapFrom(src => src.ProcessedByNavigation));            
+            CreateMap<Transaction, WalletTransactionResponseDTO>();
+            
             // ===================== FARM PROFILE =====================
             CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();
             CreateMap<FarmProfile, FarmProfileResponseDTO>().ReverseMap();
@@ -227,7 +246,7 @@ namespace BLL.Helpers
             
             // ===================== PAYMENT =====================
             CreateMap<Payment, PaymentResponseDTO>().ReverseMap();
-            CreateMap<Transaction, TransactionResponseDTO>().ReverseMap();
+            CreateMap<Transaction, TransactionCreateDTO>().ReverseMap();
 
             // ===================== PRODUCT =====================
             CreateMap<BLL.DTO.Product.ProductCreateDTO, Product>().ReverseMap();
@@ -245,6 +264,12 @@ namespace BLL.Helpers
                     o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue
                                         ? s.EnergyEfficiencyRating.Value.ToString()
                                         : null));
+
+            // ===================== REQUEST =====================
+            CreateMap<RequestCreateDTO, Request>().ReverseMap();
+            CreateMap<Request, RequestResponseDTO>()
+                .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation));
+            CreateMap<MediaLink, RequestImageDTO>().ReverseMap();
         }
     }
 }

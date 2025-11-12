@@ -11,7 +11,7 @@ namespace Controller.Controllers;
 public class OrderController : BaseController
 {
     private readonly IOrderService _orderService;
-    
+
     public OrderController(IOrderService orderService)
     {
         _orderService = orderService;
@@ -51,7 +51,8 @@ public class OrderController : BaseController
     [HttpPost("{orderPreviewId:guid}")]
     [Authorize]
     [EndpointSummary("Create Order")]
-    public async Task<ActionResult<APIResponse>> CreateOrder([FromRoute] Guid orderPreviewId, [FromBody] OrderCreateDTO dto)
+    public async Task<ActionResult<APIResponse>> CreateOrder([FromRoute] Guid orderPreviewId,
+        [FromBody] OrderCreateDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
@@ -76,8 +77,10 @@ public class OrderController : BaseController
     [HttpPost("{orderId:long}/ship")]
     [Authorize(Roles = "Admin, Staff")]
     [EndpointSummary("Ship Order")]
-    [EndpointDescription("Gửi sản phẩm đi, nếu là máy móc category ID = 1 thì chỉ cần nhập số seri, tất cả các loại khác (category ID != 1) thì chỉ cần nhập số lô không cần seri.")]
-    public async Task<ActionResult<APIResponse>> ShipOrder([FromRoute] ulong orderId, [FromBody] List<OrderDetailsShippingDTO> dtos)
+    [EndpointDescription(
+        "Gửi sản phẩm đi, nếu là máy móc category ID = 1 thì chỉ cần nhập số seri, tất cả các loại khác (category ID != 1) thì chỉ cần nhập số lô không cần seri.")]
+    public async Task<ActionResult<APIResponse>> ShipOrder([FromRoute] ulong orderId,
+        [FromBody] List<OrderDetailsShippingDTO> dtos)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
@@ -103,7 +106,8 @@ public class OrderController : BaseController
     [HttpPut("{orderId:long}")]
     [Authorize(Roles = "Admin, Staff")]
     [EndpointSummary("Process Order")]
-    [EndpointDescription("Cập nhật trạng thái đơn hàng: Paid, Processing, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
+    [EndpointDescription(
+        "Cập nhật trạng thái đơn hàng: Paid, Processing, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
     public async Task<ActionResult<APIResponse>> ProcessOrder([FromRoute] ulong orderId, [FromBody] OrderUpdateDTO dto)
     {
         var validationResult = ValidateModel();
@@ -152,12 +156,38 @@ public class OrderController : BaseController
     [HttpGet]
     [Authorize(Roles = "Admin, Staff")]
     [EndpointSummary("Get All Orders")]
-    [EndpointDescription("GET toàn bộ Order theo Status (Pending, Paid, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded). Hoặc không nhập status cũng được, trả về toàn bộ.")]
-    public async Task<ActionResult<APIResponse>> GetAllOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
+    [EndpointDescription(
+        "GET toàn bộ Order theo Status (Pending, Paid, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded). Hoặc không nhập status cũng được, trả về toàn bộ.")]
+    public async Task<ActionResult<APIResponse>> GetAllOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10,
+        [FromQuery] string? status = null)
     {
         try
         {
             var orders = await _orderService.GetAllOrdersAsync(page, pageSize, status, GetCancellationToken());
+            return SuccessResponse(orders, HttpStatusCode.OK);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Lấy danh sách đơn hàng của một khách hàng cụ thể với phân trang
+    /// </summary>
+    /// <param name="userId">ID của khách hàng</param>
+    /// <param name="page">Số trang (mặc định là 1)</param>
+    /// <param name="pageSize">Số lượng đơn hàng trên mỗi trang (mặc định là 10)</param>
+    /// <returns>Danh sách đơn hàng của khách hàng với thông tin phân trang</returns>
+    [HttpGet("user/{userId:long}")]
+    [Authorize]
+    [EndpointSummary("Get All Orders By User ID")]
+    public async Task<ActionResult<APIResponse>> GetAllOrdersByUserId([FromRoute] ulong userId,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        try
+        {
+            var orders = await _orderService.GetAllOrdersByUserIdAsync(userId, page, pageSize, GetCancellationToken());
             return SuccessResponse(orders, HttpStatusCode.OK);
         }
         catch (Exception ex)

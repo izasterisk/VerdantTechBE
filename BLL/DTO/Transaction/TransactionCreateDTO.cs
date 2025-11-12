@@ -2,7 +2,7 @@
 
 namespace BLL.DTO.Transaction;
 
-public class TransactionResponseDTO
+public class TransactionCreateDTO
 {
     public ulong Id { get; set; }
 
@@ -11,12 +11,10 @@ public class TransactionResponseDTO
     public decimal Amount { get; set; }
 
     public string Currency { get; set; } = "VND";
-
-    public ulong? OrderId { get; set; }
     
     public ulong UserId { get; set; }
 
-    public TransactionStatus Status { get; set; } = TransactionStatus.Pending;
+    public TransactionStatus Status { get; set; } = TransactionStatus.Completed;
 
     public string Note { get; set; } = null!;
 
@@ -26,9 +24,9 @@ public class TransactionResponseDTO
     
     public ulong? ProcessedBy { get; set; }
     
-    public DateTime CreatedAt { get; set; }
+    // public DateTime CreatedAt { get; set; }
     
     public DateTime? CompletedAt { get; set; }
     
-    public DateTime UpdatedAt { get; set; }
+    // public DateTime UpdatedAt { get; set; }
 }

@@ -132,10 +132,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasDefaultValue(true)
             .HasColumnName("is_active");
         
-        builder.Property(e => e.ForRent)
-            .HasDefaultValue(false)
-            .HasColumnName("for_rent");
-        
         // Timestamp fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
@@ -170,6 +166,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         // Regular indexes (max 5 for large table)
         builder.HasIndex(e => e.CategoryId)
             .HasDatabaseName("idx_category");
+            
+        builder.HasIndex(e => e.VendorId)
+            .HasDatabaseName("idx_vendor");
             
         // Full text index (updated for v7.1)
         builder.HasIndex(e => new { e.ProductName, e.Description })

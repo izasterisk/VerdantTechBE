@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 9.0
+-- Phiên bản: 9.1
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -113,20 +113,20 @@ CREATE TABLE vendor_certificates (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do nhà cung cấp tải lên để xác minh';
 
--- Tài khoản ngân hàng của nhà cung cấp (một nhà cung cấp có thể có nhiều tài khoản ngân hàng)
-CREATE TABLE vendor_bank_accounts (
+-- Tài khoản ngân hàng của người dùng (user và vendor đều có thể có nhiều tài khoản ngân hàng)
+CREATE TABLE user_bank_accounts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vendor_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
     bank_code VARCHAR(20) NOT NULL,
     account_number VARCHAR(50) NOT NULL,
-    account_holder VARCHAR(255) NOT NULL,
-    is_default BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
-    UNIQUE KEY unique_vendor_bank_account (vendor_id, account_number),
-    INDEX idx_vendor (vendor_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tài khoản ngân hàng của các hồ sơ nhà cung cấp';
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    UNIQUE KEY unique_user_bank_account (user_id, account_number),
+    INDEX idx_user (user_id),
+    INDEX idx_is_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tài khoản ngân hàng của người dùng (cả customer và vendor)';
 
 -- =====================================================
 -- CÁC BẢNG DỮ LIỆU MÔI TRƯỜNG
@@ -336,7 +336,6 @@ CREATE TABLE products (
     weight_kg DECIMAL(10,3) NOT NULL COMMENT 'Trọng lượng sản phẩm (kg) - bắt buộc',
     dimensions_cm JSON COMMENT '{chiều dài, chiều rộng, chiều cao}',
     is_active BOOLEAN DEFAULT TRUE,
-    for_rent BOOLEAN DEFAULT FALSE COMMENT 'Sản phẩm có sẵn cho thuê hay không',
     view_count BIGINT DEFAULT 0,
     sold_count BIGINT DEFAULT 0,
     rating_average DECIMAL(3,2) DEFAULT 0.00,
@@ -423,11 +422,11 @@ CREATE TABLE product_reviews (
 -- Bảng quản lý media tập trung
 CREATE TABLE media_links (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts') NOT NULL,
+    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
     image_public_id VARCHAR(512) NOT NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
-    purpose ENUM('front', 'back', 'none') DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
+    purpose ENUM('front', 'back', 'none', "certificate_pdf") DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
     sort_order INT NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -478,7 +477,7 @@ CREATE TABLE orders (
     discount_amount DECIMAL(12,2) DEFAULT 0.00,
     total_amount DECIMAL(12,2) NOT NULL,
     address_id BIGINT UNSIGNED NOT NULL,
-    order_payment_method ENUM('Banking', 'COD', 'Rent') NOT NULL,
+    order_payment_method ENUM('Banking', 'COD') NOT NULL,
     shipping_method VARCHAR(100),
     tracking_number VARCHAR(100),
     notes VARCHAR(500),
@@ -513,11 +512,13 @@ CREATE TABLE order_details (
     unit_price DECIMAL(12,2) NOT NULL,
     discount_amount DECIMAL(12,2) DEFAULT 0.00,
     subtotal DECIMAL(12,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    is_wallet_credited BOOLEAN DEFAULT FALSE COMMENT 'Đã cộng tiền vào ví vendor chưa',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
 
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
-    INDEX idx_order (order_id)
+    INDEX idx_order (order_id),
+    INDEX idx_wallet_credited_updated (is_wallet_credited, updated_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các mục trong đơn hàng';
 
 -- =========================
@@ -643,12 +644,11 @@ CREATE TABLE payments (
 -- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
 CREATE TABLE transactions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    transaction_type ENUM('payment_in', 'cashout', 'wallet_credit', 'wallet_debit', 'commission', 'refund', 'adjustment') NOT NULL,
+    transaction_type ENUM('payment_in', 'wallet_cashout', 'refund', 'adjustment') NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'VND',
-    order_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng đơn hàng',
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người dùng liên quan đến giao dịch này (khách hàng hoặc nhà cung cấp)',
-    status ENUM('pending','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
+    status ENUM('completed','failed','cancelled') NOT NULL DEFAULT 'completed',
     note VARCHAR(255) NOT NULL COMMENT 'Mô tả có thể đọc được',
     gateway_payment_id VARCHAR(255) NULL COMMENT 'ID giao dịch từ cổng thanh toán',    
     created_by BIGINT UNSIGNED NULL COMMENT 'Người dùng khởi tạo giao dịch này',
@@ -657,59 +657,90 @@ CREATE TABLE transactions (
     completed_at TIMESTAMP NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
     
     INDEX idx_user (user_id),
     INDEX idx_type_status (transaction_type, status),
-    INDEX idx_order (order_id),
     INDEX idx_gateway_payment (gateway_payment_id),
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sổ cái tài chính trung tâm - nguồn sự thật duy nhất cho tất cả chuyển động tiền tệ';
 
--- Ví cho nhà cung cấp (một ví cho một nhà cung cấp)
-CREATE TABLE wallets (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vendor_id BIGINT UNSIGNED NOT NULL UNIQUE,
-    balance DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Số dư khả dụng',
-    last_transaction_id BIGINT UNSIGNED NULL COMMENT 'Giao dịch gần nhất ảnh hưởng đến số dư',
-    last_updated_by BIGINT UNSIGNED NULL COMMENT 'Người dùng thực hiện thay đổi số dư gần nhất',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
-    FOREIGN KEY (last_transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
-    FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_vendor (vendor_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ví nhà cung cấp theo dõi số dư';
-
 -- Bảng rút tiền (tiền ra - thanh toán cho nhà cung cấp, chi phí)
 CREATE TABLE cashouts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vendor_id BIGINT UNSIGNED NOT NULL,
+    user_id BIGINT UNSIGNED NOT NULL,
     transaction_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng giao dịch để đảm bảo tính nhất quán',
     bank_account_id BIGINT UNSIGNED NOT NULL,
     amount DECIMAL(12,2) NOT NULL,
-    status ENUM('pending','processing','completed','failed','cancelled') NOT NULL DEFAULT 'pending',
-    reason VARCHAR(255) NULL COMMENT 'Lý do hoặc mục đích của khoản rút tiền (ví dụ: Thanh toán hoa hồng, Hoàn tiền)',
-    gateway_transaction_id VARCHAR(255) NULL COMMENT 'ID giao dịch cổng thanh toán bên ngoài',
-    reference_type VARCHAR(50) NULL COMMENT 'Loại tham chiếu (đơn hàng, yêu cầu, v.v.)',
+    status ENUM('processing','completed','failed','cancelled') NOT NULL DEFAULT 'processing',
+    reference_type ENUM('vendor_withdrawal', 'refund', 'admin_adjustment') NULL COMMENT 'Loại tham chiếu: vendor_withdrawal (vendor rút tiền), refund (hoàn tiền cho khách), admin_adjustment (điều chỉnh bởi admin)',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu',
     notes VARCHAR(500) NULL,
     processed_by BIGINT UNSIGNED NULL COMMENT 'Admin đã xử lý lần rút tiền này',
     processed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
-    FOREIGN KEY (bank_account_id) REFERENCES vendor_bank_accounts(id) ON DELETE RESTRICT,
+    FOREIGN KEY (bank_account_id) REFERENCES user_bank_accounts(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
-    UNIQUE KEY idx_unique_gateway_transaction (gateway_transaction_id),
-    INDEX idx_vendor (vendor_id),
+    INDEX idx_user (user_id),
     INDEX idx_status (status),
-    INDEX idx_transaction (transaction_id)
+    INDEX idx_transaction (transaction_id),
+    INDEX idx_reference (reference_type, reference_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='bảng rút tiền cho vendor';
+
+-- Ví cho nhà cung cấp (một ví cho một nhà cung cấp)
+CREATE TABLE wallets (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL UNIQUE,
+    balance DECIMAL(12,2) NOT NULL DEFAULT 0.00 COMMENT 'Số dư khả dụng',
+    last_updated_by BIGINT UNSIGNED NULL COMMENT 'Người dùng thực hiện thay đổi số dư gần nhất',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_vendor (vendor_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ví nhà cung cấp theo dõi số dư';
+
+-- =====================================================
+-- TỔNG QUAN THAY ĐỔI v9.1 (từ v9.0)
+-- =====================================================
+
+-- V) CẢI TIẾN BẢNG CASHOUTS - REFERENCE_TYPE ENUM
+-- • Thay đổi: reference_type từ VARCHAR(50) → ENUM('vendor_withdrawal', 'refund', 'admin_adjustment')
+-- • Lợi ích:
+--   - Đảm bảo data integrity: chỉ cho phép 3 giá trị hợp lệ
+--   - Tối ưu storage: ENUM chỉ tốn 1-2 bytes thay vì VARCHAR 50 bytes
+--   - Tăng performance: index và query nhanh hơn
+--   - Dễ maintain: rõ ràng các loại cashout được hỗ trợ
+-- • Các giá trị ENUM:
+--   + vendor_withdrawal: Vendor tự rút tiền từ ví (hoa hồng tích lũy)
+--   + refund: Hoàn tiền cho khách hàng (từ yêu cầu hoàn tiền)
+--   + admin_adjustment: Admin điều chỉnh số dư ví thủ công (sửa lỗi, bồi thường)
+-- • Thêm INDEX mới: idx_reference (reference_type, reference_id)
+--   - Tối ưu query theo loại reference và ID tham chiếu
+
+-- VI) ĐỔI TÊN BẢNG VENDOR_BANK_ACCOUNTS → USER_BANK_ACCOUNTS
+-- • XÓA bảng cũ: vendor_bank_accounts
+-- • TẠO bảng mới: user_bank_accounts
+-- • Thay đổi chính:
+--   + vendor_id → user_id: Bây giờ hỗ trợ tất cả users (customer, vendor, staff)
+--   + unique_vendor_bank_account → unique_user_bank_account
+--   + idx_vendor → idx_user
+-- • Lợi ích:
+--   - Customer cũng có thể lưu tài khoản ngân hàng (cho refund, cashback)
+--   - Vendor rút tiền từ user_bank_accounts
+--   - Linh hoạt hơn cho các tính năng tương lai (chuyển tiền P2P, v.v.)
+--   - Thống nhất cấu trúc: một user có nhiều bank accounts
+-- • Cập nhật foreign key:
+--   + cashouts.bank_account_id → references user_bank_accounts(id)
+-- • Model changes:
+--   + VendorBankAccount → UserBankAccount
+--   + Vendor navigation → User navigation
+--   + User.VendorBankAccounts → User.UserBankAccounts
 
 -- =====================================================
 -- TỔNG QUAN THAY ĐỔI v9.0 (từ v8.1)

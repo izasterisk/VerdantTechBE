@@ -24,10 +24,12 @@ public class OrderService : IOrderService
     private readonly IUserService _userService;
     private readonly IExportInventoryRepository _exportInventoryRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IWalletRepository _walletRepository;
     
     public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository,
         IAddressRepository addressRepository, IGoshipCourierApiClient courierApiClient, IMemoryCache memoryCache,
-        IUserService userService, IExportInventoryRepository exportInventoryRepository, IUserRepository userRepository)
+        IUserService userService, IExportInventoryRepository exportInventoryRepository, IUserRepository userRepository, 
+        IWalletRepository walletRepository)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
@@ -38,6 +40,7 @@ public class OrderService : IOrderService
         _userService = userService;
         _exportInventoryRepository = exportInventoryRepository;
         _userRepository = userRepository;
+        _walletRepository = walletRepository;
     }
 
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
@@ -64,8 +67,6 @@ public class OrderService : IOrderService
                 throw new KeyNotFoundException($"Sản phẩm với ID {orderDetail.ProductId} không tồn tại hoặc đã bị xóa.");
             if (orderDetail.Quantity > productRaw.StockQuantity || productRaw.StockQuantity == 0)
                 throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} không còn đủ hàng so với yêu cầu trong đơn hàng của bạn.");
-            if (dto.OrderPaymentMethod == OrderPaymentMethod.Rent && productRaw.ForRent == false)
-                throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} không thể thuê.");
             var product = _mapper.Map<ProductResponseDTO>(productRaw);
             product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(orderDetail.ProductId, cancellationToken));
             OrderDetailsPreviewResponseDTO orderDetailResponse = new()
@@ -150,7 +151,7 @@ public class OrderService : IOrderService
         order.Length = orderPreview.Length; order.Weight = orderPreview.Weight;
         
         var createdOrder = await _orderRepository.CreateOrderWithTransactionAsync(order, orderDetails, productsToUpdate, cancellationToken);
-        var response = await _orderRepository.GetOrderByIdAsync(createdOrder.Id, cancellationToken);
+        var response = await _orderRepository.GetOrderWithRelationsByIdAsync(createdOrder.Id, cancellationToken);
         if(response == null)
             throw new InvalidOperationException("Không thể tạo đơn hàng, vui lòng liên hệ với Staff để được hỗ trợ.");
         var finalResponse = _mapper.Map<OrderResponseDTO>(response);
@@ -172,7 +173,7 @@ public class OrderService : IOrderService
     {
         if(dtos == null || dtos.Count == 0)
             throw new ArgumentNullException($"{nameof(dtos)} rỗng.");
-        var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (order == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
         
@@ -204,11 +205,11 @@ public class OrderService : IOrderService
         foreach (var kvp in productQuantities)
         {
             if (kvp.Value != 0)
-                throw new InvalidOperationException($"Sản phẩm với ID {kvp.Key} đang được xuất ít hơn số lượng trong đơn hàng.");
+                throw new InvalidOperationException($"Sản phẩm với ID {kvp.Key} đang được xuất khác với số lượng trong đơn hàng.");
         }
         
         var from = await _userService.GetUserByIdAsync(1, cancellationToken);
-        var to = _mapper.Map<UserResponseDTO>(await _userRepository.GetUserByIdAsync(order.CustomerId, cancellationToken));
+        var to = _mapper.Map<UserResponseDTO>(await _userRepository.GetVerifiedAndActiveUserByIdAsync(order.CustomerId, cancellationToken));
         var targetAddress = await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken);
         if (targetAddress == null)
             throw new KeyNotFoundException("Địa chỉ không còn tồn tại.");
@@ -244,7 +245,7 @@ public class OrderService : IOrderService
     public async Task<OrderResponseDTO> ProcessOrderAsync(ulong staffId, ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        var order = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (order == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
         if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
@@ -256,12 +257,12 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException("Đơn hàng không phải COD không thể chuyển sang 'Processing' nếu chưa 'Paid'.");
             order.ConfirmedAt = DateTime.UtcNow;
         }
-        if(dto.Status == OrderStatus.Delivered)
-            order.DeliveredAt = DateTime.UtcNow;
-        if (dto.Status == OrderStatus.Paid)
+        if (dto.Status == OrderStatus.Delivered)
         {
-            // Validate thanh toán sẽ có sau này
+            order.DeliveredAt = DateTime.UtcNow;
         }
+        if (dto.Status == OrderStatus.Paid)
+            throw new InvalidCastException("Không thể chuyển trạng thái đơn hàng thành 'Paid', đây là quá trình tự động.");
         if (dto.Status == OrderStatus.Cancelled)
         {
             foreach (var orderDetail in order.OrderDetails)
@@ -278,7 +279,7 @@ public class OrderService : IOrderService
         }
         order.Status = dto.Status;
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
-        var response = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        var response = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if(response == null)
             throw new InvalidOperationException("Không thể cập nhật đơn hàng, vui lòng liên hệ với Staff để được hỗ trợ.");
         var finalResponse = _mapper.Map<OrderResponseDTO>(response);
@@ -296,7 +297,7 @@ public class OrderService : IOrderService
     
     public async Task<OrderResponseDTO> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
-        var orderEntity = await _orderRepository.GetOrderByIdAsync(orderId, cancellationToken);
+        var orderEntity = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (orderEntity == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
         var item = _mapper.Map<OrderResponseDTO>(orderEntity);
@@ -315,6 +316,38 @@ public class OrderService : IOrderService
     public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersAsync(int page, int pageSize, String? status = null, CancellationToken cancellationToken = default)
     {
         var (orders, totalCount) = await _orderRepository.GetAllOrdersAsync(page, pageSize, status, cancellationToken);
+        var response = new List<OrderResponseDTO>();
+        
+        foreach (var orderEntity in orders)
+        {
+            var item = _mapper.Map<OrderResponseDTO>(orderEntity);
+            if (item.OrderDetails != null)
+            {
+                foreach (var product in item.OrderDetails)
+                {
+                    product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
+                }
+            }
+            item.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(orderEntity.Address));
+            response.Add(item);
+        }
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<OrderResponseDTO>
+        {
+            Data = response,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
+    }
+
+    public async Task<PagedResponse<OrderResponseDTO>> GetAllOrdersByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var (orders, totalCount) = await _orderRepository.GetAllOrdersByUserIdAsync(userId, page, pageSize, cancellationToken);
         var response = new List<OrderResponseDTO>();
         
         foreach (var orderEntity in orders)

@@ -225,29 +225,45 @@ namespace BLL.Services
         }
 
         /// <summary>
-        /// Gắn thumbnail (ảnh sort nhỏ nhất) vào ProductListItemDTO (optional)
+        /// Gắn thumbnail (ảnh sort nhỏ nhất) vào ProductListItemDTO
         /// </summary>
         private async Task HydrateImagesAsync(List<ulong> ids, List<ProductListItemDTO> rows, CancellationToken ct)
         {
             if (ids.Count == 0) return;
 
-            var images = await _db.MediaLinks.AsNoTracking()
+            // ✅ CÁCH 1: Lấy tất cả images rồi group ở client-side (đơn giản, dễ debug)
+            var allImages = await _db.MediaLinks.AsNoTracking()
                 .Where(m => m.OwnerType == MediaOwnerType.Products && ids.Contains(m.OwnerId))
-                .OrderBy(m => m.OwnerId).ThenBy(m => m.SortOrder)
+                .OrderBy(m => m.OwnerId)
+                .ThenBy(m => m.SortOrder)
                 .ToListAsync(ct);
 
-            var firstByOwner = images
+            // Group và lấy ảnh đầu tiên cho mỗi product (client-side)
+            var firstImagesByProduct = allImages
                 .GroupBy(m => m.OwnerId)
-                .ToDictionary(g => g.Key, g => g.FirstOrDefault());
+                .Select(g => g.First())
+                .ToList();
 
             var byId = rows.ToDictionary(x => x.Id);
-            foreach (var kv in firstByOwner)
+
+            foreach (var img in firstImagesByProduct)
             {
-                if (kv.Value == null) continue;
-                if (!byId.TryGetValue(kv.Key, out var row)) continue;
-                // có thể mở rộng DTO list-item để có Thumbnail nếu bạn muốn
-                // row.ThumbnailUrl = kv.Value.ImageUrl;
+                if (!byId.TryGetValue(img.OwnerId, out var row)) continue;
+
+                // ✅ CHỈ GÁN 1 ẢNH VÀO MẢNG
+                row.Images = new List<MediaLinkItemDTO>
+        {
+            new MediaLinkItemDTO
+            {
+                Id = img.Id,
+                ImagePublicId = img.ImagePublicId,
+                ImageUrl = img.ImageUrl,
+                Purpose = img.Purpose.ToString().ToLowerInvariant(),
+                SortOrder = img.SortOrder
+            }
+        };
             }
         }
+    
     }
 }
