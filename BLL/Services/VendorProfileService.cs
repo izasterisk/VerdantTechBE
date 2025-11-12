@@ -30,10 +30,10 @@ namespace BLL.Services
                 CompanyName = dto.CompanyName,
                 Slug = dto.Slug,
                 BusinessRegistrationNumber = dto.BusinessRegistrationNumber,
-                CompanyAddress = dto.CompanyAddress,
-                Province = dto.Province,
-                District = dto.District,
-                Commune = dto.Commune,
+                //CompanyAddress = dto.CompanyAddress,
+                //Province = dto.Province,
+                //District = dto.District,
+                //Commune = dto.Commune,
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -91,10 +91,10 @@ namespace BLL.Services
             e.CompanyName = dto.CompanyName ?? e.CompanyName;
             e.Slug = dto.Slug ?? e.Slug;
             e.BusinessRegistrationNumber = dto.BusinessRegistrationNumber ?? e.BusinessRegistrationNumber;
-            e.CompanyAddress = dto.CompanyAddress ?? e.CompanyAddress;
-            e.Province = dto.Province ?? e.Province;
-            e.District = dto.District ?? e.District;
-            e.Commune = dto.Commune ?? e.Commune;
+            //e.CompanyAddress = dto.CompanyAddress ?? e.CompanyAddress;
+            //e.Province = dto.Province ?? e.Province;
+            //e.District = dto.District ?? e.District;
+            //e.Commune = dto.Commune ?? e.Commune;
             e.UpdatedAt = DateTime.UtcNow;
             await _profileRepo.UpdateAsync(e, ct);
             return Map(e);
@@ -115,10 +115,10 @@ namespace BLL.Services
             CompanyName = e.CompanyName,
             Slug = e.Slug,
             BusinessRegistrationNumber = e.BusinessRegistrationNumber,
-            CompanyAddress = e.CompanyAddress,
-            Province = e.Province,
-            District = e.District,
-            Commune = e.Commune,
+            //CompanyAddress = e.CompanyAddress,
+            //Province = e.Province,
+            //District = e.District,
+            //Commune = e.Commune,
             VerifiedAt = e.VerifiedAt,
             VerifiedBy = e.VerifiedBy,
             CreatedAt = e.CreatedAt,

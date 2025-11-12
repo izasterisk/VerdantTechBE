@@ -77,6 +77,7 @@ builder.Services.Configure<FormOptions>(o =>
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 //Dependency Injection
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>>();
 builder.Services.AddScoped<IRepository<FarmProfile>, Repository<FarmProfile>>();

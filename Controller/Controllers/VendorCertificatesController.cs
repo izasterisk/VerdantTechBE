@@ -53,7 +53,7 @@ namespace Controller.Controllers
 
         [EndpointSummary("Cập nhật chứng chỉ (thêm/xoá file)")]
         [EndpointDescription("multipart/form-data: dto.*, addCertificates[i].*, removedCertificates[i] (publicId)")]
-        [HttpPut("{id:ulong}")]
+        [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
         //[SwaggerOperation(Summary = "Cập nhật chứng chỉ (thêm/xoá file)", Description = "multipart/form-data: dto.*, addCertificates[i].*, removedCertificates[i] (publicId).")]
         public Task<VendorCertificateResponseDTO> Update(
@@ -71,7 +71,7 @@ namespace Controller.Controllers
 
         [EndpointSummary("Xoá chứng chỉ")]
         [EndpointDescription("Xoá VendorCertificate theo Id")]
-        [HttpDelete("{id:ulong}")]
+        [HttpDelete("{id}")]
         //[SwaggerOperation(Summary = "Xoá chứng chỉ", Description = "Xoá VendorCertificate theo Id.")]
         public Task Delete([FromRoute] ulong id, CancellationToken ct)
         => _svc.DeleteAsync(id, ct);

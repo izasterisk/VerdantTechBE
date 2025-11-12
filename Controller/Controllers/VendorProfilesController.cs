@@ -50,7 +50,7 @@ namespace Controller.Controllers
 
         [EndpointSummary("Cập nhật VendorProfile")]
         [EndpointDescription("Cập nhật các trường cơ bản: CompanyName, Slug, BRN, địa chỉ…")]
-        [HttpPut("{id:ulong}")]
+        [HttpPut("{id}")]
         //[SwaggerOperation(Summary = "Cập nhật VendorProfile", Description = "Cập nhật các trường cơ bản: CompanyName, Slug, BRN, địa chỉ…")]
         public Task<VendorProfileResponseDTO> Update([FromRoute] ulong id, [FromBody] VendorProfileUpdateDTO dto, CancellationToken ct)
         => _svc.UpdateAsync(id, dto, ct);
@@ -58,7 +58,7 @@ namespace Controller.Controllers
 
         [EndpointSummary("Xoá VendorProfile")]
         [EndpointDescription("Xoá hồ sơ Vendor theo Id")]
-        [HttpDelete("{id:ulong}")]
+        [HttpDelete("{id}")]
         //[SwaggerOperation(Summary = "Xoá VendorProfile", Description = "Xoá hồ sơ Vendor theo Id.")]
         public Task Delete([FromRoute] ulong id, CancellationToken ct)
         => _svc.DeleteAsync(id, ct);
