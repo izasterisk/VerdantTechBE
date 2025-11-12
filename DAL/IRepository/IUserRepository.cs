@@ -10,5 +10,5 @@ public interface IUserRepository
     Task<User?> GetUserWithAddressesByIdAsync(ulong userId, CancellationToken cancellationToken = default);
     Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, string? role = null, CancellationToken cancellationToken = default);
     Task<bool> CheckEmailExistsAsync(string username, CancellationToken cancellationToken = default);
-    Task<User> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default);
+    Task<User> GetVerifiedAndActiveUserByIdAsync(ulong userId, CancellationToken cancellationToken = default);
 }

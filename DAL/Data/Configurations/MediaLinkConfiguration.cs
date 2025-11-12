@@ -17,6 +17,7 @@ internal static class MediaLinkEfMaps
         MediaOwnerType.ProductCertificates => "product_certificates",
         MediaOwnerType.ProductReviews => "product_reviews",
         MediaOwnerType.ForumPosts => "forum_posts",
+        MediaOwnerType.Request => "request",
         _ => throw new ArgumentOutOfRangeException(nameof(v), v, null)
     };
 
@@ -29,6 +30,7 @@ internal static class MediaLinkEfMaps
         "product_certificates" => MediaOwnerType.ProductCertificates,
         "product_reviews" => MediaOwnerType.ProductReviews,
         "forum_posts" => MediaOwnerType.ForumPosts,
+        "request" => MediaOwnerType.Request,
         _ => throw new ArgumentOutOfRangeException(nameof(s), s, null)
     };
 
@@ -73,7 +75,7 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
         builder.Property(e => e.OwnerType)
             .HasConversion(ownerTypeConverter)
             .HasMaxLength(500)                 // đủ dài cho ENUM string
-            .HasColumnType("enum('vendor_certificates','chatbot_messages','products','product_registrations','product_certificates','product_reviews','forum_posts')")
+            .HasColumnType("enum('vendor_certificates','chatbot_messages','products','product_registrations','product_certificates','product_reviews','forum_posts','request')")
             .IsRequired()
             .HasColumnName("owner_type");
 

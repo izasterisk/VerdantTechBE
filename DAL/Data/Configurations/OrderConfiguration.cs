@@ -40,7 +40,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         // Enum conversion for status
         builder.Property(e => e.Status)
             .HasConversion<string>()
-            .HasColumnType("enum('pending','processing','paid','shipped','delivered','cancelled','refunded')")
+            .HasColumnType("enum('pending','processing','paid','shipped','delivered','finished','cancelled','refunded')")
             .HasColumnName("status")
             .HasDefaultValue(OrderStatus.Pending);
         

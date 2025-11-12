@@ -11,7 +11,6 @@ public partial class Payment
 
     public ulong OrderId { get; set; }
 
-
     public PaymentMethod PaymentMethod { get; set; }
 
     public PaymentGateway PaymentGateway { get; set; }

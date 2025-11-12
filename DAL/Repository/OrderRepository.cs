@@ -34,7 +34,7 @@ public class OrderRepository : IOrderRepository
     
     public async Task<Order> CreateOrderWithTransactionAsync(Order order, List<OrderDetail> orderDetails, List<Product> products, CancellationToken cancellationToken = default)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             order.CreatedAt = DateTime.UtcNow;
@@ -49,7 +49,7 @@ public class OrderRepository : IOrderRepository
             foreach (var orderDetail in orderDetails)
             {
                 orderDetail.OrderId = createdOrder.Id;
-                await _orderDetailRepository.CreateOrderDetailAsync(orderDetail);
+                await _orderDetailRepository.CreateOrderDetailAsync(orderDetail, cancellationToken);
             }
             await transaction.CommitAsync(cancellationToken);
             return createdOrder;
@@ -63,7 +63,7 @@ public class OrderRepository : IOrderRepository
     
     public async Task<Order> UpdateOrderWithTransactionAsync(Order order, CancellationToken cancellationToken = default)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
             order.UpdatedAt = DateTime.UtcNow;
@@ -78,23 +78,13 @@ public class OrderRepository : IOrderRepository
         }
     }
     
-    public async Task<bool> DeleteOrderWithTransactionAsync(Order order, CancellationToken cancellationToken = default)
+    public async Task<Order> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            var updatedOrder = await _orderRepository.DeleteAsync(order, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return updatedOrder;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        return await _orderRepository.GetAsync(o => o.Id == orderId, true, cancellationToken) ?? 
+               throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID {orderId}.");
     }
     
-    public async Task<Order?> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
+    public async Task<Order?> GetOrderWithRelationsByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         return await _orderRepository.GetWithRelationsAsync(
             o => o.Id == orderId, 
@@ -104,16 +94,20 @@ public class OrderRepository : IOrderRepository
             cancellationToken);
     }
     
-    public async Task<List<Order>> GetAllOrdersByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    public async Task<(List<Order>, int totalCount)> GetAllOrdersByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        return await _orderRepository.GetAllWithRelationsByFilterAsync(
+        return await _orderRepository.GetPaginatedWithRelationsAsync(
+            page, 
+            pageSize, 
             o => o.CustomerId == userId, 
-            true,
-            query => query.Include(o => o.OrderDetails)
+            useNoTracking: true, 
+            orderBy: query => query.OrderByDescending(o => o.CreatedAt),
+            includeFunc: query => query.Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product)
                 .Include(o => o.Address)
                 .Include(o => o.Customer),
-            cancellationToken);
+            cancellationToken
+        );
     }
     
     public async Task<(List<Order>, int totalCount)> GetAllOrdersAsync(int page, int pageSize, string? status = null, CancellationToken cancellationToken = default)

@@ -99,6 +99,11 @@ builder.Services.AddScoped<IRepository<Payment>, Repository<Payment>>();
 builder.Services.AddScoped<IRepository<Transaction>, Repository<Transaction>>();
 builder.Services.AddScoped<IRepository<ProductSerial>, Repository<ProductSerial>>();
 //builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
+builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
+builder.Services.AddScoped<IRepository<Wallet>, Repository<Wallet>>();
+builder.Services.AddScoped<IRepository<UserBankAccount>, Repository<UserBankAccount>>();
+builder.Services.AddScoped<IRepository<Cashout>, Repository<Cashout>>();
+builder.Services.AddScoped<IRepository<Request>, Repository<Request>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -119,6 +124,10 @@ builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IVendorCertificateRepository, VendorCertificateRepository>();
 builder.Services.AddScoped<IVendorProfileRepository, VendorProfileRepository>();
+builder.Services.AddScoped<IWalletRepository, WalletRepository>();
+builder.Services.AddScoped<IUserBankAccountsRepository, UserBankAccountsRepository>();
+builder.Services.AddScoped<ICashoutRepository, CashoutRepository>();
+builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -136,6 +145,10 @@ builder.Services.AddScoped<IProductRegistrationService, ProductRegistrationServi
 builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<IVendorCertificateService, VendorCertificateService>();
 builder.Services.AddScoped<IVendorProfileService, VendorProfileService>();
+builder.Services.AddScoped<IUserBankAccountsService, UserBankAccountsService>();
+builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<ICashoutService, CashoutService>();
+builder.Services.AddScoped<IRequestService, RequestService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

@@ -404,60 +404,71 @@ Xóa một danh mục sản phẩm.
 - Ràng buộc: Không thể xóa nếu category là cha của một category khác.
 
 #### ProductCertificateController (`/api/ProductCertificate`)
+Quản lý chứng nhận sản phẩm, bao gồm cả việc upload file.
 
-**`POST /api/ProductCertificate/create`** (Authorize)  
-Vendor tạo chứng nhận sản phẩm.
-
-- Body `ProductCertificateCreateDTO`:
-
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | productId | ulong | Required, > 0 |
-  | certificateName | string | Required, max 255 ký tự |
-  | issuedBy | string | Required, max 255 ký tự |
-  | issuedDate | DateTime | Required |
-  | expiryDate | DateTime? | Optional |
-  | certificateUrl | string? | max 1000 ký tự |
-  | notes | string? | max 500 ký tự |
-
+**`POST /api/ProductCertificate/upload`** (Authorize)
+Tạo hàng loạt chứng nhận kèm file PDF.
+- Content-Type: `multipart/form-data`
+- Form fields:
+  - `ProductId` (long): ID sản phẩm.
+  - `CertificationCode` (List<string>): Danh sách mã chứng nhận.
+  - `CertificationName` (List<string>): Danh sách tên chứng nhận.
+  - `Files` (List<IFormFile>): Danh sách file PDF.
 - Ràng buộc nghiệp vụ:
-  - Không validate `productId` tồn tại (có thể tạo trước khi product được approve).
-  - Set `CreatedAt = DateTime.UtcNow`.
-- Response: `ProductCertificateResponseDTO`.
-- Exceptions:
-  - `ArgumentNullException`: DTO null.
+  - Số lượng `CertificationCode`, `CertificationName`, và `Files` phải bằng nhau.
+  - Upload file lên Cloudinary, sau đó tạo các `ProductCertificate` và `MediaLink` tương ứng trong một transaction.
+- Response: `List<ProductCertificateResponseDTO>`.
 
-**`GET /api/ProductCertificate/get-by-product-id/{productId}`** (Authorize)  
-Lấy danh sách chứng nhận của sản phẩm.
-
-- Path: `productId` (ulong)
-- Response: `IReadOnlyList<ProductCertificateResponseDTO>`.
-- Exceptions:
-  - `ArgumentException`: `productId == 0`.
-
-**`GET /api/ProductCertificate/get-by-id/{id}`** (Authorize)  
-Lấy chứng nhận theo ID.
-
-- Path: `id` (ulong)
-- Response: `ProductCertificateResponseDTO` hoặc null.
-- Exceptions:
-  - `ArgumentException`: `id == 0`.
-
-**`PUT /api/ProductCertificate/update/{id}`** (Authorize)  
-Cập nhật chứng nhận sản phẩm.
-
-- Path: `id` (ulong)
-- Body `ProductCertificateUpdateDTO` (tất cả field optional, validation giống Create).
+**`POST /api/ProductCertificate`** (Authorize)
+Tạo một chứng nhận kèm file.
+- Content-Type: `multipart/form-data`
+- Form fields:
+  - `[FromForm] ProductCertificateCreateDTO dto`: Dữ liệu chứng nhận.
+  - `[FromForm] List<IFormFile> files`: File PDF.
 - Ràng buộc nghiệp vụ:
-  - Certificate phải tồn tại.
-  - Set `UpdatedAt = DateTime.UtcNow`.
-  - Transaction: update certificate.
+  - Upload file lên Cloudinary, tạo `ProductCertificate` và `MediaLink`.
 - Response: `ProductCertificateResponseDTO`.
-- Exceptions:
-  - `ArgumentNullException`: DTO null.
-  - `KeyNotFoundException`: Certificate không tồn tại (từ repository).
 
-#### ProductRegistrationController (`/api/ProductRegistrations`)
+**`GET /api/ProductCertificate`** (Authorize)
+Lấy danh sách tất cả chứng nhận (phân trang).
+- Query: `page`, `pageSize`.
+- Response: `PagedResponse<ProductCertificateResponseDTO>`.
+
+**`GET /api/ProductCertificate/by-product/{productId}`** (Authorize)
+Lấy danh sách chứng nhận của một sản phẩm (phân trang).
+- Path: `productId` (ulong).
+- Query: `page`, `pageSize`.
+- Response: `PagedResponse<ProductCertificateResponseDTO>`.
+
+**`GET /api/ProductCertificate/{id}`** (Authorize)
+Lấy chi tiết chứng nhận theo ID.
+- Path: `id` (long).
+- Response: `ProductCertificateResponseDTO`.
+
+**`PUT /api/ProductCertificate/{id}`** (Authorize)
+Cập nhật chứng nhận, có thể thêm/xóa file.
+- Content-Type: `multipart/form-data`
+- Path: `id` (long).
+- Form fields:
+  - `[FromForm] ProductCertificateUpdateDTO form`: Dữ liệu cập nhật.
+  - `[FromForm] List<IFormFile>? addFiles`: File mới để thêm.
+  - `[FromForm] List<string>? removedFilePublicIds`: Public ID của file cần xóa.
+- Response: `ProductCertificateResponseDTO`.
+
+**`PATCH /api/ProductCertificate/status/{id}`** (Authorize)
+Duyệt hoặc từ chối chứng nhận.
+- Path: `id` (long).
+- Body `ProductCertificateChangeStatusDTO`:
+  - `Status` (ProductCertificateStatus: `Verified`, `Rejected`).
+  - `RejectionReason` (string, optional, required nếu `Status` là `Rejected`).
+- Response: `ProductCertificateResponseDTO`.
+
+**`DELETE /api/ProductCertificate/{id}`** (Authorize)
+Xóa chứng nhận.
+- Path: `id` (long).
+- Response: `true` nếu thành công.
+
+#### ProductRegistrationsController (`/api/ProductRegistrations`)
 
 **`GET /api/ProductRegistrations`** (Authorize)  
 Danh sách đăng ký sản phẩm (phân trang).
@@ -481,113 +492,53 @@ Danh sách đăng ký theo vendor (phân trang).
 - Response: `PagedResponse<ProductRegistrationReponseDTO>`.
 - Exceptions: Không có.
 
-**`POST /api/ProductRegistrations`** (Authorize)  
-Tạo đăng ký sản phẩm (multipart/form-data).
-
-- Content-Type: `multipart/form-data`
+**`POST /api/ProductRegistrations`** (Authorize, Consumes: "multipart/form-data")
+Tạo đăng ký sản phẩm.
 - Form fields:
-  - `Data`: `ProductRegistrationCreateDTO` (JSON string trong form field hoặc bracket-form)
-  - `ManualFile`: IFormFile? (upload manual PDF)
-  - `Images`: List<IFormFile>? (ảnh sản phẩm)
-  - `Certificate`: List<IFormFile>? (file chứng chỉ)
-
-- `ProductRegistrationCreateDTO`:
-
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | vendorId | ulong | Required |
-  | categoryId | ulong | Required |
-  | proposedProductCode | string | Required, max 100 ký tự |
-  | proposedProductName | string | Required, max 255 ký tự |
-  | description | string? | max 500 ký tự |
-  | unitPrice | decimal | Required, > 0 |
-  | energyEfficiencyRating | string? | Parse thành int 0-5 |
-  | specifications | Dictionary<string, object>? | Parse từ JSON string hoặc bracket-form |
-  | warrantyMonths | int | >= 0 |
-  | weightKg | decimal | > 0 |
-  | dimensionsCm | { width, height, length } | Required, decimal > 0 |
-
+  - `[FromForm] CreateForm req`:
+    - `Data` (`ProductRegistrationCreateDTO`): Dữ liệu chính của đơn đăng ký.
+    - `ManualFile` (IFormFile?): File hướng dẫn sử dụng (PDF).
+    - `Images` (List<IFormFile>?): Danh sách ảnh sản phẩm.
+    - `Certificate` (List<IFormFile>?): Danh sách file chứng nhận.
 - Ràng buộc nghiệp vụ:
-  - `vendorId`, `categoryId` phải tồn tại.
-  - `energyEfficiencyRating`: parse thành int, phải 0-5 nếu có giá trị.
-  - `dimensionsCm` phải có đủ width/height/length.
-  - Upload files lên Cloudinary:
-    - `ManualFile` → `product-registrations/manuals` → lưu `manualUrl`, `manualPublicUrl`.
-    - `Images` → `product-registrations/images` → tạo `MediaLink` với `OwnerType=ProductRegistrations`.
-    - `Certificate` → `product-registrations/certificates` → tạo `MediaLink` với `OwnerType=ProductCertificates`.
-  - Set `Status = Pending`, `CreatedAt/UpdatedAt = DateTime.UtcNow`.
-  - Insert entity + MediaLinks trong transaction.
-- Response: `ProductRegistrationReponseDTO` đầy đủ (sau khi tạo + hydrate images/certificates).
-- Exceptions:
-  - `InvalidOperationException`: Vendor/Category không tồn tại, energyEfficiencyRating không hợp lệ (< 0 hoặc > 5), dimensions không hợp lệ.
+  - Upload các file lên Cloudinary.
+  - Tạo `ProductRegistration` và các `MediaLink` liên quan trong một transaction.
+- Response: `ProductRegistrationReponseDTO`.
 
-**`PUT /api/ProductRegistrations/{id}`** (Authorize)  
-Cập nhật đăng ký sản phẩm (multipart/form-data).
-
-- Path: `id` (ulong)
-- Content-Type: `multipart/form-data`
+**`PUT /api/ProductRegistrations/{id}`** (Authorize, Consumes: "multipart/form-data")
+Cập nhật đăng ký sản phẩm.
+- Path: `id` (ulong).
 - Form fields:
-  - `Data`: `ProductRegistrationUpdateDTO` (tất cả field optional, validation giống Create)
-  - `ManualFile`: IFormFile? (thay thế manual)
-  - `Images`: List<IFormFile>? (thêm ảnh mới)
-  - `Certificate`: List<IFormFile>? (thêm certificate mới)
-  - `RemoveImagePublicIds`: List<string>? (xóa ảnh cũ)
-  - `RemoveCertificatePublicIds`: List<string>? (xóa certificate cũ)
-
-- Ràng buộc nghiệp vụ:
-  - Registration phải tồn tại.
-  - Validate giống Create.
-  - Upload files mới lên Cloudinary.
-  - Xóa `MediaLink` với publicId trong remove lists.
-  - Update `UpdatedAt = DateTime.UtcNow`.
-- Response: `ProductRegistrationReponseDTO` đầy đủ (sau update).
-- Exceptions:
-  - `KeyNotFoundException`: Registration không tồn tại.
-  - `InvalidOperationException`: Validate fields không hợp lệ.
+  - `[FromForm] UpdateForm req`:
+    - `Data` (`ProductRegistrationUpdateDTO`): Dữ liệu cập nhật.
+    - `ManualFile` (IFormFile?): File hướng dẫn sử dụng mới.
+    - `Images` (List<IFormFile>?): Ảnh mới để thêm.
+    - `Certificate` (List<IFormFile>?): Chứng nhận mới để thêm.
+    - `RemoveImagePublicIds` (List<string>?): Public ID của ảnh cần xóa.
+    - `RemoveCertificatePublicIds` (List<string>?): Public ID của chứng nhận cần xóa.
+- Response: `ProductRegistrationReponseDTO`.
 
 **`PATCH /api/ProductRegistrations/{id}/status`** (Authorize)  
 Duyệt/từ chối đăng ký sản phẩm.
-
 - Path: `id` (ulong)
 - Body `ProductRegistrationChangeStatusDTO`:
-  ```json
-  {
-    "status": "Approved",  // Pending, Approved, Rejected
-    "rejectionReason": "...",  // Required nếu status = Rejected
-    "approvedBy": 123  // ulong, user ID của người duyệt
-  }
-  ```
-
+  - `status` (enum: `Approved`, `Rejected`).
+  - `rejectionReason` (string, required nếu `status` là `Rejected`).
 - Ràng buộc nghiệp vụ:
-  - Registration phải tồn tại.
-  - Nếu `status == Rejected`: `rejectionReason` bắt buộc.
-  - Nếu `status == Approved`: tự động tạo `Product` từ registration, copy thông tin sang bảng Products.
-- Response: 204 NoContent nếu thành công, 404 nếu không tìm thấy.
-- Exceptions:
-  - `KeyNotFoundException`: Registration không tồn tại.
-  - `InvalidOperationException`: Thiếu rejectionReason khi reject.
+  - Nếu `status` là `Approved`, tự động tạo một `Product` mới từ thông tin đăng ký.
+- Response: 204 NoContent.
 
 **`DELETE /api/ProductRegistrations/{id}`** (Authorize)  
-Xóa đăng ký sản phẩm (và MediaLinks liên quan).
-
-- Path: `id` (ulong)
-- Response: 204 NoContent nếu thành công, 404 nếu không tồn tại.
-- Exceptions: Không có.
+Xóa đăng ký sản phẩm.
+- Path: `id` (ulong).
+- Response: 204 NoContent.
 
 #### ProductController (`/api/Product`)
 
 **`GET /api/Product`** (Authorize)  
 Danh sách sản phẩm (phân trang).
-
-- Query params:
-
-  | Param | Type | Default |
-  | --- | --- | --- |
-  | page | int | 1 |
-  | pageSize | int | 20 |
-
-- Response: `PagedResponse<ProductListItemDTO>` (thông tin cơ bản, thumbnail đầu tiên nếu có).
-- Exceptions: Không có.
+- Query: `page`, `pageSize`.
+- Response: `PagedResponse<ProductListItemDTO>`.
 
 **`GET /api/Product/{id}`** (Authorize)  
 Chi tiết sản phẩm.
@@ -679,262 +630,191 @@ Cập nhật `CommissionRate` của sản phẩm.
 - Exceptions: `KeyNotFoundException`.
 
 **`DELETE /api/Product/{id}`** (Authorize)  
-Xóa sản phẩm (và có thể dọn ảnh `MediaLink` liên quan).
+Xoá sản phẩm (và có thể dọn ảnh `MediaLink` liên quan).
 
 - Path: `id` (long/ulong)
 - Response: 204 NoContent nếu thành công, 404 nếu không tồn tại.
 - Exceptions: Không có.
-    | viewCount | long | Optional |
-    | soldCount | long | Optional |
-    | ratingAverage | decimal | 0-5 |
 
-  - Ràng buộc nghiệp vụ:
-    - Sản phẩm phải tồn tại trước khi cập nhật.
-#### UserController (`/api/User`)
-- `POST /api/User` (AllowAnonymous)
-  - Body `UserCreateDTO`:
+#### RequestTicketController (`/api/RequestTicket`)
+Quản lý các yêu cầu hỗ trợ (support request) hoặc yêu cầu hoàn tiền (refund request).
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | email | string | Required, email hợp lệ, tối đa 255 ký tự |
-    | password | string | Required, tối đa 255 ký tự |
-    | fullName | string | Required, 2-255 ký tự |
-    | phoneNumber | string? | Optional, <= 20 ký tự, regex số điện thoại Việt Nam |
-
-  - Ràng buộc nghiệp vụ:
-    - Email phải unique.
-    - Service hash password, mặc định `Role = Customer`, `Status = Active`, `IsVerified = false`.
-
-- `POST /api/User/staff` (Authorize, Role `Admin`)
-  - Body `StaffCreateDTO` (email, fullName bắt buộc, phone optional).
-  - Ràng buộc nghiệp vụ:
-    - Email phải unique.
-    - Service phát sinh mật khẩu ngẫu nhiên, gửi email thông báo.
-    - Tạo user với `Role = Staff`, `IsVerified = true`.
-
-- `GET /api/User/{id}` (Authorize, Roles `Admin,Staff`)
-  - 404 nếu user không tồn tại.
-
-- `GET /api/User` (Authorize, Roles `Admin,Staff`)
-  - Query params:
-    - `page` (mặc định 1, > 0).
-    - `pageSize` (mặc định 10, trong khoảng 1-100).
-    - `role` (optional). Giá trị hợp lệ theo enum `UserRole` (không phân biệt hoa thường). Nếu bỏ trống -> chỉ trả về `Customer`.
-  - Kết quả là `PagedResponse`.
-
-- `PATCH /api/User/{id}` (Authorize)
-  - Body `UserUpdateDTO`:
-
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | fullName | string? | 2-255 ký tự |
-    | phoneNumber | string? | <= 20 ký tự, regex Việt Nam |
-    | avatarUrl | string? | <= 500 ký tự, URL hợp lệ |
-    | status | UserStatus? | Optional enum (Active, Inactive, Suspended, Deleted) |
-
-  - Ràng buộc nghiệp vụ:
-    - User phải tồn tại.
-    - Nếu đổi status sang `Deleted` thì set `DeletedAt = DateTime.UtcNow`.
-    - Không cho phép đổi status nếu user đã `Deleted`.
-
-- `POST /api/User/{userId}/address` (Authorize)
-  - Body `UserAddressCreateDTO` (tất cả trường địa chỉ bắt buộc, code >= 1, lat [-90,90], long [-180,180]).
-  - Ràng buộc nghiệp vụ:
-    - User phải tồn tại.
-    - Tạo địa chỉ mới và gắn cho user.
-
-- `PATCH /api/User/address/{addressId}` (Authorize)
-  - Body `UserAddressUpdateDTO` (tất cả optional, validation giống create, thêm `isDeleted` bool).
-  - Ràng buộc nghiệp vụ:
-    - Address phải tồn tại và thuộc user.
-    - `AddressHelper.ValidateAddressFields` yêu cầu các cặp tên/mã đồng bộ.
-
-#### WeatherController (`/api/Weather`)
-- `GET /api/Weather/hourly/{farmId}` (Authorize)
-  - Lấy thông tin thời tiết dự báo theo giờ trong ngày cho farm.
-
-- `GET /api/Weather/daily/{farmId}` (Authorize)
-  - Lấy thông tin thời tiết dự báo cho 7 ngày tới cho farm.
-
-- `GET /api/Weather/current/{farmId}` (Authorize)
-  - Lấy thông tin thời tiết hiện tại của farm.
-
-#### Enum hợp lệ
-| Enum | Giá trị | Ghi chú |
-| --- | --- | --- |
-| `UserRole` | Customer, Staff, Vendor, Admin | Dùng trong query `role`, hiển thị user |
-| `UserStatus` | Active, Inactive, Suspended, Deleted | Dùng khi cập nhật user và trong auth |
-| `VendorCertificateStatus` | Pending, Verified, Rejected | Chưa expose qua controller hiện tại |
-| `ProductCertificateStatus` | Pending, Verified, Rejected | Chưa expose |
-| `ProductRegistrationStatus` | Pending, Approved, Rejected | Chưa expose |
-| `FarmProfileStatus` | Active, Maintenance, Deleted | Dùng trong `FarmProfileUpdateDTO` |
-| `MessageType` | User, Bot, System | Dùng cho chatbot module tương lai |
-| `ForumPostStatus` | Visible, Hidden | Dành cho forum module |
-| `ForumCommentStatus` | Visible, Moderated, Deleted | Forum module |
-| `RequestType` | RefundRequest, SupportRequest | Request module |
-| `RequestStatus` | Pending, InReview, Approved, Rejected, Completed, Cancelled | Request module |
-| `RequestPriority` | Low, Medium, High, Urgent | Request module |
-| `OrderStatus` | Pending, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded | Hiển thị trong order response |
-| `OrderPaymentMethod` | Banking, COD, Rent | Dùng trong order preview |
-| `PaymentMethod` | CreditCard, DebitCard, Paypal, Stripe, BankTransfer, Cod | Hiện chưa expose qua controller |
-| `PaymentGateway` | Stripe, Paypal, Vnpay, Momo, Manual | Giữ cho module thanh toán |
-| `PaymentStatus` | Pending, Processing, Completed, Failed, Refunded, PartiallyRefunded | Trả về từ module payment |
-| `TransactionType` | PaymentIn, Cashout, WalletCredit, WalletDebit, Commission, Refund, Adjustment | Tài chính |
-| `TransactionStatus` | Pending, Completed, Failed, Cancelled | Tài chính |
-| `CashoutStatus` | Pending, Processing, Completed, Failed, Cancelled | Tài chính |
-| `CashoutType` | CommissionPayout, VendorPayment, Expense, Refund | Tài chính |
-| `MovementType` | Sale, ReturnToVendor, Damage, Loss, Adjustment | Quản lý kho |
-| `QualityCheckStatus` | NotRequired, Pending, Passed, Failed | Quản lý kho |
-| `ConditionOnArrival` | New, Good, Fair, Damaged | Quản lý kho |
-| `MediaOwnerType` | VendorCertificates, ChatbotMessages, Products, ProductRegistrations, ProductCertificates, ProductReviews, ForumPosts | Quản lý media |
-| `MediaPurpose` | None, Front, Back | Quản lý media |
-
-### 5) Xử lý lỗi và ngoại lệ
-- `BaseController.HandleException` quy về các HTTP status:
-  - 400: sai định dạng, validation, mapping.
-  - 401: chưa đăng nhập hoặc token sai.
-  - 403: thiếu quyền.
-  - 404: không tìm thấy dữ liệu.
-  - 409: xung đột dữ liệu (duplicate, foreign key).
-  - 410: order đã bị xóa trong khi patch.
-  - 499/408: request bị hủy/timeout (`OperationCanceledException`).
-  - 500/503: lỗi hệ thống hoặc gọi API ngoài thất bại.
-- `ValidateModel()` tự động gom thông điệp từ `ModelState` và trả về 400 dạng `APIResponse.ValidationError`.
-- Các service chủ động ném:
-  - `InvalidOperationException` khi vi phạm business rule (vd: product đã có trong cart, farm chưa có tọa độ, shipping detail không tồn tại).
-  - `ArgumentException` khi tham số không hợp lệ (vd: parentId không tồn tại, mã courier sai định dạng).
-  - `KeyNotFoundException` khi entity không tồn tại.
-  - `ValidationException` khi vi phạm `AddressHelper` hoặc địa chỉ không thuộc user.
-
-### 6) Định hướng phát triển tiếp
-Theo `VerdantTech_Project_Info.txt`, các hạng mục dự kiến:
-- Khách hàng (Web/Mobile): hồ sơ nông trại, dữ liệu pH/CO₂, forum, blog, cảnh báo thời tiết, chatbot AI, upload ảnh bệnh.
-- Người bán (Web): hồ sơ vendor, quản lý danh mục sản phẩm xanh, analytics, tài liệu kỹ thuật.
-- Chuyên gia/Admin (Web Portal): phân quyền, giám sát hiệu năng, kiểm duyệt nội dung, đảm bảo độ chính xác AI.
-- AI & Tự động hóa: tích hợp Botpress, nhận diện bệnh cây qua dịch vụ CV, khuyến nghị canh tác theo pH/CO₂/thời tiết.
-- Environmental Monitoring Engine: cập nhật thời tiết 15 phút, cảm biến pH/độ ẩm (thiết kế API device ingestion).
-
-#### PayOSController (`/api/PayOS`)
-
-**`POST /api/PayOS/create/{orderId}`** (Authorize)
-Tạo link thanh toán PayOS cho một đơn hàng.
-- Path `orderId`: ID của đơn hàng.
-- Body `CreatePaymentDataDTO`:
-  - `productName` (string, required)
-  - `description` (string, required)
-  - `returnUrl` (string, required, URL)
-  - `cancelUrl` (string, required, URL)
-
-**`POST /api/PayOS/webhook`** (AllowAnonymous)
-Webhook nhận thông báo trạng thái thanh toán từ PayOS.
-
-**`POST /api/PayOS/confirm-webhook`** (Authorize)
-Xác nhận URL webhook với PayOS.
-- Body `ConfirmWebhookDTO`:
-  - `webhookUrl` (string, required, URL)
-
-#### OrderController (`/api/Order`)
-
-**`POST /api/Order/preview`** (Authorize)  
-Tạo order preview để xem trước tổng tiền, phí ship và các dịch vụ vận chuyển khả dụng.
-
-- Body `OrderPreviewCreateDTO`:
-
+**`POST /api/RequestTicket`** (Authorize, Roles: Customer,Vendor)
+Tạo một "request ticket" mới.
+- Body `RequestCreateDTO`:
   | Field | Type | Validation |
   | --- | --- | --- |
-  | addressId | ulong | Required, > 0 |
-  | orderPaymentMethod | enum | Required: `Banking`, `COD`, `Rent` |
-  | taxAmount | decimal | >= 0 |
-  | discountAmount | decimal | >= 0 |
-  | notes | string? | Optional, max 500 ký tự |
-  | orderDetails | List<OrderDetailPreviewCreateDTO> | Required, min 1 item |
-
-- `OrderDetailPreviewCreateDTO`:
-
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | productId | ulong | Required, > 0 |
-  | quantity | int | Required, >= 1 |
-  | discountAmount | decimal | >= 0 |
-
+  | requestType | enum | Required: `RefundRequest`, `SupportRequest` |
+  | title | string | Required, 3-255 ký tự |
+  | description | string | Required, 10-2000 ký tự |
+  | images | List<MediaLinkItemDTO>? | Optional, danh sách ảnh đính kèm |
 - Ràng buộc nghiệp vụ:
-  - User (từ JWT) phải tồn tại, `IsVerified == true`.
-  - `addressId` phải tồn tại và thuộc user (qua `UserAddress` hoặc `FarmProfile`).
-  - Mỗi `productId` phải tồn tại, `IsActive == true`, `StockQuantity >= quantity`.
-  - Nếu `orderPaymentMethod == Rent`: sản phẩm phải `ForRent == true`.
-  - Tự động tính: subtotal, dimensions, weight từ sản phẩm.
-  - Gọi GoShip API lấy rates, cache preview 10 phút với `OrderPreviewId` (Guid).
-- Exceptions:
-  - `KeyNotFoundException`: User/address/product không tồn tại, address không thuộc user.
-  - `InvalidOperationException`: Sản phẩm hết hàng, không cho thuê khi chọn Rent.
+  - `UserId` được lấy từ JWT.
+  - Status mặc định là `Pending`.
+  - Nếu có `images`, các ảnh sẽ được lưu và liên kết với request ticket.
+- Response: `RequestResponseDTO`.
 
-**`POST /api/Order/{orderPreviewId}`** (Authorize)  
-Tạo đơn hàng thực từ preview, chọn shipping service.
-
-- Path: `orderPreviewId` (Guid)
-- Body `OrderCreateDTO`:
-
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | priceTableId | string | Required (ID shipping service từ preview) |
-
+**`GET /api/RequestTicket/{requestId}`** (Authorize, Roles: Admin,Staff,Customer,Vendor)
+Lấy thông tin chi tiết một request ticket.
+- Path: `requestId` (ulong).
 - Ràng buộc nghiệp vụ:
-  - Preview phải tồn tại trong cache (chưa hết 10 phút).
-  - `priceTableId` phải nằm trong `shippingDetails` của preview.
-  - User phải tồn tại, `IsVerified == true`.
-  - Sản phẩm phải còn đủ hàng (kiểm tra lại `StockQuantity`).
-  - Transaction: tạo Order + OrderDetail, trừ stock, commit.
-  - Xóa preview khỏi cache sau khi tạo thành công.
-- Exceptions:
-  - `KeyNotFoundException`: Preview hết hạn, priceTableId không hợp lệ, user/product không tồn tại.
-  - `InvalidOperationException`: Hết hàng, lỗi transaction.
+  - User phải là chủ sở hữu ticket hoặc là Admin/Staff.
+- Response: `RequestResponseDTO` (bao gồm cả ảnh).
 
-**`PUT /api/Order/{orderId}`** (Authorize)  
-Cập nhật trạng thái đơn hàng (Pending → Paid → Processing → Shipped → Delivered) hoặc hủy.
-
-- Path: `orderId` (ulong)
-- Body `OrderUpdateDTO`:
-
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | status | enum | Required: `Pending`, `Paid`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
-  | cancelledReason | string? | Optional, max 500 ký tự |
-
+**`GET /api/RequestTicket/user/{userId}`** (Authorize, Roles: Admin,Staff,Customer,Vendor)
+Lấy tất cả request tickets của một user.
+- Path: `userId` (ulong).
 - Ràng buộc nghiệp vụ:
-  - Order phải tồn tại.
-  - Nếu có `cancelledReason` → `status` phải là `Cancelled`.
-  - Validate chuyển trạng thái hợp lệ (`OrderHelper.ValidateOrderStatusTransition`): không lùi trạng thái, không chuyển từ Cancelled/Refunded.
-  - **Tác động theo status:**
-    - `Processing`: set `ConfirmedAt`.
-    - `Delivered`: set `DeliveredAt`.
-    - `Cancelled`: set `CancelledAt`, `CancelledReason`.
-    - `Shipped`: gọi GoShip API tạo shipment, lưu `TrackingNumber`. Nếu COD: payer=0, codAmount=totalAmount.
-  - Transaction: update order.
-- Exceptions:
-  - `KeyNotFoundException`: Order/address không tồn tại.
-  - `InvalidOperationException`: Cung cấp cancelledReason nhưng status không phải Cancelled, chuyển trạng thái không hợp lệ, lỗi GoShip API.
+  - User phải là chính user đó hoặc là Admin/Staff.
+- Response: `List<RequestResponseDTO>`.
 
-**`GET /api/Order/{orderId}`** (Authorize)  
-Lấy chi tiết 1 đơn hàng.
-
-- Path: `orderId` (ulong)
-- Response: `OrderResponseDTO` (customer, address, orderDetails với images).
-- Exceptions: `KeyNotFoundException` nếu order không tồn tại.
-
-**`GET /api/Order`** (Authorize)  
-Danh sách đơn hàng (phân trang, lọc theo status).
-
+**`GET /api/RequestTicket`** (Authorize, Roles: Admin,Staff)
+Lấy danh sách tất cả request tickets với filter và phân trang.
 - Query params:
-
   | Param | Type | Default | Description |
   | --- | --- | --- | --- |
   | page | int | 1 | Trang hiện tại |
-  | pageSize | int | 10 | Số item/trang |
-  | status | string? | null | Lọc: `Pending`, `Paid`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
+  | pageSize | int | 10 | Số item/trang (max 100) |
+  | requestType | enum? | null | Lọc theo `RefundRequest` hoặc `SupportRequest` |
+  | requestStatus | enum? | null | Lọc theo `Pending`, `InReview`, `Approved`, `Rejected`, `Completed`, `Cancelled` |
+- Response: `PagedResponse<RequestResponseDTO>`.
 
+**`PUT /api/RequestTicket/{requestId}/process`** (Authorize, Roles: Admin,Staff)
+Xử lý một request ticket.
+- Path: `requestId` (ulong).
+- Body `RequestUpdateDTO`:
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | status | enum | Required: `InReview`, `Approved`, `Rejected`, `Completed`, `Cancelled` |
+  | replyNotes | string? | Required nếu status là `Approved`, `Rejected`, `Completed`, `Cancelled` |
 - Ràng buộc nghiệp vụ:
-  - Parse `status` thành enum, bỏ qua nếu không hợp lệ.
-  - Eager load: OrderDetails, Product, Customer, Address.
-  - Mỗi order: `customer.address[0]` = địa chỉ order, `orderDetails[].product.images` đầy đủ.
-- Response: `PagedResponse<OrderResponseDTO>` (data, currentPage, pageSize, totalPages, totalRecords, hasNextPage, hasPreviousPage).
-- Exceptions: Không có (trả rỗng nếu không tìm thấy).
+  - Chỉ có thể xử lý các ticket có status là `Pending` hoặc `InReview`.
+  - Không thể cập nhật trạng thái ngược về `Pending`.
+  - Khi chuyển sang `InReview`, không được phép có `replyNotes`.
+  - Khi chuyển sang các trạng thái cuối (`Approved`, `Rejected`, `Completed`, `Cancelled`), `replyNotes` là bắt buộc.
+  - `ProcessedBy` và `ProcessedAt` sẽ được tự động gán.
+- Response: `RequestResponseDTO` sau khi đã cập nhật.
+
+#### UserBankAccountsController (`/api/UserBankAccounts`)
+Các endpoint đều yêu cầu Bearer token.
+
+**`POST /api/UserBankAccounts/user/{userId}`** (Authorize)
+Tạo tài khoản ngân hàng mới cho người dùng.
+- Path: `userId` (ulong).
+- Body `UserBankAccountCreateDTO`:
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | bankName | string | Required, max 255 |
+  | bankAccountName | string | Required, max 255 |
+  | bankAccountNumber | string | Required, max 50 |
+- Ràng buộc nghiệp vụ:
+  - User phải tồn tại.
+  - Service gán `UserId` từ path.
+- Response: `UserBankAccountResponseDTO`.
+
+**`PATCH /api/UserBankAccounts/{accountId}`** (Authorize)
+Cập nhật tài khoản ngân hàng.
+- Path: `accountId` (ulong).
+- Body `UserBankAccountUpdateDTO` (các trường optional, validation giống create).
+- Ràng buộc nghiệp vụ:
+  - Account phải tồn tại.
+- Response: `UserBankAccountResponseDTO`.
+
+**`DELETE /api/UserBankAccounts/{accountId}`** (Authorize, Roles: Customer,Vendor,Admin)
+Xóa tài khoản ngân hàng.
+- Path: `accountId` (ulong).
+- Ràng buộc nghiệp vụ:
+  - Chỉ chủ tài khoản hoặc Admin mới có quyền xóa.
+- Response: `true` nếu thành công.
+
+**`GET /api/UserBankAccounts/user/{userId}`** (Authorize, Roles: Customer,Vendor,Admin,Staff)
+Lấy danh sách tài khoản ngân hàng của user.
+- Path: `userId` (ulong).
+- Response: `List<UserBankAccountResponseDTO>`.
+
+**`GET /api/UserBankAccounts/supported-banks`**
+Lấy danh sách ngân hàng được hỗ trợ từ PayOS/VietQR.
+- Ràng buộc nghiệp vụ:
+  - Gọi `IPayOSApiClient.GetAllSupportedBanksAsync`.
+  - Lọc các ngân hàng có `transferSupported=1`, `lookupSupported=1`, `isTransfer=1`, `support!=0`.
+- Response: Danh sách các ngân hàng.
+
+#### WalletController (`/api/Wallet`)
+Quản lý ví điện tử và luồng rút tiền của Vendor.
+
+**`POST /api/Wallet/{userId}/process-credits`** (Authorize, Roles: Admin,Staff,Vendor)
+Xử lý cộng tiền vào ví vendor từ các đơn hàng đã giao thành công và quá 7 ngày.
+- Path: `userId` (ulong) - ID của vendor.
+- Ràng buộc nghiệp vụ:
+  - Tìm các `OrderDetail` có `Order.Status == Delivered`, `Order.DeliveredAt` <= 7 ngày trước, và `IsCreditedToVendor == false`.
+  - Tính tổng tiền (sau khi trừ commission), cộng vào `Wallet.Balance`.
+  - Đánh dấu `IsCreditedToVendor = true` cho các `OrderDetail` đã xử lý.
+  - Ghi nhận giao dịch `Transaction` với `TransactionType = CommissionCredit`.
+- Response: `WalletResponseDTO` (thông tin ví sau khi cập nhật).
+
+**`POST /api/Wallet/cashout-request`** (Authorize, Roles: Vendor)
+Vendor tạo yêu cầu rút tiền từ ví.
+- Body `WalletCashoutRequestCreateDTO`:
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | amount | decimal | Required, > 0 |
+  | userBankAccountId | ulong | Required, > 0 |
+- Ràng buộc nghiệp vụ:
+  - Vendor chỉ được có 1 yêu cầu `Pending` tại một thời điểm.
+  - `amount` phải nhỏ hơn hoặc bằng `Wallet.Balance`.
+  - `userBankAccountId` phải thuộc về vendor.
+- Response: `WalletCashoutRequestResponseDTO`.
+
+**`GET /api/Wallet/{userId}/cashout-request`** (Authorize, Roles: Admin,Staff,Vendor)
+Lấy thông tin yêu cầu rút tiền đang `Pending` của vendor.
+- Path: `userId` (ulong) - ID của vendor.
+- Response: `WalletCashoutRequestResponseDTO` hoặc 404 nếu không có.
+
+**`GET /api/Wallet/cashout-requests`** (Authorize, Roles: Admin,Staff)
+Lấy danh sách tất cả yêu cầu rút tiền (phân trang).
+- Query: `page` (default 1), `pageSize` (default 10).
+- Response: `PagedResponse<WalletCashoutRequestResponseDTO>`.
+
+**`GET /api/Wallet/{userId}/cashout-requests`** (Authorize, Roles: Admin,Staff,Vendor)
+Lấy danh sách yêu cầu rút tiền của một vendor cụ thể (phân trang).
+- Path: `userId` (ulong) - ID của vendor.
+- Query: `page` (default 1), `pageSize` (default 10).
+- Response: `PagedResponse<WalletCashoutRequestResponseDTO>`.
+
+**`DELETE /api/Wallet/cashout-request`** (Authorize, Roles: Vendor)
+Vendor xóa yêu cầu rút tiền đang `Pending` của mình.
+- Ràng buộc nghiệp vụ:
+  - Yêu cầu phải tồn tại và có status là `Pending`.
+- Response: `true` nếu thành công.
+
+**`POST /api/Wallet/{userId}/process-cashout-manual`** (Authorize, Roles: Admin,Staff)
+Admin/Staff xử lý yêu cầu rút tiền thủ công.
+- Path: `userId` (ulong) - ID của vendor.
+- Body `WalletProcessCreateDTO`:
+  | Field | Type | Validation |
+  | --- | --- | --- |
+  | status | CashoutStatus | Required: `Completed`, `Failed`, `Cancelled` |
+  | gatewayPaymentId | string? | Required nếu status là `Completed` |
+  | cancelReason | string? | Required nếu status là `Failed` hoặc `Cancelled` |
+- Ràng buộc nghiệp vụ:
+  - Yêu cầu rút tiền `Pending` của user phải tồn tại.
+  - Nếu `Completed`: Trừ tiền trong ví, cập nhật trạng thái `Cashout`, tạo `Transaction`.
+  - Nếu `Failed`/`Cancelled`: Không trừ tiền, chỉ cập nhật trạng thái `Cashout`.
+- Response: `CashoutResponseDTO`.
+
+**`POST /api/Wallet/{userId}/process-cashout`** (Authorize, Roles: Admin,Staff)
+Admin/Staff xử lý yêu cầu rút tiền tự động qua PayOS.
+- Path: `userId` (ulong) - ID của vendor.
+- Ràng buộc nghiệp vụ:
+  - Yêu cầu rút tiền `Pending` của user phải tồn tại.
+  - Gọi PayOS API để tạo lệnh chuyển tiền (`createTransfer`).
+  - Nếu thành công: Trừ tiền trong ví, cập nhật trạng thái `Cashout`, tạo `Transaction`.
+  - Nếu thất bại: Cập nhật trạng thái `Cashout` thành `Failed` và ghi lại lý do.
+- Response: `CashoutResponseDTO`.
+
+#### CashoutController (`/api/Cashout`)
+Các endpoint hỗ trợ cho việc xử lý cashout.
+
+**`GET /api/Cashout/ip-address`** (Authorize)
+Lấy địa chỉ IP của server để sử dụng trong các yêu cầu API cần whitelist IP.
+- Response: `{ "ipv4": "...", "ipv6": "..." }`.

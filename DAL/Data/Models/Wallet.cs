@@ -11,8 +11,6 @@ public partial class Wallet
 
     public decimal Balance { get; set; } = 0.00m;
 
-    public ulong? LastTransactionId { get; set; }
-
     public ulong? LastUpdatedBy { get; set; }
 
     public DateTime CreatedAt { get; set; }
@@ -21,7 +19,6 @@ public partial class Wallet
 
     // Navigation
     public virtual User Vendor { get; set; } = null!;
-    public virtual Transaction? LastTransaction { get; set; }
     public virtual User? LastUpdatedByNavigation { get; set; }
 }
 

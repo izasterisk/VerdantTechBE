@@ -11,13 +11,13 @@ public class OrderHelper
     /// </summary>
     private static readonly Dictionary<OrderStatus, HashSet<OrderStatus>> AllowedOrderStatusTransitions = new()
     {
-        [OrderStatus.Pending] = new() { OrderStatus.Paid, OrderStatus.Cancelled, OrderStatus.Processing },
+        [OrderStatus.Pending] = new() { OrderStatus.Cancelled, OrderStatus.Processing },
         [OrderStatus.Paid] = new() { OrderStatus.Cancelled, OrderStatus.Processing },
         [OrderStatus.Processing] = new() { OrderStatus.Cancelled },
         [OrderStatus.Shipped] = new() { OrderStatus.Delivered, OrderStatus.Cancelled },
         [OrderStatus.Delivered] = new() { OrderStatus.Cancelled, OrderStatus.Refunded },
-        [OrderStatus.Cancelled] = new() { OrderStatus.Refunded },
-        [OrderStatus.Refunded] = new() { } 
+        [OrderStatus.Cancelled] = new() { },
+        [OrderStatus.Refunded] = new() { }
     };
 
     /// <summary>

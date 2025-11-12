@@ -1,0 +1,13 @@
+﻿using BLL.DTO.User;
+
+namespace BLL.DTO.Wallet;
+
+public class WalletResponseDTO
+{
+    public ulong Id { get; set; }
+    public UserResponseDTO Vendor { get; set; } = null!;
+    public decimal Balance { get; set; } = 0.00m;
+    public ulong? LastUpdatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
