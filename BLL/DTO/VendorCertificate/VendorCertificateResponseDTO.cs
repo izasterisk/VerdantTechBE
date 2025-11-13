@@ -1,4 +1,5 @@
-﻿using DAL.Data;
+﻿using BLL.DTO.MediaLink;
+using DAL.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -21,5 +22,8 @@ namespace BLL.DTO.VendorCertificate
         public ulong? VerifiedBy { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public string? VendorName { get; set; }
+        public string? VerifiedByName { get; set; }
+        public List<MediaLinkItemDTO> Files { get; set; } = new();
     }
 }

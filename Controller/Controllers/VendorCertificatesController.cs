@@ -1,79 +1,169 @@
-
 using BLL.DTO.MediaLink;
 using BLL.DTO.VendorCertificate;
 using BLL.Interfaces;
+using Infrastructure.Cloudinary;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
-namespace Controller.Controllers
+namespace API.Controllers
 {
     [ApiController]
-    [Route("api/vendor-certificates")]
-    public sealed class VendorCertificatesController : ControllerBase
+    [Route("api/[controller]")]
+    public class VendorCertificateController : ControllerBase
     {
-        private readonly IVendorCertificateService _svc;
-        public VendorCertificatesController(IVendorCertificateService svc) { _svc = svc; }
+        private readonly IVendorCertificateService _service;
+        private readonly ICloudinaryService _cloudinary;
 
-
-        [EndpointSummary("Tạo nhiều VendorCertificate (1 file = 1 chứng chỉ)")]
-        [EndpointDescription("Danh sách file trong addCertificates; mỗi file tạo 1 certificate trạng thái Pending")]
-        [HttpPost("bulk")]
-        [Consumes("multipart/form-data")]
-        //[SwaggerOperation(Summary = "Tạo nhiều VendorCertificate (bulk)", Description = "Danh sách file trong addCertificates; mỗi file tạo 1 certificate trạng thái Pending.")]
-        public Task<IReadOnlyList<VendorCertificateResponseDTO>> CreateBulk(
-        [FromForm] VendorCertificateCreateDTO dto,
-        [FromForm] List<MediaLinkItemDTO> addCertificates,
-        CancellationToken ct)
-        => _svc.CreateAsync(dto, addCertificates ?? new(), ct);
-
-
-        [EndpointSummary("Danh sách chứng chỉ theo Vendor (có phân trang)")]
-        [EndpointDescription("Trả về danh sách VendorCertificate của 1 vendorId, kèm trạng thái và thời gian xác minh nếu có")]
-        [HttpGet]
-        //[SwaggerOperation(Summary = "Danh sách chứng chỉ theo Vendor (có phân trang)", Description = "Trả về danh sách VendorCertificate của 1 vendorId, kèm trạng thái và thời gian xác minh nếu có.")]
-        public Task<List<VendorCertificateResponseDTO>> GetAllByVendor([FromQuery] ulong vendorId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
-        => _svc.GetAllByVendorAsync(vendorId, page, pageSize, ct);
-
-
-        [EndpointSummary("Lấy chứng chỉ theo Id")]
-        [EndpointDescription("Trả về thông tin VendorCertificate theo Id")]
-        [HttpGet("{id}")]
-        //[SwaggerOperation(Summary = "Lấy chứng chỉ theo Id", Description = "Trả về thông tin VendorCertificate theo Id.")]
-        public Task<VendorCertificateResponseDTO?> GetById([FromRoute] ulong id, CancellationToken ct)
-        => _svc.GetByIdAsync(id, ct);
-
-
-        [EndpointSummary("Duyệt/Đổi trạng thái chứng chỉ")]
-        [EndpointDescription("Approved / Rejected / Pending; nếu Reject cần truyền RejectionReason")]
-        [HttpPatch("status")]
-        //[SwaggerOperation(Summary = "Duyệt/Đổi trạng thái chứng chỉ", Description = "Approved / Rejected / Pending; nếu Reject cần truyền RejectionReason.")]
-        public Task<VendorCertificateResponseDTO> ChangeStatus([FromBody] VendorCertificateChangeStatusDTO dto, CancellationToken ct)
-        => _svc.ChangeStatusAsync(dto, ct);
-
-
-        [EndpointSummary("Cập nhật chứng chỉ (thêm/xoá file)")]
-        [EndpointDescription("multipart/form-data: dto.*, addCertificates[i].*, removedCertificates[i] (publicId)")]
-        [HttpPut("{id}")]
-        [Consumes("multipart/form-data")]
-        //[SwaggerOperation(Summary = "Cập nhật chứng chỉ (thêm/xoá file)", Description = "multipart/form-data: dto.*, addCertificates[i].*, removedCertificates[i] (publicId).")]
-        public Task<VendorCertificateResponseDTO> Update(
-        [FromRoute] ulong id,
-        [FromForm] VendorCertificateUpdateDTO dto,
-        [FromForm] List<MediaLinkItemDTO> addCertificates,
-        [FromForm] List<string> removedCertificates,
-        CancellationToken ct)
+        public VendorCertificateController(
+            IVendorCertificateService service,
+            ICloudinaryService cloudinary)
         {
-            if (dto == null) throw new ValidationException("Dto is required");
-            if (dto.Id == 0) dto.Id = id; else if (dto.Id != id) throw new ValidationException("Route id và dto id khác nhau");
-            return _svc.UpdateAsync(dto, addCertificates ?? new(), removedCertificates ?? new(), ct);
+            _service = service;
+            _cloudinary = cloudinary;
         }
 
+       
+        [HttpGet("vendor/{vendorId}")]
+        [EndpointSummary("Get all certificates of a vendor with pagination.")]
+        [EndpointDescription("Fetches a paginated list of vendor certificates belonging to a specific vendor.")]
+        public async Task<IActionResult> GetByVendor(
+            ulong vendorId,
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken ct = default)
+        {
+            var result = await _service.GetAllByVendorIdAsync(vendorId, page, pageSize, ct);
+            return Ok(result);
+        }
 
-        [EndpointSummary("Xoá chứng chỉ")]
-        [EndpointDescription("Xoá VendorCertificate theo Id")]
+        
+        [HttpGet("{id}")]
+        [EndpointSummary("Get vendor certificate details by ID.")]
+        [EndpointDescription("Fetches full information of a vendor certificate including verification metadata.")]
+        public async Task<IActionResult> GetById(ulong id, CancellationToken ct = default)
+        {
+            var result = await _service.GetByIdAsync(id, ct);
+            return result != null ? Ok(result) : NotFound();
+        }
+
+       
+        [HttpPost]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Create multiple vendor certificates with file uploads.")]
+        [EndpointDescription("Uploads certificate files to Cloudinary and creates corresponding certificates by index (each file matches 1 certificate item).")]
+        public async Task<IActionResult> Create(
+            [FromForm] VendorCertificateCreateDto dto,
+            [FromForm] List<IFormFile> certificateFiles,
+            CancellationToken ct = default)
+        {
+            if (dto.Items == null || dto.Items.Count == 0)
+                return BadRequest("Danh sách Items không được rỗng.");
+
+            if (certificateFiles == null || certificateFiles.Count == 0)
+                return BadRequest("Phải upload ít nhất 1 file.");
+
+            if (dto.Items.Count != certificateFiles.Count)
+                return BadRequest("Số Items và số file phải bằng nhau.");
+
+            var uploadResults = await _cloudinary.UploadManyAsync(
+                certificateFiles,
+                folder: "vendor-certificates",
+                ct: ct);
+
+            var mediaList = uploadResults.Select((u, idx) => new MediaLinkItemDTO
+            {
+                ImagePublicId = u.PublicId,
+                ImageUrl = u.PublicUrl,
+                Purpose = "certificate",
+                SortOrder = idx
+            }).ToList();
+
+            var result = await _service.CreateAsync(dto, mediaList, ct);
+            return Ok(result);
+        }
+
+        
+        [HttpPut("{id}")]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Update vendor certificate information.")]
+        [EndpointDescription("Updates certificate metadata and handles adding/removing certificate files.")]
+        public async Task<IActionResult> Update(
+            ulong id,
+            [FromForm] VendorCertificateUpdateDTO dto,
+            [FromForm] List<IFormFile>? newFiles,
+            [FromForm] List<string>? removedCertificates,
+            CancellationToken ct = default)
+        {
+            dto.Id = id;
+
+            
+            var addMedias = new List<MediaLinkItemDTO>();
+
+            if (newFiles != null && newFiles.Any())
+            {
+                var uploaded = await _cloudinary.UploadManyAsync(
+                    newFiles,
+                    folder: "vendor-certificates",
+                    ct: ct);
+
+                addMedias = uploaded.Select((u, idx) => new MediaLinkItemDTO
+                {
+                    ImagePublicId = u.PublicId,
+                    ImageUrl = u.PublicUrl,
+                    Purpose = "certificate",
+                    SortOrder = idx
+                }).ToList();
+            }
+
+            removedCertificates ??= new List<string>();
+
+            try
+            {
+                var result = await _service.UpdateAsync(dto, addMedias, removedCertificates, ct);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+        
         [HttpDelete("{id}")]
-        //[SwaggerOperation(Summary = "Xoá chứng chỉ", Description = "Xoá VendorCertificate theo Id.")]
-        public Task Delete([FromRoute] ulong id, CancellationToken ct)
-        => _svc.DeleteAsync(id, ct);
+        [EndpointSummary("Delete a vendor certificate.")]
+        [EndpointDescription("Deletes a vendor certificate entry. File deletion handled in repository or via Cloudinary service.")]
+        public async Task<IActionResult> Delete(ulong id, CancellationToken ct = default)
+        {
+            try
+            {
+                await _service.DeleteAsync(id, ct);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
+
+      
+        [HttpPatch("{id}/change-status")]
+        [EndpointSummary("Change the status of a vendor certificate.")]
+        [EndpointDescription("Updates certificate approval status, verification information, and rejection reason where applicable.")]
+        public async Task<IActionResult> ChangeStatus(
+            ulong id,
+            [FromBody] VendorCertificateChangeStatusDTO dto,
+            CancellationToken ct = default)
+        {
+            dto.Id = id;
+
+            try
+            {
+                var result = await _service.ChangeStatusAsync(dto, ct);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
     }
 }

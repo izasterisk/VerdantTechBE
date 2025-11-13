@@ -15,9 +15,11 @@ using BLL.DTO.Request;
 using BLL.DTO.Transaction;
 using BLL.DTO.User;
 using BLL.DTO.UserBankAccount;
+using BLL.DTO.VendorCertificate;
 using BLL.DTO.Wallet;
 using BLL.Services.Payment;
 using DAL.Data.Models;
+using System.Numerics;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
 
 namespace BLL.Helpers
@@ -230,6 +232,10 @@ namespace BLL.Helpers
                 .ForMember(d => d.CreatedAt, opt => opt.Ignore())
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<ProductCertificate, ProductCertificateResponseDTO>();
+            // ===================== VENDOR CERTIFICATE =====================
+            CreateMap<VendorCertificate, VendorCertificateResponseDTO>()
+                .ForMember(d => d.VendorName,opt => opt.MapFrom(s => s.Vendor != null ? s.Vendor.FullName : null))
+                .ForMember(d => d.VerifiedByName,opt => opt.MapFrom(s => s.VerifiedByNavigation != null ? s.VerifiedByNavigation.FullName : null));
 
             // ===================== ORDER =====================
             CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()

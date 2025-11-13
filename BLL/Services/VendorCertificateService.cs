@@ -1,152 +1,160 @@
-﻿using BLL.DTO.VendorCertificate;
-using BLL.Interfaces;
-using DAL.Data.Models;
-using DAL.Data;
-using DAL.IRepository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.ComponentModel.DataAnnotations;
-using BLL.Interfaces;
+﻿using AutoMapper;
 using BLL.DTO.MediaLink;
+using BLL.DTO.VendorCertificate;
+using BLL.Interfaces;
+using DAL.Data;
+using DAL.Data.Models;
+using DAL.IRepository;
 
 namespace BLL.Services
 {
-    public sealed class VendorCertificateService : IVendorCertificateService
+    public class VendorCertificateService : IVendorCertificateService
     {
         private readonly IVendorCertificateRepository _repo;
-        private readonly VerdantTechDbContext _db;
-        public VendorCertificateService(IVendorCertificateRepository repo, VerdantTechDbContext db)
-        { _repo = repo; _db = db; }
+        private readonly IMapper _mapper;
 
-        public async Task<IReadOnlyList<VendorCertificateResponseDTO>> CreateAsync(VendorCertificateCreateDTO dto,List<MediaLinkItemDTO> addVendorCertificates, CancellationToken ct = default)
+        public VendorCertificateService(IVendorCertificateRepository repo, IMapper mapper)
         {
-            if (addVendorCertificates is null || addVendorCertificates.Count == 0)
-                throw new ValidationException("Cần ít nhất 1 certificate file.");
-
-
-            var now = DateTime.UtcNow;
-            var results = new List<VendorCertificateResponseDTO>(addVendorCertificates.Count);
-
-
-            await using var tx = await _db.Database.BeginTransactionAsync(ct);
-
-
-            foreach (var file in addVendorCertificates)
-            {
-                var e = new VendorCertificate
-                {
-                    VendorId = dto.VendorId,
-                    CertificationCode = dto.CertificationCode,
-                    CertificationName = dto.CertificationName,
-                    Status = VendorCertificateStatus.Pending,
-                    UploadedAt = now,
-                    CreatedAt = now,
-                    UpdatedAt = now
-                };
-
-
-                e = await _repo.CreateAsync(0, e, addVendorCertificateFiles: null, ct);
-
-
-                var media = new MediaLink
-                {
-                    Id = e.Id,
-                    OwnerType = MediaOwnerType.VendorCertificates,
-                    ImagePublicId = file.ImagePublicId ?? string.Empty,
-                    ImageUrl = file.ImageUrl,
-                    Purpose = MediaPurpose.None,
-                    SortOrder = file.SortOrder,
-                    CreatedAt = now
-                };
-                e = await _repo.UpdateAsync(e.Id, e, new[] { media }, removeCertificatePublicIds: null, ct);
-
-
-                results.Add(Map(e));
-            }
-
-
-            await tx.CommitAsync(ct);
-            return results;
+            _repo = repo;
+            _mapper = mapper;
         }
 
-        public async Task<VendorCertificateResponseDTO> UpdateAsync(VendorCertificateUpdateDTO dto,List<MediaLinkItemDTO> addVendorCertificates, List<string> removedCertificates, CancellationToken ct = default)
+        public async Task<List<VendorCertificateResponseDTO>> GetAllByVendorIdAsync(
+            ulong vendorId,
+            int page,
+            int pageSize,
+            CancellationToken ct = default)
         {
-            var e = await _repo.GetByIdAsync(dto.Id, ct) ?? throw new KeyNotFoundException("Certificate not found");
+            var list = await _repo.GetAllByVendorIdAsync(vendorId, page, pageSize, ct);
 
+            var result = _mapper.Map<List<VendorCertificateResponseDTO>>(list);
 
-            if (!string.IsNullOrWhiteSpace(dto.CertificationCode)) e.CertificationCode = dto.CertificationCode.Trim();
-            if (!string.IsNullOrWhiteSpace(dto.CertificationName)) e.CertificationName = dto.CertificationName.Trim();
-            e.UpdatedAt = DateTime.UtcNow;
-
-
-            IEnumerable<MediaLink>? toAdd = null;
-            if (addVendorCertificates != null && addVendorCertificates.Count > 0)
-            {
-                toAdd = addVendorCertificates.Select(f => new MediaLink
-                {
-                    Id = e.Id,
-                    OwnerType = MediaOwnerType.VendorCertificates,
-                    ImagePublicId = f.ImagePublicId ?? string.Empty,
-                    ImageUrl = f.ImageUrl,
-                    Purpose = MediaPurpose.None,
-                    SortOrder = f.SortOrder,
-                    CreatedAt = DateTime.UtcNow
-                });
-            }
-
-
-            e = await _repo.UpdateAsync(e.Id, e, toAdd, removedCertificates, ct);
-            return Map(e);
+            return result;
         }
-
 
         public async Task<VendorCertificateResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default)
         {
-            var e = await _repo.GetByIdAsync(id, ct);
-            return e is null ? null : Map(e);
+            var entity = await _repo.GetByIdAsync(id, ct);
+            if (entity == null)
+                return null;
+
+            return _mapper.Map<VendorCertificateResponseDTO>(entity);
         }
 
-        public async Task<List<VendorCertificateResponseDTO>> GetAllByVendorAsync(ulong vendorId, int page, int pageSize, CancellationToken ct = default)
-        => (await _repo.GetAllByVendorIdAsync(vendorId, page, pageSize, ct)).Select(Map).ToList();
-
-
-        public async Task<VendorCertificateResponseDTO> ChangeStatusAsync(VendorCertificateChangeStatusDTO dto, CancellationToken ct = default)
+        public async Task<List<VendorCertificateResponseDTO>> CreateAsync( VendorCertificateCreateDto dto, List<MediaLinkItemDTO> addVendorCertificates, CancellationToken ct = default)
         {
-            var e = await _repo.GetByIdAsync(dto.Id, ct) ?? throw new KeyNotFoundException("Certificate not found");
-            if (dto.Status == VendorCertificateStatus.Rejected && string.IsNullOrWhiteSpace(dto.RejectionReason))
-                throw new ValidationException("RejectionReason is required when rejecting.");
-            e.Status = dto.Status;
-            e.RejectionReason = dto.Status == VendorCertificateStatus.Rejected ? dto.RejectionReason : null;
-            e.VerifiedAt = dto.Status == VendorCertificateStatus.Verified ? DateTime.UtcNow : null;
-            e.VerifiedBy = dto.VerifiedBy;
-            e.UpdatedAt = DateTime.UtcNow;
-            e = await _repo.UpdateAsync(e.Id, e, addVendorCertificateFiles: null, removeCertificatePublicIds: null, ct);
-            return Map(e);
+            if (dto.Items == null || dto.Items.Count == 0)
+                throw new ArgumentException("Danh sách Items không được rỗng.");
+
+            if (addVendorCertificates == null || addVendorCertificates.Count == 0)
+                throw new ArgumentException("Phải cung cấp danh sách chứng chỉ (media).");
+
+            if (dto.Items.Count != addVendorCertificates.Count)
+                throw new ArgumentException("Số Items và số media không khớp. Mỗi item tương ứng 1 file.");
+
+            var result = new List<VendorCertificateResponseDTO>();
+
+            for (int i = 0; i < dto.Items.Count; i++)
+            {
+                var item = dto.Items[i];
+                var mediaDto = addVendorCertificates[i];
+
+                var entity = new VendorCertificate
+                {
+                    VendorId = dto.VendorId,
+                    CertificationCode = item.CertificationCode,
+                    CertificationName = item.CertificationName,
+                    Status = VendorCertificateStatus.Pending,
+                    UploadedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                var mediaEntity = new MediaLink
+                {
+                    ImagePublicId = mediaDto.ImagePublicId,
+                    ImageUrl = mediaDto.ImageUrl,
+                    Purpose = MediaPurpose.VendorCertificates,
+                    SortOrder = mediaDto.SortOrder,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                var created = await _repo.CreateAsync(dto.VendorId, entity, new[] { mediaEntity }, ct);
+
+                var mapped = _mapper.Map<VendorCertificateResponseDTO>(created);
+                mapped.Files.Add(mediaDto);
+
+                result.Add(mapped);
+            }
+
+            return result;
+        }
+
+        public async Task<VendorCertificateResponseDTO> UpdateAsync( VendorCertificateUpdateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, List<string> removedCertificates, CancellationToken ct = default)
+        {
+            var existing = await _repo.GetByIdAsync(dto.Id, ct);
+            if (existing == null)
+                throw new KeyNotFoundException($"VendorCertificate {dto.Id} không tồn tại.");
+
+            existing.VendorId = dto.VendorId;
+            existing.CertificationCode = dto.CertificationCode;
+            existing.CertificationName = dto.CertificationName;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            // Convert thêm MediaLink
+            var addMedia = addVendorCertificates?.Select(m => new MediaLink
+            {
+                ImagePublicId = m.ImagePublicId,
+                ImageUrl = m.ImageUrl,
+                Purpose = MediaPurpose.VendorCertificates,
+                SortOrder = m.SortOrder,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            }).ToList();
+
+            var updated = await _repo.UpdateAsync(
+                dto.Id,
+                existing,
+                addMedia,
+                removedCertificates,
+                ct
+            );
+
+            var mapped = _mapper.Map<VendorCertificateResponseDTO>(updated);
+
+            return mapped;
         }
 
         public async Task DeleteAsync(ulong id, CancellationToken ct = default)
         {
-            var e = await _repo.GetByIdAsync(id, ct) ?? throw new KeyNotFoundException("Certificate not found");
-            await _repo.DeleteCertificateAsync(e, ct);
+            var existing = await _repo.GetByIdAsync(id, ct);
+            if (existing == null)
+                throw new KeyNotFoundException($"VendorCertificate {id} không tồn tại.");
+
+            await _repo.DeleteCertificateAsync(existing, ct);
         }
 
-
-        private static VendorCertificateResponseDTO Map(VendorCertificate e) => new()
+        public async Task<VendorCertificateResponseDTO> ChangeStatusAsync( VendorCertificateChangeStatusDTO dto, CancellationToken ct = default)
         {
-            Id = e.Id,
-            VendorId = e.VendorId,
-            CertificationCode = e.CertificationCode,
-            CertificationName = e.CertificationName,
-            Status = e.Status,
-            RejectionReason = e.RejectionReason,
-            UploadedAt = e.UploadedAt,
-            VerifiedAt = e.VerifiedAt,
-            VerifiedBy = e.VerifiedBy,
-            CreatedAt = e.CreatedAt,
-            UpdatedAt = e.UpdatedAt
-        };
+            var existing = await _repo.GetByIdAsync(dto.Id, ct);
+            if (existing == null)
+                throw new KeyNotFoundException($"VendorCertificate {dto.Id} không tồn tại.");
+
+            existing.Status = dto.Status;
+            existing.RejectionReason = dto.Status == VendorCertificateStatus.Rejected ? dto.RejectionReason : null;
+            existing.VerifiedBy = dto.VerifiedBy;
+            existing.VerifiedAt = dto.VerifiedBy.HasValue ? DateTime.UtcNow : null;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            var updated = await _repo.UpdateAsync(
+                dto.Id,
+                existing,
+                addVendorCertificateFiles: null,
+                removeCertificatePublicIds: null,
+                ct: ct);
+
+            return _mapper.Map<VendorCertificateResponseDTO>(updated);
+        }
     }
 }

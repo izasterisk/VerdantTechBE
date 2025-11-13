@@ -8,13 +8,23 @@ using System.Threading.Tasks;
 
 namespace BLL.DTO.VendorCertificate
 {
-    public class VendorCertificateCreateDTO
+    public class VendorCertificateCreateItemDto
     {
-        [Required(ErrorMessage = "id vendor không được để trống")]
+        [Required]
+        [StringLength(50)]
+        public string CertificationCode { get; set; } = null!;
+
+        [Required]
+        [StringLength(255)]
+        public string CertificationName { get; set; } = null!;
+    }
+
+    public class VendorCertificateCreateDto
+    {
+        [Required]
         public ulong VendorId { get; set; }
-        [Required(ErrorMessage = "Mã chứng chỉ không được để trống")]
-        public string CertificationCode { get; set; }
-        [Required(ErrorMessage = "Tên chứng chỉ không được để trống")]
-        public string CertificationName { get; set; }
+
+        [Required]
+        public List<VendorCertificateCreateItemDto> Items { get; set; } = new();
     }
 }

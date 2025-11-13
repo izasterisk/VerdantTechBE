@@ -2,137 +2,148 @@
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DAL.Repository
 {
-    public sealed class VendorCertificateRepository : IVendorCertificateRepository
+    public class VendorCertificateRepository : IVendorCertificateRepository
     {
-        private readonly VerdantTechDbContext _db;
-        public VendorCertificateRepository(VerdantTechDbContext db) => _db = db;
+        private readonly VerdantTechDbContext _context;
 
-
-        public async Task<VendorCertificate> CreateAsync(
-        ulong id, // kept to match your interface
-        VendorCertificate vendorcertificate,
-        IEnumerable<MediaLink>? addVendorCertificateFiles,
-        CancellationToken ct = default)
+        public VendorCertificateRepository(VerdantTechDbContext context)
         {
-            if (vendorcertificate is null) throw new ArgumentNullException(nameof(vendorcertificate));
-
-
-            _db.Set<VendorCertificate>().Add(vendorcertificate);
-
-
-            if (addVendorCertificateFiles is not null)
-            {
-                foreach (var m in addVendorCertificateFiles)
-                {
-                    if (m is null) continue;
-                    // In your schema, MediaLink.Id is the owner id (certificate id)
-                    m.Id = id == 0 ? vendorcertificate.Id : id;
-                    m.OwnerType = MediaOwnerType.VendorCertificates;
-                    m.CreatedAt = m.CreatedAt == default ? DateTime.UtcNow : m.CreatedAt;
-                    _db.Set<MediaLink>().Add(m);
-                }
-            }
-
-
-            await _db.SaveChangesAsync(ct);
-            return vendorcertificate;
+            _context = context;
         }
 
-
-        public async Task<VendorCertificate> UpdateAsync(
-        ulong id,
-        VendorCertificate vendorcertificate,
-        IEnumerable<MediaLink>? addVendorCertificateFiles,
-        IEnumerable<string>? removeCertificatePublicIds,
-        CancellationToken ct = default)
+        public async Task<VendorCertificate> CreateAsync( ulong vendorId, VendorCertificate vendorCertificate, IEnumerable<MediaLink>? addVendorCertificateFiles, CancellationToken ct = default)
         {
-            if (vendorcertificate is null) throw new ArgumentNullException(nameof(vendorcertificate));
+            vendorCertificate.VendorId = vendorId;
+            vendorCertificate.Status = VendorCertificateStatus.Pending;
+            vendorCertificate.UploadedAt = DateTime.UtcNow;
+            vendorCertificate.CreatedAt = DateTime.UtcNow;
+            vendorCertificate.UpdatedAt = DateTime.UtcNow;
 
+            _context.VendorCertificates.Add(vendorCertificate);
+            await _context.SaveChangesAsync(ct);
 
-            _db.Set<VendorCertificate>().Update(vendorcertificate);
-
-
-            if (addVendorCertificateFiles is not null)
+            if (addVendorCertificateFiles != null)
             {
-                foreach (var m in addVendorCertificateFiles)
+                foreach (var media in addVendorCertificateFiles)
                 {
-                    if (m is null) continue;
-                    m.Id = id == 0 ? vendorcertificate.Id : id;
-                    m.OwnerType = MediaOwnerType.VendorCertificates;
-                    m.CreatedAt = m.CreatedAt == default ? DateTime.UtcNow : m.CreatedAt;
-                    _db.Set<MediaLink>().Add(m);
+                    media.OwnerType = MediaOwnerType.VendorCertificates; 
+                    media.OwnerId = vendorCertificate.Id;
+                    media.CreatedAt = DateTime.UtcNow;
+                    media.UpdatedAt = DateTime.UtcNow;
+                    _context.MediaLinks.Add(media);
                 }
+
+                await _context.SaveChangesAsync(ct);
             }
 
-
-            if (removeCertificatePublicIds is not null)
-            {
-                var toRemove = await _db.Set<MediaLink>()
-                .Where(x => x.OwnerType == MediaOwnerType.VendorCertificates
-                && x.Id == vendorcertificate.Id
-                && removeCertificatePublicIds.Contains(x.ImagePublicId))
-                .ToListAsync(ct);
-                if (toRemove.Count > 0)
-                {
-                    _db.Set<MediaLink>().RemoveRange(toRemove);
-                }
-            }
-
-
-            await _db.SaveChangesAsync(ct);
-            return vendorcertificate;
+            return vendorCertificate;
         }
 
-
-        public Task<VendorCertificate?> GetByIdAsync(ulong id, CancellationToken ct = default)
-        => _db.Set<VendorCertificate>()
-        .AsNoTracking()
-        .FirstOrDefaultAsync(v => v.Id == id, ct);
-
-
-        public Task<List<VendorCertificate>> GetAllByVendorIdAsync(ulong vendorId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<VendorCertificate> UpdateAsync( ulong id, VendorCertificate vendorCertificate, IEnumerable<MediaLink>? addVendorCertificateFiles, IEnumerable<string>? removeCertificatePublicIds, CancellationToken ct = default)
         {
-            
+            var existing = await _context.VendorCertificates
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+            if (existing == null)
+                throw new KeyNotFoundException($"VendorCertificate ID {id} not found");
+
+            // Update các field cho phép
+            existing.CertificationCode = vendorCertificate.CertificationCode;
+            existing.CertificationName = vendorCertificate.CertificationName;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            // Remove media theo publicId
+            if (removeCertificatePublicIds != null)
+            {
+                var removeList = await _context.MediaLinks
+                    .Where(m =>
+                        m.OwnerType == MediaOwnerType.VendorCertificates &&
+                        m.OwnerId == id &&
+                        m.ImagePublicId != null &&
+                        removeCertificatePublicIds.Contains(m.ImagePublicId))
+                    .ToListAsync(ct);
+
+                if (removeList.Count > 0)
+                {
+                    _context.MediaLinks.RemoveRange(removeList);
+                }
+            }
+
+            // Thêm media mới
+            if (addVendorCertificateFiles != null)
+            {
+                foreach (var media in addVendorCertificateFiles)
+                {
+                    media.OwnerType = MediaOwnerType.VendorCertificates;
+                    media.OwnerId = existing.Id;
+                    media.CreatedAt = DateTime.UtcNow;
+                    media.UpdatedAt = DateTime.UtcNow;
+                    _context.MediaLinks.Add(media);
+                }
+            }
+
+            await _context.SaveChangesAsync(ct);
+            return existing;
+        }
+
+        public async Task<VendorCertificate?> GetByIdAsync(ulong id, CancellationToken ct = default)
+        {
+            return await _context.VendorCertificates
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
+        }
+
+        public async Task<List<VendorCertificate>> GetAllByVendorIdAsync( ulong vendorId,int page, int pageSize, CancellationToken ct = default)
+        {
             if (page <= 0) page = 1;
             if (pageSize <= 0) pageSize = 20;
-            var skip = (page - 1) * pageSize;
 
-
-            return _db.Set<VendorCertificate>()
-            .AsNoTracking()
-            .OrderByDescending(v => v.CreatedAt)
-            .Skip(skip)
-            .Take(pageSize)
-            .ToListAsync(ct);
+            return await _context.VendorCertificates
+                .AsNoTracking()
+                .Where(x => x.VendorId == vendorId)
+                .OrderByDescending(x => x.UploadedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
         }
 
-
-        public async Task DeleteCertificateAsync(VendorCertificate vendorcertificatey, CancellationToken ct = default)
+        public async Task DeleteCertificateAsync(VendorCertificate vendorCertificate, CancellationToken ct = default)
         {
-            if (vendorcertificatey is null) throw new ArgumentNullException(nameof(vendorcertificatey));
+            // Xóa luôn MediaLinks liên quan
+            var media = await _context.MediaLinks
+                .Where(m =>
+                    m.OwnerType == MediaOwnerType.VendorCertificates &&
+                    m.OwnerId == vendorCertificate.Id)
+                .ToListAsync(ct);
 
-
-            // Delete related medias first
-            var medias = await _db.Set<MediaLink>()
-            .Where(m => m.OwnerType == MediaOwnerType.VendorCertificates
-            && m.Id == vendorcertificatey.Id)
-            .ToListAsync(ct);
-            if (medias.Count > 0)
+            if (media.Count > 0)
             {
-                _db.Set<MediaLink>().RemoveRange(medias);
+                _context.MediaLinks.RemoveRange(media);
             }
 
+            _context.VendorCertificates.Remove(vendorCertificate);
+            await _context.SaveChangesAsync(ct);
+        }
 
-            _db.Set<VendorCertificate>().Remove(vendorcertificatey);
-            await _db.SaveChangesAsync(ct);
+        public async Task<VendorCertificate?> ApproveAsync(ulong id, VendorCertificateStatus status, ulong? verifiedByUserId, string? rejectionReason, CancellationToken ct = default)
+        {
+            var existing = await _context.VendorCertificates
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+            if (existing == null)
+                return null;
+
+            existing.Status = status;
+            existing.VerifiedBy = verifiedByUserId;
+            existing.VerifiedAt = DateTime.UtcNow;
+            existing.RejectionReason = rejectionReason;
+            existing.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(ct);
+            return existing;
         }
     }
 }
