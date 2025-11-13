@@ -16,6 +16,5 @@ namespace BLL.DTO.VendorCertificate
         public List<string> CertificationCode { get; set; } = new();
         [Required(ErrorMessage = "Tên chứng chỉ không được để trống")]
         public List<string> CertificationName { get; set; } = new();
-      
     }
 }

@@ -19,21 +19,31 @@ namespace BLL.Services
             _mapper = mapper;
         }
 
-       
-        public async Task<List<VendorCertificateResponseDTO>> GetAllByVendorIdAsync( ulong vendorId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<List<VendorCertificateResponseDTO>> GetAllByVendorIdAsync(
+            ulong vendorId,
+            int page,
+            int pageSize,
+            CancellationToken ct = default)
         {
             var list = await _repo.GetAllByVendorIdAsync(vendorId, page, pageSize, ct);
-            return _mapper.Map<List<VendorCertificateResponseDTO>>(list);
+
+            var result = _mapper.Map<List<VendorCertificateResponseDTO>>(list);
+
+            return result;
         }
 
-      
+
         public async Task<VendorCertificateResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default)
         {
             var entity = await _repo.GetByIdAsync(id, ct);
-            return entity == null ? null : _mapper.Map<VendorCertificateResponseDTO>(entity);
+            if (entity == null)
+                return null;
+            var result = _mapper.Map<VendorCertificateResponseDTO>(entity);
+
+            return result;
         }
 
-        
+
         public async Task<List<VendorCertificateResponseDTO>> CreateAsync( VendorCertificateCreateDto dto, List<MediaLinkItemDTO> addVendorCertificates, CancellationToken ct = default)
         {
             if (dto.CertificationCode == null || dto.CertificationCode.Count == 0)
@@ -53,6 +63,7 @@ namespace BLL.Services
 
             for (int i = 0; i < dto.CertificationCode.Count; i++)
             {
+
                 var mediaDto = addVendorCertificates[i];
 
                 var entity = new VendorCertificate
@@ -63,14 +74,13 @@ namespace BLL.Services
                     Status = VendorCertificateStatus.Pending,
                     UploadedAt = DateTime.UtcNow,
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
                 };
 
                 var mediaEntity = new MediaLink
                 {
                     ImagePublicId = mediaDto.ImagePublicId,
                     ImageUrl = mediaDto.ImageUrl,
-                    Purpose = MediaPurpose.VendorCertificates,
+                    Purpose = MediaPurpose.VendorCertificatesPdf,
                     SortOrder = mediaDto.SortOrder,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -87,7 +97,7 @@ namespace BLL.Services
             return result;
         }
 
-        
+
         public async Task<VendorCertificateResponseDTO> UpdateAsync( VendorCertificateUpdateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, List<string> removedCertificates, CancellationToken ct = default)
         {
             var existing = await _repo.GetByIdAsync(dto.Id, ct);
@@ -104,12 +114,13 @@ namespace BLL.Services
             existing.CertificationName = dto.CertificationName.First();
             existing.UpdatedAt = DateTime.UtcNow;
 
+
             // Convert thêm MediaLink
             var addMedia = addVendorCertificates?.Select(m => new MediaLink
             {
                 ImagePublicId = m.ImagePublicId,
                 ImageUrl = m.ImageUrl,
-                Purpose = MediaPurpose.VendorCertificates,
+                Purpose = MediaPurpose.VendorCertificatesPdf,
                 SortOrder = m.SortOrder,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -123,20 +134,21 @@ namespace BLL.Services
                 ct
             );
 
-            return _mapper.Map<VendorCertificateResponseDTO>(updated);
+            var mapped = _mapper.Map<VendorCertificateResponseDTO>(updated);
+
+            return mapped;
         }
 
-        
+
         public async Task DeleteAsync(ulong id, CancellationToken ct = default)
         {
             var existing = await _repo.GetByIdAsync(id, ct);
             if (existing == null)
                 throw new KeyNotFoundException($"VendorCertificate {id} không tồn tại.");
-
+            
             await _repo.DeleteCertificateAsync(existing, ct);
         }
 
-       
         public async Task<VendorCertificateResponseDTO> ChangeStatusAsync( VendorCertificateChangeStatusDTO dto, CancellationToken ct = default)
         {
             var existing = await _repo.GetByIdAsync(dto.Id, ct);
@@ -144,9 +156,7 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"VendorCertificate {dto.Id} không tồn tại.");
 
             existing.Status = dto.Status;
-            existing.RejectionReason = dto.Status == VendorCertificateStatus.Rejected
-                ? dto.RejectionReason
-                : null;
+            existing.RejectionReason = dto.Status == VendorCertificateStatus.Rejected ? dto.RejectionReason : null;
 
             existing.VerifiedBy = dto.VerifiedBy;
             existing.VerifiedAt = dto.VerifiedBy.HasValue ? DateTime.UtcNow : null;

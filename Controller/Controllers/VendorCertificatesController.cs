@@ -36,7 +36,7 @@ namespace API.Controllers
             return Ok(result);
         }
 
-       
+        
         [HttpGet("{id}")]
         [EndpointSummary("Get vendor certificate details by ID.")]
         [EndpointDescription("Fetches full information of a vendor certificate including verification metadata.")]
@@ -50,7 +50,7 @@ namespace API.Controllers
         [HttpPost]
         [Consumes("multipart/form-data")]
         [EndpointSummary("Create multiple vendor certificates with file uploads.")]
-        [EndpointDescription("CertificationCode[], CertificationName[], Files[] — each index corresponds to one certificate.")]
+        [EndpointDescription("Uploads certificate files to Cloudinary and creates corresponding certificates by index .CertificationCode[], CertificationName[], Files[] — each index corresponds to one certificate.")]
         public async Task<IActionResult> Create([FromForm] VendorCertificateCreateDto dto, [FromForm] List<IFormFile> files, CancellationToken ct = default)
         {
             // Validation
@@ -68,20 +68,21 @@ namespace API.Controllers
             {
                 ImagePublicId = u.PublicId,
                 ImageUrl = u.PublicUrl,
-                Purpose = MediaPurpose.VendorCertificates.ToString(),
+                Purpose = MediaPurpose.VendorCertificatesPdf.ToString(),
                 SortOrder = i
             }).ToList();
 
             var result = await _service.CreateAsync(dto, mediaList, ct);
-            return Ok(result);
+            return result != null ? Ok(result) : NotFound();
         }
 
-       
+
         [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
         [EndpointSummary("Update vendor certificate information.")]
         [EndpointDescription("Updates certificate metadata and handles adding/removing certificate files.")]
-        public async Task<IActionResult> Update( ulong id, [FromForm] VendorCertificateUpdateDTO dto, [FromForm] List<IFormFile>? newFiles, [FromForm] List<string>? removedCertificates, CancellationToken ct = default)
+        public async Task<IActionResult> Update(ulong id, [FromForm] VendorCertificateUpdateDTO dto, [FromForm] List<IFormFile>? newFiles, [FromForm] List<string>? removedCertificates, CancellationToken ct = default)
+
         {
             dto.Id = id;
             removedCertificates ??= new List<string>();
@@ -93,11 +94,12 @@ namespace API.Controllers
             {
                 var uploaded = await _cloudinary.UploadManyAsync(newFiles, "vendor-certificates", ct);
 
+
                 addMedias = uploaded.Select((u, i) => new MediaLinkItemDTO
                 {
                     ImagePublicId = u.PublicId,
                     ImageUrl = u.PublicUrl,
-                    Purpose = MediaPurpose.VendorCertificates.ToString(),
+                    Purpose = MediaPurpose.VendorCertificatesPdf.ToString(),
                     SortOrder = i
                 }).ToList();
             }
@@ -113,10 +115,10 @@ namespace API.Controllers
             }
         }
 
-       
+        
         [HttpDelete("{id}")]
         [EndpointSummary("Delete a vendor certificate.")]
-        [EndpointDescription("Deletes a vendor certificate entry by ID.")]
+        [EndpointDescription("Deletes a vendor certificate entry by ID. File deletion handled in repository or via Cloudinary service.")]
         public async Task<IActionResult> Delete(ulong id, CancellationToken ct = default)
         {
             try
@@ -130,11 +132,14 @@ namespace API.Controllers
             }
         }
 
-
+      
         [HttpPatch("{id}/change-status")]
         [EndpointSummary("Change the status of a vendor certificate.")]
         [EndpointDescription("Updates certificate approval status, verification information, and rejection reason where applicable.")]
-        public async Task<IActionResult> ChangeStatus( ulong id, [FromBody] VendorCertificateChangeStatusDTO dto, CancellationToken ct = default)
+        public async Task<IActionResult> ChangeStatus(
+            ulong id,
+            [FromBody] VendorCertificateChangeStatusDTO dto,
+            CancellationToken ct = default)
         {
             dto.Id = id;
 

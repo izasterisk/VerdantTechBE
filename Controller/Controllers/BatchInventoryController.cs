@@ -89,7 +89,7 @@ namespace API.Controllers
         [HttpPost]
         [EndpointSummary("Create a new batch inventory entry.")]
         [EndpointDescription("Creates a new batch inventory record using the provided information.")]
-        public async Task<IActionResult> Create([FromBody] BatchInventoryCreateDto dto, CancellationToken ct = default)
+        public async Task<IActionResult> Create([FromBody] BatchInventoryCreateDTO dto, CancellationToken ct = default)
         {
             try
             {
@@ -109,7 +109,7 @@ namespace API.Controllers
         [HttpPut("{id}")]
         [EndpointSummary("Update an existing batch inventory.")]
         [EndpointDescription("Updates the details of an existing batch inventory record using the provided DTO.")]
-        public async Task<IActionResult> Update(ulong id, [FromBody] BatchInventoryUpdateDto dto, CancellationToken ct = default)
+        public async Task<IActionResult> Update(ulong id, [FromBody] BatchInventoryUpdateDTO dto, CancellationToken ct = default)
         {
             dto.Id = id;
 
@@ -151,7 +151,7 @@ namespace API.Controllers
         [HttpPost("{id}/quality-check")]
         [EndpointSummary("Run quality check on a batch inventory.")]
         [EndpointDescription("Updates the quality check status, inspector ID, and notes for a specific batch inventory.")]
-        public async Task<IActionResult> QualityCheck( ulong id, [FromBody] BatchInventoryQualityCheckDto dto, CancellationToken ct = default)
+        public async Task<IActionResult> QualityCheck( ulong id, [FromBody] BatchInventoryQualityCheckDTO dto, CancellationToken ct = default)
         {
             try
             {

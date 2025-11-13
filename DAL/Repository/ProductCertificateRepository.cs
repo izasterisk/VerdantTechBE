@@ -63,7 +63,7 @@ namespace DAL.Repository
                             OwnerId = certificate.Id,
                             ImagePublicId = f.ImagePublicId,
                             ImageUrl = f.ImageUrl,
-                            Purpose = f.Purpose == 0 ? MediaPurpose.CertificatePdf : f.Purpose,
+                            Purpose = f.Purpose == 0 ? MediaPurpose.ProductCertificatePdf : f.Purpose,
                             SortOrder = f.SortOrder == 0 ? idx : f.SortOrder,
                             CreatedAt = now,
                             UpdatedAt = now
@@ -109,7 +109,7 @@ namespace DAL.Repository
                     var toRemove = await _db.MediaLinks
                         .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates
                                  && m.OwnerId == entity.Id
-                                 && m.Purpose == MediaPurpose.CertificatePdf
+                                 && m.Purpose == MediaPurpose.ProductCertificatePdf
                                  && removeCertificatePublicIds.Contains(m.ImagePublicId))
                         .ToListAsync(ct);
 
@@ -131,7 +131,7 @@ namespace DAL.Repository
                             OwnerId = entity.Id,
                             ImagePublicId = f.ImagePublicId,
                             ImageUrl = f.ImageUrl,
-                            Purpose = f.Purpose == 0 ? MediaPurpose.CertificatePdf : f.Purpose,
+                            Purpose = f.Purpose == 0 ? MediaPurpose.ProductCertificatePdf : f.Purpose,
                             SortOrder = f.SortOrder == 0 ? idx : f.SortOrder,
                             CreatedAt = now,
                             UpdatedAt = now
@@ -183,7 +183,7 @@ namespace DAL.Repository
                 var links = await _db.MediaLinks
                     .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates
                              && m.OwnerId == id
-                             && m.Purpose == MediaPurpose.CertificatePdf)
+                             && m.Purpose == MediaPurpose.ProductCertificatePdf)
                     .ToListAsync(ct);
 
                 if (links.Count > 0) _db.MediaLinks.RemoveRange(links);

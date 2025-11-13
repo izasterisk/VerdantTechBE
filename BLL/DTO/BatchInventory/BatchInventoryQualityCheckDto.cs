@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace BLL.DTO.BatchInventory
 {
-    public class BatchInventoryQualityCheckDto
+    public class BatchInventoryQualityCheckDTO
     {
+        public ulong Id { get; set; }
         public QualityCheckStatus Status { get; set; }
 
         public ulong? QualityCheckedByUserId { get; set; }

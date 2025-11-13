@@ -193,7 +193,7 @@ namespace BLL.Services
             OwnerId = 0,
             ImagePublicId = src.ImagePublicId,
             ImageUrl = src.ImageUrl,
-            Purpose =MediaPurpose.CertificatePdf,
+            Purpose =MediaPurpose.ProductCertificatePdf,
             SortOrder = src.SortOrder == 0 ? 1 : src.SortOrder,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

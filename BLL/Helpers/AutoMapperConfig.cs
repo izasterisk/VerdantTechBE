@@ -240,8 +240,9 @@ namespace BLL.Helpers
             // ===================== VENDOR CERTIFICATE =====================
             CreateMap<VendorCertificate, VendorCertificateResponseDTO>()
                 .ForMember(d => d.VendorName,opt => opt.MapFrom(s => s.Vendor != null ? s.Vendor.FullName : null))
-                .ForMember(d => d.VerifiedByName,opt => opt.MapFrom(s => s.VerifiedByNavigation != null ? s.VerifiedByNavigation.FullName : null))
+                .ForMember(d => d.VerifiedByName, opt => opt.MapFrom(s => s.VerifiedByNavigation != null ? s.VerifiedByNavigation.FullName : null))
                 .ForMember(d => d.Files, opt => opt.MapFrom(s => s.MediaLinks));
+
             // ===================== ORDER =====================
             CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
                 .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
@@ -279,15 +280,19 @@ namespace BLL.Helpers
 
 
             // ===================== BATCH INVENTORY =====================
-            CreateMap<BatchInventoryCreateDto, BatchInventory>()
+            CreateMap<BatchInventoryCreateDTO, BatchInventory>()
                 .ForMember(d => d.Id, o => o.Ignore())
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
                 .ForMember(d => d.UpdatedAt, o => o.Ignore())
                 .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
                 .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
                 .ForMember(d => d.QualityCheckedAt, o => o.Ignore());
-
-            CreateMap<BatchInventoryUpdateDto, BatchInventory>()
+            CreateMap<BatchInventoryQualityCheckDTO, BatchInventory>()
+                .ForMember(d => d.Id, o => o.Ignore())
+                .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
+                .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
+                .ForMember(d => d.Notes, o => o.Ignore());
+            CreateMap<BatchInventoryUpdateDTO, BatchInventory>()
                 .ForMember(d => d.Id, o => o.Ignore())
                 .ForMember(d => d.ProductId, o => o.Ignore())
                 .ForMember(d => d.Sku, o => o.Ignore())
@@ -301,7 +306,7 @@ namespace BLL.Helpers
                 // CHỈ MAP GIÁ TRỊ KHÁC NULL (AutoMapper xử lý Optional Update)
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
-            CreateMap<BatchInventory, BatchInventoryDto>()
+            CreateMap<BatchInventory, BatchInventoryResponeDTO>()
                 .ForMember(dest => dest.ProductName, o => o.MapFrom(src => src.Product != null ? src.Product.ProductName : null))
                 .ForMember(dest => dest.VendorName, o => o.MapFrom(src => src.Vendor != null ? src.Vendor.FullName : null))
                 .ForMember(dest => dest.QualityCheckedByName, o => o.MapFrom(src => src.QualityCheckedByNavigation != null ? src.QualityCheckedByNavigation.FullName : null));
