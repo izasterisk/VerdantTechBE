@@ -250,8 +250,8 @@ public enum MediaPurpose
     None,
     Front,
     Back,
-    CertificatePdf,
-    VendorCertificates
+    ProductCertificatePdf,
+    VendorCertificatesPdf
 }
 
 // =====================================================

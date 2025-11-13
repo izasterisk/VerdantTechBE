@@ -9,7 +9,7 @@ namespace DAL.Data.Configurations;
 internal static class MediaLinkEfMaps
 {
     public static string OwnerTypeToDb(MediaOwnerType v) => v switch
-    {
+    {   
         MediaOwnerType.VendorCertificates => "vendor_certificates",
         MediaOwnerType.ChatbotMessages => "chatbot_messages",
         MediaOwnerType.Products => "products",
@@ -39,6 +39,8 @@ internal static class MediaLinkEfMaps
         MediaPurpose.Front => "front",
         MediaPurpose.Back => "back",
         MediaPurpose.None => "none",
+        MediaPurpose.ProductCertificatePdf => "productcertificatepdf",
+        MediaPurpose.VendorCertificatesPdf => "vendorCertificatesPdf",
         _ => "none"
     };
 
@@ -47,6 +49,8 @@ internal static class MediaLinkEfMaps
         "front" => MediaPurpose.Front,
         "back" => MediaPurpose.Back,
         "none" => MediaPurpose.None,
+        "productcertificatepdf" => MediaPurpose.ProductCertificatePdf,
+        "vendorCertificatesPdf" => MediaPurpose.VendorCertificatesPdf,
         _ => MediaPurpose.None
     };
 }
@@ -74,7 +78,7 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
 
         builder.Property(e => e.OwnerType)
             .HasConversion(ownerTypeConverter)
-            .HasMaxLength(500)                 // đủ dài cho ENUM string
+            .HasMaxLength(500)                 
             .HasColumnType("enum('vendor_certificates','chatbot_messages','products','product_registrations','product_certificates','product_reviews','forum_posts','request')")
             .IsRequired()
             .HasColumnName("owner_type");
@@ -100,7 +104,7 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
         builder.Property(e => e.Purpose)
             .HasConversion(purposeConverter)
             .HasMaxLength(500)
-            .HasColumnType("enum('front','back','none')")
+            .HasColumnType("enum('front','back','none','productcertificatepdf','vendorCertificatesPdf')")
             .HasDefaultValue(MediaPurpose.None)
             .HasColumnName("purpose");
 
