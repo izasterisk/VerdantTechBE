@@ -32,7 +32,7 @@ namespace Controller.Controllers
             CancellationToken ct = default)
             => Ok(await _svc.GetAllAsync(page, pageSize, ct));
 
-        [HttpGet("{id:long}")]
+        [HttpGet("{id}")]
         [EndpointSummary("Lấy chi tiết sản phẩm theo Id")]
         [EndpointDescription("Bao gồm đầy đủ thông tin và toàn bộ ảnh (MediaLink) của sản phẩm.")]
         public async Task<ActionResult<ProductResponseDTO>> GetById(
@@ -43,7 +43,7 @@ namespace Controller.Controllers
             return item is null ? NotFound() : Ok(item);
         }
 
-        [HttpGet("category/{categoryId:long}")]
+        [HttpGet("category/{categoryId}")]
         [EndpointSummary("Danh sách sản phẩm theo Category (phân trang)")]
         [EndpointDescription("Lọc theo CategoryId, trả về danh sách kèm thông tin cơ bản.")]
         public async Task<ActionResult<PagedResponse<ProductListItemDTO>>> GetByCategory(
@@ -65,7 +65,7 @@ namespace Controller.Controllers
 
         // ========= UPDATE =========
 
-        [HttpPut("{id:long}")]
+        [HttpPut("{id}")]
         [EndpointSummary("Cập nhật sản phẩm + ảnh (add/remove)")]
         [EndpointDescription(@"Body JSON:
 {
@@ -112,7 +112,7 @@ Route chứa id, server sẽ set ProductId từ route.")]
 
         // ========= DELETE =========
 
-        [HttpDelete("{id:long}")]
+        [HttpDelete("{id}")]
         [EndpointSummary("Xoá sản phẩm")]
         [EndpointDescription("Xoá sản phẩm và (tuỳ bạn xử lý ở repo/service) có thể dọn ảnh MediaLink liên quan.")]
         public async Task<IActionResult> Delete(

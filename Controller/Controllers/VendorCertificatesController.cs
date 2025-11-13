@@ -1,6 +1,7 @@
 using BLL.DTO.MediaLink;
 using BLL.DTO.VendorCertificate;
 using BLL.Interfaces;
+using DAL.Data;
 using Infrastructure.Cloudinary;
 using Microsoft.AspNetCore.Mvc;
 
@@ -49,72 +50,59 @@ namespace API.Controllers
         [HttpPost]
         [Consumes("multipart/form-data")]
         [EndpointSummary("Create multiple vendor certificates with file uploads.")]
-        [EndpointDescription("Uploads certificate files to Cloudinary and creates corresponding certificates by index (each file matches 1 certificate item).")]
-        public async Task<IActionResult> Create(
-            [FromForm] VendorCertificateCreateDto dto,
-            [FromForm] List<IFormFile> certificateFiles,
-            CancellationToken ct = default)
+        [EndpointDescription("Uploads certificate files to Cloudinary and creates corresponding certificates by index .CertificationCode[], CertificationName[], Files[] — each index corresponds to one certificate.")]
+        public async Task<IActionResult> Create([FromForm] VendorCertificateCreateDto dto, [FromForm] List<IFormFile> files, CancellationToken ct = default)
         {
-            if (dto.Items == null || dto.Items.Count == 0)
-                return BadRequest("Danh sách Items không được rỗng.");
+            // Validation
+            if (dto.CertificationCode.Count != dto.CertificationName.Count ||
+                dto.CertificationCode.Count != files.Count)
+            {
+                return BadRequest("CertificationCode[], CertificationName[] và Files[] phải có cùng số lượng.");
+            }
 
-            if (certificateFiles == null || certificateFiles.Count == 0)
-                return BadRequest("Phải upload ít nhất 1 file.");
+            // Upload files
+            var uploadResults = await _cloudinary.UploadManyAsync(files, "vendor-certificates", ct);
 
-            if (dto.Items.Count != certificateFiles.Count)
-                return BadRequest("Số Items và số file phải bằng nhau.");
-
-            var uploadResults = await _cloudinary.UploadManyAsync(
-                certificateFiles,
-                folder: "vendor-certificates",
-                ct: ct);
-
-            var mediaList = uploadResults.Select((u, idx) => new MediaLinkItemDTO
+            // Convert to MediaLinkItemDTO for service
+            var mediaList = uploadResults.Select((u, i) => new MediaLinkItemDTO
             {
                 ImagePublicId = u.PublicId,
                 ImageUrl = u.PublicUrl,
-                Purpose = "certificate",
-                SortOrder = idx
+                Purpose = MediaPurpose.VendorCertificatesPdf.ToString(),
+                SortOrder = i
             }).ToList();
 
             var result = await _service.CreateAsync(dto, mediaList, ct);
-            return Ok(result);
+            return result != null ? Ok(result) : NotFound();
         }
 
-        
+
         [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
         [EndpointSummary("Update vendor certificate information.")]
         [EndpointDescription("Updates certificate metadata and handles adding/removing certificate files.")]
-        public async Task<IActionResult> Update(
-            ulong id,
-            [FromForm] VendorCertificateUpdateDTO dto,
-            [FromForm] List<IFormFile>? newFiles,
-            [FromForm] List<string>? removedCertificates,
-            CancellationToken ct = default)
+        public async Task<IActionResult> Update(ulong id, [FromForm] VendorCertificateUpdateDTO dto, [FromForm] List<IFormFile>? newFiles, [FromForm] List<string>? removedCertificates, CancellationToken ct = default)
+
         {
             dto.Id = id;
+            removedCertificates ??= new List<string>();
 
-            
-            var addMedias = new List<MediaLinkItemDTO>();
+            List<MediaLinkItemDTO> addMedias = new();
 
+            // Upload new files if exist
             if (newFiles != null && newFiles.Any())
             {
-                var uploaded = await _cloudinary.UploadManyAsync(
-                    newFiles,
-                    folder: "vendor-certificates",
-                    ct: ct);
+                var uploaded = await _cloudinary.UploadManyAsync(newFiles, "vendor-certificates", ct);
 
-                addMedias = uploaded.Select((u, idx) => new MediaLinkItemDTO
+
+                addMedias = uploaded.Select((u, i) => new MediaLinkItemDTO
                 {
                     ImagePublicId = u.PublicId,
                     ImageUrl = u.PublicUrl,
-                    Purpose = "certificate",
-                    SortOrder = idx
+                    Purpose = MediaPurpose.VendorCertificatesPdf.ToString(),
+                    SortOrder = i
                 }).ToList();
             }
-
-            removedCertificates ??= new List<string>();
 
             try
             {
@@ -130,7 +118,7 @@ namespace API.Controllers
         
         [HttpDelete("{id}")]
         [EndpointSummary("Delete a vendor certificate.")]
-        [EndpointDescription("Deletes a vendor certificate entry. File deletion handled in repository or via Cloudinary service.")]
+        [EndpointDescription("Deletes a vendor certificate entry by ID. File deletion handled in repository or via Cloudinary service.")]
         public async Task<IActionResult> Delete(ulong id, CancellationToken ct = default)
         {
             try

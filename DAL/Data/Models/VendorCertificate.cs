@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using DAL.Data;
 
 namespace DAL.Data.Models;
@@ -39,4 +40,6 @@ public partial class VendorCertificate
     // Navigation Properties
     public virtual User Vendor { get; set; } = null!;
     public virtual User? VerifiedByNavigation { get; set; }
+    [NotMapped]
+    public List<MediaLink> MediaLinks { get; set; } = new();
 }

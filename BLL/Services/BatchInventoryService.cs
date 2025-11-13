@@ -26,14 +26,14 @@ namespace BLL.Services
         }
 
         // GET ALL
-        public async Task<IEnumerable<BatchInventoryDto>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
+        public async Task<IEnumerable<BatchInventoryResponeDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
         {
             var items = await _repo.GetAllAsync(page, pageSize, ct);
-            return _mapper.Map<IEnumerable<BatchInventoryDto>>(items);
+            return _mapper.Map<IEnumerable<BatchInventoryResponeDTO>>(items);
         }
 
         // GET BY PRODUCT
-        public async Task<IEnumerable<BatchInventoryDto>> GetByProductIdAsync(ulong productId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<IEnumerable<BatchInventoryResponeDTO>> GetByProductIdAsync(ulong productId, int page, int pageSize, CancellationToken ct = default)
         {
             // CHECK PRODUCT EXISTS
             var product = await _productRepo.GetProductByIdAsync(productId, useNoTracking: true, ct);
@@ -41,33 +41,33 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"Product ID {productId} not found");
 
             var items = await _repo.GetByProductIdAsync(productId, page, pageSize, ct);
-            return _mapper.Map<IEnumerable<BatchInventoryDto>>(items);
+            return _mapper.Map<IEnumerable<BatchInventoryResponeDTO>>(items);
         }
 
         // GET BY VENDOR
-        public async Task<IEnumerable<BatchInventoryDto>> GetByVendorIdAsync(ulong vendorId, int page, int pageSize, CancellationToken ct = default)
+        public async Task<IEnumerable<BatchInventoryResponeDTO>> GetByVendorIdAsync(ulong vendorId, int page, int pageSize, CancellationToken ct = default)
         {
             var vendor = await _vendorRepo.GetByIdAsync(vendorId, ct);
             if (vendor == null)
                 throw new KeyNotFoundException($"Vendor ID {vendorId} not found");
 
             var items = await _repo.GetByVendorIdAsync(vendorId, page, pageSize, ct);
-            return _mapper.Map<IEnumerable<BatchInventoryDto>>(items);
+            return _mapper.Map<IEnumerable<BatchInventoryResponeDTO>>(items);
         }
 
         // GET BY ID
-        public async Task<BatchInventoryDto?> GetByIdAsync(ulong id, CancellationToken ct = default)
+        public async Task<BatchInventoryResponeDTO?> GetByIdAsync(ulong id, CancellationToken ct = default)
         {
             var entity = await _repo.GetByIdAsync(id, ct);
 
             if (entity == null)
                 throw new KeyNotFoundException($"BatchInventory ID {id} not found");
 
-            return _mapper.Map<BatchInventoryDto>(entity);
+            return _mapper.Map<BatchInventoryResponeDTO>(entity);
         }
 
         // CREATE
-        public async Task<BatchInventoryDto> CreateAsync(BatchInventoryCreateDto dto, CancellationToken ct = default)
+        public async Task<BatchInventoryResponeDTO> CreateAsync(BatchInventoryCreateDTO dto, CancellationToken ct = default)
         {
             // CHECK PRODUCT
             var product = await _productRepo.GetProductByIdAsync(dto.ProductId, useNoTracking: true, ct);
@@ -85,11 +85,11 @@ namespace BLL.Services
             var entity = _mapper.Map<BatchInventory>(dto);
             var created = await _repo.CreateAsync(entity, ct);
 
-            return _mapper.Map<BatchInventoryDto>(created);
+            return _mapper.Map<BatchInventoryResponeDTO>(created);
         }
 
         // UPDATE
-        public async Task<BatchInventoryDto> UpdateAsync(BatchInventoryUpdateDto dto, CancellationToken ct = default)
+        public async Task<BatchInventoryResponeDTO> UpdateAsync(BatchInventoryUpdateDTO dto, CancellationToken ct = default)
         {
             var existing = await _repo.GetByIdAsync(dto.Id, ct);
             if (existing == null)
@@ -112,7 +112,7 @@ namespace BLL.Services
 
             await _repo.UpdateAsync(existing, ct);
 
-            return _mapper.Map<BatchInventoryDto>(existing);
+            return _mapper.Map<BatchInventoryResponeDTO>(existing);
         }
 
         // DELETE
@@ -126,7 +126,7 @@ namespace BLL.Services
         }
 
         // QUALITY CHECK
-        public async Task QualityCheckAsync(ulong id, BatchInventoryQualityCheckDto dto, CancellationToken ct = default)
+        public async Task QualityCheckAsync(ulong id, BatchInventoryQualityCheckDTO dto, CancellationToken ct = default)
         {
             var exists = await _repo.GetByIdAsync(id, ct);
 

@@ -27,7 +27,7 @@ namespace BLL.Helpers.CertificateFileHelper
                     OwnerId = 0,
                     ImagePublicId = i.ImagePublicId,
                     ImageUrl = i.ImageUrl,
-                    Purpose = MediaPurpose.CertificatePdf,
+                    Purpose = MediaPurpose.ProductCertificatePdf,
                     SortOrder = ++sort,
                     CreatedAt = now,
                     UpdatedAt = now

@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 
 namespace BLL.DTO.BatchInventory
 {
-    
-        public class BatchInventoryDto
+        public class BatchInventoryResponeDTO
         {
             public ulong Id { get; set; }
             public ulong ProductId { get; set; }

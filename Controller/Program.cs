@@ -133,6 +133,8 @@ builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 builder.Services.AddScoped<IBatchInventoryRepository, BatchInventoryRepository>();
 builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IVendorCertificateRepository, VendorCertificateRepository>();
+builder.Services.AddScoped<IVendorProfileRepository, VendorProfileRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -155,6 +157,8 @@ builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddScoped<IBatchInventoryService, BatchInventoryService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IVendorCertificateService, VendorCertificateService>();
+builder.Services.AddScoped<IVendorProfileService, VendorProfileService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
