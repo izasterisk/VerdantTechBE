@@ -77,6 +77,7 @@ builder.Services.Configure<FormOptions>(o =>
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 //Dependency Injection
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>>();
 builder.Services.AddScoped<IRepository<FarmProfile>, Repository<FarmProfile>>();
@@ -99,6 +100,8 @@ builder.Services.AddScoped<IRepository<Payment>, Repository<Payment>>();
 builder.Services.AddScoped<IRepository<Transaction>, Repository<Transaction>>();
 builder.Services.AddScoped<IRepository<ProductSerial>, Repository<ProductSerial>>();
 builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
+builder.Services.AddScoped<IRepository<VendorCertificate>, Repository<VendorCertificate>>();
+builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>>();
 builder.Services.AddScoped<IRepository<Wallet>, Repository<Wallet>>();
 builder.Services.AddScoped<IRepository<UserBankAccount>, Repository<UserBankAccount>>();
 builder.Services.AddScoped<IRepository<Cashout>, Repository<Cashout>>();
@@ -127,6 +130,7 @@ builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IUserBankAccountsRepository, UserBankAccountsRepository>();
 builder.Services.AddScoped<ICashoutRepository, CashoutRepository>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
+builder.Services.AddScoped<IBatchInventoryRepository, BatchInventoryRepository>();
 builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
@@ -148,6 +152,7 @@ builder.Services.AddScoped<IUserBankAccountsService, UserBankAccountsService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ICashoutService, CashoutService>();
 builder.Services.AddScoped<IRequestService, RequestService>();
+builder.Services.AddScoped<IBatchInventoryService, BatchInventoryService>();
 builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
