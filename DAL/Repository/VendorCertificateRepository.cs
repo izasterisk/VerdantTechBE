@@ -14,23 +14,7 @@ namespace DAL.Repository
             _context = context;
         }
 
-
-        private async Task<List<MediaLink>> LoadFilesAsync(ulong certId, CancellationToken ct)
-        {
-            return await _context.MediaLinks
-                .Where(m =>
-                    m.OwnerType == MediaOwnerType.VendorCertificates &&
-                    m.OwnerId == certId)
-                .OrderBy(m => m.SortOrder)
-                .ToListAsync(ct);
-        }
-
-
-        public async Task<VendorCertificate> CreateAsync(
-            ulong vendorId,
-            VendorCertificate vendorCertificate,
-            IEnumerable<MediaLink>? addVendorCertificateFiles,
-            CancellationToken ct = default)
+        public async Task<VendorCertificate> CreateAsync( ulong vendorId, VendorCertificate vendorCertificate, IEnumerable<MediaLink>? addVendorCertificateFiles, CancellationToken ct = default)
         {
             vendorCertificate.VendorId = vendorId;
             vendorCertificate.Status = VendorCertificateStatus.Pending;
@@ -45,7 +29,7 @@ namespace DAL.Repository
             {
                 foreach (var media in addVendorCertificateFiles)
                 {
-                    media.OwnerType = MediaOwnerType.VendorCertificates;
+                    media.OwnerType = MediaOwnerType.VendorCertificates; 
                     media.OwnerId = vendorCertificate.Id;
                     media.CreatedAt = DateTime.UtcNow;
                     media.UpdatedAt = DateTime.UtcNow;
@@ -55,18 +39,10 @@ namespace DAL.Repository
                 await _context.SaveChangesAsync(ct);
             }
 
-            vendorCertificate.MediaLinks = await LoadFilesAsync(vendorCertificate.Id, ct);
-
             return vendorCertificate;
         }
 
-
-        public async Task<VendorCertificate> UpdateAsync(
-            ulong id,
-            VendorCertificate vendorCertificate,
-            IEnumerable<MediaLink>? addVendorCertificateFiles,
-            IEnumerable<string>? removeCertificatePublicIds,
-            CancellationToken ct = default)
+        public async Task<VendorCertificate> UpdateAsync( ulong id, VendorCertificate vendorCertificate, IEnumerable<MediaLink>? addVendorCertificateFiles, IEnumerable<string>? removeCertificatePublicIds, CancellationToken ct = default)
         {
             var existing = await _context.VendorCertificates
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
@@ -74,27 +50,29 @@ namespace DAL.Repository
             if (existing == null)
                 throw new KeyNotFoundException($"VendorCertificate ID {id} not found");
 
-            // 🟢 Update VendorId (DTO có VendorId)
-            existing.VendorId = vendorCertificate.VendorId;
+            // Update các field cho phép
             existing.CertificationCode = vendorCertificate.CertificationCode;
             existing.CertificationName = vendorCertificate.CertificationName;
             existing.UpdatedAt = DateTime.UtcNow;
 
-            // Remove files
+            // Remove media theo publicId
             if (removeCertificatePublicIds != null)
             {
                 var removeList = await _context.MediaLinks
                     .Where(m =>
                         m.OwnerType == MediaOwnerType.VendorCertificates &&
                         m.OwnerId == id &&
+                        m.ImagePublicId != null &&
                         removeCertificatePublicIds.Contains(m.ImagePublicId))
                     .ToListAsync(ct);
 
-                if (removeList.Any())
+                if (removeList.Count > 0)
+                {
                     _context.MediaLinks.RemoveRange(removeList);
+                }
             }
 
-            // Add new files
+            // Thêm media mới
             if (addVendorCertificateFiles != null)
             {
                 foreach (var media in addVendorCertificateFiles)
@@ -108,90 +86,49 @@ namespace DAL.Repository
             }
 
             await _context.SaveChangesAsync(ct);
-
-            existing.MediaLinks = await LoadFilesAsync(existing.Id, ct);
-
             return existing;
         }
 
-
         public async Task<VendorCertificate?> GetByIdAsync(ulong id, CancellationToken ct = default)
         {
-            var cert = await _context.VendorCertificates
+            return await _context.VendorCertificates
                 .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.Id == id, ct);
-
-            if (cert == null)
-                return null;
-
-            cert.MediaLinks = await LoadFilesAsync(cert.Id, ct);
-
-            return cert;
+                .FirstOrDefaultAsync(x => x.Id == id, ct);
         }
 
-
-        public async Task<List<VendorCertificate>> GetAllByVendorIdAsync(
-            ulong vendorId,
-            int page,
-            int pageSize,
-            CancellationToken ct = default)
+        public async Task<List<VendorCertificate>> GetAllByVendorIdAsync( ulong vendorId,int page, int pageSize, CancellationToken ct = default)
         {
             if (page <= 0) page = 1;
             if (pageSize <= 0) pageSize = 20;
 
-            var query = _context.VendorCertificates
+            return await _context.VendorCertificates
                 .AsNoTracking()
-                .Where(v => v.VendorId == vendorId)
-                .OrderByDescending(v => v.UploadedAt);
-
-            var certs = await query
+                .Where(x => x.VendorId == vendorId)
+                .OrderByDescending(x => x.UploadedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(ct);
-
-            var ids = certs.Select(c => c.Id).ToList();
-
-            var files = await _context.MediaLinks
-                .Where(m =>
-                    m.OwnerType == MediaOwnerType.VendorCertificates &&
-                    ids.Contains(m.OwnerId))
-                .OrderBy(m => m.SortOrder)
-                .ToListAsync(ct);
-
-            foreach (var cert in certs)
-            {
-                cert.MediaLinks = files.Where(f => f.OwnerId == cert.Id).ToList();
-            }
-
-            return certs;
         }
 
-
-        public async Task DeleteCertificateAsync(
-            VendorCertificate vendorCertificate,
-            CancellationToken ct = default)
+        public async Task DeleteCertificateAsync(VendorCertificate vendorCertificate, CancellationToken ct = default)
         {
+            // Xóa luôn MediaLinks liên quan
             var media = await _context.MediaLinks
                 .Where(m =>
                     m.OwnerType == MediaOwnerType.VendorCertificates &&
                     m.OwnerId == vendorCertificate.Id)
                 .ToListAsync(ct);
 
-            if (media.Any())
+            if (media.Count > 0)
+            {
                 _context.MediaLinks.RemoveRange(media);
+            }
 
             _context.VendorCertificates.Remove(vendorCertificate);
-
             await _context.SaveChangesAsync(ct);
         }
 
-
-        public async Task<VendorCertificate?> ApproveAsync(
-            ulong id,
-            VendorCertificateStatus status,
-            ulong? verifiedByUserId,
-            string? rejectionReason,
-            CancellationToken ct = default)
+        public async Task<VendorCertificate?> ApproveAsync(ulong id, VendorCertificateStatus status, ulong? verifiedByUserId, string? rejectionReason, CancellationToken ct = default)
         {
             var existing = await _context.VendorCertificates
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
@@ -206,9 +143,6 @@ namespace DAL.Repository
             existing.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(ct);
-
-            existing.MediaLinks = await LoadFilesAsync(existing.Id, ct);
-
             return existing;
         }
     }

@@ -240,8 +240,8 @@ namespace BLL.Helpers
             // ===================== VENDOR CERTIFICATE =====================
             CreateMap<VendorCertificate, VendorCertificateResponseDTO>()
                 .ForMember(d => d.VendorName,opt => opt.MapFrom(s => s.Vendor != null ? s.Vendor.FullName : null))
-                .ForMember(d => d.VerifiedByName,opt => opt.MapFrom(s => s.VerifiedByNavigation != null ? s.VerifiedByNavigation.FullName : null))
-                .ForMember(d => d.Files, opt => opt.MapFrom(s => s.MediaLinks));
+                .ForMember(d => d.VerifiedByName,opt => opt.MapFrom(s => s.VerifiedByNavigation != null ? s.VerifiedByNavigation.FullName : null));
+
             // ===================== ORDER =====================
             CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
                 .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());

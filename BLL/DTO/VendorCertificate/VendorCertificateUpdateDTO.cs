@@ -13,9 +13,8 @@ namespace BLL.DTO.VendorCertificate
         [Required(ErrorMessage = "id vendor không được để trống")]
         public ulong VendorId { get; set; }
         [Required(ErrorMessage = "Mã chứng chỉ không được để trống")]
-        public List<string> CertificationCode { get; set; } = new();
+        public string CertificationCode { get; set; }
         [Required(ErrorMessage = "Tên chứng chỉ không được để trống")]
-        public List<string> CertificationName { get; set; } = new();
-      
+        public string CertificationName { get; set; }
     }
 }
