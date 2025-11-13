@@ -5,6 +5,7 @@ using BLL.DTO.CO2;
 using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
 using BLL.DTO.MediaLink;
+using BLL.DTO.Notification;
 using BLL.DTO.Order;
 using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
@@ -37,6 +38,9 @@ namespace BLL.Helpers
             CreateMap<UserAddressCreateDTO, Address>().ReverseMap();
             CreateMap<UserAddressUpdateDTO, Address>().ReverseMap();
             CreateMap<UserAddressUpdateDTO, UserAddress>().ReverseMap();
+            
+            // ===================== NOTIFICATION MAPPINGS =====================
+            CreateMap<NotificationResponseDTO, Notification>().ReverseMap();
 
             // ===================== USER BANK ACCOUNT MAPPINGS =====================
             CreateMap<UserBankAccountCreateDTO, UserBankAccount>().ReverseMap();

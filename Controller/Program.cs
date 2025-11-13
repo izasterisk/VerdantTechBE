@@ -102,10 +102,11 @@ builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventor
 builder.Services.AddScoped<IRepository<Wallet>, Repository<Wallet>>();
 builder.Services.AddScoped<IRepository<UserBankAccount>, Repository<UserBankAccount>>();
 builder.Services.AddScoped<IRepository<Cashout>, Repository<Cashout>>();
-    builder.Services.AddScoped<IRepository<Request>, Repository<Request>>();
-    builder.Services.AddScoped<IRepository<ProductReview>, Repository<ProductReview>>();
+builder.Services.AddScoped<IRepository<Request>, Repository<Request>>();
+builder.Services.AddScoped<IRepository<ProductReview>, Repository<ProductReview>>();
+builder.Services.AddScoped<IRepository<Notification>, Repository<Notification>>();
 
-    builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IFarmProfileRepository, FarmProfileRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
@@ -125,10 +126,11 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IUserBankAccountsRepository, UserBankAccountsRepository>();
 builder.Services.AddScoped<ICashoutRepository, CashoutRepository>();
-    builder.Services.AddScoped<IRequestRepository, RequestRepository>();
-    builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
+builder.Services.AddScoped<IRequestRepository, RequestRepository>();
+builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
-    builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFarmProfileService, FarmProfileService>();
 builder.Services.AddScoped<IWeatherService, WeatherService>();
@@ -145,10 +147,11 @@ builder.Services.AddScoped<IPayOSService, PayOSService>();
 builder.Services.AddScoped<IUserBankAccountsService, UserBankAccountsService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ICashoutService, CashoutService>();
-    builder.Services.AddScoped<IRequestService, RequestService>();
-    builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
+builder.Services.AddScoped<IRequestService, RequestService>();
+builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
-    // Infrastructure registrations
+// Infrastructure registrations
 builder.Services.AddInfrastructure();
 
 // Configure Memory Cache
