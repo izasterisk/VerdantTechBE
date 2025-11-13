@@ -126,6 +126,7 @@ builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IUserBankAccountsRepository, UserBankAccountsRepository>();
 builder.Services.AddScoped<ICashoutRepository, CashoutRepository>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
+builder.Services.AddScoped<IBatchInventoryRepository, BatchInventoryRepository>();
 
 
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -148,6 +149,8 @@ builder.Services.AddScoped<IUserBankAccountsService, UserBankAccountsService>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ICashoutService, CashoutService>();
 builder.Services.AddScoped<IRequestService, RequestService>();
+builder.Services.AddScoped<IBatchInventoryService, BatchInventoryService>();
+
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

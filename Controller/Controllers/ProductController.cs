@@ -93,7 +93,7 @@ namespace Controller.Controllers
 
         // ========= UPDATE EMISSION (CommissionRate) =========
 
-        [HttpPatch("{id:long}/emission")]
+        [HttpPatch("{id}/emission")]
         [EndpointSummary("Cập nhật CommissionRate của sản phẩm")]
         [EndpointDescription(@"Body JSON:
 { ""commissionRate"": 0.05 }   // ví dụ 5%
