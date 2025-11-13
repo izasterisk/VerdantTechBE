@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 9.1
+-- Phiên bản: 9.2
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -704,6 +704,59 @@ CREATE TABLE wallets (
     FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_vendor (vendor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ví nhà cung cấp theo dõi số dư';
+
+-- =====================================================
+-- CÁC BẢNG THÔNG BÁO
+-- =====================================================
+
+-- Bảng thông báo cho người dùng
+CREATE TABLE notifications (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người nhận thông báo (customer, vendor, staff, admin)',
+    title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề thông báo (hiển thị ngắn gọn)',
+    message TEXT NOT NULL COMMENT 'Nội dung chi tiết thông báo',
+    reference_type ENUM('order', 'payment', 'request', 'forum_post', 'chatbot_conversation', 'cashout', 'product_registration', 'environmental_data') NULL COMMENT 'Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết',
+    reference_id BIGINT UNSIGNED NULL COMMENT 'ID của entity tham chiếu (ví dụ: order_id, post_id)',
+    is_read BOOLEAN DEFAULT FALSE COMMENT 'Thông báo đã đọc chưa (dùng để filter hiển thị)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_user_read (user_id, is_read),
+    INDEX idx_reference (reference_type, reference_id),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ thông báo cho người dùng, hỗ trợ real-time qua SignalR. Hard delete khi user xóa.';
+
+-- =====================================================
+-- TỔNG QUAN THAY ĐỔI v9.2 (từ v9.1)
+-- =====================================================
+
+-- VII) THÊM BẢNG NOTIFICATIONS (HỆ THỐNG THÔNG BÁO)
+-- • Tạo bảng mới: notifications
+-- • Mục đích: Lưu trữ thông báo cho người dùng về các sự kiện quan trọng
+-- • Các trường chính:
+--   + user_id: Người nhận thông báo (hỗ trợ tất cả role: customer, vendor, staff, admin)
+--   + title: Tiêu đề ngắn gọn (hiển thị trong danh sách)
+--   + message: Nội dung chi tiết thông báo
+--   + reference_type: ENUM loại entity tham chiếu (order, payment, request, forum_post, chatbot_conversation, cashout, product_registration, environmental_data)
+--   + reference_id: ID của entity được tham chiếu (để link đến chi tiết)
+--   + is_read: Trạng thái đã đọc (dùng để filter, highlight thông báo mới)
+-- • Indexes:
+--   + idx_user_read (user_id, is_read): Tối ưu query lấy thông báo chưa đọc của user
+--   + idx_reference (reference_type, reference_id): Tối ưu query theo entity tham chiếu
+--   + idx_created (created_at): Tối ưu sắp xếp theo thời gian
+-- • Tính năng:
+--   - Hỗ trợ real-time notification qua SignalR
+--   - Hard delete khi user xóa thông báo (không dùng soft delete)
+--   - Linh hoạt link đến bất kỳ entity nào trong hệ thống
+-- • Use cases:
+--   + Thông báo đơn hàng mới/cập nhật trạng thái (order)
+--   + Thông báo thanh toán thành công/thất bại (payment)
+--   + Thông báo yêu cầu được duyệt/từ chối (request)
+--   + Thông báo bình luận mới trên forum (forum_post)
+--   + Thông báo cashout thành công (cashout)
+--   + Thông báo đăng ký sản phẩm được duyệt (product_registration)
+--   + Thông báo nhắc nhập dữ liệu môi trường (environmental_data)
 
 -- =====================================================
 -- TỔNG QUAN THAY ĐỔI v9.1 (từ v9.0)

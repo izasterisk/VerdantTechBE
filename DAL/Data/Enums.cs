@@ -254,3 +254,20 @@ public enum MediaPurpose
     VendorCertificates
 }
 
+// =====================================================
+// NOTIFICATION ENUMS (v9.2)
+// =====================================================
+
+public enum NotificationReferenceType
+{
+    Order,
+    Payment,
+    Request,
+    ForumPost,
+    ChatbotConversation,
+    Cashout,
+    ProductRegistration,
+    EnvironmentalData
+}
+
+

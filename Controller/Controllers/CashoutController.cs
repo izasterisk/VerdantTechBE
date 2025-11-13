@@ -70,7 +70,7 @@ public class CashoutController : BaseController
     [HttpPost("refund/{requestId}")]
     [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Process Refund Request via PayOS")]
-    [EndpointDescription("Yêu cầu phải có status Approved và type RefundRequest. Đơn hàng phải đã giao và chưa quá 7 ngày.")]
+    [EndpointDescription("Chuyển tiền tự động thông qua PayOS. Đơn hàng phải đã giao và chưa quá 7 ngày.")]
     public async Task<ActionResult<APIResponse>> ProcessRefundRequest(ulong requestId, [FromBody] RefundCreateDTO dto)
     {
         var validationResult = ValidateModel();
@@ -79,7 +79,36 @@ public class CashoutController : BaseController
         try
         {
             var staffId = GetCurrentUserId();
-            var refundResponse = await _cashoutService.CreateCashoutRefundByPayOSAsync(staffId, requestId, dto, GetCancellationToken());
+            var refundResponse =
+                await _cashoutService.CreateCashoutRefundByPayOSAsync(staffId, requestId, dto, GetCancellationToken());
+            return SuccessResponse(refundResponse);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Xử lý hoàn tiền cho yêu cầu refund
+    /// </summary>
+    /// <param name="requestId">ID của yêu cầu refund</param>
+    /// <param name="dto">Thông tin hoàn tiền</param>
+    /// <returns>Thông tin cashout refund đã được xử lý</returns>
+    [HttpPost("refund-request/{requestId}")]
+    [Authorize(Roles = "Admin,Staff")]
+    [EndpointSummary("Process Refund Request Manualy")]
+    [EndpointDescription("Staff tạo lịch sử giao dịch sau khi chuyển tiền bằng tay.")]
+    public async Task<ActionResult<APIResponse>> ProcessRefundRequestAsync(ulong requestId, [FromBody] RefundCreateDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var staffId = GetCurrentUserId();
+            var refundResponse =
+                await _cashoutService.CreateCashoutRefundAsync(staffId, requestId, dto, GetCancellationToken());
             return SuccessResponse(refundResponse);
         }
         catch (Exception ex)

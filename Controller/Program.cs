@@ -102,6 +102,12 @@ builder.Services.AddScoped<IRepository<ProductSerial>, Repository<ProductSerial>
 builder.Services.AddScoped<IRepository<BatchInventory>, Repository<BatchInventory>>();
 builder.Services.AddScoped<IRepository<VendorCertificate>, Repository<VendorCertificate>>();
 builder.Services.AddScoped<IRepository<VendorProfile>, Repository<VendorProfile>>();
+builder.Services.AddScoped<IRepository<Wallet>, Repository<Wallet>>();
+builder.Services.AddScoped<IRepository<UserBankAccount>, Repository<UserBankAccount>>();
+builder.Services.AddScoped<IRepository<Cashout>, Repository<Cashout>>();
+builder.Services.AddScoped<IRepository<Request>, Repository<Request>>();
+builder.Services.AddScoped<IRepository<ProductReview>, Repository<ProductReview>>();
+builder.Services.AddScoped<IRepository<Notification>, Repository<Notification>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -125,7 +131,8 @@ builder.Services.AddScoped<IUserBankAccountsRepository, UserBankAccountsReposito
 builder.Services.AddScoped<ICashoutRepository, CashoutRepository>();
 builder.Services.AddScoped<IRequestRepository, RequestRepository>();
 builder.Services.AddScoped<IBatchInventoryRepository, BatchInventoryRepository>();
-
+builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -146,7 +153,8 @@ builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ICashoutService, CashoutService>();
 builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddScoped<IBatchInventoryService, BatchInventoryService>();
-
+builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

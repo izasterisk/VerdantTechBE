@@ -12,16 +12,19 @@ public class RequestService : IRequestService
 {
     private readonly IRequestRepository _requestRepository;
     private readonly IMapper _mapper;
+    private readonly IUserRepository _userRepository;
     
-    public RequestService(IRequestRepository requestRepository, IMapper mapper)
+    public RequestService(IRequestRepository requestRepository, IMapper mapper, IUserRepository userRepository)
     {
         _requestRepository = requestRepository;
         _mapper = mapper;
+        _userRepository = userRepository;
     }
     
     public async Task<RequestResponseDTO> CreateRequestAsync(ulong userId, RequestCreateDTO dto, CancellationToken cancellationToken = default)
     {
         var request = _mapper.Map<Request>(dto);
+        await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
         request.UserId = userId;
         request.Status = RequestStatus.Pending;
         var images = _mapper.Map<List<MediaLink>>(dto.Images);
