@@ -253,3 +253,20 @@ public enum MediaPurpose
     CertificatePdf
 }
 
+// =====================================================
+// NOTIFICATION ENUMS (v9.2)
+// =====================================================
+
+public enum NotificationReferenceType
+{
+    Order,
+    Payment,
+    Request,
+    ForumPost,
+    ChatbotConversation,
+    Cashout,
+    ProductRegistration,
+    EnvironmentalData
+}
+
+

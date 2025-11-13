@@ -1,5 +1,6 @@
--- SEEDER DATA FOR VERDANTTECH DATABASE v9.0
+-- SEEDER DATA FOR VERDANTTECH DATABASE v9.2
 -- All passwords are: $2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS
+-- Updated for schema v9.2: Added notifications table for user notification system
 -- Updated for schema v9.0: Added product_serials table for serial number tracking, updated export_inventory to reference product_serials
 -- Updated for schema v8.0: Removed address_id from users, added user_addresses junction table for many-to-many relationship
 -- Updated environmental_data table: renamed soil_ph to phh2o, removed soil_type enum, added new environmental measurement fields
@@ -365,3 +366,32 @@ INSERT INTO `product_reviews` (`id`, `product_id`, `order_id`, `customer_id`, `r
 (1, 1, 1, 7, 5, 'Máy chạy êm, tiết kiệm điện và rất phù hợp với ruộng nhỏ của tôi. Chất lượng tốt, đóng gói cẩn thận.', '2025-09-09 16:00:00', '2025-09-09 16:00:00'),
 (2, 3, 2, 8, 4, 'Hạt giống nảy mầm tốt, tỷ lệ cao như quảng cáo. Cây trồng phát triển khỏe mạnh.', '2025-09-09 18:00:00', '2025-09-09 18:00:00'),
 (3, 4, 2, 8, 5, 'Phân rất tốt, cây trồng phát triển nhanh sau khi bón. Mùi không quá nặng, dễ sử dụng.', '2025-09-09 19:00:00', '2025-09-09 19:00:00');
+
+-- Insert Notifications (v9.2 structure - user notification system)
+INSERT INTO `notifications` (`id`, `user_id`, `title`, `message`, `reference_type`, `reference_id`, `is_read`, `created_at`, `updated_at`) VALUES
+-- Notifications for Customer 1 (user_id=7)
+(1, 7, 'Đơn hàng đã được xác nhận', 'Đơn hàng #1 của bạn đã được xác nhận và đang được chuẩn bị.', 'order', 1, 1, '2025-09-09 10:00:00', '2025-09-09 12:00:00'),
+(2, 7, 'Đơn hàng đang vận chuyển', 'Đơn hàng #1 của bạn đang trên đường giao đến địa chỉ của bạn.', 'order', 1, 1, '2025-09-09 12:00:00', '2025-09-09 14:00:00'),
+(3, 7, 'Đơn hàng đã giao thành công', 'Đơn hàng #1 đã được giao thành công. Cảm ơn bạn đã mua hàng!', 'order', 1, 0, '2025-09-09 15:00:00', '2025-09-09 15:00:00'),
+
+-- Notifications for Customer 2 (user_id=8)
+(4, 8, 'Thanh toán thành công', 'Thanh toán cho đơn hàng #2 đã được xác nhận thành công.', 'payment', 2, 1, '2025-09-09 11:00:00', '2025-09-09 13:00:00'),
+(5, 8, 'Đơn hàng đã giao thành công', 'Đơn hàng #2 đã được giao thành công. Vui lòng đánh giá sản phẩm!', 'order', 2, 0, '2025-09-09 17:00:00', '2025-09-09 17:00:00'),
+
+-- Notifications for Vendor 1 (user_id=5)
+(6, 5, 'Đơn hàng mới', 'Bạn có đơn hàng mới #1. Vui lòng chuẩn bị hàng và giao cho đơn vị vận chuyển.', 'order', 1, 1, '2025-09-09 10:00:00', '2025-09-09 10:30:00'),
+(7, 5, 'Tiền hoa hồng đã được cộng vào ví', 'Hoa hồng từ đơn hàng #1 đã được cộng vào ví của bạn.', 'order', 1, 1, '2025-09-09 15:30:00', '2025-09-09 16:00:00'),
+(8, 5, 'Yêu cầu rút tiền đã được xử lý', 'Yêu cầu rút tiền của bạn đã được xử lý thành công.', 'cashout', 1, 0, '2025-09-10 09:00:00', '2025-09-10 09:00:00'),
+
+-- Notifications for Vendor 2 (user_id=6)
+(9, 6, 'Đơn hàng mới', 'Bạn có đơn hàng mới #2 với 2 sản phẩm.', 'order', 2, 1, '2025-09-09 11:00:00', '2025-09-09 11:30:00'),
+(10, 6, 'Tiền hoa hồng đã được cộng vào ví', 'Hoa hồng từ đơn hàng #2 đã được cộng vào ví của bạn.', 'order', 2, 0, '2025-09-09 17:30:00', '2025-09-09 17:30:00'),
+
+-- Notifications for Farmers (environmental data reminders)
+(11, 9, 'Nhắc nhở nhập dữ liệu môi trường', 'Đã đến lúc cập nhật dữ liệu môi trường cho trang trại của bạn.', 'environmental_data', 1, 1, '2025-09-15 08:00:00', '2025-09-15 10:00:00'),
+(12, 10, 'Nhắc nhở nhập dữ liệu môi trường', 'Vui lòng cập nhật dữ liệu môi trường cho trang trại Long An.', 'environmental_data', 2, 0, '2025-09-15 08:00:00', '2025-09-15 08:00:00'),
+
+-- Notifications for Staff/Admin
+(13, 2, 'Yêu cầu đăng ký sản phẩm mới', 'Có yêu cầu đăng ký sản phẩm mới cần được xét duyệt.', 'product_registration', 1, 1, '2025-09-08 14:00:00', '2025-09-09 08:00:00'),
+(14, 1, 'Yêu cầu hoàn tiền mới', 'Có yêu cầu hoàn tiền mới từ khách hàng cần xử lý.', 'request', 1, 0, '2025-09-10 10:00:00', '2025-09-10 10:00:00');
+

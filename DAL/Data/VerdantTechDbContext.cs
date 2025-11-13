@@ -58,6 +58,7 @@ public class VerdantTechDbContext : DbContext
     public DbSet<ForumCategory> ForumCategories { get; set; }
     public DbSet<ForumPost> ForumPosts { get; set; }
     public DbSet<ForumComment> ForumComments { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -95,6 +96,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ForumCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ForumPostConfiguration());
         modelBuilder.ApplyConfiguration(new ForumCommentConfiguration());
+        modelBuilder.ApplyConfiguration(new NotificationConfiguration());
         
         base.OnModelCreating(modelBuilder);
     }
