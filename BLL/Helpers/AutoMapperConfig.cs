@@ -10,6 +10,7 @@ using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
 using BLL.DTO.ProductCertificate;
 using BLL.DTO.ProductRegistration;
+using BLL.DTO.ProductReview;
 using BLL.DTO.Request;
 using BLL.DTO.Transaction;
 using BLL.DTO.User;
@@ -270,6 +271,19 @@ namespace BLL.Helpers
             CreateMap<Request, RequestResponseDTO>()
                 .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation));
             CreateMap<MediaLink, RequestImageDTO>().ReverseMap();
+
+            // ===================== PRODUCT REVIEW =====================
+            CreateMap<ProductReviewCreateDTO, ProductReview>().ReverseMap();
+            CreateMap<ProductReview, ProductReviewResponseDTO>()
+                .ForMember(d => d.Customer, o => o.MapFrom(s => s.Customer));
+            CreateMap<ProductReviewUpdateDTO, ProductReview>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            
+            // ProductReview Image mappings
+            CreateMap<ProductReviewImageDTO, MediaLink>().ReverseMap();
+            CreateMap<MediaLink, ProductReviewImageDTO>()
+                .ForMember(d => d.ImageUrl, o => o.MapFrom(s => s.ImageUrl))
+                .ForMember(d => d.ImagePublicId, o => o.MapFrom(s => s.ImagePublicId));
         }
     }
 }
