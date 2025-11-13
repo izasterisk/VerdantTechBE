@@ -19,51 +19,47 @@ namespace BLL.Services
             _mapper = mapper;
         }
 
-        public async Task<List<VendorCertificateResponseDTO>> GetAllByVendorIdAsync(
-            ulong vendorId,
-            int page,
-            int pageSize,
-            CancellationToken ct = default)
+       
+        public async Task<List<VendorCertificateResponseDTO>> GetAllByVendorIdAsync( ulong vendorId, int page, int pageSize, CancellationToken ct = default)
         {
             var list = await _repo.GetAllByVendorIdAsync(vendorId, page, pageSize, ct);
-
-            var result = _mapper.Map<List<VendorCertificateResponseDTO>>(list);
-
-            return result;
+            return _mapper.Map<List<VendorCertificateResponseDTO>>(list);
         }
 
+      
         public async Task<VendorCertificateResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default)
         {
             var entity = await _repo.GetByIdAsync(id, ct);
-            if (entity == null)
-                return null;
-
-            return _mapper.Map<VendorCertificateResponseDTO>(entity);
+            return entity == null ? null : _mapper.Map<VendorCertificateResponseDTO>(entity);
         }
 
+        
         public async Task<List<VendorCertificateResponseDTO>> CreateAsync( VendorCertificateCreateDto dto, List<MediaLinkItemDTO> addVendorCertificates, CancellationToken ct = default)
         {
-            if (dto.Items == null || dto.Items.Count == 0)
-                throw new ArgumentException("Danh sách Items không được rỗng.");
+            if (dto.CertificationCode == null || dto.CertificationCode.Count == 0)
+                throw new ArgumentException("CertificationCode không được rỗng.");
+
+            if (dto.CertificationName == null || dto.CertificationName.Count == 0)
+                throw new ArgumentException("CertificationName không được rỗng.");
 
             if (addVendorCertificates == null || addVendorCertificates.Count == 0)
-                throw new ArgumentException("Phải cung cấp danh sách chứng chỉ (media).");
+                throw new ArgumentException("Danh sách MediaLinkItemDTO không được rỗng.");
 
-            if (dto.Items.Count != addVendorCertificates.Count)
-                throw new ArgumentException("Số Items và số media không khớp. Mỗi item tương ứng 1 file.");
+            if (dto.CertificationCode.Count != dto.CertificationName.Count ||
+                dto.CertificationCode.Count != addVendorCertificates.Count)
+                throw new ArgumentException("CertificationCode[], CertificationName[] và Media phải có chung số lượng.");
 
             var result = new List<VendorCertificateResponseDTO>();
 
-            for (int i = 0; i < dto.Items.Count; i++)
+            for (int i = 0; i < dto.CertificationCode.Count; i++)
             {
-                var item = dto.Items[i];
                 var mediaDto = addVendorCertificates[i];
 
                 var entity = new VendorCertificate
                 {
                     VendorId = dto.VendorId,
-                    CertificationCode = item.CertificationCode,
-                    CertificationName = item.CertificationName,
+                    CertificationCode = dto.CertificationCode[i],
+                    CertificationName = dto.CertificationName[i],
                     Status = VendorCertificateStatus.Pending,
                     UploadedAt = DateTime.UtcNow,
                     CreatedAt = DateTime.UtcNow,
@@ -91,15 +87,21 @@ namespace BLL.Services
             return result;
         }
 
+        
         public async Task<VendorCertificateResponseDTO> UpdateAsync( VendorCertificateUpdateDTO dto, List<MediaLinkItemDTO> addVendorCertificates, List<string> removedCertificates, CancellationToken ct = default)
         {
             var existing = await _repo.GetByIdAsync(dto.Id, ct);
             if (existing == null)
                 throw new KeyNotFoundException($"VendorCertificate {dto.Id} không tồn tại.");
 
+            if (dto.CertificationCode.Count != dto.CertificationName.Count)
+                throw new ArgumentException("CertificationCode[] và CertificationName[] phải bằng nhau.");
+
+
+
             existing.VendorId = dto.VendorId;
-            existing.CertificationCode = dto.CertificationCode;
-            existing.CertificationName = dto.CertificationName;
+            existing.CertificationCode = dto.CertificationCode.First();
+            existing.CertificationName = dto.CertificationName.First();
             existing.UpdatedAt = DateTime.UtcNow;
 
             // Convert thêm MediaLink
@@ -121,11 +123,10 @@ namespace BLL.Services
                 ct
             );
 
-            var mapped = _mapper.Map<VendorCertificateResponseDTO>(updated);
-
-            return mapped;
+            return _mapper.Map<VendorCertificateResponseDTO>(updated);
         }
 
+        
         public async Task DeleteAsync(ulong id, CancellationToken ct = default)
         {
             var existing = await _repo.GetByIdAsync(id, ct);
@@ -135,6 +136,7 @@ namespace BLL.Services
             await _repo.DeleteCertificateAsync(existing, ct);
         }
 
+       
         public async Task<VendorCertificateResponseDTO> ChangeStatusAsync( VendorCertificateChangeStatusDTO dto, CancellationToken ct = default)
         {
             var existing = await _repo.GetByIdAsync(dto.Id, ct);
@@ -142,7 +144,10 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"VendorCertificate {dto.Id} không tồn tại.");
 
             existing.Status = dto.Status;
-            existing.RejectionReason = dto.Status == VendorCertificateStatus.Rejected ? dto.RejectionReason : null;
+            existing.RejectionReason = dto.Status == VendorCertificateStatus.Rejected
+                ? dto.RejectionReason
+                : null;
+
             existing.VerifiedBy = dto.VerifiedBy;
             existing.VerifiedAt = dto.VerifiedBy.HasValue ? DateTime.UtcNow : null;
             existing.UpdatedAt = DateTime.UtcNow;
