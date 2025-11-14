@@ -197,27 +197,33 @@ namespace DAL.Repository
 
         public async Task<VendorCertificate?> ApproveAsync(ulong id, VendorCertificateStatus status, ulong? verifiedByUserId, string? rejectionReason, CancellationToken ct = default)
         {
-            var existing = await _context.VendorCertificates
-                .FirstOrDefaultAsync(x => x.Id == id, ct);
+            var existing = await _context.VendorCertificates.FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (existing == null)
                 return null;
 
+            if (verifiedByUserId.HasValue)
+            {
+                var userExists = await _context.Users
+                    .AnyAsync(u => u.Id == verifiedByUserId.Value, ct);
+
+                if (!userExists)
+                    throw new KeyNotFoundException($"User {verifiedByUserId} not found");
+            }
+
             existing.Status = status;
             existing.VerifiedBy = verifiedByUserId;
-            existing.VerifiedAt = DateTime.UtcNow;
+            existing.VerifiedAt = verifiedByUserId.HasValue ? DateTime.UtcNow : null;
             existing.RejectionReason = rejectionReason;
             existing.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(ct);
 
-            existing.MediaLinks = await LoadFilesAsync(existing.Id, ct);
-            if (existing.MediaLinks != null)
-            {
-                existing.MediaLinks = existing.MediaLinks
-                    .OrderBy(m => m.SortOrder)
-                    .ToList();
-            }
+            existing.MediaLinks = await _context.MediaLinks
+                .Where(m => m.OwnerType == MediaOwnerType.VendorCertificates &&
+                            m.OwnerId == existing.Id)
+                .OrderBy(m => m.SortOrder)
+                .ToListAsync(ct);
 
             return existing;
         }

@@ -151,25 +151,26 @@ namespace BLL.Services
 
         public async Task<VendorCertificateResponseDTO> ChangeStatusAsync( VendorCertificateChangeStatusDTO dto, CancellationToken ct = default)
         {
-            var existing = await _repo.GetByIdAsync(dto.Id, ct);
-            if (existing == null)
-                throw new KeyNotFoundException($"VendorCertificate {dto.Id} không tồn tại.");
+            if (dto.Status == VendorCertificateStatus.Rejected &&
+       string.IsNullOrWhiteSpace(dto.RejectionReason))
+            {
+                throw new ArgumentException("RejectionReason is required when status is Rejected.");
+            }
 
-            existing.Status = dto.Status;
-            existing.RejectionReason = dto.Status == VendorCertificateStatus.Rejected ? dto.RejectionReason : null;
-
-            existing.VerifiedBy = dto.VerifiedBy;
-            existing.VerifiedAt = dto.VerifiedBy.HasValue ? DateTime.UtcNow : null;
-            existing.UpdatedAt = DateTime.UtcNow;
-
-            var updated = await _repo.UpdateAsync(
+            // Gọi repo để duyệt / từ chối
+            var updated = await _repo.ApproveAsync(
                 dto.Id,
-                existing,
-                addVendorCertificateFiles: null,
-                removeCertificatePublicIds: null,
-                ct: ct);
+                dto.Status,
+                dto.VerifiedBy,
+                dto.Status == VendorCertificateStatus.Rejected ? dto.RejectionReason : null,
+                ct
+            );
 
-            return _mapper.Map<VendorCertificateResponseDTO>(updated);
+            if (updated == null)
+                throw new KeyNotFoundException($"VendorCertificate {dto.Id} không tồn tại.");
+            var result = _mapper.Map<VendorCertificateResponseDTO>(updated);
+           
+            return result;
         }
     }
 }
