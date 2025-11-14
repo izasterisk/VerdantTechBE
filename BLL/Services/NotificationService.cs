@@ -2,6 +2,8 @@
 using BLL.DTO;
 using BLL.DTO.Notification;
 using BLL.Interfaces;
+using BLL.Interfaces.Infrastructure;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 
@@ -11,11 +13,49 @@ public class NotificationService : INotificationService
 {
     private readonly IMapper _mapper;
     private readonly INotificationRepository _notificationRepository;
+    private readonly INotificationHub _notificationHub;
     
-    public NotificationService(IMapper mapper, INotificationRepository notificationRepository)
+    public NotificationService(
+        IMapper mapper, 
+        INotificationRepository notificationRepository,
+        INotificationHub notificationHub)
     {
         _mapper = mapper;
         _notificationRepository = notificationRepository;
+        _notificationHub = notificationHub;
+    }
+    
+    public async Task<NotificationResponseDTO> CreateAndSendNotificationAsync(
+        ulong userId, 
+        string title, 
+        string message, 
+        NotificationReferenceType? referenceType = null,
+        ulong? referenceId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var notification = new Notification
+        {
+            UserId = userId,
+            Title = title,
+            Message = message,
+            ReferenceType = referenceType,
+            ReferenceId = referenceId,
+            IsRead = false
+        };
+        
+        var createdNotification = await _notificationRepository.CreateNotificationAsync(notification, cancellationToken);
+        var notificationDto = _mapper.Map<NotificationResponseDTO>(createdNotification);
+        
+        try
+        {
+            await _notificationHub.SendNotificationToUser(userId, notificationDto);
+        }
+        catch
+        {
+            // Không throw exception - notification đã lưu DB thành công
+        }
+        
+        return notificationDto;
     }
     
     public async Task<NotificationResponseDTO> RevertReadStatusAsync(ulong notificationId, CancellationToken cancellationToken = default)

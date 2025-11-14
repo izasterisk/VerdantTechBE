@@ -11,6 +11,7 @@ using System.Text;
 using BLL.Helpers;
 using DAL.Data.Models;
 using Infrastructure.Extensions;
+using Infrastructure.SignalR;
 using BLL.DTO;
 using System.Net;
 using Newtonsoft.Json;
@@ -163,6 +164,14 @@ builder.Services.AddScoped<IVendorProfileService, VendorProfileService>();
 // Infrastructure registrations
 builder.Services.AddInfrastructure();
 
+// Configure SignalR
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
+
 // Configure Memory Cache
 builder.Services.AddMemoryCache();
 
@@ -201,6 +210,19 @@ builder.Services.AddAuthentication(options =>
     // Cấu hình events để trả về message tùy chỉnh
     options.Events = new JwtBearerEvents
     {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+            {
+                context.Token = accessToken;
+            }
+            
+            return Task.CompletedTask;
+        },
+        
         OnChallenge = context =>
         {
             // Ngăn không cho default challenge response
@@ -328,5 +350,7 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+app.MapHub<NotificationHub>("/hubs/notification");
 
 app.Run();

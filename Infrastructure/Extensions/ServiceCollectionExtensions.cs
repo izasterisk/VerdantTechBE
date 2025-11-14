@@ -5,6 +5,7 @@ using Infrastructure.Soil;
 using Infrastructure.Weather;
 using Infrastructure.Courier;
 using Infrastructure.Payment.PayOS;
+using Infrastructure.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Extensions;
@@ -52,6 +53,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    public static IServiceCollection AddSignalRNotification(this IServiceCollection services)
+    {
+        services.AddScoped<INotificationHub, NotificationHubService>();
+        return services;
+    }
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         services.AddEmail();
@@ -60,6 +67,7 @@ public static class ServiceCollectionExtensions
         services.AddCourier();
         services.AddAddress();
         services.AddPayOS();
+        services.AddSignalRNotification();
         return services;
     }
 }
