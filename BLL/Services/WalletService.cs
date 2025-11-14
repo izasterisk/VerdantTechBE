@@ -131,6 +131,7 @@ public class WalletService : IWalletService
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");
         if(await _payOSApiClient.GetBalanceAsync(cancellationToken) < (int)Math.Ceiling(walletCashout.Amount))
             throw new InvalidOperationException("Số dư trong tài khoản PayOS không đủ để thực hiện yêu cầu rút tiền. Vui lòng liên hệ bộ phận quản lý.");
+        await Task.Delay(2000, cancellationToken);
         
         var categories = new List<string> { "WalletCashout" };
         var cashoutResponse = await _payOSApiClient.CreateCashoutAsync(
