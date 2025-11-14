@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using BLL.DTO.BatchInventory;
 using BLL.Interfaces;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
+using DAL.Repository;
 
 namespace BLL.Services
 {
@@ -10,18 +12,20 @@ namespace BLL.Services
     {
         private readonly IBatchInventoryRepository _repo;
         private readonly IProductRepository _productRepo;
-        private readonly IVendorProfileRepository _vendorRepo;
+        //private readonly IVendorProfileRepository _vendorRepo;
+        private readonly IUserRepository _userRepo;
         private readonly IMapper _mapper;
 
         public BatchInventoryService(
             IBatchInventoryRepository repo,
             IProductRepository productRepo,
-            IVendorProfileRepository vendorRepo,
+        //IVendorProfileRepository vendorRepo,
+            IUserRepository userRepo,
             IMapper mapper)
         {
             _repo = repo;
             _productRepo = productRepo;
-            _vendorRepo = vendorRepo;
+            _userRepo = userRepo;
             _mapper = mapper;
         }
 
@@ -47,9 +51,10 @@ namespace BLL.Services
         // GET BY VENDOR
         public async Task<IEnumerable<BatchInventoryResponeDTO>> GetByVendorIdAsync(ulong vendorId, int page, int pageSize, CancellationToken ct = default)
         {
-            var vendor = await _vendorRepo.GetByIdAsync(vendorId, ct);
-            if (vendor == null)
-                throw new KeyNotFoundException($"Vendor ID {vendorId} not found");
+            ////var vendor = await _vendorRepo.GetByIdAsync(vendorId, ct);
+            //var vendor = await _userRepo.GetByIdAsync(vendorId, ct);
+            //if (vendor == null)
+            //    throw new KeyNotFoundException($"Vendor ID {vendorId} not found");
 
             var items = await _repo.GetByVendorIdAsync(vendorId, page, pageSize, ct);
             return _mapper.Map<IEnumerable<BatchInventoryResponeDTO>>(items);
@@ -75,12 +80,24 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"Product ID {dto.ProductId} not found");
 
             // CHECK VENDOR
+            //if (dto.VendorId.HasValue)
+            //{
+            //    var vendor = await _vendorRepo.GetByIdAsync(dto.VendorId.Value, ct);
+            //    if (vendor == null)
+            //        throw new KeyNotFoundException($"Vendor ID {dto.VendorId.Value} not found");
+            //}
             if (dto.VendorId.HasValue)
             {
-                var vendor = await _vendorRepo.GetByIdAsync(dto.VendorId.Value, ct);
-                if (vendor == null)
-                    throw new KeyNotFoundException($"Vendor ID {dto.VendorId.Value} not found");
+                var vendorUser = await _userRepo.GetUserWithAddressesByIdAsync(dto.VendorId.Value, ct);
+
+                if (vendorUser == null)
+                    throw new ArgumentException($"User ID {dto.VendorId.Value} not found.");
+
+                if (vendorUser.Role != UserRole.Vendor)
+                    throw new ArgumentException($"User ID {dto.VendorId.Value} is not a vendor.");
             }
+
+
 
             var entity = _mapper.Map<BatchInventory>(dto);
             var created = await _repo.CreateAsync(entity, ct);
@@ -101,12 +118,24 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"Product ID {dto.ProductId} not found");
 
             // Check vendor
+            //if (dto.VendorId.HasValue)
+            //{
+            //    var vendor = await _vendorRepo.GetByIdAsync(dto.VendorId.Value, ct);
+            //    if (vendor == null)
+            //        throw new KeyNotFoundException($"Vendor ID {dto.VendorId.Value} not found");
+            //}
             if (dto.VendorId.HasValue)
             {
-                var vendor = await _vendorRepo.GetByIdAsync(dto.VendorId.Value, ct);
-                if (vendor == null)
-                    throw new KeyNotFoundException($"Vendor ID {dto.VendorId.Value} not found");
+                var vendorUser = await _userRepo.GetUserWithAddressesByIdAsync(dto.VendorId.Value, ct);
+
+                if (vendorUser == null)
+                    throw new ArgumentException($"User ID {dto.VendorId.Value} not found.");
+
+                if (vendorUser.Role != UserRole.Vendor)
+                    throw new ArgumentException($"User ID {dto.VendorId.Value} is not a vendor.");
             }
+
+
 
             _mapper.Map(dto, existing);
 
