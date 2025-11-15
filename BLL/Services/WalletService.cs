@@ -18,10 +18,11 @@ public class WalletService : IWalletService
     private readonly IUserBankAccountsRepository _userBankAccountsRepository;
     private readonly ICashoutRepository _cashoutRepository;
     private readonly IPayOSApiClient _payOSApiClient;
+    private readonly INotificationService _notificationService;
     
     public WalletService(IWalletRepository walletRepository, IMapper mapper, IOrderRepository orderRepository,
         IUserBankAccountsRepository userBankAccountsRepository, ICashoutRepository cashoutRepository,
-        IPayOSApiClient payOSService)
+        IPayOSApiClient payOSService, INotificationService notificationService)
     {
         _walletRepository = walletRepository;
         _mapper = mapper;
@@ -29,6 +30,7 @@ public class WalletService : IWalletService
         _userBankAccountsRepository = userBankAccountsRepository;
         _cashoutRepository = cashoutRepository;
         _payOSApiClient = payOSService;
+        _notificationService = notificationService;
     }
 
     public async Task<WalletResponseDTO> ProcessWalletCreditsAsync(ulong userId, CancellationToken cancellationToken = default)
@@ -121,6 +123,18 @@ public class WalletService : IWalletService
         }
         
         var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
+        
+        if (dto.Status == CashoutStatus.Completed)
+        {
+            await _notificationService.CreateAndSendNotificationAsync(
+                userId,
+                "Yêu cầu rút tiền đã được xử lý thành công",
+                $"Yêu cầu rút tiền từ ví của bạn đã được xử lý thành công. Số tiền {walletCashout.Amount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.",
+                NotificationReferenceType.WalletCashout,
+                c.Id,
+                cancellationToken);
+        }
+        
         return _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
     }
     
@@ -168,6 +182,15 @@ public class WalletService : IWalletService
         var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
         var mapped = _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
         mapped.ToAccountName = cashoutResponse.ToAccountName;
+        
+        await _notificationService.CreateAndSendNotificationAsync(
+            userId,
+            "Yêu cầu rút tiền đã được xử lý thành công",
+            $"Yêu cầu rút tiền từ ví của bạn đã được xử lý thành công. Số tiền {walletCashout.Amount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.",
+            NotificationReferenceType.WalletCashout,
+            c.Id,
+            cancellationToken);
+        
         return mapped;
     }
     

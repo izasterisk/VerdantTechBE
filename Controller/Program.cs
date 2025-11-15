@@ -147,7 +147,6 @@ builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-//builder.Services.AddScoped<IStaffService, StaffService>();
 builder.Services.AddScoped<IProductCertificateService, ProductCertificateService>();
 builder.Services.AddScoped<IProductRegistrationService, ProductRegistrationService>();
 builder.Services.AddScoped<IPayOSService, PayOSService>();

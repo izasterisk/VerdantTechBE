@@ -265,7 +265,8 @@ public enum NotificationReferenceType
     Request,
     ForumPost,
     ChatbotConversation,
-    Cashout,
+    Refund,
+    WalletCashout,
     ProductRegistration,
     EnvironmentalData
 }
