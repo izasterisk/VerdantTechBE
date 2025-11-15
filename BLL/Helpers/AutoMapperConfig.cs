@@ -5,6 +5,7 @@ using BLL.DTO.Cart;
 using BLL.DTO.CO2;
 using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
+using BLL.DTO.ForumCategory;
 using BLL.DTO.MediaLink;
 using BLL.DTO.Notification;
 using BLL.DTO.Order;
@@ -107,6 +108,21 @@ namespace BLL.Helpers
 
             CreateMap<MediaLink, ImagesDTO>().ReverseMap();
             CreateMap<MediaLink, ProductImageResponseDTO>().ReverseMap();
+
+
+            // ===================== FORUM CATEGORY =====================
+            CreateMap<ForumCategoryCreateDTO, ForumCategory>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore());
+
+            CreateMap<ForumCategoryUpdateDTO, ForumCategory>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<ForumCategory, ForumCategoryResponseDto>();
+
 
             // ===================== CART =====================
             CreateMap<CartDTO, CartItem>().ReverseMap();
