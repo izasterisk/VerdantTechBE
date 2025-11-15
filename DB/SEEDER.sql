@@ -381,7 +381,7 @@ INSERT INTO `notifications` (`id`, `user_id`, `title`, `message`, `reference_typ
 -- Notifications for Vendor 1 (user_id=5)
 (6, 5, 'Đơn hàng mới', 'Bạn có đơn hàng mới #1. Vui lòng chuẩn bị hàng và giao cho đơn vị vận chuyển.', 'order', 1, 1, '2025-09-09 10:00:00', '2025-09-09 10:30:00'),
 (7, 5, 'Tiền hoa hồng đã được cộng vào ví', 'Hoa hồng từ đơn hàng #1 đã được cộng vào ví của bạn.', 'order', 1, 1, '2025-09-09 15:30:00', '2025-09-09 16:00:00'),
-(8, 5, 'Yêu cầu rút tiền đã được xử lý', 'Yêu cầu rút tiền của bạn đã được xử lý thành công.', 'cashout', 1, 0, '2025-09-10 09:00:00', '2025-09-10 09:00:00'),
+(8, 5, 'Yêu cầu rút tiền đã được xử lý', 'Yêu cầu rút tiền của bạn đã được xử lý thành công.', 'wallet_cashout', 1, 0, '2025-09-10 09:00:00', '2025-09-10 09:00:00'),
 
 -- Notifications for Vendor 2 (user_id=6)
 (9, 6, 'Đơn hàng mới', 'Bạn có đơn hàng mới #2 với 2 sản phẩm.', 'order', 2, 1, '2025-09-09 11:00:00', '2025-09-09 11:30:00'),

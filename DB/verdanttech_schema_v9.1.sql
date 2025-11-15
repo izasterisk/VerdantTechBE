@@ -715,7 +715,7 @@ CREATE TABLE notifications (
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người nhận thông báo (customer, vendor, staff, admin)',
     title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề thông báo (hiển thị ngắn gọn)',
     message TEXT NOT NULL COMMENT 'Nội dung chi tiết thông báo',
-    reference_type ENUM('order', 'payment', 'request', 'forum_post', 'chatbot_conversation', 'cashout', 'product_registration', 'environmental_data') NULL COMMENT 'Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết',
+    reference_type ENUM('order', 'payment', 'request', 'forum_post', 'chatbot_conversation', 'refund', 'wallet_cashout', 'product_registration', 'environmental_data') NULL COMMENT 'Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID của entity tham chiếu (ví dụ: order_id, post_id)',
     is_read BOOLEAN DEFAULT FALSE COMMENT 'Thông báo đã đọc chưa (dùng để filter hiển thị)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

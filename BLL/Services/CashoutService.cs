@@ -22,10 +22,11 @@ public class CashoutService : ICashoutService
     private readonly IRequestRepository _requestRepository;
     private readonly IOrderRepository _orderRepository;
     private readonly IUserBankAccountsRepository _userBankAccountRepository;
+    private readonly INotificationService _notificationService;
     
     public CashoutService(IWalletRepository walletRepository, IMapper mapper, IPayOSApiClient payOSApiClient,
         ICashoutRepository cashoutRepository, IOrderDetailRepository orderDetailRepository, IRequestRepository requestRepository,
-        IOrderRepository orderRepository, IUserBankAccountsRepository userBankAccountsRepository)
+        IOrderRepository orderRepository, IUserBankAccountsRepository userBankAccountsRepository, INotificationService notificationService)
     {
         _walletRepository = walletRepository;
         _mapper = mapper;
@@ -35,6 +36,7 @@ public class CashoutService : ICashoutService
         _requestRepository = requestRepository;
         _orderRepository = orderRepository;
         _userBankAccountRepository = userBankAccountsRepository;
+        _notificationService = notificationService;
     }
     
     public async Task<RefundReponseDTO> CreateCashoutRefundByPayOSAsync(ulong staffId, ulong requestId, RefundCreateDTO dto, CancellationToken cancellationToken = default)
@@ -117,6 +119,14 @@ public class CashoutService : ICashoutService
         reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);
         reponseDto.TransactionInfo.ToAccountName = cashoutResponse.ToAccountName;
         reponseDto.OrderDetails = products;
+        
+        await _notificationService.CreateAndSendNotificationAsync(
+            request.UserId,
+            "Rút tiền thành công",
+            $"Yêu cầu rút tiền của bạn đã được xử lý thành công. Số tiền {dto.RefundAmount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.",
+            NotificationReferenceType.Refund,
+            created.Id,
+            cancellationToken);
         return reponseDto;
     }
 
@@ -190,6 +200,14 @@ public class CashoutService : ICashoutService
         RefundReponseDTO reponseDto = new RefundReponseDTO();
         reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);
         reponseDto.OrderDetails = products;
+        
+        await _notificationService.CreateAndSendNotificationAsync(
+            request.UserId,
+            "Rút tiền thành công",
+            $"Yêu cầu rút tiền của bạn đã được xử lý thành công. Số tiền {dto.RefundAmount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.",
+            NotificationReferenceType.Refund,
+            created.Id,
+            cancellationToken);
         return reponseDto;
     }
     
