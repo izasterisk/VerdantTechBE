@@ -209,11 +209,11 @@ INSERT INTO `forum_comments` (`id`, `forum_post_id`, `user_id`, `parent_id`, `co
 (5, 2, 10, 4, 'Máy chạy rất ổn, chỉ có điều pin hơi nhanh hết khi làm đất cứng. Các bạn có kế hoạch nâng cấp dung lượng pin không?', 1, 0, 'visible', '2025-09-09 06:00:00', '2025-09-09 06:00:00'),
 (6, 3, 9, NULL, 'Bạn có thể thử dùng dung dịch tỏi ớt để xịt phòng trừ sâu bệnh. Mình dùng hiệu quả lắm!', 6, 0, 'visible', '2025-09-09 10:00:00', '2025-09-09 10:00:00');
 
--- Insert Chatbot Conversations (v7.1 structure - changed user_id to customer_id)
-INSERT INTO `chatbot_conversations` (`id`, `customer_id`, `title`, `context`, `is_active`, `started_at`, `ended_at`) VALUES
-(1, 7, 'Tư vấn chọn máy cày', '{"topic": "equipment_consultation", "products_discussed": ["TC001"], "user_preferences": {"budget": "under_30m", "farm_size": "small"}}', 0, '2025-09-08 14:00:00', '2025-09-08 14:30:00'),
-(2, 9, 'Hỗ trợ kỹ thuật canh tác', '{"topic": "farming_techniques", "crop_type": "rice", "farming_method": "organic"}', 1, '2025-09-09 06:00:00', NULL),
-(3, 8, 'Tư vấn phân bón hữu cơ', '{"topic": "fertilizer_consultation", "crop_type": "vegetables", "soil_type": "sandy"}', 0, '2025-09-09 08:00:00', '2025-09-09 08:45:00');
+-- Insert Chatbot Conversations (v9.2 structure - removed ended_at field)
+INSERT INTO `chatbot_conversations` (`id`, `customer_id`, `title`, `context`, `is_active`, `started_at`) VALUES
+(1, 7, 'Tư vấn chọn máy cày', '{"topic": "equipment_consultation", "products_discussed": ["TC001"], "user_preferences": {"budget": "under_30m", "farm_size": "small"}}', 0, '2025-09-08 14:00:00'),
+(2, 9, 'Hỗ trợ kỹ thuật canh tác', '{"topic": "farming_techniques", "crop_type": "rice", "farming_method": "organic"}', 1, '2025-09-09 06:00:00'),
+(3, 8, 'Tư vấn phân bón hữu cơ', '{"topic": "fertilizer_consultation", "crop_type": "vegetables", "soil_type": "sandy"}', 0, '2025-09-09 08:00:00');
 
 -- Insert Chatbot Messages (v8.1 structure - removed attachments, use media_links table instead)
 INSERT INTO `chatbot_messages` (`id`, `conversation_id`, `message_type`, `message_text`, `created_at`) VALUES
