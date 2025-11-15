@@ -21,16 +21,9 @@ public class NotificationHubService : INotificationHub
     /// </summary>
     public async Task SendNotificationToUser(ulong userId, object notification)
     {
-        try
-        {
-            await _hubContext.Clients
-                .Group($"User_{userId}")
-                .SendCoreAsync("ReceiveNotification", new object[] { notification });
-        }
-        catch
-        {
-            // Không throw - notification đã lưu DB, việc gửi realtime fail là acceptable
-        }
+        await _hubContext.Clients
+            .Group($"User_{userId}")
+            .SendCoreAsync("ReceiveNotification", [notification]);
     }
 
     /// <summary>
@@ -38,18 +31,11 @@ public class NotificationHubService : INotificationHub
     /// </summary>
     public async Task SendNotificationToMultipleUsers(List<ulong> userIds, object notification)
     {
-        try
-        {
-            var groupNames = userIds.Select(id => $"User_{id}").ToList();
-            
-            await _hubContext.Clients
-                .Groups(groupNames)
-                .SendCoreAsync("ReceiveNotification", new object[] { notification });
-        }
-        catch
-        {
-            // Không throw
-        }
+        var groupNames = userIds.Select(id => $"User_{id}").ToList();
+        
+        await _hubContext.Clients
+            .Groups(groupNames)
+            .SendCoreAsync("ReceiveNotification", [notification]);
     }
 
     /// <summary>
@@ -57,15 +43,8 @@ public class NotificationHubService : INotificationHub
     /// </summary>
     public async Task SendNotificationToAllUsers(object notification)
     {
-        try
-        {
-            await _hubContext.Clients.All
-                .SendCoreAsync("ReceiveNotification", new object[] { notification });
-        }
-        catch
-        {
-            // Không throw
-        }
+        await _hubContext.Clients.All
+            .SendCoreAsync("ReceiveNotification", [notification]);
     }
 
     /// <summary>
@@ -73,15 +52,8 @@ public class NotificationHubService : INotificationHub
     /// </summary>
     public async Task SendNotificationToRole(string role, object notification)
     {
-        try
-        {
-            await _hubContext.Clients
-                .Group($"Role_{role}")
-                .SendCoreAsync("ReceiveNotification", new object[] { notification });
-        }
-        catch
-        {
-            // Không throw
-        }
+        await _hubContext.Clients
+            .Group($"Role_{role}")
+            .SendCoreAsync("ReceiveNotification", [notification]);
     }
 }

@@ -15,22 +15,15 @@ public class NotificationService : INotificationService
     private readonly INotificationRepository _notificationRepository;
     private readonly INotificationHub _notificationHub;
     
-    public NotificationService(
-        IMapper mapper, 
-        INotificationRepository notificationRepository,
-        INotificationHub notificationHub)
+    public NotificationService(IMapper mapper, INotificationRepository notificationRepository, INotificationHub notificationHub)
     {
         _mapper = mapper;
         _notificationRepository = notificationRepository;
         _notificationHub = notificationHub;
     }
     
-    public async Task<NotificationResponseDTO> CreateAndSendNotificationAsync(
-        ulong userId, 
-        string title, 
-        string message, 
-        NotificationReferenceType? referenceType = null,
-        ulong? referenceId = null,
+    public async Task<NotificationResponseDTO> CreateAndSendNotificationAsync(ulong userId, string title, 
+        string message, NotificationReferenceType? referenceType = null, ulong? referenceId = null,
         CancellationToken cancellationToken = default)
     {
         var notification = new Notification
@@ -42,33 +35,16 @@ public class NotificationService : INotificationService
             ReferenceId = referenceId,
             IsRead = false
         };
-        
         var createdNotification = await _notificationRepository.CreateNotificationAsync(notification, cancellationToken);
         var notificationDto = _mapper.Map<NotificationResponseDTO>(createdNotification);
-        
-        try
-        {
-            await _notificationHub.SendNotificationToUser(userId, notificationDto);
-        }
-        catch
-        {
-            // Không throw exception - notification đã lưu DB thành công
-        }
-        
+        await _notificationHub.SendNotificationToUser(userId, notificationDto);
         return notificationDto;
     }
     
     public async Task<NotificationResponseDTO> RevertReadStatusAsync(ulong notificationId, CancellationToken cancellationToken = default)
     {
         var notification = await _notificationRepository.GetNotificationByIdAsync(notificationId, cancellationToken);
-        if(notification.IsRead == true)
-        {
-            notification.IsRead = false;
-        }
-        else
-        {
-            notification.IsRead = true;
-        }
+        notification.IsRead = !notification.IsRead;
         var updatedNotification = await _notificationRepository.UpdateNotificationAsync(notification, cancellationToken);
         return _mapper.Map<NotificationResponseDTO>(updatedNotification);
     }
