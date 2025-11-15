@@ -109,6 +109,8 @@ builder.Services.AddScoped<IRepository<Cashout>, Repository<Cashout>>();
 builder.Services.AddScoped<IRepository<Request>, Repository<Request>>();
 builder.Services.AddScoped<IRepository<ProductReview>, Repository<ProductReview>>();
 builder.Services.AddScoped<IRepository<Notification>, Repository<Notification>>();
+builder.Services.AddScoped<IRepository<ChatbotConversation>, Repository<ChatbotConversation>>();
+builder.Services.AddScoped<IRepository<ChatbotMessage>, Repository<ChatbotMessage>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -136,6 +138,7 @@ builder.Services.AddScoped<IProductReviewRepository, ProductReviewRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IVendorCertificateRepository, VendorCertificateRepository>();
 builder.Services.AddScoped<IVendorProfileRepository, VendorProfileRepository>();
+builder.Services.AddScoped<IChatbotConversationRepository, ChatbotConversationRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -159,6 +162,7 @@ builder.Services.AddScoped<IProductReviewService, ProductReviewService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IVendorCertificateService, VendorCertificateService>();
 builder.Services.AddScoped<IVendorProfileService, VendorProfileService>();
+builder.Services.AddScoped<IChatbotConversationService, ChatbotConversationService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

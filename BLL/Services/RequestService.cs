@@ -13,12 +13,14 @@ public class RequestService : IRequestService
     private readonly IRequestRepository _requestRepository;
     private readonly IMapper _mapper;
     private readonly IUserRepository _userRepository;
+    private readonly INotificationService _notificationService;
     
-    public RequestService(IRequestRepository requestRepository, IMapper mapper, IUserRepository userRepository)
+    public RequestService(IRequestRepository requestRepository, IMapper mapper, IUserRepository userRepository, INotificationService notificationService)
     {
         _requestRepository = requestRepository;
         _mapper = mapper;
         _userRepository = userRepository;
+        _notificationService = notificationService;
     }
     
     public async Task<RequestResponseDTO> CreateRequestAsync(ulong userId, RequestCreateDTO dto, CancellationToken cancellationToken = default)

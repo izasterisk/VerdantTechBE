@@ -22,6 +22,7 @@ using BLL.DTO.Wallet;
 using BLL.Services.Payment;
 using DAL.Data.Models;
 using System.Numerics;
+using BLL.DTO.ChatbotConversations;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
 
 namespace BLL.Helpers
@@ -329,6 +330,13 @@ namespace BLL.Helpers
             CreateMap<MediaLink, ProductReviewImageDTO>()
                 .ForMember(d => d.ImageUrl, o => o.MapFrom(s => s.ImageUrl))
                 .ForMember(d => d.ImagePublicId, o => o.MapFrom(s => s.ImagePublicId));
+            
+            // ===================== CHATBOT =====================
+            CreateMap<ChatbotConversation, ChatbotConversationsResponseDTO>().ReverseMap();
+            CreateMap<ChatbotMessage, ChatbotMessagesResponseDTO>().ReverseMap();
+            CreateMap<ChatbotConversationUpdateDTO, ChatbotConversation>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<ChatbotMessage, ChatbotMessageCreateDTO>().ReverseMap();
         }
     }
 }

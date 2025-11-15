@@ -11,10 +11,6 @@ public partial class ChatbotConversation
 
     public ulong CustomerId { get; set; }
 
-    [Required]
-    [StringLength(255)]
-    public string SessionId { get; set; } = null!;
-
     [StringLength(255)]
     public string? Title { get; set; }
 
@@ -26,8 +22,6 @@ public partial class ChatbotConversation
     public bool IsActive { get; set; } = true;
 
     public DateTime StartedAt { get; set; }
-
-    public DateTime? EndedAt { get; set; }
 
     // Navigation Properties
     public virtual User Customer { get; set; } = null!;

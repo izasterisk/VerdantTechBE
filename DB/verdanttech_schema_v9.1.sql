@@ -209,16 +209,13 @@ CREATE TABLE energy_usage (
 CREATE TABLE chatbot_conversations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT UNSIGNED NOT NULL,
-    session_id VARCHAR(255) NOT NULL,
     title VARCHAR(255),
     context TEXT COMMENT 'Bối cảnh cuộc hội thoại và metadata',
     is_active BOOLEAN DEFAULT TRUE,
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ended_at TIMESTAMP NULL,
 
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_customer (customer_id),
-    INDEX idx_session (session_id)
+    INDEX idx_customer (customer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các phiên hội thoại chatbot';
 
 -- Tin nhắn chatbot
@@ -738,7 +735,7 @@ CREATE TABLE notifications (
 --   + user_id: Người nhận thông báo (hỗ trợ tất cả role: customer, vendor, staff, admin)
 --   + title: Tiêu đề ngắn gọn (hiển thị trong danh sách)
 --   + message: Nội dung chi tiết thông báo
---   + reference_type: ENUM loại entity tham chiếu (order, payment, request, forum_post, chatbot_conversation, cashout, product_registration, environmental_data)
+--   + reference_type: ENUM loại entity tham chiếu (order, payment, request, forum_post, chatbot_conversation, refund, wallet_cashout, product_registration, environmental_data)
 --   + reference_id: ID của entity được tham chiếu (để link đến chi tiết)
 --   + is_read: Trạng thái đã đọc (dùng để filter, highlight thông báo mới)
 -- • Indexes:
@@ -754,7 +751,8 @@ CREATE TABLE notifications (
 --   + Thông báo thanh toán thành công/thất bại (payment)
 --   + Thông báo yêu cầu được duyệt/từ chối (request)
 --   + Thông báo bình luận mới trên forum (forum_post)
---   + Thông báo cashout thành công (cashout)
+--   + Thông báo hoàn tiền thành công (refund)
+--   + Thông báo rút tiền từ ví thành công (wallet_cashout)
 --   + Thông báo đăng ký sản phẩm được duyệt (product_registration)
 --   + Thông báo nhắc nhập dữ liệu môi trường (environmental_data)
 

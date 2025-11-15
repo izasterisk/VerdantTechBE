@@ -22,14 +22,6 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
             .IsRequired()
             .HasColumnName("customer_id");
         
-        // Required string fields
-        builder.Property(e => e.SessionId)
-            .HasMaxLength(255)
-            .IsRequired()
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("session_id");
-        
         // Optional string field
         builder.Property(e => e.Title)
             .HasMaxLength(255)
@@ -53,10 +45,6 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
             .HasColumnName("started_at");
-            
-        builder.Property(e => e.EndedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("ended_at");
         
         // Foreign Key Relationships
         builder.HasOne(d => d.Customer)
@@ -67,8 +55,5 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
         // Indexes
         builder.HasIndex(e => e.CustomerId)
             .HasDatabaseName("idx_customer");
-            
-        builder.HasIndex(e => e.SessionId)
-            .HasDatabaseName("idx_session");
     }
 }

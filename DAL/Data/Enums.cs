@@ -104,14 +104,6 @@ public enum RequestStatus
     Cancelled
 }
 
-public enum RequestPriority
-{
-    Low,
-    Medium,
-    High,
-    Urgent
-}
-
 // =====================================================
 // ORDER AND PAYMENT ENUMS
 // =====================================================
@@ -253,10 +245,6 @@ public enum MediaPurpose
     ProductCertificatePdf,
     VendorCertificatesPdf
 }
-
-// =====================================================
-// NOTIFICATION ENUMS (v9.2)
-// =====================================================
 
 public enum NotificationReferenceType
 {
