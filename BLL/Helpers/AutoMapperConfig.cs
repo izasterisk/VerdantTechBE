@@ -25,6 +25,8 @@ using DAL.Data.Models;
 using System.Numerics;
 using BLL.DTO.ChatbotConversations;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
+using BLL.DTO.ForumPost;
+using BLL.DTO.ForumComment;
 
 namespace BLL.Helpers
 {
@@ -122,6 +124,19 @@ namespace BLL.Helpers
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<ForumCategory, ForumCategoryResponseDto>();
+
+            // ===================== FORUM POST =====================
+            CreateMap<ContentBlockDTO, ContentBlock>().ReverseMap();
+
+            CreateMap<ForumPost, ForumPostResponseDTO>()
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.Images, o => o.Ignore())   
+                .ForMember(d => d.Comments, o => o.Ignore());
+
+            // ===================== FORUM COMMENT =====================
+            CreateMap<ForumComment, ForumCommentResponseDTO>()
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.Replies, o => o.Ignore());
 
 
             // ===================== CART =====================

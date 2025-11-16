@@ -27,12 +27,12 @@ public class EmailSender : IEmailSender
         string textBody = ReplacePlaceholders(textTemplate, fullNameValue, code);
 
         await SendEmailAsync(
-            toEmail, 
-            "Xác thực tài khoản VerdantTech", 
-            htmlBody, 
-            textBody, 
-            fullNameValue, 
-            code, 
+            toEmail,
+            "Xác thực tài khoản VerdantTech",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            code,
             "verification",
             cancellationToken);
     }
@@ -52,12 +52,12 @@ public class EmailSender : IEmailSender
         string textBody = ReplacePlaceholders(textTemplate, fullNameValue, code);
 
         await SendEmailAsync(
-            toEmail, 
-            "Đặt lại mật khẩu VerdantTech", 
-            htmlBody, 
-            textBody, 
-            fullNameValue, 
-            code, 
+            toEmail,
+            "Đặt lại mật khẩu VerdantTech",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            code,
             "forgot-password",
             cancellationToken);
     }
@@ -77,24 +77,24 @@ public class EmailSender : IEmailSender
         string textBody = ReplaceStaffAccountPlaceholders(textTemplate, fullNameValue, toEmail, password);
 
         await SendEmailAsync(
-            toEmail, 
-            "Tài khoản nội bộ được cấp riêng cho nhân viên của Verdant Tech", 
-            htmlBody, 
-            textBody, 
-            fullNameValue, 
-            password, 
+            toEmail,
+            "Tài khoản nội bộ được cấp riêng cho nhân viên của Verdant Tech",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            password,
             "staff-account-created",
             cancellationToken);
     }
 
-    private async Task SendEmailAsync(string toEmail, string subject, string htmlBody, string textBody, 
+    private async Task SendEmailAsync(string toEmail, string subject, string htmlBody, string textBody,
         string fullName, string code, string emailType, CancellationToken cancellationToken = default)
     {
         try
         {
             var service = CreateGmailService();
             var message = CreateEmailMessage(toEmail, subject, htmlBody, textBody, fullName, code);
-            
+
             var request = service.Users.Messages.Send(message, "me");
             await request.ExecuteAsync(cancellationToken);
         }
@@ -106,13 +106,13 @@ public class EmailSender : IEmailSender
 
     private GmailService CreateGmailService()
     {
-        var gmailUser = Environment.GetEnvironmentVariable("GMAIL_USER") 
+        var gmailUser = Environment.GetEnvironmentVariable("GMAIL_USER")
             ?? throw new InvalidOperationException("GMAIL_USER not configured");
-        var refreshToken = Environment.GetEnvironmentVariable("GMAIL_REFRESH_TOKEN") 
+        var refreshToken = Environment.GetEnvironmentVariable("GMAIL_REFRESH_TOKEN")
             ?? throw new InvalidOperationException("GMAIL_REFRESH_TOKEN not configured");
-        var clientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID") 
+        var clientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
             ?? throw new InvalidOperationException("GOOGLE_CLIENT_ID not configured");
-        var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") 
+        var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")
             ?? throw new InvalidOperationException("GOOGLE_CLIENT_SECRET not configured");
 
         var credential = new UserCredential(
@@ -139,10 +139,10 @@ public class EmailSender : IEmailSender
         });
     }
 
-    private Message CreateEmailMessage(string toEmail, string subject, string htmlBody, string textBody, 
+    private Message CreateEmailMessage(string toEmail, string subject, string htmlBody, string textBody,
         string fullName, string code)
     {
-        var gmailUser = Environment.GetEnvironmentVariable("GMAIL_USER") 
+        var gmailUser = Environment.GetEnvironmentVariable("GMAIL_USER")
             ?? throw new InvalidOperationException("GMAIL_USER not configured");
 
         // Encode subject properly for Unicode characters
@@ -158,13 +158,13 @@ public class EmailSender : IEmailSender
         emailMessage.AppendLine("--boundary123");
         emailMessage.AppendLine("Content-Type: text/plain; charset=utf-8");
         emailMessage.AppendLine();
-        
+
         // Text body with fallback
-        string finalTextBody = string.IsNullOrWhiteSpace(textBody) 
-            ? $"Xin chào {fullName}, mã của bạn là: {code}" 
+        string finalTextBody = string.IsNullOrWhiteSpace(textBody)
+            ? $"Xin chào {fullName}, mã của bạn là: {code}"
             : textBody;
         emailMessage.AppendLine(finalTextBody);
-        
+
         // HTML body if available
         if (!string.IsNullOrWhiteSpace(htmlBody))
         {
@@ -174,7 +174,7 @@ public class EmailSender : IEmailSender
             emailMessage.AppendLine();
             emailMessage.AppendLine(htmlBody);
         }
-        
+
         emailMessage.AppendLine();
         emailMessage.AppendLine("--boundary123--");
 
@@ -184,6 +184,57 @@ public class EmailSender : IEmailSender
             .Replace("=", "");
 
         return new Message { Raw = rawMessage };
+    }
+
+    public async Task SendVendorProfileVerifiedEmailAsync(string toEmail, string fullName, string loginEmail, string password, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(toEmail);
+        ArgumentException.ThrowIfNullOrEmpty(loginEmail);
+        ArgumentException.ThrowIfNullOrEmpty(password);
+
+        // Load templates vendor profile verified
+        string htmlTemplate = GetEmbeddedResourceString("Email.Templates.vendor-profile-verified.html") ?? "";
+        string textTemplate = GetEmbeddedResourceString("Email.Templates.vendor-profile-verified.txt") ?? "";
+
+        string fullNameValue = string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName;
+
+        string htmlBody = ReplaceVendorProfileVerifiedPlaceholders(htmlTemplate, fullNameValue, loginEmail, password);
+        string textBody = ReplaceVendorProfileVerifiedPlaceholders(textTemplate, fullNameValue, loginEmail, password);
+
+        await SendEmailAsync(
+            toEmail,
+            "Hồ sơ nhà cung cấp VerdantTech đã được duyệt",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            password,                 // dùng làm fallback text trong SendEmailAsync
+            "vendor-profile-verified",
+            cancellationToken);
+    }
+
+    public async Task SendVendorProfileRejectedEmailAsync(string toEmail, string fullName, string reason, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(toEmail);
+        ArgumentException.ThrowIfNullOrEmpty(reason);
+
+        // Load templates vendor profile rejected
+        string htmlTemplate = GetEmbeddedResourceString("Email.Templates.vendor-profile-rejected.html") ?? "";
+        string textTemplate = GetEmbeddedResourceString("Email.Templates.vendor-profile-rejected.txt") ?? "";
+
+        string fullNameValue = string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName;
+
+        string htmlBody = ReplaceVendorProfileRejectedPlaceholders(htmlTemplate, fullNameValue, reason);
+        string textBody = ReplaceVendorProfileRejectedPlaceholders(textTemplate, fullNameValue, reason);
+
+        await SendEmailAsync(
+            toEmail,
+            "Hồ sơ nhà cung cấp VerdantTech chưa được duyệt",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            reason,                    // dùng làm fallback text trong SendEmailAsync
+            "vendor-profile-rejected",
+            cancellationToken);
     }
 
     private static string EncodeSubject(string subject)
@@ -217,17 +268,55 @@ public class EmailSender : IEmailSender
             .Replace("{{password}}", password);
     }
 
-    private static string? GetEmbeddedResourceString(string resourcePathTail)
+    //private static string? GetEmbeddedResourceString(string resourcePathTail)
+    //{
+    //    var assembly = Assembly.GetExecutingAssembly();
+    //    var resourceName = assembly.GetManifestResourceNames()
+    //        .FirstOrDefault(n => n.EndsWith(resourcePathTail.Replace('/', '.'), StringComparison.OrdinalIgnoreCase));
+    //    if (resourceName == null) return null;
+    //    using var stream = assembly.GetManifestResourceStream(resourceName);
+    //    if (stream == null) return null;
+    //    using var reader = new StreamReader(stream, Encoding.UTF8);
+    //    return reader.ReadToEnd();
+    //}
+
+    private static string? GetEmbeddedResourceString(string fileName)
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var resourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith(resourcePathTail.Replace('/', '.'), StringComparison.OrdinalIgnoreCase));
-        if (resourceName == null) return null;
+        var names = assembly.GetManifestResourceNames();
+
+        // Tìm resource chứa tên file (case-insensitive)
+        var resourceName = names.FirstOrDefault(n =>
+            n.Contains(fileName.Replace('/', '.'), StringComparison.OrdinalIgnoreCase));
+
+        if (resourceName == null)
+        {
+            Console.WriteLine($"[EmailSender] Không tìm thấy template: {fileName}");
+            Console.WriteLine("Resource list:");
+            foreach (var n in names) Console.WriteLine("  - " + n);
+            return null;
+        }
+
         using var stream = assembly.GetManifestResourceStream(resourceName);
-        if (stream == null) return null;
-        using var reader = new StreamReader(stream, Encoding.UTF8);
+        using var reader = new StreamReader(stream!);
         return reader.ReadToEnd();
     }
+
+
+    private static string ReplaceVendorProfileVerifiedPlaceholders(string template, string fullName, string email, string password)
+    {
+        if (string.IsNullOrEmpty(template)) return template;
+        return template
+            .Replace("{{fullName}}", fullName)
+            .Replace("{{email}}", email)
+            .Replace("{{password}}", password);
+    }
+
+    private static string ReplaceVendorProfileRejectedPlaceholders(string template, string fullName, string reason)
+    {
+        if (string.IsNullOrEmpty(template)) return template;
+        return template
+            .Replace("{{fullName}}", fullName)
+            .Replace("{{reason}}", reason);
+    }
 }
-
-

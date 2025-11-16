@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DAL.Data.Models;
 
@@ -36,4 +37,6 @@ public partial class VendorProfile
     public virtual ICollection<VendorCertificate> VendorCertificates { get; set; } = new List<VendorCertificate>();
     public virtual ICollection<BatchInventory> BatchInventories { get; set; } = new List<BatchInventory>();
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
+    [NotMapped]
+    public List<MediaLink> MediaLinks { get; set; } = new();
 }
