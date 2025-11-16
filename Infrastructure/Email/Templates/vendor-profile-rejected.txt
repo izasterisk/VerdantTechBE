@@ -1,0 +1,19 @@
+﻿Hồ sơ nhà cung cấp VerdantTech chưa được duyệt
+
+Chào {{fullName}},
+
+Rất tiếc, hồ sơ nhà cung cấp của bạn hiện CHƯA ĐƯỢC DUYỆT trên hệ thống VerdantTech.
+
+Lý do:
+{{reason}}
+
+Bạn vui lòng kiểm tra và cập nhật lại thông tin theo hướng dẫn ở trên.
+Sau khi hoàn tất chỉnh sửa, bạn có thể gửi lại hồ sơ để chúng tôi xem xét lần nữa.
+
+Nếu cần hỗ trợ thêm, hãy liên hệ với bộ phận chăm sóc đối tác của VerdantTech.
+
+Trân trọng,
+Đội ngũ VerdantTech
+
+---
+© 2025 Verdant Tech Solution. All rights reserved.

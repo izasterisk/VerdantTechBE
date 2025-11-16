@@ -9,11 +9,15 @@ namespace DAL.IRepository
 {
     public interface IVendorProfileRepository
     {
+ 
         Task<VendorProfile> CreateAsync(VendorProfile vendorProfile, IEnumerable<MediaLink>? addVendorCertificateFiles, CancellationToken ct = default);
         Task<VendorProfile?> GetByIdAsync(ulong id, CancellationToken ct = default);
+        Task<VendorProfile?> GetByUserIdAsync(ulong vendorId, CancellationToken ct = default);
         Task<List<VendorProfile>> GetAllAsync(int page, int pageSize, CancellationToken ct = default);
         Task UpdateAsync(VendorProfile vendorProfile, CancellationToken ct = default);
-        Task DeleteAsync(VendorProfile vendorProfile, CancellationToken ct = default);
+        Task DeleteAsync(VendorProfile vendorProfile, CancellationToken ct = default); 
+        Task SoftDeleteAccountAsync(ulong userId, CancellationToken ct = default);
+
 
     }
 }

@@ -256,7 +256,8 @@ public enum NotificationReferenceType
     Refund,
     WalletCashout,
     ProductRegistration,
-    EnvironmentalData
+    EnvironmentalData,
+    ForumComment
 }
 
 

@@ -5,6 +5,7 @@ using BLL.DTO.Cart;
 using BLL.DTO.CO2;
 using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
+using BLL.DTO.ForumCategory;
 using BLL.DTO.MediaLink;
 using BLL.DTO.Notification;
 using BLL.DTO.Order;
@@ -24,6 +25,8 @@ using DAL.Data.Models;
 using System.Numerics;
 using BLL.DTO.ChatbotConversations;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
+using BLL.DTO.ForumPost;
+using BLL.DTO.ForumComment;
 
 namespace BLL.Helpers
 {
@@ -107,6 +110,34 @@ namespace BLL.Helpers
 
             CreateMap<MediaLink, ImagesDTO>().ReverseMap();
             CreateMap<MediaLink, ProductImageResponseDTO>().ReverseMap();
+
+
+            // ===================== FORUM CATEGORY =====================
+            CreateMap<ForumCategoryCreateDTO, ForumCategory>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore());
+
+            CreateMap<ForumCategoryUpdateDTO, ForumCategory>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<ForumCategory, ForumCategoryResponseDto>();
+
+            // ===================== FORUM POST =====================
+            CreateMap<ContentBlockDTO, ContentBlock>().ReverseMap();
+
+            CreateMap<ForumPost, ForumPostResponseDTO>()
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.Images, o => o.Ignore())   
+                .ForMember(d => d.Comments, o => o.Ignore());
+
+            // ===================== FORUM COMMENT =====================
+            CreateMap<ForumComment, ForumCommentResponseDTO>()
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.Replies, o => o.Ignore());
+
 
             // ===================== CART =====================
             CreateMap<CartDTO, CartItem>().ReverseMap();

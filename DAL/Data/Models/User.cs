@@ -17,7 +17,7 @@ public partial class User
     [StringLength(255)]
     public string PasswordHash { get; set; } = null!;
 
-    public UserRole Role { get; set; } = UserRole.Customer;
+    public UserRole Role { get; set; } 
 
     [Required]
     [StringLength(255)]
