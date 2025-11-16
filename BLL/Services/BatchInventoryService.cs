@@ -88,7 +88,7 @@ namespace BLL.Services
             //}
             if (dto.VendorId.HasValue)
             {
-                var vendorUser = await _userRepo.GetUserWithAddressesByIdAsync(dto.VendorId.Value, ct);
+                var vendorUser = await _userRepo.GetVerifiedAndActiveUserByIdAsync(dto.VendorId.Value, ct);
 
                 if (vendorUser == null)
                     throw new ArgumentException($"User ID {dto.VendorId.Value} not found.");
@@ -96,8 +96,6 @@ namespace BLL.Services
                 if (vendorUser.Role != UserRole.Vendor)
                     throw new ArgumentException($"User ID {dto.VendorId.Value} is not a vendor.");
             }
-
-
 
             var entity = _mapper.Map<BatchInventory>(dto);
             var created = await _repo.CreateAsync(entity, ct);

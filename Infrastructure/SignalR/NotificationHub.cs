@@ -51,29 +51,29 @@ public class NotificationHub : BaseHub
         await base.OnDisconnectedAsync(exception);
     }
     
-    /// <summary>
-    /// Method để client có thể gọi để đánh dấu đã đọc
-    /// </summary>
-    public async Task MarkNotificationAsRead(ulong notificationId)
-    {
-        try
-        {
-            var userId = GetCurrentUserId();
-            await Clients.Caller.SendCoreAsync("NotificationMarkedAsRead", new object[] { notificationId });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            await Clients.Caller.SendCoreAsync("Error", new object[] { "Unauthorized" });
-        }
-    }
+    // /// <summary>
+    // /// Method để client có thể gọi để đánh dấu đã đọc
+    // /// </summary>
+    // public async Task MarkNotificationAsRead(ulong notificationId)
+    // {
+    //     try
+    //     {
+    //         var userId = GetCurrentUserId();
+    //         await Clients.Caller.SendCoreAsync("NotificationMarkedAsRead", new object[] { notificationId });
+    //     }
+    //     catch (UnauthorizedAccessException)
+    //     {
+    //         await Clients.Caller.SendCoreAsync("Error", new object[] { "Unauthorized" });
+    //     }
+    // }
     
-    /// <summary>
-    /// Test connection - client có thể gọi để kiểm tra kết nối
-    /// </summary>
-    public async Task<string> Ping()
-    {
-        var userId = TryGetCurrentUserId();
-        var role = GetCurrentUserRole();
-        return $"Pong from User {userId} (Role: {role})";
-    }
+    // /// <summary>
+    // /// Test connection - client có thể gọi để kiểm tra kết nối
+    // /// </summary>
+    // public async Task<string> Ping()
+    // {
+    //     var userId = TryGetCurrentUserId();
+    //     var role = GetCurrentUserRole();
+    //     return $"Pong from User {userId} (Role: {role})";
+    // }
 }

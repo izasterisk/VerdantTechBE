@@ -252,12 +252,12 @@ public enum NotificationReferenceType
     Payment,
     Request,
     ForumPost,
+    ForumComment,
     ChatbotConversation,
     Refund,
     WalletCashout,
     ProductRegistration,
-    EnvironmentalData,
-    ForumComment
+    EnvironmentalData
 }
 
 
