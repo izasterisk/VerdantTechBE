@@ -153,8 +153,6 @@ public class WalletService : IWalletService
             (int)Math.Ceiling(walletCashout.Amount), 
             $"WalletCashout", 
             categories, cancellationToken);
-        if(cashoutResponse.State != "SUCCEEDED")
-            throw new InvalidOperationException($"Yêu cầu rút tiền qua PayOS không thành công. Mã lỗi: {cashoutResponse.ErrorCode}, Tin nhắn lỗi: {cashoutResponse.ErrorMessage}");
         
         Transaction transaction = new Transaction
         {

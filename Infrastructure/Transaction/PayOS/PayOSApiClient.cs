@@ -246,29 +246,21 @@ public class PayOSApiClient : IPayOSApiClient
             request.Content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
             
             var response = await _httpClient.SendAsync(request, cancellationToken);
-            response.EnsureSuccessStatusCode();
             
+            // Read response content BEFORE checking status code to preserve error details
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            var options = new JsonSerializerOptions
+            
+            var options2 = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             };
             
-            var cashoutResponse = JsonSerializer.Deserialize<CashoutResponse>(responseContent, options);
+            var cashoutResponse = JsonSerializer.Deserialize<CashoutResponse>(responseContent, options2);
             
-            if (cashoutResponse == null)
+            if (cashoutResponse?.Code != "00")
             {
-                throw new InvalidOperationException("Không thể phân tích phản hồi từ PayOS");
-            }
-            
-            if (cashoutResponse.Code != "00")
-            {
-                var errorCode = cashoutResponse.Data?.Transactions?.FirstOrDefault()?.ErrorCode ?? "N/A";
-                var errorMessage = cashoutResponse.Data?.Transactions?.FirstOrDefault()?.ErrorMessage ?? "Lỗi không xác định";
-                throw new InvalidOperationException(
-                    $"Yêu cầu rút tiền qua PayOS không thành công. " +
-                    $"Mô tả: {cashoutResponse.Desc}. " +
-                    $"Mã lỗi: {errorCode}, Tin nhắn lỗi: {errorMessage}");
+                var errorDesc = cashoutResponse?.Desc ?? "Lỗi không xác định";
+                throw new InvalidOperationException(errorDesc);
             }
             
             if (cashoutResponse.Data == null || cashoutResponse.Data.Transactions == null || !cashoutResponse.Data.Transactions.Any())

@@ -1,3 +1,5 @@
+using System.Runtime.Serialization;
+
 namespace DAL.Data;
 
 // =====================================================
@@ -248,15 +250,25 @@ public enum MediaPurpose
 
 public enum NotificationReferenceType
 {
+    [EnumMember(Value = "order")]
     Order,
+    [EnumMember(Value = "payment")]
     Payment,
+    [EnumMember(Value = "request")]
     Request,
+    [EnumMember(Value = "forum_post")]
     ForumPost,
+    [EnumMember(Value = "forum_comment")]
     ForumComment,
+    [EnumMember(Value = "chatbot_conversation")]
     ChatbotConversation,
+    [EnumMember(Value = "refund")]
     Refund,
+    [EnumMember(Value = "wallet_cashout")]
     WalletCashout,
+    [EnumMember(Value = "product_registration")]
     ProductRegistration,
+    [EnumMember(Value = "environmental_data")]
     EnvironmentalData
 }
 
