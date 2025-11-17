@@ -422,7 +422,7 @@ CREATE TABLE media_links (
     owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
-    image_public_id VARCHAR(512) NOT NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
+    image_public_id VARCHAR(512) NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
     purpose ENUM('front', 'back', 'none', 'vendorcertificate_pdf','productcertificate_pdf') DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
     sort_order INT NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
