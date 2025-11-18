@@ -82,10 +82,24 @@ INSERT INTO `vendor_certificates` (`id`, `vendor_id`, `certification_code`, `cer
 (8, 6, 'NON_GMO', 'Non-GMO Project Verified', 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-09-09 09:00:00', '2025-09-09 10:00:00', 1, '2025-09-09 09:00:00', '2025-09-09 10:00:00');
 
 -- Insert Farm Profiles
-INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `primary_crops`, `status`, `created_at`, `updated_at`) VALUES
-(1, 9, 'Trang trại Xanh Sạch Đồng Nai', 5.50, 4, 'Lúa, Rau xanh, Cà chua', 'Active', '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
-(2, 10, 'Trang trại Hữu Cơ Long An', 8.25, 5, 'Rau củ, Trái cây, Thảo dược', 'Active', '2025-09-08 10:30:00', '2025-09-09 05:30:00'),
-(3, 9, 'Trang trại Thực nghiệm Mê Linh', 3.75, 9, 'Rau sạch, Hoa màu', 'Active', '2025-09-08 11:00:00', '2025-09-09 06:30:00');
+INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) VALUES
+(1, 9, 'Trang trại Xanh Sạch Đồng Nai', 5.50, 4, 'Active', '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
+(2, 10, 'Trang trại Hữu Cơ Long An', 8.25, 5, 'Active', '2025-09-08 10:30:00', '2025-09-09 05:30:00'),
+(3, 9, 'Trang trại Thực nghiệm Mê Linh', 3.75, 9, 'Active', '2025-09-08 11:00:00', '2025-09-09 06:30:00');
+
+-- Insert Crops (NEW in v9.3 - replaces primary_crops field with separate table)
+INSERT INTO `crops` (`id`, `farm_profile_id`, `crop_name`, `planting_date`, `is_active`, `created_at`, `updated_at`) VALUES
+-- Farm 1 crops (Trang trại Xanh Sạch Đồng Nai)
+(1, 1, 'Lúa', '2025-05-15', 1, '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
+(2, 1, 'Rau xanh', '2025-06-01', 1, '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
+(3, 1, 'Cà chua', '2025-06-10', 1, '2025-09-08 10:00:00', '2025-09-09 06:00:00'),
+-- Farm 2 crops (Trang trại Hữu Cơ Long An)
+(4, 2, 'Rau củ', '2025-04-20', 1, '2025-09-08 10:30:00', '2025-09-09 05:30:00'),
+(5, 2, 'Trái cây', '2025-03-10', 1, '2025-09-08 10:30:00', '2025-09-09 05:30:00'),
+(6, 2, 'Thảo dược', '2025-05-25', 1, '2025-09-08 10:30:00', '2025-09-09 05:30:00'),
+-- Farm 3 crops (Trang trại Thực nghiệm Mê Linh)
+(7, 3, 'Rau sạch', '2025-07-01', 1, '2025-09-08 11:00:00', '2025-09-09 06:30:00'),
+(8, 3, 'Hoa màu', '2025-06-15', 1, '2025-09-08 11:00:00', '2025-09-09 06:30:00');
 
 -- Insert Product Categories 
 -- KHÔNG ĐƯỢC SỬA 3 CÁI ĐẦU TIÊN VÌ ĐÃ SET LOGIC CODE

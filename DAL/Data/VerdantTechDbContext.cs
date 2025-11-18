@@ -13,6 +13,7 @@ public class VerdantTechDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<FarmProfile> FarmProfiles { get; set; }
+    public DbSet<Crop> Crops { get; set; }
     public DbSet<VendorProfile> VendorProfiles { get; set; }
     public DbSet<UserBankAccount> UserBankAccounts { get; set; }
     public DbSet<Wallet> Wallets { get; set; }
@@ -67,6 +68,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new UserAddressConfiguration());
         modelBuilder.ApplyConfiguration(new FarmProfileConfiguration());
+        modelBuilder.ApplyConfiguration(new CropConfiguration());
         modelBuilder.ApplyConfiguration(new VendorProfileConfiguration());
         modelBuilder.ApplyConfiguration(new UserBankAccountConfiguration());
         modelBuilder.ApplyConfiguration(new WalletConfiguration());

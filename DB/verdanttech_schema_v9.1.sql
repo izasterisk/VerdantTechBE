@@ -139,7 +139,6 @@ CREATE TABLE farm_profiles (
     farm_name VARCHAR(255) NOT NULL,
     farm_size_hectares DECIMAL(10,2),
     address_id BIGINT UNSIGNED NULL,
-    primary_crops VARCHAR(500) COMMENT 'Các loại cây trồng chính, danh sách phân cách bằng dấu phẩy',
     status ENUM('Active', 'Maintenance', 'Deleted') DEFAULT 'Active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -148,6 +147,21 @@ CREATE TABLE farm_profiles (
     INDEX idx_user (user_id),
     INDEX idx_address (address_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hồ sơ trang trại cho người dùng nông dân';
+
+-- Bảng cây trồng cho trang trại
+CREATE TABLE crops (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    farm_profile_id BIGINT UNSIGNED NOT NULL,
+    crop_name VARCHAR(255) NOT NULL COMMENT 'Tên loại cây trồng',
+    planting_date DATE NOT NULL COMMENT 'Ngày trồng',
+    is_active BOOLEAN DEFAULT TRUE COMMENT 'Trạng thái hoạt động',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
+    INDEX idx_farm_profile (farm_profile_id),
+    INDEX idx_is_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý cây trồng của trang trại (một trang trại có nhiều cây trồng)';
 
 -- Dữ liệu giám sát môi trường
 CREATE TABLE environmental_data (
@@ -422,7 +436,7 @@ CREATE TABLE media_links (
     owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
-    image_public_id VARCHAR(512) NOT NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
+    image_public_id VARCHAR(512) NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
     purpose ENUM('front', 'back', 'none', 'vendorcertificate_pdf','productcertificate_pdf') DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
     sort_order INT NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -268,18 +268,6 @@ public class EmailSender : IEmailSender
             .Replace("{{password}}", password);
     }
 
-    //private static string? GetEmbeddedResourceString(string resourcePathTail)
-    //{
-    //    var assembly = Assembly.GetExecutingAssembly();
-    //    var resourceName = assembly.GetManifestResourceNames()
-    //        .FirstOrDefault(n => n.EndsWith(resourcePathTail.Replace('/', '.'), StringComparison.OrdinalIgnoreCase));
-    //    if (resourceName == null) return null;
-    //    using var stream = assembly.GetManifestResourceStream(resourceName);
-    //    if (stream == null) return null;
-    //    using var reader = new StreamReader(stream, Encoding.UTF8);
-    //    return reader.ReadToEnd();
-    //}
-
     private static string? GetEmbeddedResourceString(string fileName)
     {
         var assembly = Assembly.GetExecutingAssembly();
@@ -291,9 +279,6 @@ public class EmailSender : IEmailSender
 
         if (resourceName == null)
         {
-            Console.WriteLine($"[EmailSender] Không tìm thấy template: {fileName}");
-            Console.WriteLine("Resource list:");
-            foreach (var n in names) Console.WriteLine("  - " + n);
             return null;
         }
 

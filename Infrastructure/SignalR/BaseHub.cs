@@ -47,12 +47,4 @@ public abstract class BaseHub : Hub
     {
         return Context.User?.FindFirst(ClaimTypes.Role)?.Value;
     }
-
-    /// <summary>
-    /// Kiểm tra user có role cụ thể không
-    /// </summary>
-    protected bool IsInRole(string role)
-    {
-        return Context.User?.IsInRole(role) ?? false;
-    }
 }

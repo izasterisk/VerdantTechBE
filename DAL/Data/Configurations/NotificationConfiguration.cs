@@ -1,11 +1,31 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using DAL.Data.Models;
+using System.Text.RegularExpressions;
 
 namespace DAL.Data.Configurations;
 
+internal static class NotificationEfMaps
+{
+    public static string ReferenceTypeToDb(NotificationReferenceType v) 
+        => Regex.Replace(v.ToString(), "([a-z0-9])([A-Z])", "$1_$2").ToLower();
+
+    public static NotificationReferenceType ReferenceTypeFromDb(string s)
+    {
+        var words = s.Split('_');
+        var pascalCase = string.Concat(words.Select(w => char.ToUpper(w[0]) + w.Substring(1, w.Length - 1)));
+        return Enum.Parse<NotificationReferenceType>(pascalCase);
+    }
+}
+
 public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
 {
+    private static readonly ValueConverter<NotificationReferenceType, string> EnumConverter = 
+        new ValueConverter<NotificationReferenceType, string>(
+            v => NotificationEfMaps.ReferenceTypeToDb(v),
+            s => NotificationEfMaps.ReferenceTypeFromDb(s));
+
     public void Configure(EntityTypeBuilder<Notification> builder)
     {
         builder.ToTable("notifications");
@@ -42,7 +62,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         
         // Enum conversion for reference type
         builder.Property(e => e.ReferenceType)
-            .HasConversion<string>()
+            .HasConversion(EnumConverter)
             .HasColumnType("enum('order','payment','request','forum_post','forum_comment','chatbot_conversation','refund','wallet_cashout','product_registration','environmental_data')")
             .HasColumnName("reference_type")
             .HasComment("Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết");

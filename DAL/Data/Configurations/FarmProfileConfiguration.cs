@@ -40,16 +40,6 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .HasColumnType("bigint unsigned")
             .HasColumnName("address_id");
         
-        
-        
-        // Simple text fields
-        builder.Property(e => e.PrimaryCrops)
-            .HasMaxLength(500)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasComment("Main crops grown, comma-separated list")
-            .HasColumnName("primary_crops");
-        
         // Status enum field
         builder.Property(e => e.Status)
             .HasConversion<string>()

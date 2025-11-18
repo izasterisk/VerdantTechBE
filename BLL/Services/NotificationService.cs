@@ -41,6 +41,25 @@ public class NotificationService : INotificationService
         return notificationDto;
     }
     
+    public async Task CreateAndSendMultipleNotificationsAsync(List<ulong> userId, string title, 
+        string message, NotificationReferenceType referenceType, ulong referenceId,
+        CancellationToken cancellationToken = default)
+    {
+        var notifications = userId.Select(id => new Notification
+        {
+            UserId = id,
+            Title = title,
+            Message = message,
+            ReferenceType = referenceType,
+            ReferenceId = referenceId,
+            IsRead = false
+        }).ToList();
+        
+        await _notificationRepository.CreateListNotificationsWithTransactionAsync(notifications, cancellationToken);
+        var notificationDtos = _mapper.Map<List<NotificationResponseDTO>>(notifications);
+        await _notificationHub.SendNotificationToMultipleUsers(userId, notificationDtos);
+    }
+    
     public async Task<NotificationResponseDTO> RevertReadStatusAsync(ulong notificationId, CancellationToken cancellationToken = default)
     {
         var notification = await _notificationRepository.GetNotificationByIdAsync(notificationId, cancellationToken);
