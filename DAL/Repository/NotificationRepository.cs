@@ -24,6 +24,14 @@ public class NotificationRepository : INotificationRepository
         return await _notificationRepository.CreateAsync(notification, cancellationToken);
     }
 
+    public async Task CreateListNotificationsAsync(List<Notification> notifications, CancellationToken cancellationToken = default)
+    {
+        foreach (var notification in notifications)
+        {
+            await CreateNotificationAsync(notification, cancellationToken);
+        }
+    }
+
     public async Task<Notification> UpdateNotificationAsync(Notification notification, CancellationToken cancellationToken = default)
     {
         notification.UpdatedAt = DateTime.UtcNow;
