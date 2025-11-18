@@ -46,9 +46,7 @@ namespace BLL.Services
             return c == null ? null : MapWithReplies(c);
         }
 
-        public async Task<ForumCommentResponseDTO> CreateAsync(
-      ForumCommentCreateDTO dto,
-      CancellationToken ct = default)
+        public async Task<ForumCommentResponseDTO> CreateAsync(ForumCommentCreateDTO dto,CancellationToken ct = default)
         {
             var now = DateTime.UtcNow;
 
@@ -65,25 +63,28 @@ namespace BLL.Services
 
             await _repo.CreateAsync(entity, ct);
 
-            // 🔔 SEND NOTIFICATION
-            //if (dto.ParentId == null)
-            //{
-            //    // Notify Post Owner
-            //    await _notification.CreateAndSendNotificationAsync(
-            //        userId: await _repo.GetPostOwnerIdAsync(dto),
-            //        title: "Có bình luận mới trong bài viết của bạn",
-            //        message: dto.Content,
-            //        referenceType: NotificationReferenceType.ForumPost,
-            //        referenceId: dto.ForumPostId,
-            //        cancellationToken: ct
-            //    );
-            //}
-            //else
-            //{
-                // Notify Parent Comment Owner
+
+            if (dto.ParentId == null)
+            {
+                var postOwnerId = await _repo.GetPostOwnerIdAsync(dto.ForumPostId, ct);
+
+                if (postOwnerId != dto.UserId)
+                {
+                    await _notification.CreateAndSendNotificationAsync(
+                        userId: postOwnerId,
+                        title: "Có bình luận mới trong bài viết của bạn",
+                        message: dto.Content,
+                        referenceType: NotificationReferenceType.ForumPost,
+                        referenceId: dto.ForumPostId,
+                        cancellationToken: ct
+                    );
+                }
+            }
+            else
+            {
                 var parent = await _repo.GetDetailAsync(dto.ParentId.Value, ct);
 
-                if (parent!.UserId != dto.UserId)
+                if (parent != null && parent.UserId != dto.UserId)
                 {
                     await _notification.CreateAndSendNotificationAsync(
                         userId: parent.UserId,
@@ -94,7 +95,7 @@ namespace BLL.Services
                         cancellationToken: ct
                     );
                 }
-            
+            }
 
             return MapWithReplies(entity);
         }

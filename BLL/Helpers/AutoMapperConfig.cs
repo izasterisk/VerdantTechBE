@@ -136,6 +136,7 @@ namespace BLL.Helpers
             // ===================== FORUM COMMENT =====================
             CreateMap<ForumComment, ForumCommentResponseDTO>()
                 .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.FullName, o => o.MapFrom(s => s.User.FullName))
                 .ForMember(d => d.Replies, o => o.Ignore());
 
 
