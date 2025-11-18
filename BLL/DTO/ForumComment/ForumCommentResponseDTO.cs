@@ -11,6 +11,8 @@ namespace BLL.DTO.ForumComment
         public ulong Id { get; set; }
         public ulong ForumPostId { get; set; }
         public ulong UserId { get; set; }
+        public string FullName { get; set; } = "";
+
         public ulong? ParentId { get; set; }
 
         public string Content { get; set; } = null!;
