@@ -139,7 +139,6 @@ CREATE TABLE farm_profiles (
     farm_name VARCHAR(255) NOT NULL,
     farm_size_hectares DECIMAL(10,2),
     address_id BIGINT UNSIGNED NULL,
-    primary_crops VARCHAR(500) COMMENT 'Các loại cây trồng chính, danh sách phân cách bằng dấu phẩy',
     status ENUM('Active', 'Maintenance', 'Deleted') DEFAULT 'Active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -148,6 +147,21 @@ CREATE TABLE farm_profiles (
     INDEX idx_user (user_id),
     INDEX idx_address (address_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hồ sơ trang trại cho người dùng nông dân';
+
+-- Bảng cây trồng cho trang trại
+CREATE TABLE crops (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    farm_profile_id BIGINT UNSIGNED NOT NULL,
+    crop_name VARCHAR(255) NOT NULL COMMENT 'Tên loại cây trồng',
+    planting_date DATE NOT NULL COMMENT 'Ngày trồng',
+    is_active BOOLEAN DEFAULT TRUE COMMENT 'Trạng thái hoạt động',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
+    INDEX idx_farm_profile (farm_profile_id),
+    INDEX idx_is_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý cây trồng của trang trại (một trang trại có nhiều cây trồng)';
 
 -- Dữ liệu giám sát môi trường
 CREATE TABLE environmental_data (

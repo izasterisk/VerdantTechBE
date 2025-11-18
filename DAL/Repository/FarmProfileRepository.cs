@@ -10,12 +10,15 @@ public class FarmProfileRepository : IFarmProfileRepository
     private readonly IRepository<FarmProfile> _farmProfileRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IAddressRepository _addressRepository;
+    private readonly IRepository<Crop> _cropRepository;
     
-    public FarmProfileRepository(IRepository<FarmProfile> farmProfileRepository, VerdantTechDbContext dbContext, IAddressRepository addressRepository)
+    public FarmProfileRepository(IRepository<FarmProfile> farmProfileRepository, VerdantTechDbContext dbContext,
+        IAddressRepository addressRepository, IRepository<Crop> cropRepository)
     {
         _farmProfileRepository = farmProfileRepository;
         _dbContext = dbContext;
         _addressRepository = addressRepository;
+        _cropRepository = cropRepository;
     }
 
     public async Task<FarmProfile?> GetFarmProfileByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
@@ -23,7 +26,9 @@ public class FarmProfileRepository : IFarmProfileRepository
         return await _farmProfileRepository.GetWithRelationsAsync(
             f => f.Id == farmId,
             useNoTracking,
-            query => query.Include(f => f.User).Include(f => f.Address),
+            query => query.Include(f => f.User)
+                .Include(f => f.Address)
+                .Include(f => f.Crops),
             cancellationToken);
     }
 
@@ -41,11 +46,13 @@ public class FarmProfileRepository : IFarmProfileRepository
         return await _farmProfileRepository.GetAllWithRelationsByFilterAsync(
             f => f.UserId == userId,
             useNoTracking,
-            query => query.Include(f => f.User).Include(f => f.Address),
+            query => query.Include(f => f.User)
+                .Include(f => f.Address)
+                .Include(f => f.Crops),
             cancellationToken);
     }
     
-    public async Task<FarmProfile> CreateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default)
+    public async Task<FarmProfile> CreateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, List<Crop> crops, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -58,13 +65,26 @@ public class FarmProfileRepository : IFarmProfileRepository
             farmProfile.CreatedAt = DateTime.UtcNow;
             farmProfile.UpdatedAt = DateTime.UtcNow;
             farmProfile.Status = FarmProfileStatus.Active;
-            
             var createdFarmProfile = await _farmProfileRepository.CreateAsync(farmProfile, cancellationToken);
+            
+            if(crops.Count > 0)
+            {
+                foreach (var crop in crops)
+                {
+                    crop.CreatedAt = DateTime.UtcNow;
+                    crop.UpdatedAt = DateTime.UtcNow;
+                    crop.IsActive = true;
+                    crop.FarmProfileId = createdFarmProfile.Id;
+                    await _cropRepository.CreateAsync(crop, cancellationToken);
+                }
+            }
             
             var farmProfileWithRelations = await _farmProfileRepository.GetWithRelationsAsync(
                 f => f.Id == createdFarmProfile.Id,
                 useNoTracking: true,
-                query => query.Include(f => f.User).Include(f => f.Address),
+                query => query.Include(f => f.User)
+                    .Include(f => f.Address)
+                    .Include(f => f.Crops),
                 cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             
@@ -77,11 +97,19 @@ public class FarmProfileRepository : IFarmProfileRepository
         }
     }
 
-    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default)
+    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, List<Crop> crops, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            if (crops.Count > 0)
+            {
+                foreach (var crop in crops)
+                {
+                    await _cropRepository.UpdateAsync(crop, cancellationToken);
+                }
+            }
+            
             address.UpdatedAt = DateTime.UtcNow;
             await _addressRepository.UpdateAddressAsync(address, cancellationToken);
             
@@ -92,7 +120,9 @@ public class FarmProfileRepository : IFarmProfileRepository
             var farmProfileWithRelations = await _farmProfileRepository.GetWithRelationsAsync(
                 f => f.Id == updatedFarmProfile.Id,
                 useNoTracking: true,
-                query => query.Include(f => f.User).Include(f => f.Address),
+                query => query.Include(f => f.User)
+                    .Include(f => f.Address)
+                    .Include(f => f.Crops),
                 cancellationToken);
             return farmProfileWithRelations ?? updatedFarmProfile;
         }
@@ -101,5 +131,10 @@ public class FarmProfileRepository : IFarmProfileRepository
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+    
+    public async Task<bool> ValidateCropBelongToFarm(ulong cropId, ulong farmId, CancellationToken cancellationToken = default)
+    {
+        return await _cropRepository.AnyAsync(c => c.Id == cropId && c.FarmProfileId == farmId, cancellationToken);
     }
 }

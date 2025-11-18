@@ -71,6 +71,11 @@ namespace BLL.Helpers
             CreateMap<FarmProfileUpdateDTO, FarmProfile>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
+            CreateMap<CropsCreateDTO, Crop>().ReverseMap();
+            CreateMap<CropsDTO, Crop>().ReverseMap();
+            CreateMap<CropsUpdateDTO, Crop>().ReverseMap()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            
             // ===================== ADDRESS =====================
             CreateMap<Address, AddressResponseDTO>().ReverseMap();
             CreateMap<UserAddress, AddressResponseDTO>()

@@ -21,11 +21,25 @@ namespace BLL.Services
         }
         public async Task<FarmProfileResponseDTO> CreateFarmProfileAsync(ulong currentUserId, FarmProfileCreateDto dto, CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
             var address = _mapper.Map<Address>(dto);
             var farmProfile = _mapper.Map<FarmProfile>(dto);
             farmProfile.UserId = currentUserId;
+            
+            List<Crop> crops = new List<Crop>();
+            if(dto.Crops != null)
+            {
+                foreach (var crop in dto.Crops)
+                {
+                    if(crop.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                    {
+                        throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+                    }
+                    crops.Add(_mapper.Map<Crop>(crop));
+                }
+            }
 
-            var createdFarmProfile = await _farmRepo.CreateFarmProfileWithTransactionAsync(farmProfile, address, cancellationToken);
+            var createdFarmProfile = await _farmRepo.CreateFarmProfileWithTransactionAsync(farmProfile, address, crops, cancellationToken);
             var response = _mapper.Map<FarmProfileResponseDTO>(createdFarmProfile);
             
             var userDto = _mapper.Map<UserResponseDTO>(createdFarmProfile.User);
@@ -40,6 +54,7 @@ namespace BLL.Services
 
         public async Task<FarmProfileResponseDTO> UpdateFarmProfileAsync(ulong id, FarmProfileUpdateDTO dto, CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
             var farmProfile = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false, cancellationToken);
             if (farmProfile == null)
                 throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
@@ -50,7 +65,20 @@ namespace BLL.Services
             _mapper.Map(dto, farmProfile);
             _mapper.Map(dto, farmProfile.Address);
             
-            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, farmProfile.Address, cancellationToken);
+            List<Crop> crops = new List<Crop>();
+            if(dto.Crops != null)
+            {
+                foreach (var crop in dto.Crops)
+                {
+                    if(crop.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                        throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+                    if(!await _farmRepo.ValidateCropBelongToFarm(crop.Id, farmProfile.Id, cancellationToken))
+                        throw new KeyNotFoundException($"Cây trồng với ID {crop.Id} không thuộc về trang trại này.");
+                    crops.Add(_mapper.Map<Crop>(crop));
+                }
+            }
+            
+            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, farmProfile.Address, crops, cancellationToken);
             var response = _mapper.Map<FarmProfileResponseDTO>(updatedFarmProfile);
             
             var userDto = _mapper.Map<UserResponseDTO>(updatedFarmProfile.User);
