@@ -17,6 +17,8 @@ namespace DAL.IRepository
         Task UpdateAsync(VendorProfile vendorProfile, CancellationToken ct = default);
         Task DeleteAsync(VendorProfile vendorProfile, CancellationToken ct = default); 
         Task SoftDeleteAccountAsync(ulong userId, CancellationToken ct = default);
+        Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default);
+
 
 
     }

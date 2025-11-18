@@ -14,7 +14,7 @@ namespace BLL.DTO.VendorProfile
         public ulong Id { get; set; }
         [Required]
         public string CompanyName { get; set; }
-        public string? Slug { get; set; }
+        //public string? Slug { get; set; }
         [Required]
         public string BusinessRegistrationNumber { get; set; }
         public string? CompanyAddress { get; set; }
@@ -22,7 +22,6 @@ namespace BLL.DTO.VendorProfile
         public string? District { get; set; }
         public string? Commune { get; set; }
 
-        // Optional: thông tin User
         public string? Email { get; set; }
         public string? FullName { get; set; }
         public string? PhoneNumber { get; set; }

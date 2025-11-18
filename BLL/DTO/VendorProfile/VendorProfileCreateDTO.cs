@@ -23,7 +23,7 @@ namespace BLL.DTO.VendorProfile
         //public UserRole Role { get; set; } = UserRole.Vendor;
         [Required]
         public string CompanyName { get; set; }
-        public string? Slug { get; set; } 
+        //public string? Slug { get; set; } 
         [Required]
         public string BusinessRegistrationNumber { get; set; }
         public string? CompanyAddress { get; set; }
