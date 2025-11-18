@@ -29,6 +29,7 @@ namespace DAL.Repository
                 .Take(pageSize)
                 .Include(c=>c.User)
                 .Include(c => c.InverseParent)
+                .ThenInclude(r => r.User)
                 .AsNoTracking()
                 .ToListAsync(ct);
         }
@@ -37,6 +38,7 @@ namespace DAL.Repository
         {
             return await _context.ForumComments
                 .Include(c => c.InverseParent)
+                .ThenInclude(r => r.User)
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.Id == id, ct);
         }
@@ -88,6 +90,7 @@ namespace DAL.Repository
         {
             return await _context.ForumComments
                 .Include(x => x.InverseParent)
+                .ThenInclude(r => r.User)
                 .Include(c => c.User)
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
         }
