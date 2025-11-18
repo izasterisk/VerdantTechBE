@@ -206,5 +206,11 @@ namespace DAL.Repository
             _context.Users.Update(user);
             await _context.SaveChangesAsync(ct);
         }
+
+        public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            return await _context.VendorProfiles.AnyAsync(v => v.Slug == slug, ct);
+        }
+
     }
 }
