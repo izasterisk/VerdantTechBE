@@ -55,7 +55,7 @@ public class NotificationService : INotificationService
             IsRead = false
         }).ToList();
         
-        await _notificationRepository.CreateListNotificationsAsync(notifications, cancellationToken);
+        await _notificationRepository.CreateListNotificationsWithTransactionAsync(notifications, cancellationToken);
         var notificationDtos = _mapper.Map<List<NotificationResponseDTO>>(notifications);
         await _notificationHub.SendNotificationToMultipleUsers(userId, notificationDtos);
     }
