@@ -26,17 +26,17 @@ public class ChatbotConversationService : IChatbotConversationService
         await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
         var newConversation = new ChatbotConversation
         {
-            CustomerId = userId,
+            CustomerId = userId
         };
         var createdConversation = 
             await _chatbotConversationRepository.CreateConversationWithTransactionAsync(newConversation, 
             _mapper.Map<ChatbotMessage>(dto), cancellationToken);
-        var response = new SendNewMessageResponseDTO
+        
+        return new SendNewMessageResponseDTO
         {
             Conversation = _mapper.Map<ChatbotConversationsResponseDTO>(createdConversation.conversation),
             Message = _mapper.Map<ChatbotMessagesResponseDTO>(createdConversation.message)
         };
-        return response;
     }
     
     public async Task<ChatbotMessagesResponseDTO> SendNewMessageAsync(ulong userId, ulong conversationId, ChatbotMessageCreateDTO dto, CancellationToken cancellationToken = default)
@@ -50,10 +50,13 @@ public class ChatbotConversationService : IChatbotConversationService
         return _mapper.Map<ChatbotMessagesResponseDTO>(createdMessage);
     }
     
-    public async Task<ChatbotConversationsResponseDTO> UpdateChatbotConversationAsync(ulong conversationId, CancellationToken cancellationToken = default)
+    public async Task<ChatbotConversationsResponseDTO> UpdateChatbotConversationAsync(ulong conversationId, ChatbotConversationUpdateDTO dto, CancellationToken cancellationToken = default)
     {
-        var conversation = await _chatbotConversationRepository.UpdateChatbotConversationAsync(await
-            _chatbotConversationRepository.GetActiveChatbotConversationAsync(conversationId, cancellationToken), cancellationToken);
+        var existingConversation = await _chatbotConversationRepository.GetActiveChatbotConversationAsync(conversationId, cancellationToken);
+        var con = _mapper.Map(dto, existingConversation);
+        var conversation = await _chatbotConversationRepository.UpdateChatbotConversationAsync(
+            con, 
+            cancellationToken);
         return _mapper.Map<ChatbotConversationsResponseDTO>(conversation);
     }
     

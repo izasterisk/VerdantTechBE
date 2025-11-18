@@ -22,6 +22,14 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
             .IsRequired()
             .HasColumnName("customer_id");
         
+        // Session ID field
+        builder.Property(e => e.SessionId)
+            .HasMaxLength(255)
+            .IsRequired()
+            .HasColumnName("session_id")
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci");
+        
         // Optional string field
         builder.Property(e => e.Title)
             .HasMaxLength(255)
@@ -55,5 +63,8 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
         // Indexes
         builder.HasIndex(e => e.CustomerId)
             .HasDatabaseName("idx_customer");
+        
+        builder.HasIndex(e => e.SessionId)
+            .HasDatabaseName("idx_session_id");
     }
 }

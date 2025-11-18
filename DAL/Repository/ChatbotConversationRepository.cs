@@ -25,6 +25,7 @@ public class ChatbotConversationRepository : IChatbotConversationRepository
         {
             conversation.IsActive = true;
             conversation.StartedAt = DateTime.UtcNow;
+            conversation.SessionId = Guid.NewGuid().ToString();
             var createdConversation = await _chatbotConversationRepository.CreateAsync(conversation, cancellationToken);
             
             chatbotMessage.ConversationId = createdConversation.Id;

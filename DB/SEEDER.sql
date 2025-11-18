@@ -224,10 +224,10 @@ INSERT INTO `forum_comments` (`id`, `forum_post_id`, `user_id`, `parent_id`, `co
 (6, 3, 9, NULL, 'Bạn có thể thử dùng dung dịch tỏi ớt để xịt phòng trừ sâu bệnh. Mình dùng hiệu quả lắm!', 6, 0, 'visible', '2025-09-09 10:00:00', '2025-09-09 10:00:00');
 
 -- Insert Chatbot Conversations (v9.2 structure - removed ended_at field)
-INSERT INTO `chatbot_conversations` (`id`, `customer_id`, `title`, `context`, `is_active`, `started_at`) VALUES
-(1, 7, 'Tư vấn chọn máy cày', '{"topic": "equipment_consultation", "products_discussed": ["TC001"], "user_preferences": {"budget": "under_30m", "farm_size": "small"}}', 0, '2025-09-08 14:00:00'),
-(2, 9, 'Hỗ trợ kỹ thuật canh tác', '{"topic": "farming_techniques", "crop_type": "rice", "farming_method": "organic"}', 1, '2025-09-09 06:00:00'),
-(3, 8, 'Tư vấn phân bón hữu cơ', '{"topic": "fertilizer_consultation", "crop_type": "vegetables", "soil_type": "sandy"}', 0, '2025-09-09 08:00:00');
+INSERT INTO `chatbot_conversations` (`id`, `customer_id`, `session_id`, `title`, `context`, `is_active`, `started_at`) VALUES
+(1, 7, 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d', 'Tư vấn chọn máy cày', '{"topic": "equipment_consultation", "products_discussed": ["TC001"], "user_preferences": {"budget": "under_30m", "farm_size": "small"}}', 0, '2025-09-08 14:00:00'),
+(2, 9, 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e', 'Hỗ trợ kỹ thuật canh tác', '{"topic": "farming_techniques", "crop_type": "rice", "farming_method": "organic"}', 1, '2025-09-09 06:00:00'),
+(3, 8, 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f', 'Tư vấn phân bón hữu cơ', '{"topic": "fertilizer_consultation", "crop_type": "vegetables", "soil_type": "sandy"}', 0, '2025-09-09 08:00:00');
 
 -- Insert Chatbot Messages (v8.1 structure - removed attachments, use media_links table instead)
 INSERT INTO `chatbot_messages` (`id`, `conversation_id`, `message_type`, `message_text`, `created_at`) VALUES

@@ -1,6 +1,5 @@
-﻿using BLL.DTO.User;
+﻿namespace BLL.DTO.ChatbotConversations;
 
-namespace BLL.DTO.ChatbotConversations;
 public class ChatbotConversationsResponseDTO
 {
     public ulong Id { get; set; }
@@ -10,6 +9,8 @@ public class ChatbotConversationsResponseDTO
     public string? Title { get; set; }
     
     public string? Context { get; set; }
+    
+    public string SessionId { get; set; } = null!;
 
     public bool IsActive { get; set; } = true;
 

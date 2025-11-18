@@ -223,13 +223,15 @@ CREATE TABLE energy_usage (
 CREATE TABLE chatbot_conversations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT UNSIGNED NOT NULL,
+    session_id VARCHAR(255) NOT NULL COMMENT 'UUID session identifier',
     title VARCHAR(255),
     context TEXT COMMENT 'Bối cảnh cuộc hội thoại và metadata',
     is_active BOOLEAN DEFAULT TRUE,
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_customer (customer_id)
+    INDEX idx_customer (customer_id),
+    INDEX idx_session_id (session_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các phiên hội thoại chatbot';
 
 -- Tin nhắn chatbot
