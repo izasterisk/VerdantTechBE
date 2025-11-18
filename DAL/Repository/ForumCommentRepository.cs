@@ -27,6 +27,7 @@ namespace DAL.Repository
                 .OrderByDescending(c => c.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .Include(c=>c.User)
                 .Include(c => c.InverseParent)
                 .AsNoTracking()
                 .ToListAsync(ct);
@@ -36,6 +37,7 @@ namespace DAL.Repository
         {
             return await _context.ForumComments
                 .Include(c => c.InverseParent)
+                .Include(c => c.User)
                 .FirstOrDefaultAsync(c => c.Id == id, ct);
         }
 
@@ -86,6 +88,7 @@ namespace DAL.Repository
         {
             return await _context.ForumComments
                 .Include(x => x.InverseParent)
+                .Include(c => c.User)
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
         }
 
@@ -97,6 +100,7 @@ namespace DAL.Repository
 
             var directChildren = await _context.ForumComments
                 .Where(c => c.ParentId == parentId)
+                .Include(c => c.User)
                 .ToListAsync(ct);
 
             foreach (var child in directChildren)
@@ -107,6 +111,20 @@ namespace DAL.Repository
             }
 
             return result;
+        }
+
+        public async Task<ulong> GetPostOwnerIdAsync(ulong postId, CancellationToken ct = default)
+        {
+            // Lấy owner của bài post
+            var post = await _context.ForumPosts
+                .Where(p => p.Id == postId)
+                .Select(p => new { p.UserId })
+                .FirstOrDefaultAsync(ct);
+
+            if (post == null)
+                throw new KeyNotFoundException($"Không tìm thấy bài viết Id = {postId}");
+
+            return post.UserId;
         }
     }
 }

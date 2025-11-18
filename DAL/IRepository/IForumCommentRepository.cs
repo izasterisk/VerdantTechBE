@@ -20,5 +20,7 @@ namespace DAL.IRepository
         Task IncrementDislikeAsync(ulong id, CancellationToken ct = default);
         Task<ForumComment?> GetCommentWithRepliesAsync(ulong id, CancellationToken ct = default);
         Task<List<ForumComment>> GetAllRepliesRecursiveAsync(ulong parentId, CancellationToken ct = default);
+        Task<ulong> GetPostOwnerIdAsync(ulong postId, CancellationToken ct = default);
+
     }
 }
