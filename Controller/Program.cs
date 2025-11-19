@@ -26,10 +26,10 @@ using BLL.IService;
 var builder = WebApplication.CreateBuilder(args);
 
 // Load .env file
-try 
+try
 {
-    var envPath = File.Exists("Controller/.env") ? "Controller/.env" : 
-        File.Exists(".env") ? ".env" : 
+    var envPath = File.Exists("Controller/.env") ? "Controller/.env" :
+        File.Exists(".env") ? ".env" :
         throw new FileNotFoundException(".env file not found");
     Env.Load(envPath);
 }
@@ -56,7 +56,7 @@ if (!int.TryParse(databaseTimeoutStr, out int databaseTimeout))
 
 // Configure DbContext
 builder.Services.AddDbContext<VerdantTechDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.Parse("8.0.43-mysql"), 
+    options.UseMySql(connectionString, ServerVersion.Parse("8.0.43-mysql"),
         b => b.MigrationsAssembly("DAL")
             .CommandTimeout(databaseTimeout)));
 
@@ -231,15 +231,15 @@ builder.Services.AddAuthentication(options =>
         {
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            
+
             if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
             {
                 context.Token = accessToken;
             }
-            
+
             return Task.CompletedTask;
         },
-        
+
         OnChallenge = context =>
         {
             // Ngăn không cho default challenge response
@@ -251,7 +251,7 @@ builder.Services.AddAuthentication(options =>
             var jsonResponse = JsonConvert.SerializeObject(response);
             return context.Response.WriteAsync(jsonResponse);
         },
-        
+
         OnForbidden = context =>
         {
             // Tạo custom response cho 403 Forbidden
@@ -285,14 +285,14 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());        
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "VerdantTech API", Version = "v1" });
-    
+
     // Add JWT Authentication to Swagger
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
@@ -303,7 +303,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT"
     });
-    
+
     c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -331,13 +331,13 @@ if (app.Environment.IsDevelopment())
         using (var scope = app.Services.CreateScope())
         {
             var context = scope.ServiceProvider.GetRequiredService<VerdantTechDbContext>();
-            
+
             // Delete existing database if it exists
             await context.Database.EnsureDeletedAsync();
-            
+
             // Create new database with current schema
             await context.Database.EnsureCreatedAsync();
-            
+
             Console.WriteLine("Database recreated successfully!");
         }
     }
@@ -347,19 +347,29 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-// Configure the HTTP request pipeline
+// === START OF CRITICAL CHANGES FOR RENDER DEPLOYMENT ===
+
+// Khắc phục lỗi 404 Swagger: Tách logic bật Swagger ra khỏi điều kiện IsDevelopment()
+var openSwagger = Environment.GetEnvironmentVariable("OPEN_SWAGGER");
+var isSwaggerEnabled = string.Equals(openSwagger, "True", StringComparison.OrdinalIgnoreCase);
+
+if (isSwaggerEnabled)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// Cấu hình HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    var openSwagger = Environment.GetEnvironmentVariable("OPEN_SWAGGER");
-    if (string.Equals(openSwagger, "True", StringComparison.OrdinalIgnoreCase))
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+    // Giữ lại trang lỗi phát triển
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
+// Khắc phục cảnh báo HttpsRedirection: Render xử lý HTTPS nên ta bỏ qua Middleware này
+// app.UseHttpsRedirection(); 
+
+// === END OF CRITICAL CHANGES FOR RENDER DEPLOYMENT ===
 
 // Enable CORS
 app.UseCors();
