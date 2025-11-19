@@ -80,12 +80,6 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"Product ID {dto.ProductId} not found");
 
             // CHECK VENDOR
-            //if (dto.VendorId.HasValue)
-            //{
-            //    var vendor = await _vendorRepo.GetByIdAsync(dto.VendorId.Value, ct);
-            //    if (vendor == null)
-            //        throw new KeyNotFoundException($"Vendor ID {dto.VendorId.Value} not found");
-            //}
             if (dto.VendorId.HasValue)
             {
                 var vendorUser = await _userRepo.GetVerifiedAndActiveUserByIdAsync(dto.VendorId.Value, ct);
@@ -99,6 +93,8 @@ namespace BLL.Services
 
             var entity = _mapper.Map<BatchInventory>(dto);
             var created = await _repo.CreateAsync(entity, ct);
+
+            await UpdateProductStock(dto.ProductId, ct);
 
             return _mapper.Map<BatchInventoryResponeDTO>(created);
         }
@@ -116,12 +112,6 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"Product ID {dto.ProductId} not found");
 
             // Check vendor
-            //if (dto.VendorId.HasValue)
-            //{
-            //    var vendor = await _vendorRepo.GetByIdAsync(dto.VendorId.Value, ct);
-            //    if (vendor == null)
-            //        throw new KeyNotFoundException($"Vendor ID {dto.VendorId.Value} not found");
-            //}
             if (dto.VendorId.HasValue)
             {
                 var vendorUser = await _userRepo.GetUserWithAddressesByIdAsync(dto.VendorId.Value, ct);
@@ -138,6 +128,7 @@ namespace BLL.Services
             _mapper.Map(dto, existing);
 
             await _repo.UpdateAsync(existing, ct);
+            await UpdateProductStock(dto.ProductId, ct);
 
             return _mapper.Map<BatchInventoryResponeDTO>(existing);
         }
@@ -150,6 +141,7 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"BatchInventory ID {id} not found");
 
             await _repo.DeleteAsync(id, ct);
+            await UpdateProductStock(exists.ProductId, ct);
         }
 
         // QUALITY CHECK
@@ -167,6 +159,15 @@ namespace BLL.Services
                 notes: dto.Notes,
                 ct: ct
             );
+        }
+
+
+        private async Task UpdateProductStock(ulong productId, CancellationToken ct)
+        {
+            var batches = await _repo.GetByProductIdAsync(productId, 1, int.MaxValue, ct);
+            var total = batches.Sum(x => x.Quantity);
+
+            await _productRepo.UpdateStockAsync(productId, total, ct);
         }
     }
 }
