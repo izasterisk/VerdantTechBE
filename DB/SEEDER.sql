@@ -8,15 +8,15 @@
 
 -- Insert Addresses (updated with FPT University HCM address for admin and real Vietnamese address data)
 INSERT INTO `addresses` (`id`, `location_address`, `province`, `district`, `commune`, `province_code`, `district_code`, `commune_code`, `latitude`, `longitude`, `created_at`, `updated_at`) VALUES
-(1, 'Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Long Thạnh Mỹ', 'TP.HCM', 'Thành phố Thủ Đức', 'Phường Long Thạnh Mỹ', '700000', '720300', '12653', 10.84142000, 106.80986000, '2025-09-22 07:45:00', '2025-09-22 07:45:00'),
-(2, 'Số 789 Đường Công Nghiệp, Quận Hai Bà Trưng, Hà Nội', 'Hà Nội', 'Quận Hai Bà Trưng', 'Phường Bách Khoa', '100000', '100300', '20', 21.00650000, 105.84250000, '2025-09-22 08:00:00', '2025-09-22 08:00:00'),
-(3, '65 Lê Văn Lương, Phường Tân Phong, Quận 7', 'Hồ Chí Minh', 'Quận 7', 'Phường Tân Phong', '700000', '700700', '9233', 10.73020000, 106.72250000, '2025-09-22 08:30:00', '2025-09-22 08:30:00'),
-(4, '2 Hải Triều, Phường Bến Nghé, Quận 1', 'Hồ Chí Minh', 'Quận 1', 'Phường Bến Nghé', '700000', '700100', '8955', 10.77100000, 106.70500000, '2025-09-22 10:00:00', '2025-09-22 10:00:00'),
-(5, '458 Minh Khai (Times City), Phường Vĩnh Tuy, Quận Hai Bà Trưng', 'Hà Nội', 'Quận Hai Bà Trưng', 'Phường Vĩnh Tuy', '100000', '100300', '20', 20.99700000, 105.87000000, '2025-09-22 10:30:00', '2025-09-22 10:30:00'),
-(6, '18 Phan Đình Phùng, Phường Quán Thánh, Quận Ba Đình', 'Hà Nội', 'Quận Ba Đình', 'Phường Quán Thánh', '100000', '100100', '63', 21.04090000, 105.84100000, '2025-09-22 11:00:00', '2025-09-22 11:00:00'),
-(7, '720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh', 'Hồ Chí Minh', 'Quận Bình Thạnh', 'Phường 22', '700000', '701600', '8989', 10.80200000, 106.72000000, '2025-09-22 11:30:00', '2025-09-22 11:30:00'),
-(8, '72A Nguyễn Trãi (Royal City), Phường Thượng Đình, Quận Thanh Xuân', 'Hà Nội', 'Quận Thanh Xuân', 'Phường Thượng Đình', '100000', '100700', '78', 21.00370000, 105.81560000, '2025-09-22 12:00:00', '2025-09-22 12:00:00'),
-(9, '2 Trường Sơn, Phường 2, Quận Tân Bình', 'Hồ Chí Minh', 'Quận Tân Bình', 'Phường 2', '700000', '701400', '9110', 10.81100000, 106.66000000, '2025-09-22 12:30:00', '2025-09-22 12:30:00');
+(1, 'Lô E2a-7, Đường D1, Khu Công nghệ cao, Phường Long Thạnh Mỹ', 'TP.HCM', 'Thành phố Thủ Đức', 'Phường Long Thạnh Mỹ', '700000', '720300', '12653', 12.41690000, 108.62060000, '2025-09-22 07:45:00', '2025-09-22 07:45:00'),
+(2, 'Số 789 Đường Công Nghiệp, Quận Hai Bà Trưng, Hà Nội', 'Hà Nội', 'Quận Hai Bà Trưng', 'Phường Bách Khoa', '100000', '100300', '20', 12.41690000, 108.62060000, '2025-09-22 08:00:00', '2025-09-22 08:00:00'),
+(3, '65 Lê Văn Lương, Phường Tân Phong, Quận 7', 'Hồ Chí Minh', 'Quận 7', 'Phường Tân Phong', '700000', '700700', '9233', 12.41690000, 108.62060000, '2025-09-22 08:30:00', '2025-09-22 08:30:00'),
+(4, '2 Hải Triều, Phường Bến Nghé, Quận 1', 'Hồ Chí Minh', 'Quận 1', 'Phường Bến Nghé', '700000', '700100', '8955', 12.41690000, 108.62060000, '2025-09-22 10:00:00', '2025-09-22 10:00:00'),
+(5, '458 Minh Khai (Times City), Phường Vĩnh Tuy, Quận Hai Bà Trưng', 'Hà Nội', 'Quận Hai Bà Trưng', 'Phường Vĩnh Tuy', '100000', '100300', '20', 12.41690000, 108.62060000, '2025-09-22 10:30:00', '2025-09-22 10:30:00'),
+(6, '18 Phan Đình Phùng, Phường Quán Thánh, Quận Ba Đình', 'Hà Nội', 'Quận Ba Đình', 'Phường Quán Thánh', '100000', '100100', '63', 12.41690000, 108.62060000, '2025-09-22 11:00:00', '2025-09-22 11:00:00'),
+(7, '720A Điện Biên Phủ, Phường 22, Quận Bình Thạnh', 'Hồ Chí Minh', 'Quận Bình Thạnh', 'Phường 22', '700000', '701600', '8989', 12.41690000, 108.62060000, '2025-09-22 11:30:00', '2025-09-22 11:30:00'),
+(8, '72A Nguyễn Trãi (Royal City), Phường Thượng Đình, Quận Thanh Xuân', 'Hà Nội', 'Quận Thanh Xuân', 'Phường Thượng Đình', '100000', '100700', '78', 12.41690000, 108.62060000, '2025-09-22 12:00:00', '2025-09-22 12:00:00'),
+(9, '2 Trường Sơn, Phường 2, Quận Tân Bình', 'Hồ Chí Minh', 'Quận Tân Bình', 'Phường 2', '700000', '701400', '9110', 12.41690000, 108.62060000, '2025-09-22 12:30:00', '2025-09-22 12:30:00');
 
 -- Insert Users (with gmail.com emails, consistent password, and vendor role users)
 INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `tax_code`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `RefreshToken`, `RefreshTokenExpiresAt`, `created_at`, `updated_at`, `deleted_at`) VALUES

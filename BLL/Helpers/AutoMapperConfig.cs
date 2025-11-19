@@ -66,7 +66,8 @@ namespace BLL.Helpers
             CreateMap<Transaction, WalletTransactionResponseDTO>();
             
             // ===================== FARM PROFILE =====================
-            CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();
+            CreateMap<FarmProfileCreateDto, FarmProfile>()
+                .ForMember(dest => dest.Crops, opt => opt.Ignore());
             CreateMap<FarmProfile, FarmProfileResponseDTO>().ReverseMap();
             CreateMap<FarmProfileUpdateDTO, FarmProfile>()
                 .ForMember(dest => dest.Crops, opt => opt.Ignore())

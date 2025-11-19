@@ -40,7 +40,6 @@ namespace BLL.Services
                     crops.Add(_mapper.Map<Crop>(crop));
                 }
             }
-
             var createdFarmProfile = await _farmRepo.CreateFarmProfileWithTransactionAsync(farmProfile, address, crops, cancellationToken);
             var response = _mapper.Map<FarmProfileResponseDTO>(createdFarmProfile);
             
