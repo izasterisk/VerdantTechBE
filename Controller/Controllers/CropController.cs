@@ -42,6 +42,19 @@ namespace Controller.Controllers
             return Ok(result);
         }
 
+        [HttpGet("farm/{farmProfileId}")]
+        [EndpointSummary("Lấy tất cả crop theo farm")]
+        [EndpointDescription("Trả về toàn bộ crop (đang active) thuộc về FarmProfileId, không phân trang.")]
+        [ProducesResponseType(typeof(IEnumerable<CropResponseDTO>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetByFarmId(
+            ulong farmProfileId,
+            CancellationToken ct = default)
+        {
+            var result = await _service.GetByFarmIdAsync(farmProfileId, ct);
+            return Ok(result);
+        }
+
+
 
         [HttpPost]
         [EndpointSummary("Tạo mới crop (1 hoặc nhiều)")]
