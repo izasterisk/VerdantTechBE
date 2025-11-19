@@ -48,6 +48,23 @@ namespace BLL.Service
             };
         }
 
+        public async Task<IEnumerable<CropResponseDTO>> GetByFarmIdAsync(ulong farmProfileId, CancellationToken ct = default)
+        {
+            var data = await _repo.GetByFarmIdAsync(farmProfileId, ct);
+
+            return data.Select(x => new CropResponseDTO
+            {
+                Id = x.Id,
+                FarmProfileId = x.FarmProfileId,
+                CropName = x.CropName,
+                PlantingDate = x.PlantingDate,
+                IsActive = x.IsActive,
+                CreatedAt = x.CreatedAt,
+                UpdatedAt = x.UpdatedAt
+            });
+        }
+
+
         public async Task<IEnumerable<CropResponseDTO>> CreateAsync(CropCreateDTO dto, CancellationToken ct = default)
         {
             var createdList = new List<CropResponseDTO>();
