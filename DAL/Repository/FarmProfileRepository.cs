@@ -97,18 +97,13 @@ public class FarmProfileRepository : IFarmProfileRepository
         }
     }
 
-    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, List<Crop> crops, CancellationToken cancellationToken = default)
+    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            if (crops.Count > 0)
-            {
-                foreach (var crop in crops)
-                {
-                    await _cropRepository.UpdateAsync(crop, cancellationToken);
-                }
-            }
+            // Crops đã được update trong Service và đang được tracked
+            // EF Core sẽ tự động detect changes khi SaveChanges
             
             address.UpdatedAt = DateTime.UtcNow;
             await _addressRepository.UpdateAddressAsync(address, cancellationToken);

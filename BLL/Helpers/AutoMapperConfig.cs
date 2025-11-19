@@ -73,7 +73,7 @@ namespace BLL.Helpers
 
             CreateMap<CropsCreateDTO, Crop>().ReverseMap();
             CreateMap<CropsDTO, Crop>().ReverseMap();
-            CreateMap<CropsUpdateDTO, Crop>().ReverseMap()
+            CreateMap<CropsUpdateDTO, Crop>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             
             // ===================== ADDRESS =====================

@@ -65,20 +65,24 @@ namespace BLL.Services
             _mapper.Map(dto, farmProfile);
             _mapper.Map(dto, farmProfile.Address);
             
-            List<Crop> crops = new List<Crop>();
-            if(dto.Crops != null)
+            if(dto.Crops != null && dto.Crops.Count > 0)
             {
-                foreach (var crop in dto.Crops)
+                foreach (var cropDto in dto.Crops)
                 {
-                    if(crop.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                    if(cropDto.PlantingDate.HasValue && cropDto.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
                         throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
-                    if(!await _farmRepo.ValidateCropBelongToFarm(crop.Id, farmProfile.Id, cancellationToken))
-                        throw new KeyNotFoundException($"Cây trồng với ID {crop.Id} không thuộc về trang trại này.");
-                    crops.Add(_mapper.Map<Crop>(crop));
+                    if(!await _farmRepo.ValidateCropBelongToFarm(cropDto.Id, farmProfile.Id, cancellationToken))
+                        throw new KeyNotFoundException($"Cây trồng với ID {cropDto.Id} không thuộc về trang trại này.");
+                    
+                    var existingCrop = farmProfile.Crops?.FirstOrDefault(x => x.Id == cropDto.Id);
+                    if(existingCrop == null)
+                        throw new KeyNotFoundException($"Cây trồng với ID {cropDto.Id} không thuộc về trang trại này hoặc đã bị xóa.");
+                    _mapper.Map(cropDto, existingCrop);
+                    existingCrop.UpdatedAt = DateTime.UtcNow;
                 }
             }
             
-            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, farmProfile.Address, crops, cancellationToken);
+            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, farmProfile.Address, cancellationToken);
             var response = _mapper.Map<FarmProfileResponseDTO>(updatedFarmProfile);
             
             var userDto = _mapper.Map<UserResponseDTO>(updatedFarmProfile.User);
