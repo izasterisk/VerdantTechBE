@@ -21,7 +21,7 @@ public class FarmProfileRepository : IFarmProfileRepository
         _cropRepository = cropRepository;
     }
 
-    public async Task<FarmProfile?> GetFarmProfileByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
+    public async Task<FarmProfile?> GetFarmProfileWithRelationByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {
         return await _farmProfileRepository.GetWithRelationsAsync(
             f => f.Id == farmId,
@@ -31,6 +31,15 @@ public class FarmProfileRepository : IFarmProfileRepository
                 .Include(f => f.Crops),
             cancellationToken);
     }
+    
+    public async Task<FarmProfile> GetFarmProfileByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
+    {
+        return await _farmProfileRepository.GetAsync(
+            f => f.Id == farmId && f.Status == FarmProfileStatus.Active,
+            true, cancellationToken) ?? 
+               throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
+    }
+
 
     public async Task<FarmProfile?> GetCoordinateByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {
@@ -97,13 +106,16 @@ public class FarmProfileRepository : IFarmProfileRepository
         }
     }
 
-    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default)
+    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, List<Crop> crops, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            // Crops đã được update trong Service và đang được tracked
-            // EF Core sẽ tự động detect changes khi SaveChanges
+            foreach (var crop in crops)
+            {
+                crop.UpdatedAt = DateTime.UtcNow;
+                await _cropRepository.UpdateAsync(crop, cancellationToken);
+            }
             
             address.UpdatedAt = DateTime.UtcNow;
             await _addressRepository.UpdateAddressAsync(address, cancellationToken);
@@ -128,8 +140,9 @@ public class FarmProfileRepository : IFarmProfileRepository
         }
     }
     
-    public async Task<bool> ValidateCropBelongToFarm(ulong cropId, ulong farmId, CancellationToken cancellationToken = default)
+    public async Task<Crop> GetCropBelongToFarm(ulong cropId, ulong farmId, CancellationToken cancellationToken = default)
     {
-        return await _cropRepository.AnyAsync(c => c.Id == cropId && c.FarmProfileId == farmId, cancellationToken);
+        return await _cropRepository.GetAsync(c => c.Id == cropId && c.FarmProfileId == farmId, true, cancellationToken)
+            ?? throw new KeyNotFoundException("Cây trồng không thuộc về trang trại hoặc không tồn tại");
     }
 }
