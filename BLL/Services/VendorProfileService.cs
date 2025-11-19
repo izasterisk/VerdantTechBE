@@ -294,7 +294,7 @@ namespace BLL.Service
             {
                 Email = dto.Email,
                 PasswordHash = AuthUtils.HashPassword(dto.Password),
-                FullName = dto.FullName,
+                FullName = dto.FullName ?? "",
                 PhoneNumber = dto.PhoneNumber,
                 TaxCode = dto.TaxCode,
                 Role = UserRole.Vendor,
@@ -365,9 +365,9 @@ namespace BLL.Service
             var address = new Address
             {
                 LocationAddress = dto.CompanyAddress,
-                Province = dto.Province,
-                District = dto.District,
-                Commune = dto.Commune,
+                Province = dto.Province ?? "",
+                District = dto.District ?? "",
+                Commune = dto.Commune ?? "",
                 ProvinceCode = string.Empty,
                 DistrictCode = string.Empty,
                 CommuneCode = string.Empty,
@@ -404,9 +404,9 @@ namespace BLL.Service
                 var newAddr = new Address
                 {
                     LocationAddress = dto.CompanyAddress,
-                    Province = dto.Province,
-                    District = dto.District,
-                    Commune = dto.Commune,
+                    Province = dto.Province ?? "",
+                    District = dto.District ?? "",
+                    Commune = dto.Commune ?? "",
                     ProvinceCode = string.Empty,
                     DistrictCode = string.Empty,
                     CommuneCode = string.Empty,

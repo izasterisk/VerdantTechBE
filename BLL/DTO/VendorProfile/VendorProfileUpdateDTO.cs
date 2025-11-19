@@ -12,11 +12,11 @@ namespace BLL.DTO.VendorProfile
     public class VendorProfileUpdateDTO
     {
         public ulong Id { get; set; }
-        [Required]
-        public string CompanyName { get; set; }
+        [Required] 
+        public string CompanyName { get; set; } = null!;
         //public string? Slug { get; set; }
         [Required]
-        public string BusinessRegistrationNumber { get; set; }
+        public string BusinessRegistrationNumber { get; set; } = null!;
         public string? CompanyAddress { get; set; }
         public string? Province { get; set; }
         public string? District { get; set; }
