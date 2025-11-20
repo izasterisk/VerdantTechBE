@@ -17,17 +17,17 @@ namespace BLL.Services
     public class ForumPostService : IForumPostService
     {
         private readonly IForumPostRepository _repo;
-        //private readonly ICloudinaryService _cloudinary;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
 
         public ForumPostService(
             IForumPostRepository repo,
-            //ICloudinaryService cloudinary,
-            IMapper mapper)
+            IMapper mapper,
+            INotificationService notificationService)
         {
             _repo = repo;
-            //_cloudinary = cloudinary;
             _mapper = mapper;
+            _notificationService = notificationService;
         }
 
         // ===================== GET ALL =====================
@@ -63,7 +63,6 @@ namespace BLL.Services
 
             var dto = _mapper.Map<ForumPostResponseDTO>(post);
 
-            // chỉ lấy comment cha, replies build trong MapCommentWithReplies
             dto.Comments = post.ForumComments
                 .Where(c => c.ParentId == null)
                 .OrderByDescending(c => c.CreatedAt)
@@ -133,7 +132,7 @@ namespace BLL.Services
                 mediaEntities = addImages.Select((m, index) => new MediaLink
                 {
                     OwnerType = MediaOwnerType.ForumPosts,
-                    OwnerId = post.Id, // lưu ý: lúc này Id có thể vẫn là 0, repo có thể cần chỉnh nếu muốn chính xác
+                    OwnerId = post.Id,
                     ImagePublicId = m.ImagePublicId,
                     ImageUrl = m.ImageUrl,
                     Purpose = index == 0 ? MediaPurpose.Front : MediaPurpose.None,
@@ -144,6 +143,24 @@ namespace BLL.Services
             }
 
             await _repo.CreateAsync(post, mediaEntities, ct);
+
+            // =====================================================
+            // 🔔 Thêm thông báo (KHÔNG đổi logic xử lý post)
+            // =====================================================
+            var title = "🔥 Có bài viết mới dành cho bạn!";
+            var message =
+                $"'{post.Title}' vừa được đăng lên diễn đàn.\n" +
+                $"Hãy vào đọc và tham gia thảo luận nhé! 💬";
+
+            await _notificationService.CreateAndSendNotificationAsync(
+                userId,
+                title,
+                message,
+                NotificationReferenceType.ForumPost,
+                post.Id,
+                ct
+            );
+            // =====================================================
 
             var result = _mapper.Map<ForumPostResponseDTO>(post);
             return result;
