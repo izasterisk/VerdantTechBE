@@ -10,7 +10,7 @@ namespace DAL.IRepository
     public interface IProductCategoryRepository
     {
         Task<bool> IsCategoryNameNotUniqueAsync(string name, CancellationToken cancellationToken = default);
-        Task<bool> IsCategoryHasMoreThan2FatherAsync(ulong parentId, CancellationToken cancellationToken = default);
+        Task<bool> IsCategoryAlreadySonsAsync(ulong parentId, CancellationToken cancellationToken = default);
         Task<ProductCategory?> GetProductCategoryByIdAsync(ulong categoryId, bool useNoTracking = true, CancellationToken cancellationToken = default);
         Task<List<ProductCategory>> GetAllProductCategoryAsync( CancellationToken cancellationToken = default);
         Task<ProductCategory> CreateProductCategoryAsync(ProductCategory productCategory, CancellationToken cancellationToken = default);

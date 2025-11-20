@@ -79,7 +79,7 @@ public class OrderDetailRepository : IOrderDetailRepository
         if (product == false)
             throw new KeyNotFoundException("Sản phẩm không tồn tại.");
         var rootCategoryId = await GetRootProductCategoryIdByProductIdAsync(productId, cancellationToken);
-        if (rootCategoryId == 1)
+        if (rootCategoryId == 24 || rootCategoryId == 25 || rootCategoryId == 28 || rootCategoryId == 29)
         {
             if (serialNumber == null)
                 throw new InvalidExpressionException("Với danh mục máy móc bắt buộc phải có số sê-ri.");
