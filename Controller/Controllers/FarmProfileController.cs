@@ -109,10 +109,6 @@ namespace Controller.Controllers
                 var result = await _farmProfileService.UpdateFarmProfileAsync(id, dto, GetCancellationToken());
                 return SuccessResponse(result);
             }
-            catch (KeyNotFoundException)
-            {
-                return ErrorResponse("Không tìm thấy hồ sơ trang trại", HttpStatusCode.NotFound);
-            }
             catch (Exception ex)
             {
                 return HandleException(ex);
