@@ -89,7 +89,7 @@ namespace BLL.Services
                 //     throw new ArgumentException($"User ID {dto.VendorId.Value} not found.");
 
                 if (vendorUser.Role != UserRole.Vendor)
-                    throw new ArgumentException($"User ID {dto.VendorId.Value} is not a vendor.");
+                    throw new ArgumentException($"Người dùng với ID {dto.VendorId.Value} không phải là nhà cung cấp.");
             }
 
             var entity = _mapper.Map<BatchInventory>(dto);

@@ -1,19 +1,12 @@
--- SEEDER DATA FOR VERDANTTECH DATABASE v9.2
+﻿-- SEEDER DATA FOR VERDANTTECH DATABASE v9.2
 -- Last Updated: 2025-11-20
--- Included: 23 Farms, 6 Farmers
+-- Included: 23 Farms, 6 Farmers, 20 Vendors, 172 Products
 -- Address Logic: Using ONLY codes from provided files (Dong Thap, BRVT, Nghe An, Lam Dong)
--- Coordinates: Real rural coordinates for the visual address
-
 -- All passwords are: $2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS
 
 -- =====================================================
--- 1. INSERT ADDRESSES
+-- 1. INSERT ADDRESSES (Keep existing farm addresses)
 -- =====================================================
--- Note regarding Codes: 
--- Since valid codes are only provided for Dong Thap, BRVT, Nghe An, Lam Dong,
--- addresses in other provinces will "borrow" valid linked codes from these 4 provinces
--- to ensure database integrity while keeping the text address accurate.
-
 INSERT INTO `addresses` (`id`, `location_address`, `province`, `district`, `commune`, `province_code`, `district_code`, `commune_code`, `latitude`, `longitude`, `created_at`, `updated_at`) VALUES
 -- System Addresses (Keep IDs 1-8)
 (1, 'Lô E2a-7, Đường D1, Khu Công nghệ cao', 'TP.HCM', 'Thành phố Thủ Đức', 'Phường Long Thạnh Mỹ', '700000', '720300', '12653', 10.8411, 106.8099, NOW(), NOW()),
@@ -23,107 +16,78 @@ INSERT INTO `addresses` (`id`, `location_address`, `province`, `district`, `comm
 (7, '720A Điện Biên Phủ', 'Hồ Chí Minh', 'Quận Bình Thạnh', 'Phường 22', '700000', '701600', '8989', 10.7960, 106.7220, NOW(), NOW()),
 (8, '72A Nguyễn Trãi', 'Hà Nội', 'Quận Thanh Xuân', 'Phường Thượng Đình', '100000', '100700', '78', 21.0008, 105.8157, NOW(), NOW()),
 
--- FARM ADDRESSES (IDs 9-31)
--- 1. Đồng Tháp [Real Code: Dong Thap/Chau Thanh/Tan Phu Trung 12221]
+-- FARM ADDRESSES (IDs 9-31) - Keep existing
 (9, 'Xã Tân Thành, H. Châu Thành', 'Đồng Tháp', 'Huyện Châu Thành', 'Xã Tân Thành', '870000', '871100', '12221', 10.2633, 105.7567, NOW(), NOW()),
-
--- 2. BR-VT [Real Code: BRVT/Xuyen Moc/Phuoc Thuan 9313]
 (10, 'Xã Phước Thuận, H. Xuyên Mộc', 'Bà Rịa - Vũng Tàu', 'Huyện Xuyên Mộc', 'Xã Phước Thuận', '790000', '790300', '9313', 10.5133, 107.4600, NOW(), NOW()),
-
--- 3. Bình Thuận [Borrow Code: BRVT/Xuyen Moc/Bau Lam 9318]
 (11, 'Xã Hàm Thắng, H. Hàm Thuận Bắc', 'Bình Thuận', 'Huyện Hàm Thuận Bắc', 'Xã Hàm Thắng', '790000', '790300', '9318', 10.9833, 108.1167, NOW(), NOW()),
-
--- 4. Đồng Nai [Borrow Code: BRVT/Xuyen Moc/Binh Chau 9325]
-(12, 'Phường Bửu Hòa, TP. Biên Hòa', 'Đồng Nai', 'TP. Biên Hòa', 'Phường Bửu Hòa', '790000', '790300', '9325', 10.9419, 106.8047, NOW(), NOW()),
-
--- 5. Đắk Lắk [Borrow Code: Lam Dong/Da Lat/Ta Nung 8818]
+(12, 'Số 12, KDC 16, Ấp 4, Xã Phú Hòa, Định Quán, Đồng Nai', 'Đồng Nai', 'TP. Biên Hòa', 'Xã Phú Hòa', '790000', '790300', '9325', 11.21036900, 107.40797600, NOW(), NOW()),
 (13, 'Xã Ea Nuôl, H. Buôn Đôn', 'Đắk Lắk', 'Huyện Buôn Đôn', 'Xã Ea Nuôl', '670000', '670100', '8818', 12.7833, 107.8667, NOW(), NOW()),
-
--- 6. Lâm Đồng (Bảo Lộc) [Borrow Code: Lam Dong/Da Lat/Xuan Truong 8819 (File lacks Bao Loc communes)]
 (14, 'Xã Lộc Bảo, TP. Bảo Lộc', 'Lâm Đồng', 'TP. Bảo Lộc', 'Xã Lộc Bảo', '670000', '670100', '8819', 11.5067, 107.7633, NOW(), NOW()),
-
--- 7. Lâm Đồng (Bảo Lộc) [Borrow Code: Lam Dong/Da Lat/Xuan Tho 8820]
 (15, 'Xã Đại Lào, TP. Bảo Lộc', 'Lâm Đồng', 'TP. Bảo Lộc', 'Xã Đại Lào', '670000', '670100', '8820', 11.4800, 107.7500, NOW(), NOW()),
-
--- 8. Lâm Đồng (Đà Lạt) [Real Code: Lam Dong/Da Lat/P4 8808]
 (16, 'Phường 4, TP. Đà Lạt', 'Lâm Đồng', 'TP. Đà Lạt', 'Phường 4', '670000', '670100', '8808', 11.9310, 108.4300, NOW(), NOW()),
-
--- 9. Lâm Đồng (Đà Lạt) [Real Code: Lam Dong/Da Lat/P5 8809]
 (17, 'Phường 5, TP. Đà Lạt', 'Lâm Đồng', 'TP. Đà Lạt', 'Phường 5', '670000', '670100', '8809', 11.9450, 108.4250, NOW(), NOW()),
-
--- 10. Lâm Đồng (Đà Lạt) [Real Code: Lam Dong/Da Lat/P10 8814]
 (18, 'Phường 10, TP. Đà Lạt', 'Lâm Đồng', 'TP. Đà Lạt', 'Phường 10', '670000', '670100', '8814', 11.9350, 108.4600, NOW(), NOW()),
-
--- 11. Lâm Đồng (Đạ Huoai) [Borrow Code: Lam Dong/Da Lat/Tram Hanh 8821]
-(19, 'Xã Đạ Loan, H. Đạ Huoai', 'Lâm Đồng', 'Huyện Đạ Huoai', 'Xã Đạ Loan', '670000', '670100', '8821', 11.4667, 107.6833, NOW(), NOW()),
-
--- 12. Lâm Đồng (Đạ Tẻh) [Borrow Code: Lam Dong/Da Lat/P11 8815]
+(19, 'xã Ea Tiêu, huyện Cú Kuin, Đắk Lắk', 'Đắk Lắk', 'Huyện Cú Kuin', 'xã Ea Tiêu', '670000', '670100', '8821', 12.62207400, 108.11036000, NOW(), NOW()),
 (20, 'Xã Đạ Tẻh, H. Đạ Tẻh', 'Lâm Đồng', 'Huyện Đạ Tẻh', 'Xã Đạ Tẻh', '670000', '670100', '8815', 11.5500, 107.5500, NOW(), NOW()),
-
--- 13. Gia Lai [Borrow Code: Lam Dong/Da Lat/P12 8816]
-(21, 'Xã Ia Kha, H. Ia Grai', 'Gia Lai', 'Huyện Ia Grai', 'Xã Ia Kha', '670000', '670100', '8816', 13.9833, 107.9167, NOW(), NOW()),
-
--- 14. Nghệ An [Real Code: Nghe An/Hung Nguyen/Hung Tay 6401]
-(22, 'Xã Hưng Tây, H. Hưng Nguyên', 'Nghệ An', 'Huyện Hưng Nguyên', 'Xã Hưng Tây', '460000', '461800', '6401', 18.6667, 105.6333, NOW(), NOW()),
-
--- 15. Nghệ An [Real Code: Nghe An/Hung Nguyen/Hung Loi 6408]
-(23, 'Xã Hưng Lợi, H. Hưng Nguyên', 'Nghệ An', 'Huyện Hưng Nguyên', 'Xã Hưng Lợi', '460000', '461800', '6408', 18.6333, 105.6500, NOW(), NOW()),
-
--- 16. Nghệ An [Real Code: Nghe An/Hung Nguyen/Hung Dao 6402]
-(24, 'Xã Hưng Đạo, H. Hưng Nguyên', 'Nghệ An', 'Huyện Hưng Nguyên', 'Xã Hưng Đạo', '460000', '461800', '6402', 18.6500, 105.6167, NOW(), NOW()),
-
--- 17. Bắc Giang [Borrow Code: Nghe An/Hung Nguyen/Hung Khanh 6418]
+(21, 'số 41 Lạc Long Quân, thị trấn Lộc Thắng (huyện Bảo Lâm, tỉnh Lâm Đồng)', 'Lâm Đồng', 'Huyện Bảo Lâm', 'Thị trấn Lộc Thắng', '670000', '670100', '8816', 11.59958400, 107.83705000, NOW(), NOW()),
+(22, 'Xã Hưng Tây, H. Hưng Nguyên', 'Nghệ An', 'Huyện Hưng Nguyên', 'Xã Hưng Tây', '460000', '461800', '6401', 18.61578300, 105.67749800, NOW(), NOW()),
+(23, 'Xã Hưng Lợi, H. Hưng Nguyên', 'Nghệ An', 'Huyện Hưng Nguyên', 'Xã Hưng Lợi', '460000', '461800', '6408', 18.61995200, 105.67979400, NOW(), NOW()),
+(24, 'Xã Hưng Đạo, H. Hưng Nguyên', 'Nghệ An', 'Huyện Hưng Nguyên', 'Xã Hưng Đạo', '460000', '461800', '6402', 18.62264600, 105.67628600, NOW(), NOW()),
 (25, 'Xã Tân Yên, H. Lục Nam', 'Bắc Giang', 'Huyện Lục Nam', 'Xã Tân Yên', '460000', '461800', '6418', 21.3000, 106.3000, NOW(), NOW()),
-
--- 18. Thái Bình [Borrow Code: Nghe An/Hung Nguyen/Hung Lam 6419]
 (26, 'Xã Vũ Lăng, H. Vũ Thư', 'Thái Bình', 'Huyện Vũ Thư', 'Xã Vũ Lăng', '460000', '461800', '6419', 20.4167, 106.3167, NOW(), NOW()),
-
--- 19. Sơn La (Mộc Châu) [Borrow Code: Lam Dong/Da Lat/P3 8807]
 (27, 'Xã Tân Lập, H. Mộc Châu', 'Sơn La', 'Huyện Mộc Châu', 'Xã Tân Lập', '670000', '670100', '8807', 20.8500, 104.6333, NOW(), NOW()),
-
--- 20. Hòa Bình [Borrow Code: Nghe An/Hung Nguyen/Hung Linh 6405]
 (28, 'Xã Phú Lương, H. Lương Sơn', 'Hòa Bình', 'Huyện Lương Sơn', 'Xã Phú Lương', '460000', '461800', '6405', 20.8667, 105.5500, NOW(), NOW()),
-
--- 21. Lạng Sơn [Borrow Code: Nghe An/Hung Nguyen/Hung Long 6411]
-(29, 'Xã Hữu Khánh, H. Lộc Bình', 'Lạng Sơn', 'Huyện Lộc Bình', 'Xã Hữu Khánh', '460000', '461800', '6411', 21.7667, 106.9167, NOW(), NOW()),
-
--- 22. Thái Nguyên [Borrow Code: Nghe An/Hung Nguyen/Hung My 6403]
+(29, 'Thôn Trường Thọ, Xã Xuân Trường, Thành phố Đà Lạt, Lâm Đồng', 'Lâm Đồng', 'Thôn Trường Thọ', 'Thành phố Đà Lạt', '460000', '461800', '6411', 11.88986800, 108.56761600, NOW(), NOW()),
 (30, 'Xã Phúc Trìu, TP. Phổ Yên', 'Thái Nguyên', 'TP. Phổ Yên', 'Xã Phúc Trìu', '460000', '461800', '6403', 21.4833, 105.7667, NOW(), NOW()),
-
--- 23. Sơn La (Bắc Yên) [Borrow Code: Lam Dong/Da Lat/P6 8810]
 (31, 'Xã Tà Hộc, H. Bắc Yên', 'Sơn La', 'Huyện Bắc Yên', 'Xã Tà Hộc', '670000', '670100', '8810', 21.0833, 104.3833, NOW(), NOW());
 
-
 -- =====================================================
--- 2. INSERT USERS (6 Farmers)
+-- 2. INSERT USERS (6 Farmers + 20 Vendors)
 -- =====================================================
 INSERT INTO `users` (`id`, `email`, `password_hash`, `role`, `full_name`, `phone_number`, `tax_code`, `is_verified`, `verification_token`, `verification_sent_at`, `avatar_url`, `status`, `last_login_at`, `created_at`, `updated_at`, `deleted_at`) VALUES
+-- System users (Keep IDs 1-16)
 (1, 'admin@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'admin', 'Quản trị viên hệ thống', '0901234567', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (2, 'staff1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Nguyễn Văn Nhân Viên 1', '0901234568', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (3, 'staff2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Trần Thị Nhân Viên 2', '0901234569', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (4, 'staff3@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'staff', 'Lê Văn Nhân Viên 3', '0901234570', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
-(5, 'vendor1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Máy Móc Nông Nghiệp Xanh', '0901234571', 'MST123456789', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
-(6, 'vendor2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Cửa Hàng Nông Sản Sạch VerdantTech', '0901234572', 'MST987654321', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (7, 'customer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Phạm Văn Khách Hàng 1', '0901234573', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (8, 'customer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Hoàng Thị Khách Hàng 2', '0901234574', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
--- FARMERS (Total 6: 2 existing + 4 new)
+-- FARMERS (Total 6)
 (9, 'farmer1@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Nguyễn Văn Nông Dân 1', '0901234575', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (10, 'farmer2@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Trần Thị Nông Dân 2', '0901234576', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (11, 'testuser@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Test', '0901234577', NULL, 0, 'test-token-123', NOW(), NULL, 'active', NULL, NOW(), NOW(), NULL),
 (12, 'inactive@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Người Dùng Không Hoạt Động', '0901234578', NULL, 1, NULL, NULL, NULL, 'inactive', NOW(), NOW(), NOW(), NULL),
--- NEW FARMERS
 (13, 'farmer3@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Lê Văn Nông Dân 3', '0901234580', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (14, 'farmer4@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Phạm Thị Nông Dân 4', '0901234581', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
 (15, 'farmer5@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Hoàng Văn Nông Dân 5', '0901234582', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
-(16, 'farmer6@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Vũ Thị Nông Dân 6', '0901234583', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL);
+(16, 'farmer6@gmail.com', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'customer', 'Vũ Thị Nông Dân 6', '0901234583', NULL, 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+-- VENDORS (20 vendors - IDs 17-36)
+(17, 'vendor01@greenfarm.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Phân Bón Xanh Việt', '0902000001', 'MST1000000001', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(18, 'vendor02@biosol.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Vi Sinh Việt', '0902000002', 'MST1000000002', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(19, 'vendor03@ecoagri.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Nông Nghiệp Sinh Thái', '0902000003', 'MST1000000003', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(20, 'vendor04@organicvn.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Hữu Cơ Việt Nam', '0902000004', 'MST1000000004', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(21, 'vendor05@biopest.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Bảo Vệ Thực Vật Sinh Học', '0902000005', 'MST1000000005', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(22, 'vendor06@cleanseeds.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Giống Cây Sạch', '0902000006', 'MST1000000006', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(23, 'vendor07@irrigation.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Hệ Thống Tưới Tiêu', '0902000007', 'MST1000000007', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(24, 'vendor08@smartfarm.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Công Nghệ Nông Nghiệp Thông Minh', '0902000008', 'MST1000000008', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(25, 'vendor09@machinery.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Máy Móc Nông Nghiệp Xanh', '0902000009', 'MST1000000009', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(26, 'vendor10@safeagri.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty An Toàn Nông Nghiệp', '0902000010', 'MST1000000010', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(27, 'vendor11@covermaterial.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Vật Liệu Che Phủ', '0902000011', 'MST1000000011', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(28, 'vendor12@biopack.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Bao Bì Sinh Học', '0902000012', 'MST1000000012', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(29, 'vendor13@hydroponic.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Thủy Canh Việt', '0902000013', 'MST1000000013', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(30, 'vendor14@agritech.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Thiết Bị Nông Nghiệp Công Nghệ Cao', '0902000014', 'MST1000000014', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(31, 'vendor15@greenharvest.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Thu Hoạch Xanh', '0902000015', 'MST1000000015', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(32, 'vendor16@soilcare.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Chăm Sóc Đất', '0902000016', 'MST1000000016', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(33, 'vendor17@plantgrowth.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Kích Thích Sinh Trưởng', '0902000017', 'MST1000000017', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(34, 'vendor18@seedsupply.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Cung Ứng Giống', '0902000018', 'MST1000000018', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(35, 'vendor19@watertech.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Công Nghệ Nước', '0902000019', 'MST1000000019', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL),
+(36, 'vendor20@agrisupport.vn', '$2a$11$eebvzn7Au.D1ILICdBn4zeE8kMjPcMwg2CkbCUOiVsWFURxS6JriS', 'vendor', 'Công Ty Hỗ Trợ Nông Nghiệp', '0902000020', 'MST1000000020', 1, NULL, NULL, NULL, 'active', NOW(), NOW(), NOW(), NULL);
 
 -- =====================================================
 -- 3. INSERT USER_ADDRESSES
 -- =====================================================
 INSERT INTO `user_addresses` (`id`, `user_id`, `address_id`, `is_deleted`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 1, 1, 0, NOW(), NOW(), NULL),
-(2, 5, 2, 0, NOW(), NOW(), NULL),
-(3, 6, 3, 0, NOW(), NOW(), NULL),
 (6, 7, 6, 0, NOW(), NOW(), NULL),
 (7, 8, 7, 0, NOW(), NOW(), NULL),
 (8, 8, 8, 0, NOW(), NOW(), NULL),
@@ -134,279 +98,1139 @@ INSERT INTO `user_addresses` (`id`, `user_id`, `address_id`, `is_deleted`, `crea
 (13, 13, 17, 0, NOW(), NOW(), NULL),
 (14, 14, 22, 0, NOW(), NOW(), NULL),
 (15, 15, 25, 0, NOW(), NOW(), NULL),
-(16, 16, 29, 0, NOW(), NOW(), NULL);
+(16, 16, 29, 0, NOW(), NOW(), NULL),
+-- Link Vendors to addresses (random from 1,2,3,6,7,8)
+(17, 17, 1, 0, NOW(), NOW(), NULL),
+(18, 18, 2, 0, NOW(), NOW(), NULL),
+(19, 19, 3, 0, NOW(), NOW(), NULL),
+(20, 20, 6, 0, NOW(), NOW(), NULL),
+(21, 21, 7, 0, NOW(), NOW(), NULL),
+(22, 22, 8, 0, NOW(), NOW(), NULL),
+(23, 23, 1, 0, NOW(), NOW(), NULL),
+(24, 24, 2, 0, NOW(), NOW(), NULL),
+(25, 25, 3, 0, NOW(), NOW(), NULL),
+(26, 26, 6, 0, NOW(), NOW(), NULL),
+(27, 27, 7, 0, NOW(), NOW(), NULL),
+(28, 28, 8, 0, NOW(), NOW(), NULL),
+(29, 29, 1, 0, NOW(), NOW(), NULL),
+(30, 30, 2, 0, NOW(), NOW(), NULL),
+(31, 31, 3, 0, NOW(), NOW(), NULL),
+(32, 32, 6, 0, NOW(), NOW(), NULL),
+(33, 33, 7, 0, NOW(), NOW(), NULL),
+(34, 34, 8, 0, NOW(), NOW(), NULL),
+(35, 35, 1, 0, NOW(), NOW(), NULL),
+(36, 36, 2, 0, NOW(), NOW(), NULL);
 
 -- =====================================================
--- 4. FARM PROFILES & CROPS (23 Farms / 6 Farmers)
+-- 4. FARM PROFILES & CROPS (Keep existing 23 Farms / 6 Farmers)
 -- =====================================================
 
 -- ===== FARMER 1 (User ID 9) - 4 Farms =====
--- 1. Đồng Tháp
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (1, 9, 'Trang trại Lúa ĐBSCL', 15.5, 9, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (1, 'Lúa', '2025-01-15', 1), (1, 'Rau muống', '2025-06-01', 1), (1, 'Cải thảo', '2025-06-01', 1);
 
--- 2. BR-VT
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (2, 9, 'Trang trại Cao Su BRVT', 20.0, 10, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (2, 'Cao su', '2020-01-01', 1), (2, 'Điều', '2021-03-01', 1);
 
--- 3. Bình Thuận
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (3, 9, 'Trang trại Thanh Long', 8.2, 11, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (3, 'Thanh long ruột đỏ', '2022-05-15', 1), (3, 'Thanh long trắng', '2022-05-15', 1);
 
--- 4. Đồng Nai
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (4, 9, 'Trang trại Ca Cao Biên Hòa', 12.0, 12, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (4, 'Ca cao', '2021-08-10', 1);
 
-
 -- ===== FARMER 2 (User ID 10) - 4 Farms =====
--- 5. Đak Lak
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (5, 10, 'Trang trại Sầu Riêng Đak Lak', 10.5, 13, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (5, 'Sầu riêng Monthong', '2019-06-20', 1), (5, 'Sầu riêng Ri6', '2019-06-20', 1);
 
--- 6. Lâm Đồng (Cà Phê)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (6, 10, 'Trang trại Cà Phê Lâm Đồng', 6.8, 14, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (6, 'Cà phê Arabica', '2018-11-01', 1);
 
--- 7. Lâm Đồng (Chè)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (7, 10, 'Trang trại Chè Lâm Đồng', 5.5, 15, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (7, 'Chè xanh', '2020-02-15', 1);
 
--- 8. Lâm Đồng (Nho)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (8, 10, 'Trang trại Nho Đà Lạt', 3.2, 16, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (8, 'Nho Cardinal', '2023-01-10', 1), (8, 'Nho Kyoho', '2023-01-10', 1);
 
-
 -- ===== FARMER 3 (User ID 13) - 4 Farms =====
--- 9. Lâm Đồng (Dâu Tây)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (9, 13, 'Trang trại Dâu Tây Đà Lạt', 2.5, 17, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (9, 'Dâu tây Camarosa', '2024-10-01', 1), (9, 'Dâu tây Festival', '2024-10-01', 1);
 
--- 10. Lâm Đồng (Rau Sạch)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (10, 13, 'Trang trại Rau Sạch Đà Lạt', 4.5, 18, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (10, 'Cà chua bi', '2025-02-01', 1), (10, 'Xà lách', '2025-02-01', 1), (10, 'Bông cải xanh', '2025-02-01', 1);
 
--- 11. Lâm Đồng (Tiêu)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (11, 13, 'Trang trại Tiêu Lâm Đồng', 7.3, 19, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (11, 'Tiêu (Hồ tiêu)', '2021-05-20', 1);
 
--- 12. Lâm Đồng (Chuối)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (12, 13, 'Trang trại Chuối Lâm Đồng', 4.0, 20, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (12, 'Chuối tiêu', '2023-07-15', 1);
 
-
 -- ===== FARMER 4 (User ID 14) - 4 Farms =====
--- 13. Gia Lai
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (13, 14, 'Trang trại Chè Tây Nguyên', 9.0, 21, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (13, 'Chè shan tuyết', '2019-04-01', 1);
 
--- 14. Nghệ An (Lúa)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (14, 14, 'Trang trại Lúa Vinh', 18.0, 22, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (14, 'Lúa Nàng Nhen', '2025-01-20', 1), (14, 'Lúa Bắc Hương', '2025-01-20', 1);
 
--- 15. Nghệ An (Ngô)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (15, 14, 'Trang trại Ngô Vinh', 12.5, 23, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (15, 'Ngô nếp', '2025-03-01', 1), (15, 'Ngô lai', '2025-03-01', 1);
 
--- 16. Nghệ An (Sắn)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (16, 14, 'Trang trại Sắn Vinh', 10.0, 24, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (16, 'Sắn KM94', '2024-12-15', 1);
 
-
 -- ===== FARMER 5 (User ID 15) - 4 Farms =====
--- 17. Bắc Giang
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (17, 15, 'Trang trại Vải Bắc Giang', 7.5, 25, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (17, 'Vải thiều', '2018-02-10', 1);
 
--- 18. Thái Bình
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (18, 15, 'Trang trại Lúa Thái Bình', 22.0, 26, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (18, 'Lúa Bắc Hương', '2025-01-25', 1), (18, 'Lúa Khang Dân', '2025-01-25', 1);
 
--- 19. Sơn La (Đào)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (19, 15, 'Trang trại Đào Sơn La', 5.8, 27, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (19, 'Đào tiên', '2020-11-05', 1);
 
--- 20. Hòa Bình
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (20, 15, 'Trang trại Mận Hòa Bình', 6.2, 28, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (20, 'Mận hậu', '2021-01-15', 1);
 
-
 -- ===== FARMER 6 (User ID 16) - 3 Farms =====
--- 21. Lạng Sơn
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (21, 16, 'Trang trại Hồng Lạng Sơn', 4.5, 29, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (21, 'Hồng giòn', '2022-03-10', 1);
 
--- 22. Thái Nguyên
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (22, 16, 'Trang trại Chè Thái Nguyên', 8.5, 30, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (22, 'Chè Thái Nguyên', '2020-08-20', 1);
 
--- 23. Sơn La (Cà Phê)
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (23, 16, 'Trang trại Cà Phê Sơn La', 9.5, 31, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active`) VALUES 
 (23, 'Cà phê Robusta', '2019-09-05', 1);
 
+-- =====================================================
+-- 5. VENDOR PROFILES, BANK ACCOUNTS, WALLETS
+-- =====================================================
+
+-- Insert Vendor Profiles (20 vendors)
+INSERT INTO vendor_profiles (id, user_id, company_name, slug, business_registration_number, verified_at, verified_by, created_at, updated_at) VALUES
+(1, 17, 'Công Ty Phân Bón Xanh Việt', 'cong-ty-phan-bon-xanh-viet', 'BRN1000000001', NOW(), 1, NOW(), NOW()),
+(2, 18, 'Công Ty Vi Sinh Việt', 'cong-ty-vi-sinh-viet', 'BRN1000000002', NOW(), 1, NOW(), NOW()),
+(3, 19, 'Công Ty Nông Nghiệp Sinh Thái', 'cong-ty-nong-nghiep-sinh-thai', 'BRN1000000003', NOW(), 1, NOW(), NOW()),
+(4, 20, 'Công Ty Hữu Cơ Việt Nam', 'cong-ty-huu-co-viet-nam', 'BRN1000000004', NOW(), 1, NOW(), NOW()),
+(5, 21, 'Công Ty Bảo Vệ Thực Vật Sinh Học', 'cong-ty-bao-ve-thuc-vat-sinh-hoc', 'BRN1000000005', NOW(), 1, NOW(), NOW()),
+(6, 22, 'Công Ty Giống Cây Sạch', 'cong-ty-giong-cay-sach', 'BRN1000000006', NOW(), 1, NOW(), NOW()),
+(7, 23, 'Công Ty Hệ Thống Tưới Tiêu', 'cong-ty-he-thong-tuoi-tieu', 'BRN1000000007', NOW(), 1, NOW(), NOW()),
+(8, 24, 'Công Ty Công Nghệ Nông Nghiệp Thông Minh', 'cong-ty-cong-nghe-nong-nghiep-thong-minh', 'BRN1000000008', NOW(), 1, NOW(), NOW()),
+(9, 25, 'Công Ty Máy Móc Nông Nghiệp Xanh', 'cong-ty-may-moc-nong-nghiep-xanh', 'BRN1000000009', NOW(), 1, NOW(), NOW()),
+(10, 26, 'Công Ty An Toàn Nông Nghiệp', 'cong-ty-an-toan-nong-nghiep', 'BRN1000000010', NOW(), 1, NOW(), NOW()),
+(11, 27, 'Công Ty Vật Liệu Che Phủ', 'cong-ty-vat-lieu-che-phu', 'BRN1000000011', NOW(), 1, NOW(), NOW()),
+(12, 28, 'Công Ty Bao Bì Sinh Học', 'cong-ty-bao-bi-sinh-hoc', 'BRN1000000012', NOW(), 1, NOW(), NOW()),
+(13, 29, 'Công Ty Thủy Canh Việt', 'cong-ty-thuy-canh-viet', 'BRN1000000013', NOW(), 1, NOW(), NOW()),
+(14, 30, 'Công Ty Thiết Bị Nông Nghiệp Công Nghệ Cao', 'cong-ty-thiet-bi-nong-nghiep-cong-nghe-cao', 'BRN1000000014', NOW(), 1, NOW(), NOW()),
+(15, 31, 'Công Ty Thu Hoạch Xanh', 'cong-ty-thu-hoach-xanh', 'BRN1000000015', NOW(), 1, NOW(), NOW()),
+(16, 32, 'Công Ty Chăm Sóc Đất', 'cong-ty-cham-soc-dat', 'BRN1000000016', NOW(), 1, NOW(), NOW()),
+(17, 33, 'Công Ty Kích Thích Sinh Trưởng', 'cong-ty-kich-thich-sinh-truong', 'BRN1000000017', NOW(), 1, NOW(), NOW()),
+(18, 34, 'Công Ty Cung Ứng Giống', 'cong-ty-cung-ung-giong', 'BRN1000000018', NOW(), 1, NOW(), NOW()),
+(19, 35, 'Công Ty Công Nghệ Nước', 'cong-ty-cong-nghe-nuoc', 'BRN1000000019', NOW(), 1, NOW(), NOW()),
+(20, 36, 'Công Ty Hỗ Trợ Nông Nghiệp', 'cong-ty-ho-tro-nong-nghiep', 'BRN1000000020', NOW(), 1, NOW(), NOW());
+
+-- Insert User Bank Accounts (20 vendors - all same account 970436/1045069359)
+INSERT INTO user_bank_accounts (id, user_id, bank_code, account_number, is_active, created_at, updated_at) VALUES
+(1, 17, '970436', '1045069359', 1, NOW(), NOW()),
+(2, 18, '970436', '1045069359', 1, NOW(), NOW()),
+(3, 19, '970436', '1045069359', 1, NOW(), NOW()),
+(4, 20, '970436', '1045069359', 1, NOW(), NOW()),
+(5, 21, '970436', '1045069359', 1, NOW(), NOW()),
+(6, 22, '970436', '1045069359', 1, NOW(), NOW()),
+(7, 23, '970436', '1045069359', 1, NOW(), NOW()),
+(8, 24, '970436', '1045069359', 1, NOW(), NOW()),
+(9, 25, '970436', '1045069359', 1, NOW(), NOW()),
+(10, 26, '970436', '1045069359', 1, NOW(), NOW()),
+(11, 27, '970436', '1045069359', 1, NOW(), NOW()),
+(12, 28, '970436', '1045069359', 1, NOW(), NOW()),
+(13, 29, '970436', '1045069359', 1, NOW(), NOW()),
+(14, 30, '970436', '1045069359', 1, NOW(), NOW()),
+(15, 31, '970436', '1045069359', 1, NOW(), NOW()),
+(16, 32, '970436', '1045069359', 1, NOW(), NOW()),
+(17, 33, '970436', '1045069359', 1, NOW(), NOW()),
+(18, 34, '970436', '1045069359', 1, NOW(), NOW()),
+(19, 35, '970436', '1045069359', 1, NOW(), NOW()),
+(20, 36, '970436', '1045069359', 1, NOW(), NOW());
+
+-- Insert Wallets (20 vendors - starting balance 10,000,000 VND)
+INSERT INTO wallets (id, vendor_id, balance, last_updated_by, created_at, updated_at) VALUES
+(1, 17, 10000000.00, 1, NOW(), NOW()),
+(2, 18, 10000000.00, 1, NOW(), NOW()),
+(3, 19, 10000000.00, 1, NOW(), NOW()),
+(4, 20, 10000000.00, 1, NOW(), NOW()),
+(5, 21, 10000000.00, 1, NOW(), NOW()),
+(6, 22, 10000000.00, 1, NOW(), NOW()),
+(7, 23, 10000000.00, 1, NOW(), NOW()),
+(8, 24, 10000000.00, 1, NOW(), NOW()),
+(9, 25, 10000000.00, 1, NOW(), NOW()),
+(10, 26, 10000000.00, 1, NOW(), NOW()),
+(11, 27, 10000000.00, 1, NOW(), NOW()),
+(12, 28, 10000000.00, 1, NOW(), NOW()),
+(13, 29, 10000000.00, 1, NOW(), NOW()),
+(14, 30, 10000000.00, 1, NOW(), NOW()),
+(15, 31, 10000000.00, 1, NOW(), NOW()),
+(16, 32, 10000000.00, 1, NOW(), NOW()),
+(17, 33, 10000000.00, 1, NOW(), NOW()),
+(18, 34, 10000000.00, 1, NOW(), NOW()),
+(19, 35, 10000000.00, 1, NOW(), NOW()),
+(20, 36, 10000000.00, 1, NOW(), NOW());
+
+-- Insert Vendor Certificates (20 vendors x 1 cert each = 20 certs)
+INSERT INTO vendor_certificates (id, vendor_id, certification_code, certification_name, status, rejection_reason, uploaded_at, verified_at, verified_by, created_at, updated_at) VALUES
+(1, 17, 'TCVN_8956', 'TCVN 8956:2011 - Phân vi sinh', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(2, 18, 'ISO_14001', 'ISO 14001 Environmental Management', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(3, 19, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(4, 20, 'USDA_ORGANIC', 'USDA Organic Certification', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(5, 21, 'TCVN_7259', 'TCVN 7259:2003 - Phân hữu cơ', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(6, 22, 'TCVN_8956', 'TCVN 8956:2011 - Phân vi sinh', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(7, 23, 'ISO_14001', 'ISO 14001 Environmental Management', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(8, 24, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(9, 25, 'USDA_ORGANIC', 'USDA Organic Certification', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(10, 26, 'TCVN_7259', 'TCVN 7259:2003 - Phân hữu cơ', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(11, 27, 'TCVN_8956', 'TCVN 8956:2011 - Phân vi sinh', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(12, 28, 'ISO_14001', 'ISO 14001 Environmental Management', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(13, 29, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(14, 30, 'USDA_ORGANIC', 'USDA Organic Certification', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(15, 31, 'TCVN_7259', 'TCVN 7259:2003 - Phân hữu cơ', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(16, 32, 'TCVN_8956', 'TCVN 8956:2011 - Phân vi sinh', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(17, 33, 'ISO_14001', 'ISO 14001 Environmental Management', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(18, 34, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(19, 35, 'USDA_ORGANIC', 'USDA Organic Certification', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(20, 36, 'TCVN_7259', 'TCVN 7259:2003 - Phân hữu cơ', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW());
+
+-- Media Links for Vendor Certificates (20 PDF files)
+INSERT INTO media_links (id, owner_type, owner_id, image_url, image_public_id, purpose, sort_order, created_at, updated_at) VALUES
+(1, 'vendor_certificates', 1, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_1.pdf', 'vendor_cert_1', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(2, 'vendor_certificates', 2, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_2.pdf', 'vendor_cert_2', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(3, 'vendor_certificates', 3, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_3.pdf', 'vendor_cert_3', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(4, 'vendor_certificates', 4, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_4.pdf', 'vendor_cert_4', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(5, 'vendor_certificates', 5, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_5.pdf', 'vendor_cert_5', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(6, 'vendor_certificates', 6, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_6.pdf', 'vendor_cert_6', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(7, 'vendor_certificates', 7, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_7.pdf', 'vendor_cert_7', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(8, 'vendor_certificates', 8, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_8.pdf', 'vendor_cert_8', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(9, 'vendor_certificates', 9, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_9.pdf', 'vendor_cert_9', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(10, 'vendor_certificates', 10, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_10.pdf', 'vendor_cert_10', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(11, 'vendor_certificates', 11, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_11.pdf', 'vendor_cert_11', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(12, 'vendor_certificates', 12, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_12.pdf', 'vendor_cert_12', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(13, 'vendor_certificates', 13, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_13.pdf', 'vendor_cert_13', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(14, 'vendor_certificates', 14, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_14.pdf', 'vendor_cert_14', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(15, 'vendor_certificates', 15, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_15.pdf', 'vendor_cert_15', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(16, 'vendor_certificates', 16, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_16.pdf', 'vendor_cert_16', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(17, 'vendor_certificates', 17, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_17.pdf', 'vendor_cert_17', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(18, 'vendor_certificates', 18, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_18.pdf', 'vendor_cert_18', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(19, 'vendor_certificates', 19, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_19.pdf', 'vendor_cert_19', 'vendorCertificatesPdf', 0, NOW(), NOW()),
+(20, 'vendor_certificates', 20, 'https://res.cloudinary.com/verdanttech/certificates/vendor_cert_20.pdf', 'vendor_cert_20', 'vendorCertificatesPdf', 0, NOW(), NOW());
+
+-- Insert Product Categories (11 parent + 29 sub categories)
+INSERT INTO product_categories (id, parent_id, name, slug, description, is_active, created_at, updated_at) VALUES
+(1, NULL, 'DINH DƯỠNG THỰC VẬT', 'dinh-duong-thuc-vat', 'Danh mục DINH DƯỠNG THỰC VẬT', 1, NOW(), NOW()),
+(2, NULL, 'BẢO VỆ THỰC VẬT SINH HỌC', 'bao-ve-thuc-vat-sinh-hoc', 'Danh mục BẢO VỆ THỰC VẬT SINH HỌC', 1, NOW(), NOW()),
+(3, NULL, 'GIỐNG CÂY TRỒNG & VẬT LIỆU NHÂN GIỐNG', 'giong-cay-trong-vat-lieu-nhan-giong', 'Danh mục GIỐNG CÂY TRỒNG & VẬT LIỆU NHÂN GIỐNG', 1, NOW(), NOW()),
+(4, NULL, 'HỆ THỐNG TƯỚI TIÊU', 'he-thong-tuoi-tieu', 'Danh mục HỆ THỐNG TƯỚI TIÊU', 1, NOW(), NOW()),
+(5, NULL, 'CÔNG NGHỆ & THIẾT BỊ THÔNG MINH', 'cong-nghe-thiet-bi-thong-minh', 'Danh mục CÔNG NGHỆ & THIẾT BỊ THÔNG MINH', 1, NOW(), NOW()),
+(6, NULL, 'MÁY MÓC & DỤNG CỤ', 'may-moc-dung-cu', 'Danh mục MÁY MÓC & DỤNG CỤ', 1, NOW(), NOW()),
+(7, NULL, 'AN TOÀN LAO ĐỘNG & KIỂM TRA CƠ BẢN', 'an-toan-lao-dong-kiem-tra-co-ban', 'Danh mục AN TOÀN LAO ĐỘNG & KIỂM TRA CƠ BẢN', 1, NOW(), NOW()),
+(8, NULL, 'VẬT LIỆU PHỦ & CHE CHẮN', 'vat-lieu-phu-che-chan', 'Danh mục VẬT LIỆU PHỦ & CHE CHẮN', 1, NOW(), NOW()),
+(9, NULL, 'BAO BÌ & BẢO QUẢN', 'bao-bi-bao-quan', 'Danh mục BAO BÌ & BẢO QUẢN', 1, NOW(), NOW()),
+(10, NULL, 'VẬT LIỆU TRỒNG TRỌT & GIÁ ĐỠ', 'vat-lieu-trong-trot-gia-do', 'Danh mục VẬT LIỆU TRỒNG TRỌT & GIÁ ĐỠ', 1, NOW(), NOW()),
+(11, NULL, 'TÀI LIỆU HƯỚNG DẪN', 'tai-lieu-huong-dan', 'Danh mục TÀI LIỆU HƯỚNG DẪN', 1, NOW(), NOW()),
+(12, 1, 'Phân Bón Hữu Cơ', 'phan-bon-huu-co', 'Danh mục con Phân Bón Hữu Cơ', 1, NOW(), NOW()),
+(13, 1, 'Phân Bón Vi Sinh', 'phan-bon-vi-sinh', 'Danh mục con Phân Bón Vi Sinh', 1, NOW(), NOW()),
+(14, 1, 'Phân Bón Hữu Cơ Vi Sinh', 'phan-bon-huu-co-vi-sinh', 'Danh mục con Phân Bón Hữu Cơ Vi Sinh', 1, NOW(), NOW()),
+(15, 1, 'Chất Cải Tạo Đất', 'chat-cai-tao-dat', 'Danh mục con Chất Cải Tạo Đất', 1, NOW(), NOW()),
+(16, 1, 'Chất Kích Thích Sinh Trưởng Sinh Học', 'chat-kich-thich-sinh-truong-sinh-hoc', 'Danh mục con Chất Kích Thích Sinh Trưởng Sinh Học', 1, NOW(), NOW()),
+(17, 2, 'Thuốc Trừ Sâu Sinh Học', 'thuoc-tru-sau-sinh-hoc', 'Danh mục con Thuốc Trừ Sâu Sinh Học', 1, NOW(), NOW()),
+(18, 2, 'Thuốc Trừ Bệnh Sinh Học', 'thuoc-tru-benh-sinh-hoc', 'Danh mục con Thuốc Trừ Bệnh Sinh Học', 1, NOW(), NOW()),
+(19, 2, 'Thiết Bị Bẫy & Giám Sát Dịch Hại', 'thiet-bi-bay-giam-sat-dich-hai', 'Danh mục con Thiết Bị Bẫy & Giám Sát Dịch Hại', 1, NOW(), NOW()),
+(20, 3, 'Hạt Giống Rau', 'hat-giong-rau', 'Danh mục con Hạt Giống Rau', 1, NOW(), NOW()),
+(21, 3, 'Vật Tư Ươm Giống', 'vat-tu-uom-giong', 'Danh mục con Vật Tư Ươm Giống', 1, NOW(), NOW()),
+(22, 4, 'Tưới Nhỏ Giọt', 'tuoi-nho-giot', 'Danh mục con Tưới Nhỏ Giọt', 1, NOW(), NOW()),
+(23, 4, 'Tưới Phun Mưa', 'tuoi-phun-mua', 'Danh mục con Tưới Phun Mưa', 1, NOW(), NOW()),
+(24, 4, 'Thiết Bị Bơm & Lọc Nước', 'thiet-bi-bom-loc-nuoc', 'Danh mục con Thiết Bị Bơm & Lọc Nước', 1, NOW(), NOW()),
+(25, 4, 'Hệ Thống Điều Khiển Tưới', 'he-thong-dieu-khien-tuoi', 'Danh mục con Hệ Thống Điều Khiển Tưới', 1, NOW(), NOW()),
+(26, 4, 'Phụ Kiện Tưới Tiêu', 'phu-kien-tuoi-tieu', 'Danh mục con Phụ Kiện Tưới Tiêu', 1, NOW(), NOW()),
+(27, 5, 'Thiết Bị Giám Sát', 'thiet-bi-giam-sat', 'Danh mục con Thiết Bị Giám Sát', 1, NOW(), NOW()),
+(28, 5, 'Hệ Thống IoT & Tự Động Hóa', 'he-thong-iot-tu-dong-hoa', 'Danh mục con Hệ Thống IoT & Tự Động Hóa', 1, NOW(), NOW()),
+(29, 6, 'Máy Móc Nhỏ', 'may-moc-nho', 'Danh mục con Máy Móc Nhỏ', 1, NOW(), NOW()),
+(30, 6, 'Dụng Cụ Cầm Tay', 'dung-cu-cam-tay', 'Danh mục con Dụng Cụ Cầm Tay', 1, NOW(), NOW()),
+(31, 6, 'Thiết Bị Đo Lường', 'thiet-bi-do-luong', 'Danh mục con Thiết Bị Đo Lường', 1, NOW(), NOW()),
+(32, 7, 'Bộ Test Nhanh Cơ Bản', 'bo-test-nhanh-co-ban', 'Danh mục con Bộ Test Nhanh Cơ Bản', 1, NOW(), NOW()),
+(33, 7, 'Bảo Hộ Lao Động', 'bao-ho-lao-dong', 'Danh mục con Bảo Hộ Lao Động', 1, NOW(), NOW()),
+(34, 8, 'Màng Phủ', 'mang-phu', 'Danh mục con Màng Phủ', 1, NOW(), NOW()),
+(35, 8, 'Lưới Che Chắn', 'luoi-che-chan', 'Danh mục con Lưới Che Chắn', 1, NOW(), NOW()),
+(36, 8, 'Vải Địa Kỹ Thuật & Phụ Kiện', 'vai-dia-ky-thuat-phu-kien', 'Danh mục con Vải Địa Kỹ Thuật & Phụ Kiện', 1, NOW(), NOW()),
+(37, 9, 'Bao Bì Sinh Học', 'bao-bi-sinh-hoc', 'Danh mục con Bao Bì Sinh Học', 1, NOW(), NOW()),
+(38, 9, 'Thiết Bị Bảo Quản & Sơ Chế Nhỏ', 'thiet-bi-bao-quan-so-che-nho', 'Danh mục con Thiết Bị Bảo Quản & Sơ Chế Nhỏ', 1, NOW(), NOW()),
+(39, 10, 'Giàn Trồng & Giá Đỡ', 'gian-trong-gia-do', 'Danh mục con Giàn Trồng & Giá Đỡ', 1, NOW(), NOW()),
+(40, 10, 'Phụ Kiện Thủy Canh Cơ Bản', 'phu-kien-thuy-canh-co-ban', 'Danh mục con Phụ Kiện Thủy Canh Cơ Bản', 1, NOW(), NOW());
+
+-- Insert Products (173 products, price=1000, commission_rate=10%, stock=100)
+INSERT INTO products (id, category_id, vendor_id, product_code, product_name, slug, description, unit_price, commission_rate, discount_percentage, energy_efficiency_rating, specifications, manual_urls, public_url, warranty_months, stock_quantity, weight_kg, dimensions_cm, is_active, view_count, sold_count, rating_average, created_at, updated_at) VALUES
+(1, 12, 17, 'PRD-C01-0001', 'Phân compost viên nén NPK 3-2-2', 'phan-compost-vien-nen-npk-3-2-2', 'Sản phẩm Phân compost viên nén NPK 3-2-2 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"npk\":\"3-2-2\",\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(2, 12, 17, 'PRD-C01-0002', 'Phân trùn quế Bentley Red đóng bao 5kg, 10kg, 20kg', 'phan-trun-que-bentley-red-dong-bao-5kg-10kg-20kg', 'Sản phẩm Phân trùn quế Bentley Red đóng bao 5kg, 10kg, 20kg chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"weight\":\"5kg\",\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 20.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(3, 12, 17, 'PRD-C01-0003', 'Phân bò ủ hoai mục dạng bột', 'phan-bo-u-hoai-muc-dang-bot', 'Sản phẩm Phân bò ủ hoai mục dạng bột chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(4, 12, 17, 'PRD-C01-0004', 'Phân gà lên men vi sinh bao 50kg', 'phan-ga-len-men-vi-sinh-bao-50kg', 'Sản phẩm Phân gà lên men vi sinh bao 50kg chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"weight\":\"50kg\",\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 50.000, "{\"length\":80,\"width\":50,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(5, 12, 17, 'PRD-C01-0005', 'Phân rơm rạ compost NPK 2-1-1', 'phan-rom-ra-compost-npk-2-1-1', 'Sản phẩm Phân rơm rạ compost NPK 2-1-1 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"npk\":\"2-1-1\",\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(6, 12, 17, 'PRD-C01-0006', 'Phân bã mía ủ hoai mục', 'phan-ba-mia-u-hoai-muc', 'Sản phẩm Phân bã mía ủ hoai mục chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(7, 12, 17, 'PRD-C01-0007', 'Phân bã cà phê lên men', 'phan-ba-ca-phe-len-men', 'Sản phẩm Phân bã cà phê lên men chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(8, 12, 17, 'PRD-C01-0008', 'Phân hữu cơ vi sinh Tribeco, Japfa, CP', 'phan-huu-co-vi-sinh-tribeco-japfa-cp', 'Sản phẩm Phân hữu cơ vi sinh Tribeco, Japfa, CP chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân hữu cơ\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(9, 13, 17, 'PRD-C01-0009', 'EM (Effective Microorganisms) - EM1, EM-Pro', 'em-effective-microorganisms-em1-em-pro', 'Sản phẩm EM (Effective Microorganisms) - EM1, EM-Pro chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(10, 13, 18, 'PRD-C01-0010', 'Trichoderma harzianum dạng bột WP', 'trichoderma-harzianum-dang-bot-wp', 'Sản phẩm Trichoderma harzianum dạng bột WP chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(11, 13, 18, 'PRD-C01-0011', 'Bacillus subtilis 10^8 CFU/ml', 'bacillus-subtilis-108-cfu-ml', 'Sản phẩm Bacillus subtilis 10^8 CFU/ml chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(12, 13, 18, 'PRD-C01-0012', 'Azotobacter chroococcum cố định đạm', 'azotobacter-chroococcum-co-dinh-dam', 'Sản phẩm Azotobacter chroococcum cố định đạm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(13, 13, 18, 'PRD-C01-0013', 'Mycorrhiza VAM (Vesicular Arbuscular Mycorrhiza)', 'mycorrhiza-vam-vesicular-arbuscular-mycorrhiza', 'Sản phẩm Mycorrhiza VAM (Vesicular Arbuscular Mycorrhiza) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(14, 13, 18, 'PRD-C01-0014', 'Rhizobium đậu tương chuyên dụng', 'rhizobium-dau-tuong-chuyen-dung', 'Sản phẩm Rhizobium đậu tương chuyên dụng chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(15, 13, 18, 'PRD-C01-0015', 'Pseudomonas fluorescens hòa tan lân', 'pseudomonas-fluorescens-hoa-tan-lan', 'Sản phẩm Pseudomonas fluorescens hòa tan lân chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(16, 14, 18, 'PRD-C01-0016', 'Phân NPK hữu cơ 5-5-5 + vi sinh', 'phan-npk-huu-co-5-5-5-vi-sinh', 'Sản phẩm Phân NPK hữu cơ 5-5-5 + vi sinh chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân hữu cơ\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(17, 14, 18, 'PRD-C01-0017', 'Phân NPK hữu cơ 10-5-5 đa dụng', 'phan-npk-huu-co-10-5-5-da-dung', 'Sản phẩm Phân NPK hữu cơ 10-5-5 đa dụng chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân hữu cơ\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(18, 14, 18, 'PRD-C01-0018', 'Phân bón lá hữu cơ Humix', 'phan-bon-la-huu-co-humix', 'Sản phẩm Phân bón lá hữu cơ Humix chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân hữu cơ\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(19, 14, 19, 'PRD-C01-0019', 'Phân bón chuyên dụng cho cà phê hữu cơ', 'phan-bon-chuyen-dung-cho-ca-phe-huu-co', 'Sản phẩm Phân bón chuyên dụng cho cà phê hữu cơ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân hữu cơ\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(20, 14, 19, 'PRD-C01-0020', 'Phân bón chuyên dụng cho rau hữu cơ', 'phan-bon-chuyen-dung-cho-rau-huu-co', 'Sản phẩm Phân bón chuyên dụng cho rau hữu cơ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân hữu cơ\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(21, 14, 19, 'PRD-C01-0021', 'Phân bón chuyên dụng cho cây ăn trái', 'phan-bon-chuyen-dung-cho-cay-an-trai', 'Sản phẩm Phân bón chuyên dụng cho cây ăn trái chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(22, 15, 19, 'PRD-C01-0022', 'Than sinh học (Biochar) từ trấu', 'than-sinh-hoc-biochar-tu-trau', 'Sản phẩm Than sinh học (Biochar) từ trấu chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(23, 15, 19, 'PRD-C01-0023', 'Vôi bột CaCO3 độ mịn 100 mesh', 'voi-bot-caco3-do-min-100-mesh', 'Sản phẩm Vôi bột CaCO3 độ mịn 100 mesh chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(24, 15, 19, 'PRD-C01-0024', 'Thạch cao nông nghiệp CaSO4.2H2O', 'thach-cao-nong-nghiep-caso42h2o', 'Sản phẩm Thạch cao nông nghiệp CaSO4.2H2O chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(25, 15, 19, 'PRD-C01-0025', 'Bột đá lân phosphate tự nhiên', 'bot-da-lan-phosphate-tu-nhien', 'Sản phẩm Bột đá lân phosphate tự nhiên chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(26, 15, 19, 'PRD-C01-0026', 'Zeolite tự nhiên độ mịn 60-80 mesh', 'zeolite-tu-nhien-do-min-60-80-mesh', 'Sản phẩm Zeolite tự nhiên độ mịn 60-80 mesh chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(27, 15, 19, 'PRD-C01-0027', 'Vôi dolomite CaMg(CO3)2', 'voi-dolomite-camgco32', 'Sản phẩm Vôi dolomite CaMg(CO3)2 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(28, 16, 20, 'PRD-C01-0028', 'Acid humic 70-80% dạng bột/lỏng', 'acid-humic-70-80-dang-bot-long', 'Sản phẩm Acid humic 70-80% dạng bột/lỏng chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(29, 16, 20, 'PRD-C01-0029', 'Acid fulvic 50% dạng lỏng', 'acid-fulvic-50-dang-long', 'Sản phẩm Acid fulvic 50% dạng lỏng chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(30, 16, 20, 'PRD-C01-0030', 'Potassium humate 60% dạng bột', 'potassium-humate-60-dang-bot', 'Sản phẩm Potassium humate 60% dạng bột chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(31, 16, 20, 'PRD-C01-0031', 'Chiết xuất tảo biển Ascophyllum nodosum', 'chiet-xuat-tao-bien-ascophyllum-nodosum', 'Sản phẩm Chiết xuất tảo biển Ascophyllum nodosum chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(32, 16, 20, 'PRD-C01-0032', 'Amino acid thực vật 25-45%', 'amino-acid-thuc-vat-25-45', 'Sản phẩm Amino acid thực vật 25-45% chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(33, 16, 20, 'PRD-C01-0033', 'GA3 (Gibberellic Acid) sinh học', 'ga3-gibberellic-acid-sinh-hoc', 'Sản phẩm GA3 (Gibberellic Acid) sinh học chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(34, 16, 20, 'PRD-C01-0034', 'Chiết xuất nấm men (Yeast extract)', 'chiet-xuat-nam-men-yeast-extract', 'Sản phẩm Chiết xuất nấm men (Yeast extract) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(35, 17, 20, 'PRD-C02-0035', 'Bacillus thuringiensis var. kurstaki (Bt-k) WP', 'bacillus-thuringiensis-var-kurstaki-bt-k-wp', 'Sản phẩm Bacillus thuringiensis var. kurstaki (Bt-k) WP chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(36, 17, 20, 'PRD-C02-0036', 'NPV (Nuclear Polyhedrosis Virus) sâu xanh da láng', 'npv-nuclear-polyhedrosis-virus-sau-xanh-da-lang', 'Sản phẩm NPV (Nuclear Polyhedrosis Virus) sâu xanh da láng chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"form\":\"EC\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(37, 17, 21, 'PRD-C02-0037', 'Beauveria bassiana 10^8 bào tử/ml', 'beauveria-bassiana-108-bao-tu-ml', 'Sản phẩm Beauveria bassiana 10^8 bào tử/ml chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(38, 17, 21, 'PRD-C02-0038', 'Metarhizium anisopliae 10^8 bào tử/g', 'metarhizium-anisopliae-108-bao-tu-g', 'Sản phẩm Metarhizium anisopliae 10^8 bào tử/g chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(39, 17, 21, 'PRD-C02-0039', 'Dầu neem (Azadirachtin 300-3000ppm)', 'dau-neem-azadirachtin-300-3000ppm', 'Sản phẩm Dầu neem (Azadirachtin 300-3000ppm) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(40, 17, 21, 'PRD-C02-0040', 'Chiết xuất tỏi Allicin 30%', 'chiet-xuat-toi-allicin-30', 'Sản phẩm Chiết xuất tỏi Allicin 30% chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(41, 17, 21, 'PRD-C02-0041', 'Chiết xuất ớt Capsaicin 1-2%', 'chiet-xuat-ot-capsaicin-1-2', 'Sản phẩm Chiết xuất ớt Capsaicin 1-2% chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(42, 17, 21, 'PRD-C02-0042', 'Tinh dầu sả chanh Citronella 10%', 'tinh-dau-sa-chanh-citronella-10', 'Sản phẩm Tinh dầu sả chanh Citronella 10% chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.500, "{\"length\":15,\"width\":10,\"height\":8}", 1, 0, 0, 0.00, NOW(), NOW()),
+(43, 17, 21, 'PRD-C02-0043', 'Spinosad từ vi khuẩn Saccharopolyspora', 'spinosad-tu-vi-khuan-saccharopolyspora', 'Sản phẩm Spinosad từ vi khuẩn Saccharopolyspora chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(44, 18, 21, 'PRD-C02-0044', 'Trichoderma harzianum 10^7-10^8 bào tử/g', 'trichoderma-harzianum-107-108-bao-tu-g', 'Sản phẩm Trichoderma harzianum 10^7-10^8 bào tử/g chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(45, 18, 21, 'PRD-C02-0045', 'Bacillus subtilis 10^8 CFU/ml - Phòng trừ bệnh', 'bacillus-subtilis-108-cfu-ml-phong-tru-benh', 'Sản phẩm Bacillus subtilis 10^8 CFU/ml - Phòng trừ bệnh chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(46, 18, 22, 'PRD-C02-0046', 'Pseudomonas fluorescens 10^8 CFU/ml', 'pseudomonas-fluorescens-108-cfu-ml', 'Sản phẩm Pseudomonas fluorescens 10^8 CFU/ml chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(47, 18, 22, 'PRD-C02-0047', 'Bordeaux mixture (đồng sunfat + vôi)', 'bordeaux-mixture-dong-sunfat-voi', 'Sản phẩm Bordeaux mixture (đồng sunfat + vôi) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(48, 18, 22, 'PRD-C02-0048', 'Lưu huỳnh dạng bột phun 80% WP', 'luu-huynh-dang-bot-phun-80-wp', 'Sản phẩm Lưu huỳnh dạng bột phun 80% WP chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(49, 19, 22, 'PRD-C02-0049', 'Đèn bẫy côn trùng UV 20W-40W', 'den-bay-con-trung-uv-20w-40w', 'Sản phẩm Đèn bẫy côn trùng UV 20W-40W chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 12, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(50, 19, 22, 'PRD-C02-0050', 'Bẫy pheromone ruồi vàng Zeugodacus', 'bay-pheromone-ruoi-vang-zeugodacus', 'Sản phẩm Bẫy pheromone ruồi vàng Zeugodacus chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 12, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(51, 19, 22, 'PRD-C02-0051', 'Bẫy vàng dính 25x40cm (20 tấm/xấp)', 'bay-vang-dinh-25x40cm-20-tam-xap', 'Sản phẩm Bẫy vàng dính 25x40cm (20 tấm/xấp) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 12, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(52, 19, 22, 'PRD-C02-0052', 'Bẫy xanh dính thrips 25x40cm', 'bay-xanh-dinh-thrips-25x40cm', 'Sản phẩm Bẫy xanh dính thrips 25x40cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 12, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(53, 19, 22, 'PRD-C02-0053', 'Keo dính côn trùng chuyên dụng', 'keo-dinh-con-trung-chuyen-dung', 'Sản phẩm Keo dính côn trùng chuyên dụng chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(54, 20, 22, 'PRD-C03-0054', 'Hạt giống rau cải xanh hữu cơ F1', 'hat-giong-rau-cai-xanh-huu-co-f1', 'Sản phẩm Hạt giống rau cải xanh hữu cơ F1 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"germination_rate\":\"90-95%\",\"pack_size\":\"100g\",\"type\":\"F1 Hybrid\"}", NULL, NULL, 0, 100, 0.100, "{\"length\":12,\"width\":8,\"height\":2}", 1, 0, 0, 0.00, NOW(), NOW()),
+(55, 20, 23, 'PRD-C03-0055', 'Hạt giống cà chua bi/cherry hữu cơ', 'hat-giong-ca-chua-bi-cherry-huu-co', 'Sản phẩm Hạt giống cà chua bi/cherry hữu cơ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"germination_rate\":\"90-95%\",\"pack_size\":\"50g\",\"type\":\"Open Pollinated\"}", NULL, NULL, 0, 100, 0.100, "{\"length\":12,\"width\":8,\"height\":2}", 1, 0, 0, 0.00, NOW(), NOW()),
+(56, 20, 23, 'PRD-C03-0056', 'Hạt giống dưa leo/dưa chuột hữu cơ', 'hat-giong-dua-leo-dua-chuot-huu-co', 'Sản phẩm Hạt giống dưa leo/dưa chuột hữu cơ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"germination_rate\":\"90-95%\",\"pack_size\":\"50g\",\"type\":\"Open Pollinated\"}", NULL, NULL, 0, 100, 0.100, "{\"length\":12,\"width\":8,\"height\":2}", 1, 0, 0, 0.00, NOW(), NOW()),
+(57, 20, 23, 'PRD-C03-0057', 'Hạt giống ớt sừng/ớt hiểm hữu cơ', 'hat-giong-ot-sung-ot-hiem-huu-co', 'Sản phẩm Hạt giống ớt sừng/ớt hiểm hữu cơ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"germination_rate\":\"90-95%\",\"pack_size\":\"50g\",\"type\":\"Open Pollinated\"}", NULL, NULL, 0, 100, 0.100, "{\"length\":12,\"width\":8,\"height\":2}", 1, 0, 0, 0.00, NOW(), NOW()),
+(58, 20, 23, 'PRD-C03-0058', 'Hạt giống xà lách các loại (Romaine, Butterhead)', 'hat-giong-xa-lach-cac-loai-romaine-butterhead', 'Sản phẩm Hạt giống xà lách các loại (Romaine, Butterhead) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"germination_rate\":\"90-95%\",\"pack_size\":\"50g\",\"type\":\"Open Pollinated\"}", NULL, NULL, 0, 100, 0.100, "{\"length\":12,\"width\":8,\"height\":2}", 1, 0, 0, 0.00, NOW(), NOW()),
+(59, 20, 23, 'PRD-C03-0059', 'Hạt giống rau mùi tây parsley hữu cơ', 'hat-giong-rau-mui-tay-parsley-huu-co', 'Sản phẩm Hạt giống rau mùi tây parsley hữu cơ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"germination_rate\":\"90-95%\",\"pack_size\":\"100g\",\"type\":\"Open Pollinated\"}", NULL, NULL, 0, 100, 0.100, "{\"length\":12,\"width\":8,\"height\":2}", 1, 0, 0, 0.00, NOW(), NOW()),
+(60, 20, 23, 'PRD-C03-0060', 'Hạt giống húng quế basil hữu cơ', 'hat-giong-hung-que-basil-huu-co', 'Sản phẩm Hạt giống húng quế basil hữu cơ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"germination_rate\":\"90-95%\",\"pack_size\":\"50g\",\"type\":\"Open Pollinated\"}", NULL, NULL, 0, 100, 0.100, "{\"length\":12,\"width\":8,\"height\":2}", 1, 0, 0, 0.00, NOW(), NOW()),
+(61, 20, 23, 'PRD-C03-0061', 'Hạt giống bí đỏ/bí ngô hữu cơ', 'hat-giong-bi-do-bi-ngo-huu-co', 'Sản phẩm Hạt giống bí đỏ/bí ngô hữu cơ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"germination_rate\":\"90-95%\",\"pack_size\":\"50g\",\"type\":\"Open Pollinated\"}", NULL, NULL, 0, 100, 0.100, "{\"length\":12,\"width\":8,\"height\":2}", 1, 0, 0, 0.00, NOW(), NOW()),
+(62, 21, 23, 'PRD-C03-0062', 'Khay ươm hạt 50/72/128 lỗ', 'khay-uom-hat-50-72-128-lo', 'Sản phẩm Khay ươm hạt 50/72/128 lỗ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(63, 21, 23, 'PRD-C03-0063', 'Túi ươm PE đen 10x15cm, 15x20cm', 'tui-uom-pe-den-10x15cm-15x20cm', 'Sản phẩm Túi ươm PE đen 10x15cm, 15x20cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(64, 21, 24, 'PRD-C03-0064', 'Giá thể xơ dừa Coco Peat 5kg nén', 'gia-the-xo-dua-coco-peat-5kg-nen', 'Sản phẩm Giá thể xơ dừa Coco Peat 5kg nén chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(65, 21, 24, 'PRD-C03-0065', 'Giá thể Perlite size 3-6mm', 'gia-the-perlite-size-3-6mm', 'Sản phẩm Giá thể Perlite size 3-6mm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(66, 21, 24, 'PRD-C03-0066', 'Phân trùn Vermicompost ươm hạt', 'phan-trun-vermicompost-uom-hat', 'Sản phẩm Phân trùn Vermicompost ươm hạt chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(67, 21, 24, 'PRD-C03-0067', 'Chậu ươm xơ dừa nén Coco pot', 'chau-uom-xo-dua-nen-coco-pot', 'Sản phẩm Chậu ươm xơ dừa nén Coco pot chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(68, 22, 24, 'PRD-C04-0068', 'Ống nhỏ giọt bù áp 16mm, khoảng cách 20cm/30cm/40cm', 'ong-nho-giot-bu-ap-16mm-khoang-cach-20cm-30cm-40cm', 'Sản phẩm Ống nhỏ giọt bù áp 16mm, khoảng cách 20cm/30cm/40cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"diameter\":\"16mm\",\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(69, 22, 24, 'PRD-C04-0069', 'Ống nhỏ giọt thường 16mm không bù áp', 'ong-nho-giot-thuong-16mm-khong-bu-ap', 'Sản phẩm Ống nhỏ giọt thường 16mm không bù áp chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"diameter\":\"16mm\",\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(70, 22, 24, 'PRD-C04-0070', 'Ống mềm PE 16mm/20mm (cuộn 100m, 200m)', 'ong-mem-pe-16mm-20mm-cuon-100m-200m', 'Sản phẩm Ống mềm PE 16mm/20mm (cuộn 100m, 200m) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"diameter\":\"16mm\",\"length\":\"100m\",\"material\":\"PE\"}", NULL, NULL, 0, 100, 12.000, "{\"length\":100,\"width\":30,\"height\":30}", 1, 0, 0, 0.00, NOW(), NOW()),
+(71, 22, 24, 'PRD-C04-0071', 'Đầu nhỏ giọt điều chỉnh 2-8 lít/giờ', 'dau-nho-giot-dieu-chinh-2-8-lit-gio', 'Sản phẩm Đầu nhỏ giọt điều chỉnh 2-8 lít/giờ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(72, 22, 24, 'PRD-C04-0072', 'Đầu nhỏ giọt cắm gốc 4 lít/giờ', 'dau-nho-giot-cam-goc-4-lit-gio', 'Sản phẩm Đầu nhỏ giọt cắm gốc 4 lít/giờ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(73, 22, 25, 'PRD-C04-0073', 'Đầu phun sương 360° cho ươm giống', 'dau-phun-suong-360-cho-uom-giong', 'Sản phẩm Đầu phun sương 360° cho ươm giống chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(74, 22, 25, 'PRD-C04-0074', 'Tê nối ống 16mm chữ I, chữ T, chữ L', 'te-noi-ong-16mm-chu-i-chu-t-chu-l', 'Sản phẩm Tê nối ống 16mm chữ I, chữ T, chữ L chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"diameter\":\"16mm\",\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(75, 22, 25, 'PRD-C04-0075', 'Van khóa ống 16mm, 20mm, 25mm', 'van-khoa-ong-16mm-20mm-25mm', 'Sản phẩm Van khóa ống 16mm, 20mm, 25mm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(76, 22, 25, 'PRD-C04-0076', 'Đầu bịt ống 16mm', 'dau-bit-ong-16mm', 'Sản phẩm Đầu bịt ống 16mm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"diameter\":\"16mm\",\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(77, 22, 25, 'PRD-C04-0077', 'Bộ kit tưới ban công 10m/20m', 'bo-kit-tuoi-ban-cong-10m-20m', 'Sản phẩm Bộ kit tưới ban công 10m/20m chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(78, 22, 25, 'PRD-C04-0078', 'Bộ kit tưới vườn rau 50m2', 'bo-kit-tuoi-vuon-rau-50m2', 'Sản phẩm Bộ kit tưới vườn rau 50m2 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(79, 23, 25, 'PRD-C04-0079', 'Béc phun mưa tĩnh 90°/180°/270°/360°', 'bec-phun-mua-tinh-90-180-270-360', 'Sản phẩm Béc phun mưa tĩnh 90°/180°/270°/360° chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(80, 23, 25, 'PRD-C04-0080', 'Béc phun sương Fogger 60 lít/giờ', 'bec-phun-suong-fogger-60-lit-gio', 'Sản phẩm Béc phun sương Fogger 60 lít/giờ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(81, 24, 25, 'PRD-C04-0081', 'Máy bơm nước năng lượng mặt trời 500W-2000W', 'may-bom-nuoc-nang-luong-mat-troi-500w-2000w', 'Sản phẩm Máy bơm nước năng lượng mặt trời 500W-2000W chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"power\":\"500W\",\"engine\":\"Electric\"}", NULL, NULL, 24, 100, 35.000, "{\"length\":60,\"width\":40,\"height\":50}", 1, 0, 0, 0.00, NOW(), NOW()),
+(82, 24, 26, 'PRD-C04-0082', 'Máy bơm tăng áp tự động Panasonic 125W', 'may-bom-tang-ap-tu-dong-panasonic-125w', 'Sản phẩm Máy bơm tăng áp tự động Panasonic 125W chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"power\":\"125W\",\"engine\":\"Electric\"}", NULL, NULL, 24, 100, 35.000, "{\"length\":60,\"width\":40,\"height\":50}", 1, 0, 0, 0.00, NOW(), NOW()),
+(83, 24, 26, 'PRD-C04-0083', 'Máy bơm nước biến tần Hitachi WM-P250GX2', 'may-bom-nuoc-bien-tan-hitachi-wm-p250gx2', 'Sản phẩm Máy bơm nước biến tần Hitachi WM-P250GX2 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"engine\":\"Electric\"}", NULL, NULL, 24, 100, 35.000, "{\"length\":60,\"width\":40,\"height\":50}", 1, 0, 0, 0.00, NOW(), NOW()),
+(84, 24, 26, 'PRD-C04-0084', 'Máy bơm chìm nước sạch 1HP, 2HP', 'may-bom-chim-nuoc-sach-1hp-2hp', 'Sản phẩm Máy bơm chìm nước sạch 1HP, 2HP chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"power\":\"1HP\",\"engine\":\"Electric\"}", NULL, NULL, 24, 100, 35.000, "{\"length\":60,\"width\":40,\"height\":50}", 1, 0, 0, 0.00, NOW(), NOW()),
+(85, 24, 26, 'PRD-C04-0085', '"Bộ lọc đĩa 1"", 2"" lưu lượng 3-10m3/h"', 'bo-loc-dia-1-2-luu-luong-3-10m3-h', 'Sản phẩm "Bộ lọc đĩa 1"", 2"" lưu lượng 3-10m3/h" chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(86, 24, 26, 'PRD-C04-0086', 'Bộ lọc rác inox 304 lưới 40 mesh', 'bo-loc-rac-inox-304-luoi-40-mesh', 'Sản phẩm Bộ lọc rác inox 304 lưới 40 mesh chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(87, 24, 26, 'PRD-C04-0087', 'Thiết bị bơm phân hòa tan Venturi', 'thiet-bi-bom-phan-hoa-tan-venturi', 'Sản phẩm Thiết bị bơm phân hòa tan Venturi chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(88, 25, 26, 'PRD-C04-0088', 'Bộ điều khiển tưới tự động 4 zone/6 zone/8 zone', 'bo-dieu-khien-tuoi-tu-dong-4-zone-6-zone-8-zone', 'Sản phẩm Bộ điều khiển tưới tự động 4 zone/6 zone/8 zone chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(89, 25, 26, 'PRD-C04-0089', '"Van điện từ 1"" AC/DC 9V/12V/24V"', 'van-dien-tu-1-ac-dc-9v-12v-24v', 'Sản phẩm "Van điện từ 1"" AC/DC 9V/12V/24V" chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"voltage\":\"9V\",\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(90, 25, 26, 'PRD-C04-0090', 'Cảm biến độ ẩm đất 4-20mA analog', 'cam-bien-do-am-dat-4-20ma-analog', 'Sản phẩm Cảm biến độ ẩm đất 4-20mA analog chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(91, 25, 27, 'PRD-C04-0091', 'Cảm biến mưa Hunter Rain-Clik', 'cam-bien-mua-hunter-rain-clik', 'Sản phẩm Cảm biến mưa Hunter Rain-Clik chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(92, 25, 27, 'PRD-C04-0092', 'Van điện từ phun sương AC 220V', 'van-dien-tu-phun-suong-ac-220v', 'Sản phẩm Van điện từ phun sương AC 220V chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"voltage\":\"220V\",\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(93, 25, 27, 'PRD-C04-0093', 'Bộ timer tưới 16 chương trình', 'bo-timer-tuoi-16-chuong-trinh', 'Sản phẩm Bộ timer tưới 16 chương trình chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(94, 25, 27, 'PRD-C04-0094', 'Bộ điều khiển tưới Wifi/4G kết nối app', 'bo-dieu-khien-tuoi-wifi-4g-ket-noi-app', 'Sản phẩm Bộ điều khiển tưới Wifi/4G kết nối app chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(95, 26, 27, 'PRD-C04-0095', 'Ống PE phi 16mm, 20mm, 25mm, 32mm (cuộn 100m)', 'ong-pe-phi-16mm-20mm-25mm-32mm-cuon-100m', 'Sản phẩm Ống PE phi 16mm, 20mm, 25mm, 32mm (cuộn 100m) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"diameter\":\"16mm\",\"length\":\"100m\",\"material\":\"PE\"}", NULL, NULL, 0, 100, 12.000, "{\"length\":100,\"width\":30,\"height\":30}", 1, 0, 0, 0.00, NOW(), NOW()),
+(96, 26, 27, 'PRD-C04-0096', 'Ống PVC phi 21mm, 27mm, 34mm, 42mm (4m/6m thanh)', 'ong-pvc-phi-21mm-27mm-34mm-42mm-4m-6m-thanh', 'Sản phẩm Ống PVC phi 21mm, 27mm, 34mm, 42mm (4m/6m thanh) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"diameter\":\"21mm\",\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(97, 26, 27, 'PRD-C04-0097', 'Tê nối PE 16mm, 20mm, 25mm', 'te-noi-pe-16mm-20mm-25mm', 'Sản phẩm Tê nối PE 16mm, 20mm, 25mm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(98, 26, 27, 'PRD-C04-0098', 'Phụ kiện kẹp PE 16mm, 20mm, 25mm', 'phu-kien-kep-pe-16mm-20mm-25mm', 'Sản phẩm Phụ kiện kẹp PE 16mm, 20mm, 25mm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(99, 26, 27, 'PRD-C04-0099', 'Van bi PVC 21mm, 27mm, 34mm', 'van-bi-pvc-21mm-27mm-34mm', 'Sản phẩm Van bi PVC 21mm, 27mm, 34mm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(100, 26, 28, 'PRD-C04-0100', '"Van bi inox 304 ren 1/2"", 3/4"", 1"""', 'van-bi-inox-304-ren-1-2-3-4-1', 'Sản phẩm "Van bi inox 304 ren 1/2"", 3/4"", 1""" chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(101, 26, 28, 'PRD-C04-0101', '"Đồng hồ đo nước 1/2"", 3/4"""', 'dong-ho-do-nuoc-1-2-3-4', 'Sản phẩm "Đồng hồ đo nước 1/2"", 3/4""" chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 12, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(102, 27, 28, 'PRD-C05-0102', 'Cảm biến nhiệt độ độ ẩm không khí SHT20/DHT22', 'cam-bien-nhiet-do-do-am-khong-khi-sht20-dht22', 'Sản phẩm Cảm biến nhiệt độ độ ẩm không khí SHT20/DHT22 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(103, 27, 28, 'PRD-C05-0103', 'Cảm biến pH đất pH-4502C (0-14 pH)', 'cam-bien-ph-dat-ph-4502c-0-14-ph', 'Sản phẩm Cảm biến pH đất pH-4502C (0-14 pH) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"range\":\"0-14 pH\",\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(104, 27, 28, 'PRD-C05-0104', 'Cảm biến EC đất EC-5 (0-20 mS/cm)', 'cam-bien-ec-dat-ec-5-0-20-ms-cm', 'Sản phẩm Cảm biến EC đất EC-5 (0-20 mS/cm) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"range\":\"0-20 mS/cm\",\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(105, 27, 28, 'PRD-C05-0105', 'Cảm biến độ ẩm đất Capacitive (0-100%)', 'cam-bien-do-am-dat-capacitive-0-100', 'Sản phẩm Cảm biến độ ẩm đất Capacitive (0-100%) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(106, 27, 28, 'PRD-C05-0106', 'Cảm biến ánh sáng lux meter 0-200,000 Lux', 'cam-bien-anh-sang-lux-meter-0-200000-lux', 'Sản phẩm Cảm biến ánh sáng lux meter 0-200,000 Lux chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(107, 27, 28, 'PRD-C05-0107', 'Cảm biến mưa Rain Sensor', 'cam-bien-mua-rain-sensor', 'Sản phẩm Cảm biến mưa Rain Sensor chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(108, 28, 28, 'PRD-C05-0108', 'Trạm thời tiết nông nghiệp 7 in 1 Wifi/4G', 'tram-thoi-tiet-nong-nghiep-7-in-1-wifi-4g', 'Sản phẩm Trạm thời tiết nông nghiệp 7 in 1 Wifi/4G chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(109, 28, 29, 'PRD-C05-0109', 'Relay 8 kênh 220VAC/30A điều khiển thiết bị', 'relay-8-kenh-220vac-30a-dieu-khien-thiet-bi', 'Sản phẩm Relay 8 kênh 220VAC/30A điều khiển thiết bị chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"voltage\":\"220V\",\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 24, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(110, 28, 29, 'PRD-C05-0110', 'Bộ nguồn 12VDC/24VDC 5A ổn áp', 'bo-nguon-12vdc-24vdc-5a-on-ap', 'Sản phẩm Bộ nguồn 12VDC/24VDC 5A ổn áp chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"voltage\":\"12V\",\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(111, 28, 29, 'PRD-C05-0111', 'Ắc quy gel 12V 100Ah lưu trữ điện', 'ac-quy-gel-12v-100ah-luu-tru-dien', 'Sản phẩm Ắc quy gel 12V 100Ah lưu trữ điện chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(112, 29, 29, 'PRD-C06-0112', 'Máy xới đất mini Honda GX200 6.5HP', 'may-xoi-dat-mini-honda-gx200-65hp', 'Sản phẩm Máy xới đất mini Honda GX200 6.5HP chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"power\":\"6.5HP\",\"engine\":\"Honda GX200\"}", NULL, NULL, 24, 100, 150.000, "{\"length\":180,\"width\":120,\"height\":100}", 1, 0, 0, 0.00, NOW(), NOW()),
+(113, 29, 29, 'PRD-C06-0113', 'Máy phun thuốc động cơ Honda GX35 25 lít', 'may-phun-thuoc-dong-co-honda-gx35-25-lit', 'Sản phẩm Máy phun thuốc động cơ Honda GX35 25 lít chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"capacity\":\"25L\",\"engine\":\"Honda GX200\"}", NULL, NULL, 24, 100, 0.500, "{\"length\":15,\"width\":10,\"height\":8}", 1, 0, 0, 0.00, NOW(), NOW()),
+(114, 29, 29, 'PRD-C06-0114', 'Máy phun sương khử trùng ULV 16 lít', 'may-phun-suong-khu-trung-ulv-16-lit', 'Sản phẩm Máy phun sương khử trùng ULV 16 lít chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"capacity\":\"16L\",\"engine\":\"Electric\"}", NULL, NULL, 24, 100, 15.000, "{\"length\":50,\"width\":35,\"height\":40}", 1, 0, 0, 0.00, NOW(), NOW()),
+(115, 29, 29, 'PRD-C06-0115', 'Máy phun phân bón lá điện 16 lít', 'may-phun-phan-bon-la-dien-16-lit', 'Sản phẩm Máy phun phân bón lá điện 16 lít chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân vi sinh\"}", NULL, NULL, 24, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(116, 29, 29, 'PRD-C06-0116', 'Máy gieo hạt 4 hàng đẩy tay', 'may-gieo-hat-4-hang-day-tay', 'Sản phẩm Máy gieo hạt 4 hàng đẩy tay chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"engine\":\"Electric\"}", NULL, NULL, 24, 100, 15.000, "{\"length\":50,\"width\":35,\"height\":40}", 1, 0, 0, 0.00, NOW(), NOW()),
+(117, 30, 29, 'PRD-C06-0117', 'Cuốc xới đất cán gỗ đầu inox', 'cuoc-xoi-dat-can-go-dau-inox', 'Sản phẩm Cuốc xới đất cán gỗ đầu inox chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":35,\"width\":10,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(118, 30, 30, 'PRD-C06-0118', 'Xẻng múc đất mũi vuông/mũi nhọn', 'xeng-muc-dat-mui-vuong-mui-nhon', 'Sản phẩm Xẻng múc đất mũi vuông/mũi nhọn chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":35,\"width\":10,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(119, 30, 30, 'PRD-C06-0119', 'Cào ba chạc cán gỗ', 'cao-ba-chac-can-go', 'Sản phẩm Cào ba chạc cán gỗ chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":35,\"width\":10,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(120, 30, 30, 'PRD-C06-0120', '"Kéo cắt cành Tramontina 8"""', 'keo-cat-canh-tramontina-8', 'Sản phẩm "Kéo cắt cành Tramontina 8""" chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":35,\"width\":10,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(121, 30, 30, 'PRD-C06-0121', 'Kéo cắt tỉa Okatsune 103', 'keo-cat-tia-okatsune-103', 'Sản phẩm Kéo cắt tỉa Okatsune 103 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":35,\"width\":10,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(122, 30, 30, 'PRD-C06-0122', 'Cưa cành gập Silky Gomboy 240mm', 'cua-canh-gap-silky-gomboy-240mm', 'Sản phẩm Cưa cành gập Silky Gomboy 240mm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(123, 30, 30, 'PRD-C06-0123', 'Dao rọc cành ghép Felco 3.90/50', 'dao-roc-canh-ghep-felco-390-50', 'Sản phẩm Dao rọc cành ghép Felco 3.90/50 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":35,\"width\":10,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(124, 30, 30, 'PRD-C06-0124', 'Băng ghép cành Buddy Tape 2cm', 'bang-ghep-canh-buddy-tape-2cm', 'Sản phẩm Băng ghép cành Buddy Tape 2cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(125, 30, 30, 'PRD-C06-0125', 'Bình phun thuốc thủ công 1-2 lít', 'binh-phun-thuoc-thu-cong-1-2-lit', 'Sản phẩm Bình phun thuốc thủ công 1-2 lít chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.500, "{\"length\":15,\"width\":10,\"height\":8}", 1, 0, 0, 0.00, NOW(), NOW()),
+(126, 30, 30, 'PRD-C06-0126', 'Bình tưới nước 5 lít đầu sen', 'binh-tuoi-nuoc-5-lit-dau-sen', 'Sản phẩm Bình tưới nước 5 lít đầu sen chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(127, 30, 31, 'PRD-C06-0127', 'Găng tay làm vườn chống gai', 'gang-tay-lam-vuon-chong-gai', 'Sản phẩm Găng tay làm vườn chống gai chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(128, 31, 31, 'PRD-C06-0128', 'Máy đo đường Brix refractometer 0-32%', 'may-do-duong-brix-refractometer-0-32', 'Sản phẩm Máy đo đường Brix refractometer 0-32% chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"engine\":\"Electric\"}", NULL, NULL, 24, 100, 15.000, "{\"length\":50,\"width\":35,\"height\":40}", 1, 0, 0, 0.00, NOW(), NOW()),
+(129, 31, 31, 'PRD-C06-0129', 'Cân điện tử 0.01g-5kg', 'can-dien-tu-001g-5kg', 'Sản phẩm Cân điện tử 0.01g-5kg chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 12, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(130, 31, 31, 'PRD-C06-0130', 'Thước đo pH đất que cắm 3 in 1', 'thuoc-do-ph-dat-que-cam-3-in-1', 'Sản phẩm Thước đo pH đất que cắm 3 in 1 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(131, 31, 31, 'PRD-C06-0131', 'Nhiệt kế đất hiển thị số 0-50°C', 'nhiet-ke-dat-hien-thi-so-0-50c', 'Sản phẩm Nhiệt kế đất hiển thị số 0-50°C chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 12, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(132, 32, 31, 'PRD-C07-0132', 'Bộ test pH/EC đất 40 mẫu', 'bo-test-ph-ec-dat-40-mau', 'Sản phẩm Bộ test pH/EC đất 40 mẫu chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"range\":\"0-20 mS/cm\",\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(133, 32, 31, 'PRD-C07-0133', 'Bộ test NPK đất 20 mẫu', 'bo-test-npk-dat-20-mau', 'Sản phẩm Bộ test NPK đất 20 mẫu chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"interface\":\"Analog 4-20mA\"}", NULL, NULL, 0, 100, 0.800, "{\"length\":25,\"width\":20,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(134, 32, 31, 'PRD-C07-0134', 'Test kit Nitrate/Nitrite trong rau', 'test-kit-nitrate-nitrite-trong-rau', 'Sản phẩm Test kit Nitrate/Nitrite trong rau chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(135, 32, 31, 'PRD-C07-0135', 'Bộ test nhanh thuốc trừ sâu 5 loại', 'bo-test-nhanh-thuoc-tru-sau-5-loai', 'Sản phẩm Bộ test nhanh thuốc trừ sâu 5 loại chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"form\":\"EC\"}", NULL, NULL, 0, 100, 0.500, "{\"length\":15,\"width\":10,\"height\":8}", 1, 0, 0, 0.00, NOW(), NOW()),
+(136, 33, 32, 'PRD-C07-0136', 'Quần áo bảo hộ phun thuốc toàn thân', 'quan-ao-bao-ho-phun-thuoc-toan-than', 'Sản phẩm Quần áo bảo hộ phun thuốc toàn thân chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.500, "{\"length\":15,\"width\":10,\"height\":8}", 1, 0, 0, 0.00, NOW(), NOW()),
+(137, 33, 32, 'PRD-C07-0137', 'Khẩu trang 3M N95/KN95 lọc bụi', 'khau-trang-3m-n95-kn95-loc-bui', 'Sản phẩm Khẩu trang 3M N95/KN95 lọc bụi chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(138, 33, 32, 'PRD-C07-0138', 'Kính bảo hộ chống hóa chất', 'kinh-bao-ho-chong-hoa-chat', 'Sản phẩm Kính bảo hộ chống hóa chất chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(139, 33, 32, 'PRD-C07-0139', 'Ủng cao su chống hóa chất', 'ung-cao-su-chong-hoa-chat', 'Sản phẩm Ủng cao su chống hóa chất chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"material\":\"PVC\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(140, 33, 32, 'PRD-C07-0140', 'Mũ bảo hộ nhựa ABS', 'mu-bao-ho-nhua-abs', 'Sản phẩm Mũ bảo hộ nhựa ABS chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(141, 34, 32, 'PRD-C08-0141', 'Rơm khô đóng bành 15-20kg', 'rom-kho-dong-banh-15-20kg', 'Sản phẩm Rơm khô đóng bành 15-20kg chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(142, 34, 32, 'PRD-C08-0142', 'Vỏ trấu khô 50 lít/bao', 'vo-trau-kho-50-lit-bao', 'Sản phẩm Vỏ trấu khô 50 lít/bao chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(143, 34, 32, 'PRD-C08-0143', 'Thảm phủ vải không dệt đen 1.6m', 'tham-phu-vai-khong-det-den-16m', 'Sản phẩm Thảm phủ vải không dệt đen 1.6m chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(144, 34, 32, 'PRD-C08-0144', 'Túi vải trồng cây 30x30cm, 40x40cm', 'tui-vai-trong-cay-30x30cm-40x40cm', 'Sản phẩm Túi vải trồng cây 30x30cm, 40x40cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(145, 35, 33, 'PRD-C08-0145', 'Lưới che nắng 70% đen HDPE 4m rộng', 'luoi-che-nang-70-den-hdpe-4m-rong', 'Sản phẩm Lưới che nắng 70% đen HDPE 4m rộng chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(146, 35, 33, 'PRD-C08-0146', 'Lưới chắn côn trùng 40 mesh (lỗ 0.6mm)', 'luoi-chan-con-trung-40-mesh-lo-06mm', 'Sản phẩm Lưới chắn côn trùng 40 mesh (lỗ 0.6mm) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(147, 35, 33, 'PRD-C08-0147', 'Lưới chắn chim 2cm x 2cm nylon', 'luoi-chan-chim-2cm-x-2cm-nylon', 'Sản phẩm Lưới chắn chim 2cm x 2cm nylon chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(148, 35, 33, 'PRD-C08-0148', 'Lưới chắn gió HDPE 50-70%', 'luoi-chan-gio-hdpe-50-70', 'Sản phẩm Lưới chắn gió HDPE 50-70% chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(149, 35, 33, 'PRD-C08-0149', 'Lưới làm giàn leo 10cm x 10cm', 'luoi-lam-gian-leo-10cm-x-10cm', 'Sản phẩm Lưới làm giàn leo 10cm x 10cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(150, 36, 33, 'PRD-C08-0150', 'Vải địa kỹ thuật đen chống cỏ 100g/m2 (1m x 100m)', 'vai-dia-ky-thuat-den-chong-co-100g-m2-1m-x-100m', 'Sản phẩm Vải địa kỹ thuật đen chống cỏ 100g/m2 (1m x 100m) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"length\":\"100m\",\"material\":\"PVC\"}", NULL, NULL, 0, 100, 12.000, "{\"length\":100,\"width\":30,\"height\":30}", 1, 0, 0, 0.00, NOW(), NOW()),
+(151, 36, 33, 'PRD-C08-0151', 'Vải không dệt trắng phủ gốc 50g/m2', 'vai-khong-det-trang-phu-goc-50g-m2', 'Sản phẩm Vải không dệt trắng phủ gốc 50g/m2 chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(152, 36, 33, 'PRD-C08-0152', 'Vải bạt che nắng mưa PE tarpaulin', 'vai-bat-che-nang-mua-pe-tarpaulin', 'Sản phẩm Vải bạt che nắng mưa PE tarpaulin chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(153, 36, 33, 'PRD-C08-0153', 'Màng PE nhà kính 200 micron UV 3-5 năm', 'mang-pe-nha-kinh-200-micron-uv-3-5-nam', 'Sản phẩm Màng PE nhà kính 200 micron UV 3-5 năm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(154, 37, 34, 'PRD-C09-0154', 'Túi giấy kraft nâu 1kg, 2kg, 5kg có quai', 'tui-giay-kraft-nau-1kg-2kg-5kg-co-quai', 'Sản phẩm Túi giấy kraft nâu 1kg, 2kg, 5kg có quai chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(155, 37, 34, 'PRD-C09-0155', 'Hộp giấy kraft tái chế 15x15x10cm', 'hop-giay-kraft-tai-che-15x15x10cm', 'Sản phẩm Hộp giấy kraft tái chế 15x15x10cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(156, 37, 34, 'PRD-C09-0156', 'Hộp giấy carton sóng 3 lớp 40x30x20cm', 'hop-giay-carton-song-3-lop-40x30x20cm', 'Sản phẩm Hộp giấy carton sóng 3 lớp 40x30x20cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(157, 37, 34, 'PRD-C09-0157', 'Khay mía đựng rau 500g-1kg', 'khay-mia-dung-rau-500g-1kg', 'Sản phẩm Khay mía đựng rau 500g-1kg chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(158, 37, 34, 'PRD-C09-0158', 'Băng keo giấy kraft 48mm x 50m', 'bang-keo-giay-kraft-48mm-x-50m', 'Sản phẩm Băng keo giấy kraft 48mm x 50m chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(159, 38, 34, 'PRD-C09-0159', 'Thùng xốp bảo ôn 50 lít-100 lít', 'thung-xop-bao-on-50-lit-100-lit', 'Sản phẩm Thùng xốp bảo ôn 50 lít-100 lít chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(160, 38, 34, 'PRD-C09-0160', 'Túi zip PE thực phẩm 10x15cm, 15x20cm', 'tui-zip-pe-thuc-pham-10x15cm-15x20cm', 'Sản phẩm Túi zip PE thực phẩm 10x15cm, 15x20cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(161, 38, 34, 'PRD-C09-0161', 'Thùng nhựa rỗng thông gió 56 lít', 'thung-nhua-rong-thong-gio-56-lit', 'Sản phẩm Thùng nhựa rỗng thông gió 56 lít chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(162, 38, 34, 'PRD-C09-0162', 'Túi hút chân không PA/PE 20x30cm', 'tui-hut-chan-khong-pa-pe-20x30cm', 'Sản phẩm Túi hút chân không PA/PE 20x30cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 0.300, "{\"length\":30,\"width\":20,\"height\":5}", 1, 0, 0, 0.00, NOW(), NOW()),
+(163, 39, 35, 'PRD-C10-0163', 'Lưới leo nhựa 10cm x 10cm (1.8m x 5m)', 'luoi-leo-nhua-10cm-x-10cm-18m-x-5m', 'Sản phẩm Lưới leo nhựa 10cm x 10cm (1.8m x 5m) chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 3.000, "{\"length\":50,\"width\":20,\"height\":20}", 1, 0, 0, 0.00, NOW(), NOW()),
+(164, 39, 35, 'PRD-C10-0164', 'Dây buộc cây sinh học phân hủy', 'day-buoc-cay-sinh-hoc-phan-huy', 'Sản phẩm Dây buộc cây sinh học phân hủy chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Phân vi sinh\"}", NULL, NULL, 0, 100, 25.000, "{\"length\":60,\"width\":40,\"height\":15}", 1, 0, 0, 0.00, NOW(), NOW()),
+(165, 39, 35, 'PRD-C10-0165', 'Dây PE bọc foam buộc cây', 'day-pe-boc-foam-buoc-cay', 'Sản phẩm Dây PE bọc foam buộc cây chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(166, 39, 35, 'PRD-C10-0166', 'Kẹp nhựa cố định cây vào giàn', 'kep-nhua-co-dinh-cay-vao-gian', 'Sản phẩm Kẹp nhựa cố định cây vào giàn chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(167, 40, 35, 'PRD-C10-0167', 'Bơm nước thủy canh 35W-55W', 'bom-nuoc-thuy-canh-35w-55w', 'Sản phẩm Bơm nước thủy canh 35W-55W chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 24, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(168, 40, 35, 'PRD-C10-0168', 'Máy sục khí oxy 35L/phút 2 vòi', 'may-suc-khi-oxy-35l-phut-2-voi', 'Sản phẩm Máy sục khí oxy 35L/phút 2 vòi chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"engine\":\"Electric\"}", NULL, NULL, 24, 100, 15.000, "{\"length\":50,\"width\":35,\"height\":40}", 1, 0, 0, 0.00, NOW(), NOW()),
+(169, 40, 35, 'PRD-C10-0169', 'Đá sục khí dạng trụ/đĩa', 'da-suc-khi-dang-tru-dia', 'Sản phẩm Đá sục khí dạng trụ/đĩa chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(170, 40, 35, 'PRD-C10-0170', 'Chậu trồng thủy canh net pot 5cm-10cm', 'chau-trong-thuy-canh-net-pot-5cm-10cm', 'Sản phẩm Chậu trồng thủy canh net pot 5cm-10cm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(171, 40, 35, 'PRD-C10-0171', 'Bồn chứa dung dịch 100-500 lít PE', 'bon-chua-dung-dich-100-500-lit-pe', 'Sản phẩm Bồn chứa dung dịch 100-500 lít PE chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(172, 11, 36, 'PRD-C11-0172', 'Sổ tay canh tác hữu cơ Việt Nam', 'so-tay-canh-tac-huu-co-viet-nam', 'Sản phẩm Sổ tay canh tác hữu cơ Việt Nam chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW()),
+(173, 11, 36, 'PRD-C11-0173', 'Sổ tay an toàn thực phẩm', 'so-tay-an-toan-thuc-pham', 'Sản phẩm Sổ tay an toàn thực phẩm chất lượng cao', 1000.00, 10.00, 0.00, NULL, "{\"type\":\"Standard\",\"quality\":\"Premium\"}", NULL, NULL, 0, 100, 1.000, "{\"length\":20,\"width\":15,\"height\":10}", 1, 0, 0, 0.00, NOW(), NOW());
+
+-- Insert Media Links for Products (346 images)
+INSERT INTO media_links (id, owner_type, owner_id, image_url, image_public_id, purpose, sort_order, created_at, updated_at) VALUES
+(21, 'products', 1, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763388886/b-80om-sau-logo-min_pvk0ci.webp', 'b-80om-sau-logo-min_pvk0ci', 'front', 0, NOW(), NOW()),
+(22, 'products', 2, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763390461/phan-trun-que-song-hong-bao-5kg_vsy8m2.webp', 'phan-trun-que-song-hong-bao-5kg_vsy8m2', 'front', 0, NOW(), NOW()),
+(23, 'products', 2, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763390470/phan-trun-que-5kg-2_adxnxe.webp', 'phan-trun-que-5kg-2_adxnxe', 'back', 1, NOW(), NOW()),
+(24, 'products', 3, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763390724/IMG_0906_y801wu.jpg', 'IMG_0906_y801wu', 'front', 0, NOW(), NOW()),
+(25, 'products', 3, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763390751/75d855af-6fb6-45df-902f-3a364115c179_u5xka7.png', '75d855af-6fb6-45df-902f-3a364115c179_u5xka7', 'back', 1, NOW(), NOW()),
+(26, 'products', 4, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763390797/phan-ga_hrctqf.jpg', 'phan-ga_hrctqf', 'front', 0, NOW(), NOW()),
+(27, 'products', 4, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763390901/phan-ga-len-men-bon-lot2.jpg_f2cfdd.webp', 'phan-ga-len-men-bon-lot2', 'back', 1, NOW(), NOW()),
+(28, 'products', 5, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763391094/ky_thuat_xu_ly_rom_ra_ba_con_nen_biet-1024x1024_jq88rp.jpg', 'ky_thuat_xu_ly_rom_ra_ba_con_nen_biet-1024x1024_jq88rp', 'front', 0, NOW(), NOW()),
+(29, 'products', 6, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763391349/phan-mun-mia-sfarm-2kg-800x800_jbzjnf.jpg', 'phan-mun-mia-sfarm-2kg-800x800_jbzjnf', 'front', 0, NOW(), NOW()),
+(30, 'products', 7, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763391554/base64-16817000930721929163041-1681749924106426085792_kvu993.webp', 'base64-16817000930721929163041-1681749924106426085792_kvu993', 'front', 0, NOW(), NOW()),
+(31, 'products', 8, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763391616/972b418b-fa59-4b0e-81b6-a4c90d29b890_mym831.png', '972b418b-fa59-4b0e-81b6-a4c90d29b890_mym831', 'front', 0, NOW(), NOW()),
+(32, 'products', 9, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763391655/teraganix-soil-amendment-16oz-em-1-microbial-inoculant-soil-amendment-1159529253_kgeojb.webp', 'teraganix-soil-amendment-16oz-em-1-microbial-inoculant-soil-amendment-1159529253_kgeojb', 'front', 0, NOW(), NOW()),
+(33, 'products', 10, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763391763/Che-pham-trichoderma-tuoi-cay-doi-khang-nam-benh_hpqgq2.webp', 'Che-pham-trichoderma-tuoi-cay-doi-khang-nam-benh_hpqgq2', 'front', 0, NOW(), NOW()),
+(34, 'products', 11, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763391939/z2518223022774-272d86585a9aba0b910b0f6ae19b5f9a_ouftlu.jpg', 'z2518223022774-272d86585a9aba0b910b0f6ae19b5f9a_ouftlu', 'front', 0, NOW(), NOW()),
+(35, 'products', 12, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763392034/phan-bon-vi-sinh-azoto-mat-sau_nbiy6k.jpg', 'phan-bon-vi-sinh-azoto-mat-sau_nbiy6k', 'front', 0, NOW(), NOW()),
+(36, 'products', 13, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763392081/00bf20f3-828e-41ec-98d1-e79029ecb68f_duc1ku.png', '00bf20f3-828e-41ec-98d1-e79029ecb68f_duc1ku', 'front', 0, NOW(), NOW()),
+(37, 'products', 14, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763392134/9c3b93f5-b0d5-4155-b8ed-27c7be58cb33_bxlmtw.png', '9c3b93f5-b0d5-4155-b8ed-27c7be58cb33_bxlmtw', 'front', 0, NOW(), NOW()),
+(38, 'products', 15, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763392166/18dd74be6625175e74b08a7d9534316c_kw55nk.jpg', '18dd74be6625175e74b08a7d9534316c_kw55nk', 'front', 0, NOW(), NOW()),
+(39, 'products', 16, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763395234/phan-bon-huu-co-khoang-minro-5-5-5-te-cover_t12ulq.jpg', 'phan-bon-huu-co-khoang-minro-5-5-5-te-cover_t12ulq', 'front', 0, NOW(), NOW()),
+(40, 'products', 17, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763395271/8015f451-7344-4819-a6ed-c9cac8721702_ydqila.png', '8015f451-7344-4819-a6ed-c9cac8721702_ydqila', 'front', 0, NOW(), NOW()),
+(41, 'products', 18, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763395873/hinh_san_pham__4__c19f91335db34865899e8eaba7ee47ad_1024x1024_kn632l.png', 'hinh_san_pham__4__c19f91335db34865899e8eaba7ee47ad_1024x1024_kn632l', 'front', 0, NOW(), NOW()),
+(42, 'products', 19, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763395902/1224423-cafe_lmhqbn.jpg', '1224423-cafe_lmhqbn', 'front', 0, NOW(), NOW()),
+(43, 'products', 20, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763395935/cd_rau_copy_ikme9q.jpg', 'cd_rau_copy_ikme9q', 'front', 0, NOW(), NOW()),
+(44, 'products', 21, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763395958/dautrauchuyencayntrai_givrg7.jpg', 'dautrauchuyencayntrai_givrg7', 'front', 0, NOW(), NOW()),
+(45, 'products', 22, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396002/trau-hun-nguyen-canh-sfarm-bao-bi-mat-truoc_qnqqdh.jpg', 'trau-hun-nguyen-canh-sfarm-bao-bi-mat-truoc_qnqqdh', 'front', 0, NOW(), NOW()),
+(46, 'products', 23, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396021/bot-da-sieu-min-CaC03-khong-trang-phu-nss-500_rmcp2m.jpg', 'bot-da-sieu-min-CaC03-khong-trang-phu-nss-500_rmcp2m', 'front', 0, NOW(), NOW()),
+(47, 'products', 24, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396100/61d7f45c-216b-4b66-802d-6728c7eb720c_ckbtkp.png', '61d7f45c-216b-4b66-802d-6728c7eb720c_ckbtkp', 'front', 0, NOW(), NOW()),
+(48, 'products', 25, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396132/4902ea3f-e769-4b8d-a920-dd5adf7ff870_eqhzhs.png', '4902ea3f-e769-4b8d-a920-dd5adf7ff870_eqhzhs', 'front', 0, NOW(), NOW()),
+(49, 'products', 26, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396153/Zeolite-Nhat-Bao-20-KG_hmmoqn.jpg', 'Zeolite-Nhat-Bao-20-KG_hmmoqn', 'front', 0, NOW(), NOW()),
+(50, 'products', 27, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396191/dolomite1_hfnxiv.jpg', 'dolomite1_hfnxiv', 'front', 0, NOW(), NOW()),
+(51, 'products', 28, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396292/humic-acid__1__700e57f0ffe9478c8d2d2fde86a75af2_zb4mdr.png', 'humic-acid__1__700e57f0ffe9478c8d2d2fde86a75af2_zb4mdr', 'front', 0, NOW(), NOW()),
+(52, 'products', 29, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396302/axit-fulvic-50_edoums.jpg', 'axit-fulvic-50_edoums', 'front', 0, NOW(), NOW()),
+(53, 'products', 30, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396351/fd00f303-f629-4968-acce-10172465eb14_tlppwi.png', 'fd00f303-f629-4968-acce-10172465eb14_tlppwi', 'front', 0, NOW(), NOW()),
+(54, 'products', 31, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396351/fd00f303-f629-4968-acce-10172465eb14_tlppwi.png', 'fd00f303-f629-4968-acce-10172465eb14_tlppwi', 'front', 0, NOW(), NOW()),
+(55, 'products', 32, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396425/Amino-Promin-45-MKA___media_library_original_800_800_crpi3x.jpg', 'Amino-Promin-45-MKA___media_library_original_800_800_crpi3x', 'front', 0, NOW(), NOW()),
+(56, 'products', 33, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396437/Gibberellic-Acid-GA3-5G_ulwfyt.jpg', 'Gibberellic-Acid-GA3-5G_ulwfyt', 'front', 0, NOW(), NOW()),
+(57, 'products', 34, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396486/capture-1353_wj9fu2.jpg', 'capture-1353_wj9fu2', 'front', 0, NOW(), NOW()),
+(58, 'products', 35, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396494/thuoc_tru_sau_sinh_hoc_vbt_usa_20g_e16fe6c9c07f4c1e98a0f1a7ea58754e_grande_y9f69o.jpg', 'thuoc_tru_sau_sinh_hoc_vbt_usa_20g_e16fe6c9c07f4c1e98a0f1a7ea58754e_grande_y9f69o', 'front', 0, NOW(), NOW()),
+(59, 'products', 36, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396546/Bia-1_zwsmie.jpg', 'Bia-1_zwsmie', 'front', 0, NOW(), NOW()),
+(60, 'products', 37, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396555/51T05PMee8L._SL1000__retkc5.jpg', '51T05PMee8L', 'front', 0, NOW(), NOW()),
+(61, 'products', 38, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396602/a3767996-f970-4d85-b065-2591b705170e_lbuf8m.png', 'a3767996-f970-4d85-b065-2591b705170e_lbuf8m', 'front', 0, NOW(), NOW()),
+(62, 'products', 39, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396611/ab0311f0-1fa9-11e9-8702-a7c94cf1bfe9_xjt4hv.jpg', 'ab0311f0-1fa9-11e9-8702-a7c94cf1bfe9_xjt4hv', 'front', 0, NOW(), NOW()),
+(63, 'products', 40, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396651/allciline-2737148j29304_xnhsik.webp', 'allciline-2737148j29304_xnhsik', 'front', 0, NOW(), NOW()),
+(64, 'products', 41, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396659/sg-11134201-22100-xh0he8624vive0_lw6mdk.jpg', 'sg-11134201-22100-xh0he8624vive0_lw6mdk', 'front', 0, NOW(), NOW()),
+(65, 'products', 42, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396762/26581b22-5527-403b-b4b5-8db05c0b8f6f_qlxlea.png', '26581b22-5527-403b-b4b5-8db05c0b8f6f_qlxlea', 'front', 0, NOW(), NOW()),
+(66, 'products', 43, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396751/uploads_2024_08_26_9229c9c8d10eada99b32ae2e9a2a16db545fe5fd_spinki-25SC_n1qkhp.png', 'uploads_2024_08_26_9229c9c8d10eada99b32ae2e9a2a16db545fe5fd_spinki-25SC_n1qkhp', 'front', 0, NOW(), NOW()),
+(67, 'products', 44, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396803/3be5e81d-29f8-411c-9400-0d3f1f0af8dd_nrzurx.png', '3be5e81d-29f8-411c-9400-0d3f1f0af8dd_nrzurx', 'front', 0, NOW(), NOW()),
+(68, 'products', 45, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396827/Bacisub-L_1_shf4o9.webp', 'Bacisub-L_1_shf4o9', 'front', 0, NOW(), NOW()),
+(69, 'products', 46, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763396845/advance_psedumonas_-_copy_zihthu.jpg', 'advance_psedumonas_-_copy_zihthu', 'front', 0, NOW(), NOW()),
+(70, 'products', 47, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397116/f7fd2e87-8734-471f-ba0f-7bb422655b87_r45fbg.png', 'f7fd2e87-8734-471f-ba0f-7bb422655b87_r45fbg', 'front', 0, NOW(), NOW()),
+(71, 'products', 48, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397126/60ca2eb2-f6f8-41bc-b7ed-bbf150a6fcc7_splycq.png', '60ca2eb2-f6f8-41bc-b7ed-bbf150a6fcc7_splycq', 'front', 0, NOW(), NOW()),
+(72, 'products', 49, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397248/ca84842c30f659805cdf028998a804fe_f290oq.jpg', 'ca84842c30f659805cdf028998a804fe_f290oq', 'front', 0, NOW(), NOW()),
+(73, 'products', 50, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397261/2696d54b27b76f5c578d7efbcb954d85_xpfsze.jpg', '2696d54b27b76f5c578d7efbcb954d85_xpfsze', 'front', 0, NOW(), NOW()),
+(74, 'products', 51, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397331/4a425f30-206f-48bd-b4d6-42af36a60e18_dcys83.png', '4a425f30-206f-48bd-b4d6-42af36a60e18_dcys83', 'front', 0, NOW(), NOW()),
+(75, 'products', 52, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397341/af816a4c-cb30-4e6a-ae05-2ff99e257767_tos8ja.png', 'af816a4c-cb30-4e6a-ae05-2ff99e257767_tos8ja', 'front', 0, NOW(), NOW()),
+(76, 'products', 53, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397377/bdc5bfa8bce1ac12eadf203ef7ad34b0.jpg_525x525q80_xnu7b5.jpg', 'bdc5bfa8bce1ac12eadf203ef7ad34b0', 'front', 0, NOW(), NOW()),
+(77, 'products', 54, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397386/hat-giong-cai-be-xanh-mo-752aq-234448-450x450_pkvjr9.jpg', 'hat-giong-cai-be-xanh-mo-752aq-234448-450x450_pkvjr9', 'front', 0, NOW(), NOW()),
+(78, 'products', 55, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397421/hat-giong-ca-chua-bi-phu-nong_ei3jok.jpg', 'hat-giong-ca-chua-bi-phu-nong_ei3jok', 'front', 0, NOW(), NOW()),
+(79, 'products', 56, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397440/4f2a0361-ab4f-4305-a422-4a8d255d59b0_gkaxc2.png', '4f2a0361-ab4f-4305-a422-4a8d255d59b0_gkaxc2', 'front', 0, NOW(), NOW()),
+(80, 'products', 57, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397510/107_6645dfb62ed6469f81dfce009f6e11b8_1024x1024_gupfux.png', '107_6645dfb62ed6469f81dfce009f6e11b8_1024x1024_gupfux', 'front', 0, NOW(), NOW()),
+(81, 'products', 58, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397525/0e659cfe-6aea-46ae-8f1f-cc64936225bc_s9cna1.png', '0e659cfe-6aea-46ae-8f1f-cc64936225bc_s9cna1', 'front', 0, NOW(), NOW()),
+(82, 'products', 59, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397548/7f9815a371bad0d5caf6206fc3d804bb.jpg_kzcvj2.webp', '7f9815a371bad0d5caf6206fc3d804bb', 'front', 0, NOW(), NOW()),
+(83, 'products', 60, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397567/hat-giong-que-tay-italy-basil-greenhome-2gr-11-min_diwl5h.webp', 'hat-giong-que-tay-italy-basil-greenhome-2gr-11-min_diwl5h', 'front', 0, NOW(), NOW()),
+(84, 'products', 61, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397578/hat_giong_bi-do_aef782f582b749a8b3d61489b55dfa2c_1024x1024_sh3q31.jpg', 'hat_giong_bi-do_aef782f582b749a8b3d61489b55dfa2c_1024x1024_sh3q31', 'front', 0, NOW(), NOW()),
+(85, 'products', 62, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397866/vn-11134207-7r98o-lqwx8lg03fdl4e_vzultk.webp', 'vn-11134207-7r98o-lqwx8lg03fdl4e_vzultk', 'front', 0, NOW(), NOW()),
+(86, 'products', 63, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397882/ce5c3390-8237-4777-8434-d6168ef8ac89_kaggdq.png', 'ce5c3390-8237-4777-8434-d6168ef8ac89_kaggdq', 'front', 0, NOW(), NOW()),
+(87, 'products', 64, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397932/59563472-8ef9-45d0-91b2-ed7a1456cbb0_nmi9ei.png', '59563472-8ef9-45d0-91b2-ed7a1456cbb0_nmi9ei', 'front', 0, NOW(), NOW()),
+(88, 'products', 65, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763397941/69c41903-1bd4-442b-b9f5-80176439eefb_slq98j.png', '69c41903-1bd4-442b-b9f5-80176439eefb_slq98j', 'front', 0, NOW(), NOW()),
+(89, 'products', 66, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398008/5f1f1e3f-3015-43be-902a-be611c04d1cf_zcf2bn.png', '5f1f1e3f-3015-43be-902a-be611c04d1cf_zcf2bn', 'front', 0, NOW(), NOW()),
+(90, 'products', 67, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398044/80_11b719ea16f24771b9da596cb1005013_1024x1024_s6yque.png', '80_11b719ea16f24771b9da596cb1005013_1024x1024_s6yque', 'front', 0, NOW(), NOW()),
+(91, 'products', 68, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398157/vn-11134207-7ras8-man1qzzzi5ege2_xo5zui.webp', 'vn-11134207-7ras8-man1qzzzi5ege2_xo5zui', 'front', 0, NOW(), NOW()),
+(92, 'products', 69, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398171/65b917da-6c73-4b25-9b4c-eb34cb26c032_pdwnkk.png', '65b917da-6c73-4b25-9b4c-eb34cb26c032_pdwnkk', 'front', 0, NOW(), NOW()),
+(93, 'products', 70, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398209/day-tuoi-dlpe_-1-700x700_ao0cyv.jpg', 'day-tuoi-dlpe_-1-700x700_ao0cyv', 'front', 0, NOW(), NOW()),
+(94, 'products', 71, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398218/20180606110949HTB1ka9Uk8DH8KJjSszcq6zDTFXaW_twjsyc.jpg', '20180606110949HTB1ka9Uk8DH8KJjSszcq6zDTFXaW_twjsyc', 'front', 0, NOW(), NOW()),
+(95, 'products', 72, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398284/408997bc-77ea-4c1c-8bc9-f3371cd7e97a_hgjpgq.png', '408997bc-77ea-4c1c-8bc9-f3371cd7e97a_hgjpgq', 'front', 0, NOW(), NOW()),
+(96, 'products', 73, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398291/0026551_dau-tuoi-xoay-phun-mua-tm-323-bec-bo-tuoi-xoay-360-kem-chan-de_qilcaf.jpg', '0026551_dau-tuoi-xoay-phun-mua-tm-323-bec-bo-tuoi-xoay-360-kem-chan-de_qilcaf', 'front', 0, NOW(), NOW()),
+(97, 'products', 74, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398328/10c80e93-abd9-4e5d-97dd-da4fed7b7110_l2hvyc.png', '10c80e93-abd9-4e5d-97dd-da4fed7b7110_l2hvyc', 'front', 0, NOW(), NOW()),
+(98, 'products', 75, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398351/khoa-khoi-thuy-nho-giot-ong-ldpe-16-20mm_vdenzu.jpg', 'khoa-khoi-thuy-nho-giot-ong-ldpe-16-20mm_vdenzu', 'front', 0, NOW(), NOW()),
+(99, 'products', 76, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398371/nut-bit-16mm-2_ksxyui.jpg', 'nut-bit-16mm-2_ksxyui', 'front', 0, NOW(), NOW()),
+(100, 'products', 77, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398396/f747bc12-1c44-41d1-bd19-c772fd9c747f_xcwmiy.png', 'f747bc12-1c44-41d1-bd19-c772fd9c747f_xcwmiy', 'front', 0, NOW(), NOW()),
+(101, 'products', 78, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398421/tron-bo-phun-suong-12-bec-cho-vuon-cay-vuon-rau-vuon-lan-khong-can-may-bom_thietbiphuntuoi24h_2_s3nwyq.jpg', 'tron-bo-phun-suong-12-bec-cho-vuon-cay-vuon-rau-vuon-lan-khong-can-may-bom_thietbiphuntuoi24h_2_s3nwyq', 'front', 0, NOW(), NOW()),
+(102, 'products', 79, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398458/0022616_dau-tuoi-xoe-90-180-360-btx-913-bec-phun-suong-bo-tuoi-xoe-phun-mua-90-180-360-do_ntscoh.jpg', '0022616_dau-tuoi-xoe-90-180-360-btx-913-bec-phun-suong-bo-tuoi-xoe-phun-mua-90-180-360-do_ntscoh', 'front', 0, NOW(), NOW()),
+(103, 'products', 80, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398489/bec-tuoi-phun-suong-outlet-fogger-4-pvc-ren-21-khi-phun__2__08e4fd359b9c4a09abb3422b08a3ac6c_master_qy6eur.jpg', 'bec-tuoi-phun-suong-outlet-fogger-4-pvc-ren-21-khi-phun__2__08e4fd359b9c4a09abb3422b08a3ac6c_master_qy6eur', 'front', 0, NOW(), NOW()),
+(104, 'products', 81, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398587/093b8636-3e6e-4b2e-8356-bd696a792492_m8z3vp.png', '093b8636-3e6e-4b2e-8356-bd696a792492_m8z3vp', 'front', 0, NOW(), NOW()),
+(105, 'products', 82, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398600/may-bom-tang-ap-a-130jak-768x768_ncorud.jpg', 'may-bom-tang-ap-a-130jak-768x768_ncorud', 'front', 0, NOW(), NOW()),
+(106, 'products', 83, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398622/165VNWM-P250GX2_01_wcxevw.jpg', '165VNWM-P250GX2_01_wcxevw', 'front', 0, NOW(), NOW()),
+(107, 'products', 84, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398635/may-bom-chim-2hp_vnxfje.jpg', 'may-bom-chim-2hp_vnxfje', 'front', 0, NOW(), NOW()),
+(108, 'products', 85, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398707/30-1_mmzar2.png', '30-1_mmzar2', 'front', 0, NOW(), NOW()),
+(109, 'products', 86, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398736/luoi-inox-40-mesh-0_zfvnmq.png', 'luoi-inox-40-mesh-0_zfvnmq', 'front', 0, NOW(), NOW()),
+(110, 'products', 87, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398767/Cham-phan-venturi2_r4unmi.jpg', 'Cham-phan-venturi2_r4unmi', 'front', 0, NOW(), NOW()),
+(111, 'products', 88, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398847/823da180-7768-4d12-9eeb-3f22ba7d8c93_bn6tbs.png', '823da180-7768-4d12-9eeb-3f22ba7d8c93_bn6tbs', 'front', 0, NOW(), NOW()),
+(112, 'products', 89, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763398822/e46e96cd-b7ae-47d4-8f9a-a901ab646d20_kl9mp7.png', 'e46e96cd-b7ae-47d4-8f9a-a901ab646d20_kl9mp7', 'front', 0, NOW(), NOW()),
+(113, 'products', 90, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399361/118_oifjrm.png', '118_oifjrm', 'front', 0, NOW(), NOW()),
+(114, 'products', 91, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399376/download_ltwhzz.jpg', 'download_ltwhzz', 'front', 0, NOW(), NOW()),
+(115, 'products', 92, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399398/z658479514_qxa1us.jpg', 'z658479514_qxa1us', 'front', 0, NOW(), NOW()),
+(116, 'products', 93, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399427/b64eab61-42ce-4044-a81b-5aab4f21c0ca_mv0nnd.png', 'b64eab61-42ce-4044-a81b-5aab4f21c0ca_mv0nnd', 'front', 0, NOW(), NOW()),
+(117, 'products', 94, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399453/B%E1%BB%99-%C4%91i%E1%BB%81u-khi%E1%BB%83n-b%E1%BA%ADt-t%E1%BA%AFt-m%C3%A1y-b%C6%A1m-t%E1%BB%AB-xa-qua-%C4%91i%E1%BB%87n-tho%E1%BA%A1i-app-wifi-c%C3%B3-h%E1%BA%B9n-gi%E1%BB%9D-ATA_y7jptg.jpg', 'B%E1%BB%99-%C4%91i%E1%BB%81u-khi%E1%BB%83n-b%E1%BA%ADt-t%E1%BA%AFt-m%C3%A1y-b%C6%A1m-t%E1%BB%AB-xa-qua-%C4%91i%E1%BB%87n-tho%E1%BA%A1i-app-wifi-c%C3%B3-h%E1%BA%B9n-gi%E1%BB%9D-ATA_y7jptg', 'front', 0, NOW(), NOW()),
+(118, 'products', 95, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399489/vn-11134207-7r98o-lq488mc9efv65d_tk6vfd.webp', 'vn-11134207-7r98o-lq488mc9efv65d_tk6vfd', 'front', 0, NOW(), NOW()),
+(119, 'products', 96, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399529/ong_pvc_bm_iapwsp.png', 'ong_pvc_bm_iapwsp', 'front', 0, NOW(), NOW()),
+(120, 'products', 97, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399500/b1f7a6d101c4970892fc8151c668f2f1.jpg_aq6ync.webp', 'b1f7a6d101c4970892fc8151c668f2f1', 'front', 0, NOW(), NOW()),
+(121, 'products', 98, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399567/vn-11134207-7r98o-llyqltwsi12734_nd5equ.webp', 'vn-11134207-7r98o-llyqltwsi12734_nd5equ', 'front', 0, NOW(), NOW()),
+(122, 'products', 99, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399559/Van-khoa-nuoc-BM.png6__qc3xub.png', 'Van-khoa-nuoc-BM', 'front', 0, NOW(), NOW()),
+(123, 'products', 100, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399590/van-bi-mini-inox-304-9_b5bb2905c7a94dc6aca61741bf1aead3_vhw46s.jpg', 'van-bi-mini-inox-304-9_b5bb2905c7a94dc6aca61741bf1aead3_vhw46s', 'front', 0, NOW(), NOW()),
+(124, 'products', 101, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399601/dong-ho-koamx-than-gang-dn20-1_bkuxdu.jpg', 'dong-ho-koamx-than-gang-dn20-1_bkuxdu', 'front', 0, NOW(), NOW()),
+(125, 'products', 102, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399612/module-cam-bien-do-am-nhiet-do-dht22-5cl3-4_vvfxxu.jpg', 'module-cam-bien-do-am-nhiet-do-dht22-5cl3-4_vvfxxu', 'front', 0, NOW(), NOW()),
+(126, 'products', 103, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399629/cam-bien-do-do-ph-pq8f-5_xcrfzd.jpg', 'cam-bien-do-do-ph-pq8f-5_xcrfzd', 'front', 0, NOW(), NOW()),
+(127, 'products', 104, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399645/cam-bien-nhiet-do-do-am-dat-9_aee7ae.png', 'cam-bien-nhiet-do-do-am-dat-9_aee7ae', 'front', 0, NOW(), NOW()),
+(128, 'products', 105, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399657/cam-bien-do-am-dat-m9bi-3_aoeybx.jpg', 'cam-bien-do-am-dat-m9bi-3_aoeybx', 'front', 0, NOW(), NOW()),
+(129, 'products', 106, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399671/8baa0b48e772b70af211fd07bd949bae.jpg_960x960q80.jpg__mpphjj.webp', '8baa0b48e772b70af211fd07bd949bae', 'front', 0, NOW(), NOW()),
+(130, 'products', 107, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399683/z6552644132_itanzl.webp', 'z6552644132_itanzl', 'front', 0, NOW(), NOW()),
+(131, 'products', 108, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399703/All-in-one-Solar-ultrasonic-weather-station-for-small-farm-irrigation-systems01-1_lvfqqp.webp', 'All-in-one-Solar-ultrasonic-weather-station-for-small-farm-irrigation-systems01-1_lvfqqp', 'front', 0, NOW(), NOW()),
+(132, 'products', 109, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763399715/tc002465-module-relay-8-kenh-5v-10_amituo.webp', 'tc002465-module-relay-8-kenh-5v-10_amituo', 'front', 0, NOW(), NOW()),
+(133, 'products', 110, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400164/nguon-24-vdc-wago-2857-2144-chinh-hang-nhap-khau-duc_efzxxc.jpg', 'nguon-24-vdc-wago-2857-2144-chinh-hang-nhap-khau-duc_efzxxc', 'front', 0, NOW(), NOW()),
+(134, 'products', 111, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400175/12100ah_i01equ.webp', '12100ah_i01equ', 'front', 0, NOW(), NOW()),
+(135, 'products', 112, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400275/may-xoi-dat-mini-honda-gx200-65hp_z42vnv.jpg', 'may-xoi-dat-mini-honda-gx200-65hp_z42vnv', 'front', 0, NOW(), NOW()),
+(136, 'products', 113, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400289/untitled2323a1aaaaaz_ppruee.png', 'untitled2323a1aaaaaz_ppruee', 'front', 0, NOW(), NOW()),
+(137, 'products', 114, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400325/unnamed__1__5562cf1762ed442faf7e167d4ab78ccc_master_yrk7f3.png', 'unnamed__1__5562cf1762ed442faf7e167d4ab78ccc_master_yrk7f3', 'front', 0, NOW(), NOW()),
+(138, 'products', 115, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400366/than-may-phun-thuoc-16l-dung-pin-20v-total-tspli2016-nen-1744809316-_fin9e8.jpg', 'than-may-phun-thuoc-16l-dung-pin-20v-total-tspli2016-nen-1744809316-_fin9e8', 'front', 0, NOW(), NOW()),
+(139, 'products', 116, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400381/may_gieo_hat_ngo_999_master_c6ahjq.jpg', 'may_gieo_hat_ngo_999_master_c6ahjq', 'front', 0, NOW(), NOW()),
+(140, 'products', 117, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400394/1_jw3ogv.jpg', '1_jw3ogv', 'front', 0, NOW(), NOW()),
+(141, 'products', 118, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400424/tolsen-58002_pm1ul3.webp', 'tolsen-58002_pm1ul3', 'front', 0, NOW(), NOW()),
+(142, 'products', 119, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400436/Cao-ba-chia-can-go-lon-HM098_nt54ve.png', 'Cao-ba-chia-can-go-lon-HM098_nt54ve', 'front', 0, NOW(), NOW()),
+(143, 'products', 120, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400450/78345125PNM001G_jg1jbm.png', '78345125PNM001G_jg1jbm', 'front', 0, NOW(), NOW()),
+(144, 'products', 121, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400462/20cm__3__grande_buqsop.png', '20cm__3__grande_buqsop', 'front', 0, NOW(), NOW()),
+(145, 'products', 122, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400495/83e44d5b-bd51-45fc-bb55-70561d7fbd77_bfeg37.png', '83e44d5b-bd51-45fc-bb55-70561d7fbd77_bfeg37', 'front', 0, NOW(), NOW()),
+(146, 'products', 123, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400525/Dao-chiet-ghep-canh-FELCO-3.90-50_hvqjye.png', 'Dao-chiet-ghep-canh-FELCO-3', 'front', 0, NOW(), NOW()),
+(147, 'products', 124, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400549/-uploaded-san-pham-Buddy_tape_01_cr_600x400_nr2toa.jpg', '-uploaded-san-pham-Buddy_tape_01_cr_600x400_nr2toa', 'front', 0, NOW(), NOW()),
+(148, 'products', 125, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400569/cac-loai-binh-phun-thuoc-sau_fswy78.jpg', 'cac-loai-binh-phun-thuoc-sau_fswy78', 'front', 0, NOW(), NOW()),
+(149, 'products', 126, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400585/vn-11134207-7qukw-lgd2epwcp4yy3c_u6rj1g.jpg', 'vn-11134207-7qukw-lgd2epwcp4yy3c_u6rj1g', 'front', 0, NOW(), NOW()),
+(150, 'products', 127, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400597/O1CN018P8P2q2EE935tLuAI__1968008712.jpg_400x400.jpg__u8a78a.avif', 'O1CN018P8P2q2EE935tLuAI__1968008712', 'front', 0, NOW(), NOW()),
+(151, 'products', 128, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400610/0b8053a5c8f450d4d6c40b5090176198.jpg_720x720q80_diotn8.jpg', '0b8053a5c8f450d4d6c40b5090176198', 'front', 0, NOW(), NOW()),
+(152, 'products', 129, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400625/mt3002c_ld07ui.jpg', 'mt3002c_ld07ui', 'front', 0, NOW(), NOW()),
+(153, 'products', 130, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400640/0019725_may-do-ph-co-ph-31v-dung-cu-do-do-ph-dat-3-trong-1-que-thu-ph-do-am-anh-sang_diyqn2.jpg', '0019725_may-do-ph-co-ph-31v-dung-cu-do-do-ph-dat-3-trong-1-que-thu-ph-do-am-anh-sang_diyqn2', 'front', 0, NOW(), NOW()),
+(154, 'products', 131, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400656/149647572523714-hai-phong_yzceck.jpg', '149647572523714-hai-phong_yzceck', 'front', 0, NOW(), NOW()),
+(155, 'products', 132, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400670/do-pH-da-voi-may-Hi98331_ovpabk.jpg', 'do-pH-da-voi-may-Hi98331_ovpabk', 'front', 0, NOW(), NOW()),
+(156, 'products', 133, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400699/hanna-hi3895-1_hvmgmy.jpg', 'hanna-hi3895-1_hvmgmy', 'front', 0, NOW(), NOW()),
+(157, 'products', 134, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400715/0kuus1p408vpy6tbd1xr-533x400_ekdnuk.jpg', '0kuus1p408vpy6tbd1xr-533x400_ekdnuk', 'front', 0, NOW(), NOW()),
+(158, 'products', 135, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400734/KIT-kiem-tra-nhanh-thuoc-tru-sau-VPR10-web1c_hvor21.jpg', 'KIT-kiem-tra-nhanh-thuoc-tru-sau-VPR10-web1c_hvor21', 'front', 0, NOW(), NOW()),
+(159, 'products', 136, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400930/quan-ao-bao-ho-phun-thuoc-tru-sau-_1_flwepd.webp', 'quan-ao-bao-ho-phun-thuoc-tru-sau-_1_flwepd', 'front', 0, NOW(), NOW()),
+(160, 'products', 137, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763400978/khau-trang-3m-9501-kn95_xmgxet.webp', 'khau-trang-3m-9501-kn95_xmgxet', 'front', 0, NOW(), NOW()),
+(161, 'products', 138, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401014/php-16237141210_tpttfc.jpg', 'php-16237141210_tpttfc', 'front', 0, NOW(), NOW()),
+(162, 'products', 139, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401001/ung-bao-ho-gia-qua-phai-chang_q8ow0g.jpg', 'ung-bao-ho-gia-qua-phai-chang_q8ow0g', 'front', 0, NOW(), NOW()),
+(163, 'products', 140, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401037/mu-cach-dien-thoang-khi-chat-lieu-nhua-abs-12_d8e6683fe8dc41b9a1d6c643b1d2139b_1024x1024_ua7rqz.jpg', 'mu-cach-dien-thoang-khi-chat-lieu-nhua-abs-12_d8e6683fe8dc41b9a1d6c643b1d2139b_1024x1024_ua7rqz', 'front', 0, NOW(), NOW()),
+(164, 'products', 141, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401062/vn-11134207-7ras8-m44sh7i7btu797_g0jiro.webp', 'vn-11134207-7ras8-m44sh7i7btu797_g0jiro', 'front', 0, NOW(), NOW()),
+(165, 'products', 142, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401078/vo-trau-tuoi-8f47daab-f8f4-40b8-a08a-a03a51caa9ad_t7ncyg.webp', 'vo-trau-tuoi-8f47daab-f8f4-40b8-a08a-a03a51caa9ad_t7ncyg', 'front', 0, NOW(), NOW()),
+(166, 'products', 143, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401132/6304.99.00.99_yzlj77.jpg', '6304', 'front', 0, NOW(), NOW()),
+(167, 'products', 144, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401144/z3751201226587_dae8032410a38b5ad292cffb02de5ab8-510x510_drosfx.jpg', 'z3751201226587_dae8032410a38b5ad292cffb02de5ab8-510x510_drosfx', 'front', 0, NOW(), NOW()),
+(168, 'products', 145, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401221/images_uacebd.jpg', 'images_uacebd', 'front', 0, NOW(), NOW()),
+(169, 'products', 146, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401241/image-20240925132759-4_w2f1z9.jpg', 'image-20240925132759-4_w2f1z9', 'front', 0, NOW(), NOW()),
+(170, 'products', 147, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401269/Bird-Mist-Nets-Anti-Netting-Mesh-Black-Nylon-PE-Plastic-Knitted-HDPE-Catch-Bat-45mm-Foot-for-Agriculture-Garden_utdmel.avif', 'Bird-Mist-Nets-Anti-Netting-Mesh-Black-Nylon-PE-Plastic-Knitted-HDPE-Catch-Bat-45mm-Foot-for-Agriculture-Garden_utdmel', 'front', 0, NOW(), NOW()),
+(171, 'products', 148, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401282/HDPE-Privacy-Fence-Fabric-Screen-Mesh-Plastic-Wind-Breaker-Net-for-Patio-Garden_wrmzgw.avif', 'HDPE-Privacy-Fence-Fabric-Screen-Mesh-Plastic-Wind-Breaker-Net-for-Patio-Garden_wrmzgw', 'front', 0, NOW(), NOW()),
+(172, 'products', 149, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763401305/vn-11134207-820l4-meziv7dty3nua8_upvqzw.jpg', 'vn-11134207-820l4-meziv7dty3nua8_upvqzw', 'front', 0, NOW(), NOW()),
+(173, 'products', 150, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402289/0032615_vai-khong-det-phu-goc-chong-co-giu-am-vkd-80g-mang-trai-diet-co-dai-vai-bat-chong-co_510_brj5qs.jpg', '0032615_vai-khong-det-phu-goc-chong-co-giu-am-vkd-80g-mang-trai-diet-co-dai-vai-bat-chong-co_510_brj5qs', 'front', 0, NOW(), NOW()),
+(174, 'products', 151, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402304/fb0097247afcdba282ed-e1721036595849-500x500_opwffo.jpg', 'fb0097247afcdba282ed-e1721036595849-500x500_opwffo', 'front', 0, NOW(), NOW()),
+(175, 'products', 152, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402322/bat-che-tarpaulin-xe-tai_pgxm0d.webp', 'bat-che-tarpaulin-xe-tai_pgxm0d', 'front', 0, NOW(), NOW()),
+(176, 'products', 153, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402339/mang-nha-kinh-politiv_xshvvz.jpg', 'mang-nha-kinh-politiv_xshvvz', 'front', 0, NOW(), NOW()),
+(177, 'products', 154, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402354/tui-giay-kraft-mong-quai-coi-dan_utpanj.png', 'tui-giay-kraft-mong-quai-coi-dan_utpanj', 'front', 0, NOW(), NOW()),
+(178, 'products', 155, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402369/untitled-1-02_18ee162eb5694638a7f07b921c33081c_1d5140b1badb4138a7623858c711822c_master_ljwbrv.jpg', 'untitled-1-02_18ee162eb5694638a7f07b921c33081c_1d5140b1badb4138a7623858c711822c_master_ljwbrv', 'front', 0, NOW(), NOW()),
+(179, 'products', 156, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402388/Hop-40x30x20-3_nqozv3.jpg', 'Hop-40x30x20-3_nqozv3', 'front', 0, NOW(), NOW()),
+(180, 'products', 157, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402402/khay-ba-mia-biogreen_c2yuny.png', 'khay-ba-mia-biogreen_c2yuny', 'front', 0, NOW(), NOW()),
+(181, 'products', 158, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402421/bang-keo-giay-kraft-1_1722480815.jpg_pyxmuy.webp', 'bang-keo-giay-kraft-1_1722480815', 'front', 0, NOW(), NOW()),
+(182, 'products', 159, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402469/original_images_1QAX29PCQPAQ4F0EZFZOPY7Q_rom52p.jpg', 'original_images_1QAX29PCQPAQ4F0EZFZOPY7Q_rom52p', 'front', 0, NOW(), NOW()),
+(183, 'products', 160, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402483/Zip-Chi-Do-3.jpg_uu0jc6.webp', 'Zip-Chi-Do-3', 'front', 0, NOW(), NOW()),
+(184, 'products', 161, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402500/THUNG-NHUA-RONG-HS022-xanh-duong_cimbok.jpg', 'THUNG-NHUA-RONG-HS022-xanh-duong_cimbok', 'front', 0, NOW(), NOW()),
+(185, 'products', 162, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402515/tui-pa-pe-hut-chan-khong_e8vt5z.jpg', 'tui-pa-pe-hut-chan-khong_e8vt5z', 'front', 0, NOW(), NOW()),
+(186, 'products', 163, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402776/vn-11134207-7ra0g-m87t55el7errcc_rmxdai.jpg', 'vn-11134207-7ra0g-m87t55el7errcc_rmxdai', 'front', 0, NOW(), NOW()),
+(187, 'products', 164, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402801/avery-bio-650_n0j6eq.jpg', 'avery-bio-650_n0j6eq', 'front', 0, NOW(), NOW()),
+(188, 'products', 165, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402838/cuon-bang-buoc-pe-3-mau-xanh-do-trang-z_zgniky.jpg', 'cuon-bang-buoc-pe-3-mau-xanh-do-trang-z_zgniky', 'front', 0, NOW(), NOW()),
+(189, 'products', 166, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402912/kep-nhua-than-cay-2_qsdcym.jpg', 'kep-nhua-than-cay-2_qsdcym', 'front', 0, NOW(), NOW()),
+(190, 'products', 167, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402877/vn-11134207-7r98o-lv5jf82kyzg99e_zfccwr.jpg', 'vn-11134207-7r98o-lv5jf82kyzg99e_zfccwr', 'front', 0, NOW(), NOW()),
+(191, 'products', 168, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402944/May-suc-khi-Jecod_g9jclq.jpg', 'May-suc-khi-Jecod_g9jclq', 'front', 0, NOW(), NOW()),
+(192, 'products', 169, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402962/bao-gia-dia-suc-khi-da-tia-moi-nhat-www.micoeco.com__kvss8q.png', 'bao-gia-dia-suc-khi-da-tia-moi-nhat-www', 'front', 0, NOW(), NOW()),
+(193, 'products', 170, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402982/ro-thuy-canh-trong-rau_jcpl5x.png', 'ro-thuy-canh-trong-rau_jcpl5x', 'front', 0, NOW(), NOW()),
+(194, 'products', 171, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763402997/Capture3_ic0lq0.png', 'Capture3_ic0lq0', 'front', 0, NOW(), NOW()),
+(195, 'products', 172, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763403035/Nong_nghiep_huu_co_lxmbaj.jpg', 'Nong_nghiep_huu_co_lxmbaj', 'front', 0, NOW(), NOW()),
+(196, 'products', 173, 'https://res.cloudinary.com/dy6htecfm/image/upload/v1763403064/SO-TAY-AN-TOAN-THUC-PHAM_aqgpve.gif', 'SO-TAY-AN-TOAN-THUC-PHAM_aqgpve', 'front', 0, NOW(), NOW());
+
+-- Insert Product Certificates (only for products requiring mandatory certs)
+INSERT INTO product_certificates (id, product_id, certification_code, certification_name, status, rejection_reason, uploaded_at, verified_at, verified_by, created_at, updated_at) VALUES
+(1, 54, 'GIONG_CAY', 'Giấy chứng nhận giống cây trồng - Cục Trồng trọt', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(2, 55, 'GIONG_CAY', 'Giấy chứng nhận giống cây trồng - Cục Trồng trọt', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(3, 56, 'GIONG_CAY', 'Giấy chứng nhận giống cây trồng - Cục Trồng trọt', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(4, 57, 'GIONG_CAY', 'Giấy chứng nhận giống cây trồng - Cục Trồng trọt', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(5, 58, 'GIONG_CAY', 'Giấy chứng nhận giống cây trồng - Cục Trồng trọt', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(6, 59, 'GIONG_CAY', 'Giấy chứng nhận giống cây trồng - Cục Trồng trọt', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(7, 60, 'GIONG_CAY', 'Giấy chứng nhận giống cây trồng - Cục Trồng trọt', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(8, 61, 'GIONG_CAY', 'Giấy chứng nhận giống cây trồng - Cục Trồng trọt', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(9, 81, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(10, 82, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(11, 83, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(12, 84, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(13, 85, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(14, 86, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(15, 87, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(16, 88, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(17, 89, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(18, 90, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(19, 91, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(20, 92, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(21, 93, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(22, 94, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(23, 112, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(24, 113, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(25, 114, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(26, 115, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(27, 116, 'CERT_CR', 'Giấy chứng nhận hợp quy (CR) - An toàn điện', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(28, 132, 'TCVN_TEST', 'TCVN - Độ chính xác thiết bị kiểm tra', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(29, 133, 'TCVN_TEST', 'TCVN - Độ chính xác thiết bị kiểm tra', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(30, 134, 'TCVN_TEST', 'TCVN - Độ chính xác thiết bị kiểm tra', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(31, 135, 'TCVN_TEST', 'TCVN - Độ chính xác thiết bị kiểm tra', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(32, 136, 'TCVN_BAO_HO', 'TCVN - An toàn lao động', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(33, 137, 'TCVN_BAO_HO', 'TCVN - An toàn lao động', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(34, 138, 'TCVN_BAO_HO', 'TCVN - An toàn lao động', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(35, 139, 'TCVN_BAO_HO', 'TCVN - An toàn lao động', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(36, 140, 'TCVN_BAO_HO', 'TCVN - An toàn lao động', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(37, 154, 'QCVN_BYT', 'QCVN 12-1:2011/BYT - An toàn vệ sinh thực phẩm', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(38, 155, 'QCVN_BYT', 'QCVN 12-1:2011/BYT - An toàn vệ sinh thực phẩm', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(39, 156, 'QCVN_BYT', 'QCVN 12-1:2011/BYT - An toàn vệ sinh thực phẩm', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(40, 157, 'QCVN_BYT', 'QCVN 12-1:2011/BYT - An toàn vệ sinh thực phẩm', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
+(41, 158, 'QCVN_BYT', 'QCVN 12-1:2011/BYT - An toàn vệ sinh thực phẩm', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW());
+
+-- Media Links for Product Certificates (41 PDF files)
+INSERT INTO media_links (id, owner_type, owner_id, image_url, image_public_id, purpose, sort_order, created_at, updated_at) VALUES
+(367, 'product_certificates', 1, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_1.pdf', 'product_cert_1', 'productcertificatepdf', 0, NOW(), NOW()),
+(368, 'product_certificates', 2, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_2.pdf', 'product_cert_2', 'productcertificatepdf', 0, NOW(), NOW()),
+(369, 'product_certificates', 3, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_3.pdf', 'product_cert_3', 'productcertificatepdf', 0, NOW(), NOW()),
+(370, 'product_certificates', 4, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_4.pdf', 'product_cert_4', 'productcertificatepdf', 0, NOW(), NOW()),
+(371, 'product_certificates', 5, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_5.pdf', 'product_cert_5', 'productcertificatepdf', 0, NOW(), NOW()),
+(372, 'product_certificates', 6, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_6.pdf', 'product_cert_6', 'productcertificatepdf', 0, NOW(), NOW()),
+(373, 'product_certificates', 7, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_7.pdf', 'product_cert_7', 'productcertificatepdf', 0, NOW(), NOW()),
+(374, 'product_certificates', 8, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_8.pdf', 'product_cert_8', 'productcertificatepdf', 0, NOW(), NOW()),
+(375, 'product_certificates', 9, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_9.pdf', 'product_cert_9', 'productcertificatepdf', 0, NOW(), NOW()),
+(376, 'product_certificates', 10, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_10.pdf', 'product_cert_10', 'productcertificatepdf', 0, NOW(), NOW()),
+(377, 'product_certificates', 11, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_11.pdf', 'product_cert_11', 'productcertificatepdf', 0, NOW(), NOW()),
+(378, 'product_certificates', 12, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_12.pdf', 'product_cert_12', 'productcertificatepdf', 0, NOW(), NOW()),
+(379, 'product_certificates', 13, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_13.pdf', 'product_cert_13', 'productcertificatepdf', 0, NOW(), NOW()),
+(380, 'product_certificates', 14, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_14.pdf', 'product_cert_14', 'productcertificatepdf', 0, NOW(), NOW()),
+(381, 'product_certificates', 15, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_15.pdf', 'product_cert_15', 'productcertificatepdf', 0, NOW(), NOW()),
+(382, 'product_certificates', 16, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_16.pdf', 'product_cert_16', 'productcertificatepdf', 0, NOW(), NOW()),
+(383, 'product_certificates', 17, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_17.pdf', 'product_cert_17', 'productcertificatepdf', 0, NOW(), NOW()),
+(384, 'product_certificates', 18, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_18.pdf', 'product_cert_18', 'productcertificatepdf', 0, NOW(), NOW()),
+(385, 'product_certificates', 19, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_19.pdf', 'product_cert_19', 'productcertificatepdf', 0, NOW(), NOW()),
+(386, 'product_certificates', 20, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_20.pdf', 'product_cert_20', 'productcertificatepdf', 0, NOW(), NOW()),
+(387, 'product_certificates', 21, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_21.pdf', 'product_cert_21', 'productcertificatepdf', 0, NOW(), NOW()),
+(388, 'product_certificates', 22, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_22.pdf', 'product_cert_22', 'productcertificatepdf', 0, NOW(), NOW()),
+(389, 'product_certificates', 23, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_23.pdf', 'product_cert_23', 'productcertificatepdf', 0, NOW(), NOW()),
+(390, 'product_certificates', 24, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_24.pdf', 'product_cert_24', 'productcertificatepdf', 0, NOW(), NOW()),
+(391, 'product_certificates', 25, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_25.pdf', 'product_cert_25', 'productcertificatepdf', 0, NOW(), NOW()),
+(392, 'product_certificates', 26, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_26.pdf', 'product_cert_26', 'productcertificatepdf', 0, NOW(), NOW()),
+(393, 'product_certificates', 27, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_27.pdf', 'product_cert_27', 'productcertificatepdf', 0, NOW(), NOW()),
+(394, 'product_certificates', 28, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_28.pdf', 'product_cert_28', 'productcertificatepdf', 0, NOW(), NOW()),
+(395, 'product_certificates', 29, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_29.pdf', 'product_cert_29', 'productcertificatepdf', 0, NOW(), NOW()),
+(396, 'product_certificates', 30, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_30.pdf', 'product_cert_30', 'productcertificatepdf', 0, NOW(), NOW()),
+(397, 'product_certificates', 31, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_31.pdf', 'product_cert_31', 'productcertificatepdf', 0, NOW(), NOW()),
+(398, 'product_certificates', 32, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_32.pdf', 'product_cert_32', 'productcertificatepdf', 0, NOW(), NOW()),
+(399, 'product_certificates', 33, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_33.pdf', 'product_cert_33', 'productcertificatepdf', 0, NOW(), NOW()),
+(400, 'product_certificates', 34, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_34.pdf', 'product_cert_34', 'productcertificatepdf', 0, NOW(), NOW()),
+(401, 'product_certificates', 35, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_35.pdf', 'product_cert_35', 'productcertificatepdf', 0, NOW(), NOW()),
+(402, 'product_certificates', 36, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_36.pdf', 'product_cert_36', 'productcertificatepdf', 0, NOW(), NOW()),
+(403, 'product_certificates', 37, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_37.pdf', 'product_cert_37', 'productcertificatepdf', 0, NOW(), NOW()),
+(404, 'product_certificates', 38, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_38.pdf', 'product_cert_38', 'productcertificatepdf', 0, NOW(), NOW()),
+(405, 'product_certificates', 39, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_39.pdf', 'product_cert_39', 'productcertificatepdf', 0, NOW(), NOW()),
+(406, 'product_certificates', 40, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_40.pdf', 'product_cert_40', 'productcertificatepdf', 0, NOW(), NOW()),
+(407, 'product_certificates', 41, 'https://res.cloudinary.com/verdanttech/certificates/product_cert_41.pdf', 'product_cert_41', 'productcertificatepdf', 0, NOW(), NOW());
+
+-- Insert Batch Inventory (173 batches with quality check)
+INSERT INTO batch_inventory (id, product_id, sku, vendor_id, batch_number, lot_number, quantity, unit_cost_price, expiry_date, manufacturing_date, quality_check_status, quality_checked_by, quality_checked_at, notes, created_at, updated_at) VALUES
+(1, 1, 'SKU-0001', 17, 'BATCH0001', 'LOT0001', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(2, 2, 'SKU-0002', 17, 'BATCH0002', 'LOT0002', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(3, 3, 'SKU-0003', 17, 'BATCH0003', 'LOT0003', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(4, 4, 'SKU-0004', 17, 'BATCH0004', 'LOT0004', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(5, 5, 'SKU-0005', 17, 'BATCH0005', 'LOT0005', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(6, 6, 'SKU-0006', 17, 'BATCH0006', 'LOT0006', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(7, 7, 'SKU-0007', 17, 'BATCH0007', 'LOT0007', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(8, 8, 'SKU-0008', 17, 'BATCH0008', 'LOT0008', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(9, 9, 'SKU-0009', 17, 'BATCH0009', 'LOT0009', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(10, 10, 'SKU-0010', 18, 'BATCH0010', 'LOT0010', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(11, 11, 'SKU-0011', 18, 'BATCH0011', 'LOT0011', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(12, 12, 'SKU-0012', 18, 'BATCH0012', 'LOT0012', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(13, 13, 'SKU-0013', 18, 'BATCH0013', 'LOT0013', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(14, 14, 'SKU-0014', 18, 'BATCH0014', 'LOT0014', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(15, 15, 'SKU-0015', 18, 'BATCH0015', 'LOT0015', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(16, 16, 'SKU-0016', 18, 'BATCH0016', 'LOT0016', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(17, 17, 'SKU-0017', 18, 'BATCH0017', 'LOT0017', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(18, 18, 'SKU-0018', 18, 'BATCH0018', 'LOT0018', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(19, 19, 'SKU-0019', 19, 'BATCH0019', 'LOT0019', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(20, 20, 'SKU-0020', 19, 'BATCH0020', 'LOT0020', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(21, 21, 'SKU-0021', 19, 'BATCH0021', 'LOT0021', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(22, 22, 'SKU-0022', 19, 'BATCH0022', 'LOT0022', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(23, 23, 'SKU-0023', 19, 'BATCH0023', 'LOT0023', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(24, 24, 'SKU-0024', 19, 'BATCH0024', 'LOT0024', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(25, 25, 'SKU-0025', 19, 'BATCH0025', 'LOT0025', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(26, 26, 'SKU-0026', 19, 'BATCH0026', 'LOT0026', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(27, 27, 'SKU-0027', 19, 'BATCH0027', 'LOT0027', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(28, 28, 'SKU-0028', 20, 'BATCH0028', 'LOT0028', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(29, 29, 'SKU-0029', 20, 'BATCH0029', 'LOT0029', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(30, 30, 'SKU-0030', 20, 'BATCH0030', 'LOT0030', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(31, 31, 'SKU-0031', 20, 'BATCH0031', 'LOT0031', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(32, 32, 'SKU-0032', 20, 'BATCH0032', 'LOT0032', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(33, 33, 'SKU-0033', 20, 'BATCH0033', 'LOT0033', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(34, 34, 'SKU-0034', 20, 'BATCH0034', 'LOT0034', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(35, 35, 'SKU-0035', 20, 'BATCH0035', 'LOT0035', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(36, 36, 'SKU-0036', 20, 'BATCH0036', 'LOT0036', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(37, 37, 'SKU-0037', 21, 'BATCH0037', 'LOT0037', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(38, 38, 'SKU-0038', 21, 'BATCH0038', 'LOT0038', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(39, 39, 'SKU-0039', 21, 'BATCH0039', 'LOT0039', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(40, 40, 'SKU-0040', 21, 'BATCH0040', 'LOT0040', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(41, 41, 'SKU-0041', 21, 'BATCH0041', 'LOT0041', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(42, 42, 'SKU-0042', 21, 'BATCH0042', 'LOT0042', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(43, 43, 'SKU-0043', 21, 'BATCH0043', 'LOT0043', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(44, 44, 'SKU-0044', 21, 'BATCH0044', 'LOT0044', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(45, 45, 'SKU-0045', 21, 'BATCH0045', 'LOT0045', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(46, 46, 'SKU-0046', 22, 'BATCH0046', 'LOT0046', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(47, 47, 'SKU-0047', 22, 'BATCH0047', 'LOT0047', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(48, 48, 'SKU-0048', 22, 'BATCH0048', 'LOT0048', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(49, 49, 'SKU-0049', 22, 'BATCH0049', 'LOT0049', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(50, 50, 'SKU-0050', 22, 'BATCH0050', 'LOT0050', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(51, 51, 'SKU-0051', 22, 'BATCH0051', 'LOT0051', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(52, 52, 'SKU-0052', 22, 'BATCH0052', 'LOT0052', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(53, 53, 'SKU-0053', 22, 'BATCH0053', 'LOT0053', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(54, 54, 'SKU-0054', 22, 'BATCH0054', 'LOT0054', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(55, 55, 'SKU-0055', 23, 'BATCH0055', 'LOT0055', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(56, 56, 'SKU-0056', 23, 'BATCH0056', 'LOT0056', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(57, 57, 'SKU-0057', 23, 'BATCH0057', 'LOT0057', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(58, 58, 'SKU-0058', 23, 'BATCH0058', 'LOT0058', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(59, 59, 'SKU-0059', 23, 'BATCH0059', 'LOT0059', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(60, 60, 'SKU-0060', 23, 'BATCH0060', 'LOT0060', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(61, 61, 'SKU-0061', 23, 'BATCH0061', 'LOT0061', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(62, 62, 'SKU-0062', 23, 'BATCH0062', 'LOT0062', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(63, 63, 'SKU-0063', 23, 'BATCH0063', 'LOT0063', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(64, 64, 'SKU-0064', 24, 'BATCH0064', 'LOT0064', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(65, 65, 'SKU-0065', 24, 'BATCH0065', 'LOT0065', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(66, 66, 'SKU-0066', 24, 'BATCH0066', 'LOT0066', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(67, 67, 'SKU-0067', 24, 'BATCH0067', 'LOT0067', 100, 900.00, '2026-12-31', '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(68, 68, 'SKU-0068', 24, 'BATCH0068', 'LOT0068', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(69, 69, 'SKU-0069', 24, 'BATCH0069', 'LOT0069', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(70, 70, 'SKU-0070', 24, 'BATCH0070', 'LOT0070', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(71, 71, 'SKU-0071', 24, 'BATCH0071', 'LOT0071', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(72, 72, 'SKU-0072', 24, 'BATCH0072', 'LOT0072', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(73, 73, 'SKU-0073', 25, 'BATCH0073', 'LOT0073', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(74, 74, 'SKU-0074', 25, 'BATCH0074', 'LOT0074', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(75, 75, 'SKU-0075', 25, 'BATCH0075', 'LOT0075', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(76, 76, 'SKU-0076', 25, 'BATCH0076', 'LOT0076', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(77, 77, 'SKU-0077', 25, 'BATCH0077', 'LOT0077', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(78, 78, 'SKU-0078', 25, 'BATCH0078', 'LOT0078', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(79, 79, 'SKU-0079', 25, 'BATCH0079', 'LOT0079', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(80, 80, 'SKU-0080', 25, 'BATCH0080', 'LOT0080', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(81, 81, 'SKU-0081', 25, 'BATCH0081', 'LOT0081', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(82, 82, 'SKU-0082', 26, 'BATCH0082', 'LOT0082', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(83, 83, 'SKU-0083', 26, 'BATCH0083', 'LOT0083', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(84, 84, 'SKU-0084', 26, 'BATCH0084', 'LOT0084', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(85, 85, 'SKU-0085', 26, 'BATCH0085', 'LOT0085', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(86, 86, 'SKU-0086', 26, 'BATCH0086', 'LOT0086', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(87, 87, 'SKU-0087', 26, 'BATCH0087', 'LOT0087', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(88, 88, 'SKU-0088', 26, 'BATCH0088', 'LOT0088', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(89, 89, 'SKU-0089', 26, 'BATCH0089', 'LOT0089', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(90, 90, 'SKU-0090', 26, 'BATCH0090', 'LOT0090', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(91, 91, 'SKU-0091', 27, 'BATCH0091', 'LOT0091', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(92, 92, 'SKU-0092', 27, 'BATCH0092', 'LOT0092', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(93, 93, 'SKU-0093', 27, 'BATCH0093', 'LOT0093', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(94, 94, 'SKU-0094', 27, 'BATCH0094', 'LOT0094', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(95, 95, 'SKU-0095', 27, 'BATCH0095', 'LOT0095', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(96, 96, 'SKU-0096', 27, 'BATCH0096', 'LOT0096', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(97, 97, 'SKU-0097', 27, 'BATCH0097', 'LOT0097', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(98, 98, 'SKU-0098', 27, 'BATCH0098', 'LOT0098', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(99, 99, 'SKU-0099', 27, 'BATCH0099', 'LOT0099', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(100, 100, 'SKU-0100', 28, 'BATCH0100', 'LOT0100', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(101, 101, 'SKU-0101', 28, 'BATCH0101', 'LOT0101', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(102, 102, 'SKU-0102', 28, 'BATCH0102', 'LOT0102', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(103, 103, 'SKU-0103', 28, 'BATCH0103', 'LOT0103', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(104, 104, 'SKU-0104', 28, 'BATCH0104', 'LOT0104', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(105, 105, 'SKU-0105', 28, 'BATCH0105', 'LOT0105', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(106, 106, 'SKU-0106', 28, 'BATCH0106', 'LOT0106', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(107, 107, 'SKU-0107', 28, 'BATCH0107', 'LOT0107', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(108, 108, 'SKU-0108', 28, 'BATCH0108', 'LOT0108', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(109, 109, 'SKU-0109', 29, 'BATCH0109', 'LOT0109', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(110, 110, 'SKU-0110', 29, 'BATCH0110', 'LOT0110', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(111, 111, 'SKU-0111', 29, 'BATCH0111', 'LOT0111', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(112, 112, 'SKU-0112', 29, 'BATCH0112', 'LOT0112', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(113, 113, 'SKU-0113', 29, 'BATCH0113', 'LOT0113', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(114, 114, 'SKU-0114', 29, 'BATCH0114', 'LOT0114', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(115, 115, 'SKU-0115', 29, 'BATCH0115', 'LOT0115', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(116, 116, 'SKU-0116', 29, 'BATCH0116', 'LOT0116', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(117, 117, 'SKU-0117', 29, 'BATCH0117', 'LOT0117', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(118, 118, 'SKU-0118', 30, 'BATCH0118', 'LOT0118', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(119, 119, 'SKU-0119', 30, 'BATCH0119', 'LOT0119', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(120, 120, 'SKU-0120', 30, 'BATCH0120', 'LOT0120', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(121, 121, 'SKU-0121', 30, 'BATCH0121', 'LOT0121', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(122, 122, 'SKU-0122', 30, 'BATCH0122', 'LOT0122', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(123, 123, 'SKU-0123', 30, 'BATCH0123', 'LOT0123', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(124, 124, 'SKU-0124', 30, 'BATCH0124', 'LOT0124', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(125, 125, 'SKU-0125', 30, 'BATCH0125', 'LOT0125', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(126, 126, 'SKU-0126', 30, 'BATCH0126', 'LOT0126', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(127, 127, 'SKU-0127', 31, 'BATCH0127', 'LOT0127', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(128, 128, 'SKU-0128', 31, 'BATCH0128', 'LOT0128', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(129, 129, 'SKU-0129', 31, 'BATCH0129', 'LOT0129', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(130, 130, 'SKU-0130', 31, 'BATCH0130', 'LOT0130', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(131, 131, 'SKU-0131', 31, 'BATCH0131', 'LOT0131', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(132, 132, 'SKU-0132', 31, 'BATCH0132', 'LOT0132', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(133, 133, 'SKU-0133', 31, 'BATCH0133', 'LOT0133', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(134, 134, 'SKU-0134', 31, 'BATCH0134', 'LOT0134', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(135, 135, 'SKU-0135', 31, 'BATCH0135', 'LOT0135', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(136, 136, 'SKU-0136', 32, 'BATCH0136', 'LOT0136', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(137, 137, 'SKU-0137', 32, 'BATCH0137', 'LOT0137', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(138, 138, 'SKU-0138', 32, 'BATCH0138', 'LOT0138', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(139, 139, 'SKU-0139', 32, 'BATCH0139', 'LOT0139', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(140, 140, 'SKU-0140', 32, 'BATCH0140', 'LOT0140', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(141, 141, 'SKU-0141', 32, 'BATCH0141', 'LOT0141', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(142, 142, 'SKU-0142', 32, 'BATCH0142', 'LOT0142', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(143, 143, 'SKU-0143', 32, 'BATCH0143', 'LOT0143', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(144, 144, 'SKU-0144', 32, 'BATCH0144', 'LOT0144', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(145, 145, 'SKU-0145', 33, 'BATCH0145', 'LOT0145', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(146, 146, 'SKU-0146', 33, 'BATCH0146', 'LOT0146', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(147, 147, 'SKU-0147', 33, 'BATCH0147', 'LOT0147', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(148, 148, 'SKU-0148', 33, 'BATCH0148', 'LOT0148', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(149, 149, 'SKU-0149', 33, 'BATCH0149', 'LOT0149', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(150, 150, 'SKU-0150', 33, 'BATCH0150', 'LOT0150', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(151, 151, 'SKU-0151', 33, 'BATCH0151', 'LOT0151', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(152, 152, 'SKU-0152', 33, 'BATCH0152', 'LOT0152', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(153, 153, 'SKU-0153', 33, 'BATCH0153', 'LOT0153', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(154, 154, 'SKU-0154', 34, 'BATCH0154', 'LOT0154', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(155, 155, 'SKU-0155', 34, 'BATCH0155', 'LOT0155', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(156, 156, 'SKU-0156', 34, 'BATCH0156', 'LOT0156', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(157, 157, 'SKU-0157', 34, 'BATCH0157', 'LOT0157', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(158, 158, 'SKU-0158', 34, 'BATCH0158', 'LOT0158', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(159, 159, 'SKU-0159', 34, 'BATCH0159', 'LOT0159', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(160, 160, 'SKU-0160', 34, 'BATCH0160', 'LOT0160', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(161, 161, 'SKU-0161', 34, 'BATCH0161', 'LOT0161', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(162, 162, 'SKU-0162', 34, 'BATCH0162', 'LOT0162', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(163, 163, 'SKU-0163', 35, 'BATCH0163', 'LOT0163', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(164, 164, 'SKU-0164', 35, 'BATCH0164', 'LOT0164', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(165, 165, 'SKU-0165', 35, 'BATCH0165', 'LOT0165', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(166, 166, 'SKU-0166', 35, 'BATCH0166', 'LOT0166', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(167, 167, 'SKU-0167', 35, 'BATCH0167', 'LOT0167', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(168, 168, 'SKU-0168', 35, 'BATCH0168', 'LOT0168', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(169, 169, 'SKU-0169', 35, 'BATCH0169', 'LOT0169', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(170, 170, 'SKU-0170', 35, 'BATCH0170', 'LOT0170', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(171, 171, 'SKU-0171', 35, 'BATCH0171', 'LOT0171', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(172, 172, 'SKU-0172', 36, 'BATCH0172', 'LOT0172', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW()),
+(173, 173, 'SKU-0173', 36, 'BATCH0173', 'LOT0173', 100, 900.00, NULL, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW());
+
+-- Insert Product Serials for Machinery (16 products x 10 units = 160 serials)
+INSERT INTO product_serials (id, batch_inventory_id, product_id, serial_number, status, created_at, updated_at) VALUES
+(1, 49, 49, 'SN-0049-001', 'sold', NOW(), NOW()),
+(2, 49, 49, 'SN-0049-002', 'sold', NOW(), NOW()),
+(3, 49, 49, 'SN-0049-003', 'stock', NOW(), NOW()),
+(4, 49, 49, 'SN-0049-004', 'stock', NOW(), NOW()),
+(5, 49, 49, 'SN-0049-005', 'stock', NOW(), NOW()),
+(6, 49, 49, 'SN-0049-006', 'stock', NOW(), NOW()),
+(7, 49, 49, 'SN-0049-007', 'stock', NOW(), NOW()),
+(8, 49, 49, 'SN-0049-008', 'stock', NOW(), NOW()),
+(9, 49, 49, 'SN-0049-009', 'stock', NOW(), NOW()),
+(10, 49, 49, 'SN-0049-010', 'stock', NOW(), NOW()),
+(11, 81, 81, 'SN-0081-001', 'sold', NOW(), NOW()),
+(12, 81, 81, 'SN-0081-002', 'sold', NOW(), NOW()),
+(13, 81, 81, 'SN-0081-003', 'stock', NOW(), NOW()),
+(14, 81, 81, 'SN-0081-004', 'stock', NOW(), NOW()),
+(15, 81, 81, 'SN-0081-005', 'stock', NOW(), NOW()),
+(16, 81, 81, 'SN-0081-006', 'stock', NOW(), NOW()),
+(17, 81, 81, 'SN-0081-007', 'stock', NOW(), NOW()),
+(18, 81, 81, 'SN-0081-008', 'stock', NOW(), NOW()),
+(19, 81, 81, 'SN-0081-009', 'stock', NOW(), NOW()),
+(20, 81, 81, 'SN-0081-010', 'stock', NOW(), NOW()),
+(21, 82, 82, 'SN-0082-001', 'sold', NOW(), NOW()),
+(22, 82, 82, 'SN-0082-002', 'sold', NOW(), NOW()),
+(23, 82, 82, 'SN-0082-003', 'stock', NOW(), NOW()),
+(24, 82, 82, 'SN-0082-004', 'stock', NOW(), NOW()),
+(25, 82, 82, 'SN-0082-005', 'stock', NOW(), NOW()),
+(26, 82, 82, 'SN-0082-006', 'stock', NOW(), NOW()),
+(27, 82, 82, 'SN-0082-007', 'stock', NOW(), NOW()),
+(28, 82, 82, 'SN-0082-008', 'stock', NOW(), NOW()),
+(29, 82, 82, 'SN-0082-009', 'stock', NOW(), NOW()),
+(30, 82, 82, 'SN-0082-010', 'stock', NOW(), NOW()),
+(31, 83, 83, 'SN-0083-001', 'sold', NOW(), NOW()),
+(32, 83, 83, 'SN-0083-002', 'sold', NOW(), NOW()),
+(33, 83, 83, 'SN-0083-003', 'stock', NOW(), NOW()),
+(34, 83, 83, 'SN-0083-004', 'stock', NOW(), NOW()),
+(35, 83, 83, 'SN-0083-005', 'stock', NOW(), NOW()),
+(36, 83, 83, 'SN-0083-006', 'stock', NOW(), NOW()),
+(37, 83, 83, 'SN-0083-007', 'stock', NOW(), NOW()),
+(38, 83, 83, 'SN-0083-008', 'stock', NOW(), NOW()),
+(39, 83, 83, 'SN-0083-009', 'stock', NOW(), NOW()),
+(40, 83, 83, 'SN-0083-010', 'stock', NOW(), NOW()),
+(41, 84, 84, 'SN-0084-001', 'sold', NOW(), NOW()),
+(42, 84, 84, 'SN-0084-002', 'sold', NOW(), NOW()),
+(43, 84, 84, 'SN-0084-003', 'stock', NOW(), NOW()),
+(44, 84, 84, 'SN-0084-004', 'stock', NOW(), NOW()),
+(45, 84, 84, 'SN-0084-005', 'stock', NOW(), NOW()),
+(46, 84, 84, 'SN-0084-006', 'stock', NOW(), NOW()),
+(47, 84, 84, 'SN-0084-007', 'stock', NOW(), NOW()),
+(48, 84, 84, 'SN-0084-008', 'stock', NOW(), NOW()),
+(49, 84, 84, 'SN-0084-009', 'stock', NOW(), NOW()),
+(50, 84, 84, 'SN-0084-010', 'stock', NOW(), NOW()),
+(51, 88, 88, 'SN-0088-001', 'sold', NOW(), NOW()),
+(52, 88, 88, 'SN-0088-002', 'sold', NOW(), NOW()),
+(53, 88, 88, 'SN-0088-003', 'stock', NOW(), NOW()),
+(54, 88, 88, 'SN-0088-004', 'stock', NOW(), NOW()),
+(55, 88, 88, 'SN-0088-005', 'stock', NOW(), NOW()),
+(56, 88, 88, 'SN-0088-006', 'stock', NOW(), NOW()),
+(57, 88, 88, 'SN-0088-007', 'stock', NOW(), NOW()),
+(58, 88, 88, 'SN-0088-008', 'stock', NOW(), NOW()),
+(59, 88, 88, 'SN-0088-009', 'stock', NOW(), NOW()),
+(60, 88, 88, 'SN-0088-010', 'stock', NOW(), NOW()),
+(61, 89, 89, 'SN-0089-001', 'sold', NOW(), NOW()),
+(62, 89, 89, 'SN-0089-002', 'sold', NOW(), NOW()),
+(63, 89, 89, 'SN-0089-003', 'stock', NOW(), NOW()),
+(64, 89, 89, 'SN-0089-004', 'stock', NOW(), NOW()),
+(65, 89, 89, 'SN-0089-005', 'stock', NOW(), NOW()),
+(66, 89, 89, 'SN-0089-006', 'stock', NOW(), NOW()),
+(67, 89, 89, 'SN-0089-007', 'stock', NOW(), NOW()),
+(68, 89, 89, 'SN-0089-008', 'stock', NOW(), NOW()),
+(69, 89, 89, 'SN-0089-009', 'stock', NOW(), NOW()),
+(70, 89, 89, 'SN-0089-010', 'stock', NOW(), NOW()),
+(71, 92, 92, 'SN-0092-001', 'sold', NOW(), NOW()),
+(72, 92, 92, 'SN-0092-002', 'sold', NOW(), NOW()),
+(73, 92, 92, 'SN-0092-003', 'stock', NOW(), NOW()),
+(74, 92, 92, 'SN-0092-004', 'stock', NOW(), NOW()),
+(75, 92, 92, 'SN-0092-005', 'stock', NOW(), NOW()),
+(76, 92, 92, 'SN-0092-006', 'stock', NOW(), NOW()),
+(77, 92, 92, 'SN-0092-007', 'stock', NOW(), NOW()),
+(78, 92, 92, 'SN-0092-008', 'stock', NOW(), NOW()),
+(79, 92, 92, 'SN-0092-009', 'stock', NOW(), NOW()),
+(80, 92, 92, 'SN-0092-010', 'stock', NOW(), NOW()),
+(81, 94, 94, 'SN-0094-001', 'sold', NOW(), NOW()),
+(82, 94, 94, 'SN-0094-002', 'sold', NOW(), NOW()),
+(83, 94, 94, 'SN-0094-003', 'stock', NOW(), NOW()),
+(84, 94, 94, 'SN-0094-004', 'stock', NOW(), NOW()),
+(85, 94, 94, 'SN-0094-005', 'stock', NOW(), NOW()),
+(86, 94, 94, 'SN-0094-006', 'stock', NOW(), NOW()),
+(87, 94, 94, 'SN-0094-007', 'stock', NOW(), NOW()),
+(88, 94, 94, 'SN-0094-008', 'stock', NOW(), NOW()),
+(89, 94, 94, 'SN-0094-009', 'stock', NOW(), NOW()),
+(90, 94, 94, 'SN-0094-010', 'stock', NOW(), NOW()),
+(91, 108, 108, 'SN-0108-001', 'sold', NOW(), NOW()),
+(92, 108, 108, 'SN-0108-002', 'sold', NOW(), NOW()),
+(93, 108, 108, 'SN-0108-003', 'stock', NOW(), NOW()),
+(94, 108, 108, 'SN-0108-004', 'stock', NOW(), NOW()),
+(95, 108, 108, 'SN-0108-005', 'stock', NOW(), NOW()),
+(96, 108, 108, 'SN-0108-006', 'stock', NOW(), NOW()),
+(97, 108, 108, 'SN-0108-007', 'stock', NOW(), NOW()),
+(98, 108, 108, 'SN-0108-008', 'stock', NOW(), NOW()),
+(99, 108, 108, 'SN-0108-009', 'stock', NOW(), NOW()),
+(100, 108, 108, 'SN-0108-010', 'stock', NOW(), NOW()),
+(101, 109, 109, 'SN-0109-001', 'sold', NOW(), NOW()),
+(102, 109, 109, 'SN-0109-002', 'sold', NOW(), NOW()),
+(103, 109, 109, 'SN-0109-003', 'stock', NOW(), NOW()),
+(104, 109, 109, 'SN-0109-004', 'stock', NOW(), NOW()),
+(105, 109, 109, 'SN-0109-005', 'stock', NOW(), NOW()),
+(106, 109, 109, 'SN-0109-006', 'stock', NOW(), NOW()),
+(107, 109, 109, 'SN-0109-007', 'stock', NOW(), NOW()),
+(108, 109, 109, 'SN-0109-008', 'stock', NOW(), NOW()),
+(109, 109, 109, 'SN-0109-009', 'stock', NOW(), NOW()),
+(110, 109, 109, 'SN-0109-010', 'stock', NOW(), NOW()),
+(111, 112, 112, 'SN-0112-001', 'sold', NOW(), NOW()),
+(112, 112, 112, 'SN-0112-002', 'sold', NOW(), NOW()),
+(113, 112, 112, 'SN-0112-003', 'stock', NOW(), NOW()),
+(114, 112, 112, 'SN-0112-004', 'stock', NOW(), NOW()),
+(115, 112, 112, 'SN-0112-005', 'stock', NOW(), NOW()),
+(116, 112, 112, 'SN-0112-006', 'stock', NOW(), NOW()),
+(117, 112, 112, 'SN-0112-007', 'stock', NOW(), NOW()),
+(118, 112, 112, 'SN-0112-008', 'stock', NOW(), NOW()),
+(119, 112, 112, 'SN-0112-009', 'stock', NOW(), NOW()),
+(120, 112, 112, 'SN-0112-010', 'stock', NOW(), NOW()),
+(121, 113, 113, 'SN-0113-001', 'sold', NOW(), NOW()),
+(122, 113, 113, 'SN-0113-002', 'sold', NOW(), NOW()),
+(123, 113, 113, 'SN-0113-003', 'stock', NOW(), NOW()),
+(124, 113, 113, 'SN-0113-004', 'stock', NOW(), NOW()),
+(125, 113, 113, 'SN-0113-005', 'stock', NOW(), NOW()),
+(126, 113, 113, 'SN-0113-006', 'stock', NOW(), NOW()),
+(127, 113, 113, 'SN-0113-007', 'stock', NOW(), NOW()),
+(128, 113, 113, 'SN-0113-008', 'stock', NOW(), NOW()),
+(129, 113, 113, 'SN-0113-009', 'stock', NOW(), NOW()),
+(130, 113, 113, 'SN-0113-010', 'stock', NOW(), NOW()),
+(131, 114, 114, 'SN-0114-001', 'sold', NOW(), NOW()),
+(132, 114, 114, 'SN-0114-002', 'sold', NOW(), NOW()),
+(133, 114, 114, 'SN-0114-003', 'stock', NOW(), NOW()),
+(134, 114, 114, 'SN-0114-004', 'stock', NOW(), NOW()),
+(135, 114, 114, 'SN-0114-005', 'stock', NOW(), NOW()),
+(136, 114, 114, 'SN-0114-006', 'stock', NOW(), NOW()),
+(137, 114, 114, 'SN-0114-007', 'stock', NOW(), NOW()),
+(138, 114, 114, 'SN-0114-008', 'stock', NOW(), NOW()),
+(139, 114, 114, 'SN-0114-009', 'stock', NOW(), NOW()),
+(140, 114, 114, 'SN-0114-010', 'stock', NOW(), NOW()),
+(141, 115, 115, 'SN-0115-001', 'sold', NOW(), NOW()),
+(142, 115, 115, 'SN-0115-002', 'sold', NOW(), NOW()),
+(143, 115, 115, 'SN-0115-003', 'stock', NOW(), NOW()),
+(144, 115, 115, 'SN-0115-004', 'stock', NOW(), NOW()),
+(145, 115, 115, 'SN-0115-005', 'stock', NOW(), NOW()),
+(146, 115, 115, 'SN-0115-006', 'stock', NOW(), NOW()),
+(147, 115, 115, 'SN-0115-007', 'stock', NOW(), NOW()),
+(148, 115, 115, 'SN-0115-008', 'stock', NOW(), NOW()),
+(149, 115, 115, 'SN-0115-009', 'stock', NOW(), NOW()),
+(150, 115, 115, 'SN-0115-010', 'stock', NOW(), NOW()),
+(151, 116, 116, 'SN-0116-001', 'sold', NOW(), NOW()),
+(152, 116, 116, 'SN-0116-002', 'sold', NOW(), NOW()),
+(153, 116, 116, 'SN-0116-003', 'stock', NOW(), NOW()),
+(154, 116, 116, 'SN-0116-004', 'stock', NOW(), NOW()),
+(155, 116, 116, 'SN-0116-005', 'stock', NOW(), NOW()),
+(156, 116, 116, 'SN-0116-006', 'stock', NOW(), NOW()),
+(157, 116, 116, 'SN-0116-007', 'stock', NOW(), NOW()),
+(158, 116, 116, 'SN-0116-008', 'stock', NOW(), NOW()),
+(159, 116, 116, 'SN-0116-009', 'stock', NOW(), NOW()),
+(160, 116, 116, 'SN-0116-010', 'stock', NOW(), NOW());
+
 
 -- =====================================================
--- 5. PRESERVE EXISTING SYSTEM DATA
+-- PRESERVE EXISTING SYSTEM DATA (Forum, Chatbot)
 -- =====================================================
-
--- Insert Vendor Profiles
-INSERT INTO `vendor_profiles` (`id`, `user_id`, `company_name`, `slug`, `business_registration_number`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
-(1, 5, 'Công Ty Máy Móc Nông Nghiệp Xanh', 'cong-ty-may-moc-nong-nghiep-xanh', 'BRN123456789', '2025-09-09 07:00:00', 1, '2025-09-08 08:00:00', '2025-09-09 07:00:00'),
-(2, 6, 'Cửa Hàng Nông Sản Sạch VerdantTech', 'cua-hang-nong-san-sach-verdanttech', 'BRN987654321', '2025-09-09 06:30:00', 1, '2025-09-08 08:30:00', '2025-09-09 06:30:00');
-
--- Insert User Bank Accounts
-INSERT INTO `user_bank_accounts` (`id`, `user_id`, `bank_code`, `account_number`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 5, '970436', '1045069359', 1, '2025-09-09 07:05:00', '2025-09-09 07:05:00'),
-(2, 6, '970436', '1045069359', 1, '2025-09-09 06:35:00', '2025-09-09 06:35:00');
-
--- Insert Wallets
-INSERT INTO `wallets` (`id`, `vendor_id`, `balance`, `last_updated_by`, `created_at`, `updated_at`) VALUES
-(1, 5, 10000000.00, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
-(2, 6, 2500000.00, 1, '2025-09-09 08:00:00', '2025-09-09 08:00:00');
-
--- Insert Vendor Certificates
-INSERT INTO `vendor_certificates` (`id`, `vendor_id`, `certification_code`, `certification_name`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
-(1, 5, 'ISO14001', 'ISO 14001 Environmental Management', 'verified', NULL, '2025-09-08 09:00:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:00:00', '2025-09-09 07:00:00'),
-(2, 5, 'ISO50001', 'ISO 50001 Energy Management', 'verified', NULL, '2025-09-08 09:15:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:15:00', '2025-09-09 07:00:00'),
-(3, 5, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'verified', NULL, '2025-09-08 09:30:00', '2025-09-09 07:00:00', 1, '2025-09-08 09:30:00', '2025-09-09 07:00:00'),
-(4, 5, 'HACCP', 'HACCP - Hazard Analysis Critical Control Points', 'pending', NULL, '2025-09-09 08:00:00', NULL, NULL, '2025-09-09 08:00:00', '2025-09-09 08:00:00'),
-(5, 6, 'USDA_ORGANIC', 'USDA Organic Certification', 'verified', NULL, '2025-09-08 10:00:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:00:00', '2025-09-09 06:30:00'),
-(6, 6, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'verified', NULL, '2025-09-08 10:15:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:15:00', '2025-09-09 06:30:00'),
-(7, 6, 'FAIRTRADE', 'Fairtrade International Certification', 'verified', NULL, '2025-09-08 10:30:00', '2025-09-09 06:30:00', 1, '2025-09-08 10:30:00', '2025-09-09 06:30:00'),
-(8, 6, 'NON_GMO', 'Non-GMO Project Verified', 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', '2025-09-09 09:00:00', '2025-09-09 10:00:00', 1, '2025-09-09 09:00:00', '2025-09-09 10:00:00');
-
--- Insert Product Categories 
-INSERT INTO `product_categories` (`id`, `parent_id`, `name`, `slug`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, NULL, 'Thiết Bị Nông Nghiệp', 'thiet-bi-nong-nghiep', 'Các loại dụng cụ và công cụ nhỏ phục vụ nông nghiệp', 1, NOW(), NOW()),
-(2, NULL, 'Máy Móc Nông Nghiệp', 'may-moc-nong-nghiep', 'Các loại máy móc hạng nặng phục vụ sản xuất nông nghiệp', 1, NOW(), NOW()),
-(3, NULL, 'Hạt Giống', 'hat-giong', 'Hạt giống chất lượng cao', 1, NOW(), NOW()),
-(4, NULL, 'Phân Bón', 'phan-bon', 'Phân bón hữu cơ và hóa học', 1, NOW(), NOW()),
-(5, 1, 'Dụng Cụ Cầm Tay', 'dung-cu-cam-tay', 'Cuốc, xẻng, và các dụng cụ cầm tay khác', 1, NOW(), NOW()),
-(6, 1, 'Máy Cắt Cỏ Cầm Tay', 'may-cat-co-cam-tay', 'Máy cắt cỏ cầm tay và thiết bị chăm sóc cỏ', 1, NOW(), NOW()),
-(7, 2, 'Máy Cày', 'may-cay', 'Máy cày và thiết bị làm đất', 1, NOW(), NOW()),
-(8, 2, 'Máy Gặt', 'may-gat', 'Máy gặt và thu hoạch', 1, NOW(), NOW()),
-(9, 2, 'Máy Bay Nông Nghiệp', 'may-bay-nong-nghiep', 'Drone và thiết bị bay phục vụ nông nghiệp', 1, NOW(), NOW()),
-(10, 3, 'Hạt Giống Rau', 'hat-giong-rau', 'Hạt giống rau củ hữu cơ', 1, NOW(), NOW()),
-(11, 4, 'Phân Bón Hữu Cơ', 'phan-bon-huu-co', 'Phân bón hữu cơ từ thiên nhiên', 1, NOW(), NOW());
-
--- Insert Products
-INSERT INTO `products` (`id`, `category_id`, `vendor_id`, `product_code`, `product_name`, `slug`, `description`, `unit_price`, `commission_rate`, `discount_percentage`, `energy_efficiency_rating`, `specifications`, `manual_urls`, `public_url`, `warranty_months`, `stock_quantity`, `weight_kg`, `dimensions_cm`, `is_active`, `view_count`, `sold_count`, `rating_average`, `created_at`, `updated_at`) VALUES
-(1, 7, 5, 'TC001', 'Máy Cày Mini Điện VerdantTech V1', 'may-cay-mini-dien-verdanttech-v1', 'Máy cày mini sử dụng năng lượng điện, thân thiện với môi trường.', 1000.00, 10.00, 5.00, 5, '{"power": "10kW", "battery": "48V 100Ah"}', 'manual_tc001.pdf', NULL, 24, 50, 500.000, '{"length": 250, "width": 120, "height": 150}', 1, 120, 5, 4.60, NOW(), NOW()),
-(2, 8, 5, 'HV002', 'Máy Gặt Lúa Tự Động VerdantTech H2', 'may-gat-lua-tu-dong-verdanttech-h2', 'Máy gặt lúa tự động với công nghệ AI.', 1000.00, 8.00, 5.00, 4, '{"engine": "Diesel 50HP", "capacity": "2 tons/hour"}', 'manual_hv002.pdf', NULL, 36, 10, 2500.000, '{"length": 450, "width": 200, "height": 250}', 1, 85, 3, 4.80, NOW(), NOW()),
-(3, 10, 6, 'SD003', 'Hạt Giống Rau Cải Xanh Hữu Cơ', 'hat-giong-rau-cai-xanh-huu-co', 'Hạt giống rau cải xanh hữu cơ.', 1000.00, 5.00, 5.00, NULL, '{"germination_rate": "95%", "pack_size": "100g"}', 'manual_sd003.pdf', NULL, 0, 200, 0.100, '{"length": 10, "width": 5, "height": 2}', 1, 200, 50, 4.50, NOW(), NOW()),
-(4, 11, 6, 'FT004', 'Phân Bón Hữu Cơ Compost Premium', 'phan-bon-huu-co-compost-premium', 'Phân bón hữu cơ từ compost.', 1000.00, 7.00, 5.00, NULL, '{"npk": "5-5-5", "weight": "25kg"}', 'manual_ft004.pdf', NULL, 0, 100, 25.000, '{"length": 50, "width": 30, "height": 10}', 1, 150, 20, 4.70, NOW(), NOW()),
-(5, 9, 5, 'DR005', 'Drone Phun Thuốc Thông Minh VerdantTech D3', 'drone-phun-thuoc-thong-minh-verdanttech-d3', 'Drone phun thuốc tự động với AI.', 1000.00, 12.00, 5.00, 3, '{"flight_time": "30min", "capacity": "10L"}', 'manual_dr005.pdf', NULL, 12, 15, 5.000, '{"length": 100, "width": 100, "height": 50}', 1, 90, 7, 4.40, NOW(), NOW());
-
--- Insert Product Certificates
-INSERT INTO `product_certificates` (`id`, `product_id`, `certification_code`, `certification_name`, `status`, `rejection_reason`, `uploaded_at`, `verified_at`, `verified_by`, `created_at`, `updated_at`) VALUES
-(1, 1, 'ISO50001', 'ISO 50001 Energy Management', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
-(2, 1, 'CARBON_NEUTRAL', 'Carbon Neutral Certification', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
-(3, 2, 'ISO14001', 'ISO 14001 Environmental Management', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
-(4, 2, 'SBTI', 'SBTi - Science Based Targets Initiative', 'pending', NULL, NOW(), NULL, NULL, NOW(), NOW()),
-(5, 3, 'USDA_ORGANIC', 'USDA Organic Certification', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
-(6, 3, 'VIETGAP', 'VietGAP – Thực hành nông nghiệp tốt tại Việt Nam', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
-(7, 4, 'GLOBALGAP', 'GlobalGAP Certification', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
-(8, 4, 'NON_GMO', 'Non-GMO Project Verified', 'rejected', 'Chứng chỉ không rõ ràng, cần upload lại bản gốc', NOW(), NOW(), 1, NOW(), NOW()),
-(9, 5, 'RAINFOREST_ALLIANCE', 'Rainforest Alliance Certification', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW()),
-(10, 5, 'CARBON_NEUTRAL_2', 'Carbon Neutral Certification', 'pending', NULL, NOW(), NULL, NULL, NOW(), NOW());
 
 -- Insert Forum Categories
-INSERT INTO `forum_categories` (`id`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
+INSERT INTO forum_categories (id, name, description, is_active, created_at, updated_at) VALUES
 (1, 'Kỹ Thuật Canh Tác', 'Thảo luận về các phương pháp canh tác bền vững và hữu cơ', 1, NOW(), NOW()),
 (2, 'Máy Móc & Thiết Bị Nông Nghiệp', 'Chia sẻ kinh nghiệm sử dụng máy móc hạng nặng và thiết bị nông nghiệp', 1, NOW(), NOW()),
 (3, 'Phòng Trừ Sâu Bệnh', 'Các biện pháp phòng trừ sâu bệnh thân thiện với môi trường', 1, NOW(), NOW());
 
 -- Insert Forum Posts
-INSERT INTO `forum_posts` (`id`, `forum_category_id`, `user_id`, `title`, `slug`, `content`, `tags`, `view_count`, `like_count`, `dislike_count`, `is_pinned`, `status`, `created_at`, `updated_at`) VALUES
+INSERT INTO forum_posts (id, forum_category_id, user_id, title, slug, content, tags, view_count, like_count, dislike_count, is_pinned, status, created_at, updated_at) VALUES
 (1, 1, 9, 'Kinh nghiệm trồng lúa hữu cơ tại Đồng Nai', 'kinh-nghiem-trong-lua-huu-co-tai-dong-nai', '[{"order": 1, "type": "text", "content": "Chào mọi người, mình đang trồng lúa hữu cơ tại Đồng Nai. Ai có kinh nghiệm chia sẻ nhé!"}]', 'lúa, hữu cơ, đồng nai', 150, 20, 2, 1, 'visible', NOW(), NOW()),
 (2, 2, 7, 'Review máy cày mini điện VerdantTech V1', 'review-may-cay-mini-dien-verdanttech-v1', '[{"order": 1, "type": "text", "content": "Mình mới mua máy cày mini điện V1, chạy rất êm và tiết kiệm. Có ai dùng chưa?"}]', 'máy cày, điện, verdanttech', 80, 15, 1, 0, 'visible', NOW(), NOW()),
 (3, 3, 10, 'Biện pháp phòng sâu bệnh tự nhiên cho rau củ', 'bien-phap-phong-sau-benh-tu-nhien-cho-rau-cu', '[{"order": 1, "type": "text", "content": "Mọi người thường dùng gì để phòng sâu bệnh cho rau mà không dùng thuốc hóa học?"}]', 'sâu bệnh, rau củ, tự nhiên', 120, 18, 0, 0, 'visible', NOW(), NOW());
 
 -- Insert Forum Comments
-INSERT INTO `forum_comments` (`id`, `forum_post_id`, `user_id`, `parent_id`, `content`, `like_count`, `dislike_count`, `status`, `created_at`, `updated_at`) VALUES
+INSERT INTO forum_comments (id, forum_post_id, user_id, parent_id, content, like_count, dislike_count, status, created_at, updated_at) VALUES
 (1, 1, 10, NULL, 'Mình ở Long An cũng trồng lúa hữu cơ. Quan trọng là chọn giống lúa phù hợp không?', 3, 0, 'visible', NOW(), NOW()),
 (2, 1, 9, 1, 'Mình thường chọn giống lúa ST24 hoặc ST25 vì phù hợp với đất phù sa và có chất lượng gạo tốt.', 5, 0, 'visible', NOW(), NOW()),
 (3, 1, 7, NULL, 'Bài viết rất hữu ích! Mình đang cân nhắc chuyển từ canh tác truyền thống sang hữu cơ.', 2, 0, 'visible', NOW(), NOW()),
-(4, 2, 5, NULL, 'Cảm ơn bạn đã đánh giá sản phẩm của chúng tôi! Nếu có bất kỳ thắc mắc nào về sử dụng, hãy liên hệ.', 4, 0, 'visible', NOW(), NOW()),
+(4, 2, 17, NULL, 'Cảm ơn bạn đã đánh giá sản phẩm của chúng tôi! Nếu có bất kỳ thắc mắc nào về sử dụng, hãy liên hệ.', 4, 0, 'visible', NOW(), NOW()),
 (5, 2, 10, 4, 'Máy chạy rất ổn, chỉ có điều pin hơi nhanh hết khi làm đất cứng.', 1, 0, 'visible', NOW(), NOW()),
 (6, 3, 9, NULL, 'Bạn có thể thử dùng dung dịch tỏi ớt để xịt phòng trừ sâu bệnh.', 6, 0, 'visible', NOW(), NOW());
 
 -- Insert Chatbot Conversations
-INSERT INTO `chatbot_conversations` (`id`, `customer_id`, `session_id`, `title`, `context`, `is_active`, `started_at`) VALUES
+INSERT INTO chatbot_conversations (id, customer_id, session_id, title, context, is_active, started_at) VALUES
 (1, 7, 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d', 'Tư vấn chọn máy cày', '{"topic": "equipment_consultation"}', 0, NOW()),
 (2, 9, 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e', 'Hỗ trợ kỹ thuật canh tác', '{"topic": "farming_techniques"}', 1, NOW()),
 (3, 8, 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f', 'Tư vấn phân bón hữu cơ', '{"topic": "fertilizer_consultation"}', 0, NOW());
 
 -- Insert Chatbot Messages
-INSERT INTO `chatbot_messages` (`id`, `conversation_id`, `message_type`, `message_text`, `created_at`) VALUES
+INSERT INTO chatbot_messages (id, conversation_id, message_type, message_text, created_at) VALUES
 (1, 1, 'user', 'Tôi cần tư vấn chọn máy cày cho ruộng nhỏ khoảng 2ha', NOW()),
 (2, 1, 'bot', 'Với diện tích 2ha, tôi khuyên bạn nên chọn máy cày mini điện VerdantTech V1.', NOW()),
 (3, 1, 'user', 'Giá của máy này là bao nhiêu? Có khuyến mãi không?', NOW()),
-(4, 1, 'bot', 'Máy cày mini điện VerdantTech V1 có giá 25.000.000 VNĐ.', NOW()),
+(4, 1, 'bot', 'Máy cày mini điện VerdantTech V1 có giá 1.000 VNĐ.', NOW()),
 (5, 2, 'user', 'Tôi muốn hỏi về kỹ thuật trồng lúa hữu cơ', NOW()),
 (6, 2, 'bot', 'Trồng lúa hữu cơ cần chú ý những điểm sau: 1) Chuẩn bị đất 2) Chọn giống 3) Quản lý nước.', NOW()),
 (7, 3, 'user', 'Tôi trồng rau, đất cát, nên dùng loại phân nào?', NOW()),
 (8, 3, 'bot', 'Với đất cát trồng rau, tôi khuyên bạn sử dụng Phân Compost Hữu Cơ Premium.', NOW()),
 (9, 3, 'user', 'Cảm ơn bạn! Tôi sẽ đặt mua ngay.', NOW()),
 (10, 3, 'bot', 'Rất vui được hỗ trợ bạn!', NOW());
-
--- Insert Batch Inventory
-INSERT INTO `batch_inventory` (`id`, `product_id`, `sku`, `vendor_id`, `batch_number`, `lot_number`, `quantity`, `unit_cost_price`, `expiry_date`, `manufacturing_date`, `quality_check_status`, `quality_checked_by`, `quality_checked_at`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 1, 'SKU_TC001_001', 5, 'BATCH001', 'LOT001', 5, 18000000.00, NULL, '2025-08-01', 'passed', 2, NOW(), 'Máy cày đầu tiên nhập kho', NOW(), NOW()),
-(2, 2, 'SKU_HV002_001', 5, 'BATCH002', 'LOT002', 10, 70000000.00, NULL, '2025-07-15', 'passed', 2, NOW(), 'Máy gặt lúa nhập kho', NOW(), NOW()),
-(3, 3, 'SKU_SD003_001', 6, 'BATCH003', 'LOT003', 200, 25000.00, '2026-09-08', '2025-06-01', 'passed', 2, NOW(), 'Hạt giống nhập kho', NOW(), NOW()),
-(4, 4, 'SKU_FT004_001', 6, 'BATCH004', 'LOT004', 100, 60000.00, '2026-03-01', '2025-05-01', 'passed', 2, NOW(), 'Phân bón nhập kho', NOW(), NOW()),
-(5, 5, 'SKU_DR005_001', 5, 'BATCH005', 'LOT005', 15, 20000000.00, NULL, '2025-08-15', 'passed', 2, NOW(), 'Drone phun thuốc nhập kho', NOW(), NOW());
-
--- Insert Product Serials
-INSERT INTO `product_serials` (`id`, `batch_inventory_id`, `product_id`, `serial_number`, `status`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 'TC001-B001-001', 'sold', NOW(), NOW()),
-(2, 1, 1, 'TC001-B001-002', 'stock', NOW(), NOW()),
-(3, 1, 1, 'TC001-B001-003', 'stock', NOW(), NOW()),
-(4, 1, 1, 'TC001-B001-004', 'stock', NOW(), NOW()),
-(5, 1, 1, 'TC001-B001-005', 'stock', NOW(), NOW());
