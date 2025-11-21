@@ -29,5 +29,6 @@ namespace DAL.IRepository
 
         // ---------------- POST WITH COMMENTS ----------------
         Task<ForumPost?> GetPostWithCommentsAsync(ulong id, CancellationToken ct = default);
+        Task<bool> SlugExistsAsync(string slug, CancellationToken ct);
     }
 }

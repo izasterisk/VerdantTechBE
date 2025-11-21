@@ -29,7 +29,7 @@ public partial class ProductRegistration
     /// <summary>
     /// Energy efficiency rating (0-5, with 0 being lowest and 5 being highest)
     /// </summary>
-    public int? EnergyEfficiencyRating { get; set; }
+    public decimal? EnergyEfficiencyRating { get; set; }
 
     /// <summary>
     /// Technical specifications as key-value pairs (JSON)

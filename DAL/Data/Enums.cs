@@ -243,7 +243,8 @@ public enum MediaPurpose
     Front,
     Back,
     ProductCertificatePdf,
-    VendorCertificatesPdf
+    VendorCertificatesPdf,
+    ProductImage
 }
 
 public enum NotificationReferenceType

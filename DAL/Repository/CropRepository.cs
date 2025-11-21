@@ -68,5 +68,14 @@ namespace DAL.Repository
             await _context.SaveChangesAsync(ct);
             return true;
         }
+
+        public async Task<IEnumerable<Crop>> GetByFarmIdAsync(ulong farmProfileId, CancellationToken ct = default)
+        {
+            return await _context.Crops
+                .AsNoTracking()
+                .Where(x => x.FarmProfileId == farmProfileId && x.IsActive)
+                .ToListAsync(ct);
+        }
+
     }
 }

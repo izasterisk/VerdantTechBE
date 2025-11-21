@@ -14,6 +14,8 @@ using BLL.DTO.MediaLink;
 using BLL.DTO.ProductRegistration;
 using BLL.Interfaces;
 using Infrastructure.Cloudinary;
+using Microsoft.Extensions.Logging;
+
 namespace Controller.Controllers
 {
     [ApiController]
@@ -33,11 +35,14 @@ namespace Controller.Controllers
             _cloud = cloud;
             _logger = logger;
         }
+
+
+        // 🔧 Logging helper
         private void LogDict(string label, Dictionary<string, object>? dict)
         {
             try
             {
-                var json = dict is null ? "null" : System.Text.Json.JsonSerializer.Serialize(dict);
+                var json = dict is null ? "null" : JsonSerializer.Serialize(dict);
                 _logger.LogInformation("{Label}: {Json}", label, json);
             }
             catch (Exception ex)
@@ -46,11 +51,13 @@ namespace Controller.Controllers
             }
         }
 
-        // ========= READ =========
+        // =====================================================================
+        // 📌 READ ENDPOINTS
+        // =====================================================================
 
         [HttpGet]
-        [EndpointSummary("Danh sách đăng ký sản phẩm (có phân trang)")]
-        [EndpointDescription("Trả về danh sách ProductRegistration kèm ảnh (MediaLinks) và manual URLs nếu có.")]
+        [EndpointSummary("Danh sách đăng ký sản phẩm (phân trang)")]
+        [EndpointDescription("Trả về danh sách product registrations bao gồm hình ảnh, file manual, certificate và thông tin chi tiết.")]
         public async Task<ActionResult<PagedResponse<ProductRegistrationReponseDTO>>> GetAll(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
@@ -60,8 +67,10 @@ namespace Controller.Controllers
             return Ok(res);
         }
 
-        [HttpGet("{id:long}")]
-        [EndpointSummary("Chi tiết đăng ký sản phẩm theo Id")]
+
+        [HttpGet("{id}")]
+        [EndpointSummary("Lấy chi tiết đăng ký sản phẩm theo ID")]
+        [EndpointDescription("Trả về thông tin chi tiết của một product registration, bao gồm images, specifications và certificate.")]
         public async Task<ActionResult<ProductRegistrationReponseDTO>> GetById(
             ulong id,
             CancellationToken ct = default)
@@ -70,8 +79,10 @@ namespace Controller.Controllers
             return item is null ? NotFound("Đơn đăng ký không tồn tại.") : Ok(item);
         }
 
-        [HttpGet("vendor/{vendorId:long}")]
-        [EndpointSummary("Danh sách đăng ký theo Vendor (có phân trang)")]
+
+        [HttpGet("vendor/{vendorId}")]
+        [EndpointSummary("Lấy danh sách đăng ký theo Vendor")]
+        [EndpointDescription("Trả về tất cả đăng ký sản phẩm của một Vendor kèm phân trang.")]
         public async Task<ActionResult<PagedResponse<ProductRegistrationReponseDTO>>> GetByVendor(
             ulong vendorId,
             [FromQuery] int page = 1,
@@ -82,25 +93,34 @@ namespace Controller.Controllers
             return Ok(res);
         }
 
-        // ========= CREATE =========
+
+        // =====================================================================
+        // 📌 CREATE ENDPOINT
+        // =====================================================================
 
         [HttpPost]
         [Consumes("multipart/form-data")]
-        [EndpointSummary("Tạo đăng ký sản phẩm (multipart/form-data)")]
+        [EndpointSummary("Tạo mới Product Registration")]
+        [EndpointDescription("Tạo đăng ký sản phẩm mới bao gồm: hình ảnh sản phẩm, file manual PDF, certificates PDF, specifications và thông tin mô tả.")]
         public async Task<ActionResult<ProductRegistrationReponseDTO>> Create(
             [FromForm] CreateForm req,
             CancellationToken ct = default)
         {
             FillSpecsFromForm(req.Data, Request.Form);
-            // Manual
+
+            // Upload manual
             string? manualUrl = null, manualPublicUrl = null;
             if (req.ManualFile is not null)
             {
                 var up = await _cloud.UploadAsync(req.ManualFile, "product-registrations/manuals", ct);
-                if (up is not null) { manualUrl = up.Url; manualPublicUrl = up.PublicUrl; }
+                if (up is not null)
+                {
+                    manualUrl = up.Url;
+                    manualPublicUrl = up.PublicUrl;
+                }
             }
 
-            // Images
+            // Upload product images
             var imagesDto = new List<MediaLinkItemDTO>();
             if (req.Images is { Count: > 0 })
             {
@@ -114,56 +134,66 @@ namespace Controller.Controllers
                 }).ToList();
             }
 
-            // Certificates
+            // Upload certificate files
             var certDtos = new List<MediaLinkItemDTO>();
             if (req.Certificate is { Count: > 0 })
             {
-                // (tuỳ chọn) chặn file không phải PDF
                 var pdfs = req.Certificate.Where(f =>
                     string.Equals(f.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) ||
                     f.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
                 ).ToList();
 
                 var ups = await _cloud.UploadManyAsync(pdfs, "product-registrations/certificates", ct);
+
                 certDtos = ups.Select((x, i) => new MediaLinkItemDTO
                 {
                     ImagePublicId = x.PublicId,
-                    ImageUrl = x.PublicUrl,     // ✅ dùng PublicUrl
-                    Purpose = "CertificatePdf",// ✅ gắn đúng purpose
+                    ImageUrl = x.PublicUrl,
+                    Purpose = "certificatepdf",
                     SortOrder = i + 1
                 }).ToList();
             }
 
             var created = await _service.CreateAsync(
                 req.Data,
-                manualUrl, manualPublicUrl,
+                manualUrl,
+                manualPublicUrl,
                 imagesDto,
-                certDtos,    // ✅ truyền vào
+                certDtos,
                 ct
             );
+
             return Ok(created);
-        } 
+        }
 
-            // ========= UPDATE =========
 
-        [HttpPut("{id:long}")]
+        // =====================================================================
+        // 📌 UPDATE ENDPOINT
+        // =====================================================================
+
+        [HttpPut("{id}")]
         [Consumes("multipart/form-data")]
-        [EndpointSummary("Cập nhật đăng ký sản phẩm (multipart/form-data)")]
+        [EndpointSummary("Cập nhật Product Registration")]
+        [EndpointDescription("Cập nhật thông tin đăng ký sản phẩm, thêm/xoá hình ảnh, thêm/xoá certificate, cập nhật manual và specifications.")]
         public async Task<ActionResult<ProductRegistrationReponseDTO>> Update(
             ulong id,
             [FromForm] UpdateForm req,
             CancellationToken ct = default)
         {
             FillSpecsFromForm(req.Data, Request.Form);
-            // Manual
+
             string? manualUrl = null, manualPublicUrl = null;
             if (req.ManualFile is not null)
             {
                 var up = await _cloud.UploadAsync(req.ManualFile, "product-registrations/manuals", ct);
-                if (up is not null) { manualUrl = up.Url; manualPublicUrl = up.PublicUrl; }
+                if (up is not null)
+                {
+                    manualUrl = up.Url;
+                    manualPublicUrl = up.PublicUrl;
+                }
             }
 
-            // Thêm ảnh
+            // Add images
             var addImages = new List<MediaLinkItemDTO>();
             if (req.Images is { Count: > 0 })
             {
@@ -177,8 +207,8 @@ namespace Controller.Controllers
                 }).ToList();
             }
 
-            // Thêm chứng chỉ
-            var addCertificates = new List<MediaLinkItemDTO>();
+            // Add certificates
+            var addCerts = new List<MediaLinkItemDTO>();
             if (req.Certificate is { Count: > 0 })
             {
                 var pdfs = req.Certificate.Where(f =>
@@ -187,34 +217,38 @@ namespace Controller.Controllers
                 ).ToList();
 
                 var ups = await _cloud.UploadManyAsync(pdfs, "product-registrations/certificates", ct);
-                addCertificates = ups.Select((x, i) => new MediaLinkItemDTO
+                addCerts = ups.Select((x, i) => new MediaLinkItemDTO
                 {
                     ImagePublicId = x.PublicId,
-                    ImageUrl = x.PublicUrl,     // ✅ dùng PublicUrl
-                    Purpose = "CertificatePdf",// ✅ gắn đúng purpose
+                    ImageUrl = x.PublicUrl,
+                    Purpose = "certificatepdf",
                     SortOrder = i + 1
                 }).ToList();
             }
 
-            var removedImages = req.RemoveImagePublicIds ?? new List<string>();
-            var removedCerts = req.RemoveCertificatePublicIds ?? new List<string>();
-
             var updated = await _service.UpdateAsync(
                 req.Data,
-                manualUrl, manualPublicUrl,
+                manualUrl,
+                manualPublicUrl,
                 addImages,
-                addCertificates,           // ✅ truyền vào
-                removedImages,
-                removedCerts,
+                addCerts,
+                req.RemoveImagePublicIds ?? new List<string>(),
+                req.RemoveCertificatePublicIds ?? new List<string>(),
                 ct
             );
+
             return Ok(updated);
         }
 
-        // ========= CHANGE STATUS / DELETE =========
 
-        [HttpPatch("{id:long}/status")]
-        [EndpointSummary("Duyệt / Từ chối đơn đăng ký")]
+        // =====================================================================
+        // 📌 CHANGE STATUS ENDPOINT
+        // =====================================================================
+
+        [HttpPatch("{id}/status")]
+        [EndpointSummary("Duyệt hoặc từ chối đăng ký")]
+        [EndpointDescription("Thay đổi trạng thái của đơn đăng ký sản phẩm: Approved hoặc Rejected. "
+            + "Khi được duyệt (Approved), hệ thống sẽ tự động tạo Product và copy toàn bộ media/ certificates.")]
         public async Task<IActionResult> ChangeStatus(
             ulong id,
             [FromBody] ProductRegistrationChangeStatusDTO dto,
@@ -224,15 +258,25 @@ namespace Controller.Controllers
             return ok ? NoContent() : NotFound("Đơn đăng ký không tồn tại.");
         }
 
-        [HttpDelete("{id:long}")]
-        [EndpointSummary("Xoá đơn đăng ký sản phẩm")]
+
+        // =====================================================================
+        // 📌 DELETE ENDPOINT
+        // =====================================================================
+
+        [HttpDelete("{id}")]
+        [EndpointSummary("Xoá đăng ký sản phẩm")]
+        [EndpointDescription("Xoá một product registration theo ID. "
+            + "Không xoá Products đã được tạo từ Approved.")]
         public async Task<IActionResult> Delete(ulong id, CancellationToken ct = default)
         {
             var ok = await _service.DeleteAsync(id, ct);
             return ok ? NoContent() : NotFound("Đơn đăng ký không tồn tại.");
         }
 
-        // ========= Request models =========
+
+        // =====================================================================
+        // 📌 FORM MODELS
+        // =====================================================================
 
         public sealed class CreateForm
         {
@@ -252,133 +296,57 @@ namespace Controller.Controllers
             [FromForm] public List<string>? RemoveCertificatePublicIds { get; set; }
         }
 
-        // ========= Helpers (bind Specifications từ multipart/form-data) =========
+
+        // =====================================================================
+        // 📌 SPECIFICATIONS PARSING
+        // =====================================================================
 
         private static readonly HashSet<string> KnownFormKeys = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // file fields
-        "ManualFile", "Images", "Certificate",
+        {
+            "ManualFile","Images","Certificate",
+            "Data.VendorId","Data.CategoryId","Data.ProposedProductCode","Data.ProposedProductName",
+            "Data.Description","Data.UnitPrice","Data.EnergyEfficiencyRating","Data.WarrantyMonths",
+            "Data.WeightKg","Data.DimensionsCm.Width","Data.DimensionsCm.Height","Data.DimensionsCm.Length",
+            "Data.Id"
+        };
 
-        // all Data.* fields except Specifications
-        "Data.VendorId","Data.CategoryId","Data.ProposedProductCode","Data.ProposedProductName",
-        "Data.Description","Data.UnitPrice","Data.EnergyEfficiencyRating","Data.WarrantyMonths",
-        "Data.WeightKg","Data.DimensionsCm.Width","Data.DimensionsCm.Height","Data.DimensionsCm.Length",
-        "Data.Id", // for update
-        // nếu bạn còn field nào khác trong DTO thì thêm vào đây
-        // KHÔNG thêm "Data.Specifications" vì ta sẽ tự xử lý riêng
-    };
-
-        // ===== helper: merge specs vào DTO =====
         private static void FillSpecsFromForm(object dto, IFormCollection form)
         {
-            // 1) Nếu client gửi đúng "Data.Specifications" là JSON string → parse dùng luôn
+            // Case 1: Specifications được gửi dưới dạng JSON nguyên khối
             if (form.TryGetValue("Data.Specifications", out var jsonVals) &&
-                !string.IsNullOrWhiteSpace(jsonVals.ToString()))
+                !string.IsNullOrWhiteSpace(jsonVals))
             {
                 try
                 {
-                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(jsonVals.ToString())
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonVals)
                                ?? new Dictionary<string, object>();
                     dto.GetType().GetProperty("Specifications")?.SetValue(dto, dict);
                     return;
                 }
-                catch { /* rơi xuống bước 2 */ }
+                catch { }
             }
 
-            // 2) Swagger thường "flatten" các cặp key (N, P2O5, ...) thành field rời ở gốc form.
-            //    Ta gom TẤT CẢ key KHÔNG thuộc KnownFormKeys & KHÔNG bắt đầu bằng "Data."
+            // Case 2: Swagger flatten
             var specs = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var kv in form)
             {
                 var key = kv.Key;
                 if (key.StartsWith("Data.", StringComparison.OrdinalIgnoreCase)) continue;
                 if (KnownFormKeys.Contains(key)) continue;
 
-                var raw = kv.ToString();
-                // cố gắng parse số → nếu fail thì để string
-                if (decimal.TryParse(raw, out var dec)) specs[key] = dec;
-                else if (int.TryParse(raw, out var i)) specs[key] = i;
-                else specs[key] = raw;
+                var raw = kv.Value.ToString();
+
+                if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out var dec))
+                    specs[key] = dec;
+                else if (int.TryParse(raw, out var i))
+                    specs[key] = i;
+                else
+                    specs[key] = raw;
             }
 
             if (specs.Count > 0)
-            {
                 dto.GetType().GetProperty("Specifications")?.SetValue(dto, specs);
-            }
-        }
-
-        private static void BindSpecsFromFormIfAny(HttpRequest request, out Dictionary<string, object>? parsed)
-        {
-            parsed = null;
-            if (!request.HasFormContentType) return;
-
-            var form = request.Form;
-
-            // 1) Ưu tiên đọc JSON nguyên khối
-            var jsonKeys = new[]
-            {
-                "Data.Specifications",
-                "Specifications",
-                "data.specifications",
-                "specifications"
-            };
-
-            foreach (var key in jsonKeys)
-            {
-                if (form.TryGetValue(key, out var raw) && !StringValues.IsNullOrEmpty(raw))
-                {
-                    var s = raw.ToString();
-                    var t = s.Trim();
-                    if (!string.IsNullOrWhiteSpace(t) &&
-                        ((t.StartsWith("{") && t.EndsWith("}")) || (t.StartsWith("[") && t.EndsWith("]"))))
-                    {
-                        try
-                        {
-                            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(t);
-                            if (dict != null && dict.Count > 0) { parsed = dict; return; }
-                        }
-                        catch { /* ignore */ }
-                    }
-                }
-            }
-
-            // 2) Fallback: bracket-form Data.Specifications[key]=value
-            var prefixes = new[] { "Data.Specifications[", "Specifications[" };
-            Dictionary<string, object>? acc = null;
-
-            foreach (var fk in form.Keys)
-            {
-                foreach (var p in prefixes)
-                {
-                    if (fk.StartsWith(p, StringComparison.OrdinalIgnoreCase) && fk.EndsWith("]"))
-                    {
-                        var propName = fk.Substring(p.Length, fk.Length - p.Length - 1);
-                        var val = form[fk].ToString();
-
-                        acc ??= new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                        acc[propName] = CoerceToBestType(val);
-                    }
-                }
-            }
-
-            if (acc != null && acc.Count > 0) parsed = acc;
-        }
-
-        private static object CoerceToBestType(string s)
-        {
-            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
-
-            if (bool.TryParse(s, out var b)) return b;
-            if (long.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var l)) return l;
-            if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var dec)) return dec;
-
-            var t = s.Trim();
-            if ((t.StartsWith("{") && t.EndsWith("}")) || (t.StartsWith("[") && t.EndsWith("]")))
-            {
-                try { return JsonSerializer.Deserialize<object>(t) ?? s; }
-                catch { /* keep as string */ }
-            }
-            return s;
         }
     }
 }
