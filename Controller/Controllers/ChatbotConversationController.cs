@@ -73,15 +73,16 @@ public class ChatbotConversationController : BaseController
     /// Cập nhật thông tin cuộc hội thoại chatbot
     /// </summary>
     /// <param name="conversationId">ID của cuộc hội thoại</param>
+    /// <param name="dto">Thông tin cập nhật cuộc hội thoại</param>
     /// <returns>Thông tin cuộc hội thoại đã cập nhật</returns>
     [HttpPatch("{conversationId}")]
     [EndpointSummary("Update Chatbot Conversation")]
     [EndpointDescription("Cập nhật thông tin cuộc hội thoại chatbot (title, context, is_active).")]
-    public async Task<ActionResult<APIResponse>> UpdateChatbotConversation(ulong conversationId)
+    public async Task<ActionResult<APIResponse>> UpdateChatbotConversation(ulong conversationId, [FromBody] ChatbotConversationUpdateDTO dto)
     {
         try
         {
-            var result = await _chatbotConversationService.UpdateChatbotConversationAsync(conversationId, GetCancellationToken());
+            var result = await _chatbotConversationService.UpdateChatbotConversationAsync(conversationId, dto, GetCancellationToken());
             return SuccessResponse(result);
         }
         catch (Exception ex)

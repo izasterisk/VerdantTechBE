@@ -48,8 +48,7 @@ public class OrderService : IOrderService
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        if (await _orderRepository.GetActiveUserByIdAsync(userId, cancellationToken) == null)
-            throw new KeyNotFoundException($"Người dùng với ID {userId} không tồn tại.");
+        await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
         var address = await _addressRepository.GetAddressByIdAsync(dto.AddressId, cancellationToken);
         if (address == null)
             throw new KeyNotFoundException($"Địa chỉ với ID {dto.AddressId} không tồn tại.");
@@ -119,7 +118,7 @@ public class OrderService : IOrderService
         var selectedShipping = orderPreview.ShippingDetails.FirstOrDefault(s => s.PriceTableId == dto.PriceTableId);
         if (selectedShipping == null)
             throw new KeyNotFoundException($"Dịch vụ vận chuyển với ID {dto.PriceTableId} không tồn tại trong danh sách dịch vụ khả dụng.");
-        var user = await _orderRepository.GetActiveUserByIdAsync(orderPreview.CustomerId, cancellationToken);
+        var user = await _userRepository.GetVerifiedAndActiveUserByIdAsync(orderPreview.CustomerId, cancellationToken);
         if (user == null)
             throw new KeyNotFoundException($"Người dùng với ID {orderPreview.CustomerId} không tồn tại hoặc đã bị xóa.");
         
@@ -239,7 +238,9 @@ public class OrderService : IOrderService
                 product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
             }
         }
-        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(order.CustomerId, cancellationToken));
+
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(
+                await _userRepository.GetVerifiedAndActiveUserByIdAsync(order.CustomerId, cancellationToken));
         finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken)));
         
         await _notificationService.CreateAndSendNotificationAsync(
@@ -300,7 +301,7 @@ public class OrderService : IOrderService
                 product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
             }
         }
-        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(response.CustomerId, cancellationToken));
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _userRepository.GetVerifiedAndActiveUserByIdAsync(response.CustomerId, cancellationToken));
         finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken)));
         
         string notificationMessage = dto.Status switch

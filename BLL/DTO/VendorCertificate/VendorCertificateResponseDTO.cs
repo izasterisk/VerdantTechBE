@@ -13,8 +13,8 @@ namespace BLL.DTO.VendorCertificate
     {
         public ulong Id { get; set; }
         public ulong VendorId { get; set; }
-        public string CertificationCode { get; set; }
-        public string CertificationName { get; set; }
+        public string CertificationCode { get; set; } = null!;
+        public string CertificationName { get; set; } = null!;
         public VendorCertificateStatus Status { get; set; }
         public string? RejectionReason { get; set; }
         public DateTime UploadedAt { get; set; }

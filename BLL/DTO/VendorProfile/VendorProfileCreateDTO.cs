@@ -12,7 +12,7 @@ namespace BLL.DTO.VendorProfile
     public class VendorProfileCreateDTO
     {
         // Optional: thông tin User
-        public string Email { get; set; }
+        public string Email { get; set; } = null!;
 
         [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
         [StringLength(255, ErrorMessage = "Mật khẩu không được vượt quá 255 ký tự")]
@@ -22,10 +22,10 @@ namespace BLL.DTO.VendorProfile
         public string? TaxCode { get; set; }
         //public UserRole Role { get; set; } = UserRole.Vendor;
         [Required]
-        public string CompanyName { get; set; }
+        public string CompanyName { get; set; } = null!;
         //public string? Slug { get; set; } 
         [Required]
-        public string BusinessRegistrationNumber { get; set; }
+        public string BusinessRegistrationNumber { get; set; } = null!;
         public string? CompanyAddress { get; set; }
         public string? Province { get; set; }
         public string? District { get; set; }

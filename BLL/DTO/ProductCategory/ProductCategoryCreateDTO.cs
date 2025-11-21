@@ -16,7 +16,7 @@ namespace BLL.DTO.ProductCategory
         [Range(1, ulong.MaxValue, ErrorMessage = "ParentId phải lớn hơn 0")]
         public ulong? ParentId { get; set; }
 
-        //[StringLength(255, ErrorMessage = "Mô tả không được vượt quá 255 ký tự")]
+        [StringLength(255, ErrorMessage = "Mô tả không được vượt quá 255 ký tự")]
         public string? Description { get; set; }
     }
 }

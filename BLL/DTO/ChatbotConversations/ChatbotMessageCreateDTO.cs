@@ -10,7 +10,7 @@ public class ChatbotMessageCreateDTO
     // public ulong ConversationId { get; set; }
 
     [Required(ErrorMessage = "Loại tin nhắn là bắt buộc")]
-    [EnumDataType(typeof(MessageType), ErrorMessage = "Loại tin nhắn không hợp lệ")]
+    [EnumDataType(typeof(MessageType), ErrorMessage = "Loại tin nhắn không hợp lệ. Chỉ chấp nhận User, Bot, System.")]
     public MessageType MessageType { get; set; }
 
     [Required(ErrorMessage = "Nội dung tin nhắn là bắt buộc")]

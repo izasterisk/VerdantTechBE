@@ -42,7 +42,7 @@ namespace BLL.Services
             // CHECK PRODUCT EXISTS
             var product = await _productRepo.GetProductByIdAsync(productId, useNoTracking: true, ct);
             if (product == null)
-                throw new KeyNotFoundException($"Product ID {productId} not found");
+                throw new KeyNotFoundException($"Không tìm thấy sản phẩm có ID {productId}");
 
             var items = await _repo.GetByProductIdAsync(productId, page, pageSize, ct);
             return _mapper.Map<IEnumerable<BatchInventoryResponeDTO>>(items);
@@ -66,7 +66,7 @@ namespace BLL.Services
             var entity = await _repo.GetByIdAsync(id, ct);
 
             if (entity == null)
-                throw new KeyNotFoundException($"BatchInventory ID {id} not found");
+                throw new KeyNotFoundException($"Không tìm thấy kho hàng có ID {id}");
 
             return _mapper.Map<BatchInventoryResponeDTO>(entity);
         }
@@ -77,18 +77,19 @@ namespace BLL.Services
             // CHECK PRODUCT
             var product = await _productRepo.GetProductByIdAsync(dto.ProductId, useNoTracking: true, ct);
             if (product == null)
-                throw new KeyNotFoundException($"Product ID {dto.ProductId} not found");
+                throw new KeyNotFoundException($"Không tìm thấy sản phẩm có ID {dto.ProductId}");
 
             // CHECK VENDOR
             if (dto.VendorId.HasValue)
             {
                 var vendorUser = await _userRepo.GetVerifiedAndActiveUserByIdAsync(dto.VendorId.Value, ct);
 
-                if (vendorUser == null)
-                    throw new ArgumentException($"User ID {dto.VendorId.Value} not found.");
+                // Dưới repo đã catch trường hợp không tìm được rồi.
+                // if (vendorUser == null)
+                //     throw new ArgumentException($"User ID {dto.VendorId.Value} not found.");
 
                 if (vendorUser.Role != UserRole.Vendor)
-                    throw new ArgumentException($"User ID {dto.VendorId.Value} is not a vendor.");
+                    throw new ArgumentException($"Người dùng với ID {dto.VendorId.Value} không phải là nhà cung cấp.");
             }
 
             var entity = _mapper.Map<BatchInventory>(dto);
@@ -104,12 +105,12 @@ namespace BLL.Services
         {
             var existing = await _repo.GetByIdAsync(dto.Id, ct);
             if (existing == null)
-                throw new KeyNotFoundException($"BatchInventory ID {dto.Id} not found");
+                throw new KeyNotFoundException($"Không tìm thấy kho hàng có ID {dto.Id}");
 
             // Check product
             var product = await _productRepo.GetProductByIdAsync(dto.ProductId, useNoTracking: true, ct);
             if (product == null)
-                throw new KeyNotFoundException($"Product ID {dto.ProductId} not found");
+                throw new KeyNotFoundException($"Không tìm thấy sản phẩm có ID {dto.ProductId}");
 
             // Check vendor
             if (dto.VendorId.HasValue)
@@ -117,7 +118,7 @@ namespace BLL.Services
                 var vendorUser = await _userRepo.GetUserWithAddressesByIdAsync(dto.VendorId.Value, ct);
 
                 if (vendorUser == null)
-                    throw new ArgumentException($"User ID {dto.VendorId.Value} not found.");
+                    throw new ArgumentException($"Không tìm thấy người dùng có ID {dto.VendorId.Value}");
 
                 if (vendorUser.Role != UserRole.Vendor)
                     throw new ArgumentException($"User ID {dto.VendorId.Value} is not a vendor.");
@@ -138,7 +139,7 @@ namespace BLL.Services
         {
             var exists = await _repo.GetByIdAsync(id, ct);
             if (exists == null)
-                throw new KeyNotFoundException($"BatchInventory ID {id} not found");
+                throw new KeyNotFoundException($"Không tìm thấy kho hàng có ID {id}");
 
             await _repo.DeleteAsync(id, ct);
             await UpdateProductStock(exists.ProductId, ct);
@@ -150,7 +151,7 @@ namespace BLL.Services
             var exists = await _repo.GetByIdAsync(id, ct);
 
             if (exists == null)
-                throw new KeyNotFoundException($"BatchInventory ID {id} not found");
+                throw new KeyNotFoundException($"Không tìm thấy kho hàng có ID {id}");
 
             await _repo.QualityCheckAsync(
                 id: id,

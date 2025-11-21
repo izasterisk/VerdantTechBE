@@ -12,11 +12,15 @@ public partial class ChatbotConversation
     public ulong CustomerId { get; set; }
 
     [StringLength(255)]
+    public string SessionId { get; set; } = null!;
+
+    [StringLength(255)]
     public string? Title { get; set; }
 
     /// <summary>
     /// Conversation context and metadata
     /// </summary>
+    [StringLength(5000)]
     public string? Context { get; set; }
 
     public bool IsActive { get; set; } = true;

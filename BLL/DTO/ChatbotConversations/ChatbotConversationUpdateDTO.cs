@@ -14,8 +14,8 @@ public class ChatbotConversationUpdateDTO
     
     [StringLength(5000, ErrorMessage = "Ngữ cảnh không được vượt quá 5000 ký tự")]
     public string? Context { get; set; }
-
-    public bool IsActive { get; set; } = true;
+    
+    public bool? IsActive { get; set; }
 
     // public DateTime StartedAt { get; set; }
 }
