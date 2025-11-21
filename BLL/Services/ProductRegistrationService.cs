@@ -14,6 +14,7 @@ using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using DAL.Repositories;
+using System.Globalization;
 
 namespace BLL.Services
 {
@@ -491,7 +492,15 @@ namespace BLL.Services
 
 
         private static decimal? ParseNullableDecimal(string? s)
-            => decimal.TryParse(s, out var v) ? v : null;
+        {
+            if (string.IsNullOrWhiteSpace(s)) return null;
+
+            if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var v))
+                return v;
+
+            return null;
+        }
+
 
 
         private static Dictionary<string, decimal>? ToDecimalDict(object? input)

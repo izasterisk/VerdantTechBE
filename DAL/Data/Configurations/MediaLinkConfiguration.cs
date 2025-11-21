@@ -9,7 +9,7 @@ namespace DAL.Data.Configurations;
 internal static class MediaLinkEfMaps
 {
     public static string OwnerTypeToDb(MediaOwnerType v) => v switch
-    {   
+    {
         MediaOwnerType.VendorCertificates => "vendor_certificates",
         MediaOwnerType.ChatbotMessages => "chatbot_messages",
         MediaOwnerType.Products => "products",
@@ -40,18 +40,18 @@ internal static class MediaLinkEfMaps
         MediaPurpose.Back => "back",
         MediaPurpose.None => "none",
         MediaPurpose.ProductCertificatePdf => "productcertificatepdf",
-        MediaPurpose.VendorCertificatesPdf => "vendorcertificatesPdf",
+        MediaPurpose.VendorCertificatesPdf => "vendorcertificatespdf",
         MediaPurpose.ProductImage => "productimage",
         _ => "none"
     };
 
-    public static MediaPurpose PurposeFromDb(string s) => s switch
+    public static MediaPurpose PurposeFromDb(string s) => s.ToLowerInvariant() switch
     {
         "front" => MediaPurpose.Front,
         "back" => MediaPurpose.Back,
         "none" => MediaPurpose.None,
         "productcertificatepdf" => MediaPurpose.ProductCertificatePdf,
-        "vendorertificatesPdf" => MediaPurpose.VendorCertificatesPdf,
+        "vendorcertificatespdf" => MediaPurpose.VendorCertificatesPdf,
         "productimage" => MediaPurpose.ProductImage,
         _ => MediaPurpose.None
     };
@@ -64,12 +64,12 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
         builder.ToTable("media_links");
 
         builder.HasKey(e => e.Id);
+
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
-        // ==== Converters (không dùng switch-expression trong lambda) ====
         var ownerTypeConverter = new ValueConverter<MediaOwnerType, string>(
             v => MediaLinkEfMaps.OwnerTypeToDb(v),
             s => MediaLinkEfMaps.OwnerTypeFromDb(s));
@@ -109,6 +109,7 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
             .HasColumnType("enum('front','back','none','productcertificatepdf','vendorcertificatesPdf','productimage')")
             .HasDefaultValue(MediaPurpose.None)
             .HasColumnName("purpose");
+
 
         builder.Property(e => e.SortOrder)
             .HasColumnType("int")
