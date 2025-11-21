@@ -11,14 +11,13 @@ namespace BLL.DTO.ForumPost
     {
         public ulong Id { get; set; }
         public string? Title { get; set; }
-        public string? Slug { get; set; }
+        //public string? Slug { get; set; }
         public string? Tags { get; set; }
-        public List<ContentBlockDTO>? Content { get; set; }
+        //public List<ContentBlockDTO>? Content { get; set; }
+        public List<string>? Content { get; set; } = new();
 
-        // Ảnh thêm mới
         public IEnumerable<IFormFile>? AddImages { get; set; }
 
-        // Ảnh cần xóa (publicId)
         public IEnumerable<string>? RemoveImagePublicIds { get; set; }
     }
 

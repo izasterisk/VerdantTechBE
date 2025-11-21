@@ -3,7 +3,6 @@ using BLL.DTO.ForumPost;
 using BLL.DTO.ForumComment;
 using BLL.DTO.MediaLink;
 using BLL.Interfaces;
-using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 using System;
@@ -11,6 +10,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using BLL.Helpers;
+using DAL.Data;
+using System.Text.Json;
 
 namespace BLL.Services
 {
@@ -30,18 +32,15 @@ namespace BLL.Services
             _notificationService = notificationService;
         }
 
-        // ===================== GET ALL =====================
         public async Task<IEnumerable<ForumPostResponseDTO>> GetAllAsync(
             int page,
             int pageSize,
             CancellationToken ct = default)
         {
             var posts = await _repo.GetAllAsync(page, pageSize, ct);
-            var result = _mapper.Map<List<ForumPostResponseDTO>>(posts);
-            return result;
+            return _mapper.Map<List<ForumPostResponseDTO>>(posts);
         }
 
-        // ===================== GET ALL BY CATEGORY =====================
         public async Task<IEnumerable<ForumPostResponseDTO>> GetAllByCategoryIdAsync(
             ulong categoryId,
             int page,
@@ -49,11 +48,9 @@ namespace BLL.Services
             CancellationToken ct = default)
         {
             var posts = await _repo.GetAllByCategoryIdAsync(categoryId, page, pageSize, ct);
-            var result = _mapper.Map<List<ForumPostResponseDTO>>(posts);
-            return result;
+            return _mapper.Map<List<ForumPostResponseDTO>>(posts);
         }
 
-        // ===================== GET DETAIL =====================
         public async Task<ForumPostResponseDTO?> GetDetailAsync(
             ulong id,
             CancellationToken ct = default)
@@ -63,6 +60,17 @@ namespace BLL.Services
 
             var dto = _mapper.Map<ForumPostResponseDTO>(post);
 
+            dto.Images = post.MediaLinks?
+                .OrderBy(m => m.SortOrder)
+                .Select(m => new MediaLinkItemDTO
+                {
+                    Id = m.Id,
+                    ImagePublicId = m.ImagePublicId,
+                    ImageUrl = m.ImageUrl,
+                    SortOrder = m.SortOrder,
+                    Purpose = m.Purpose.ToString()
+                }).ToList() ?? new List<MediaLinkItemDTO>();
+
             dto.Comments = post.ForumComments
                 .Where(c => c.ParentId == null)
                 .OrderByDescending(c => c.CreatedAt)
@@ -72,7 +80,6 @@ namespace BLL.Services
             return dto;
         }
 
-        // ===================== GET POST WITH COMMENTS (DEEP) =====================
         public async Task<ForumPostResponseDTO?> GetPostWithCommentsAsync(
             ulong id,
             CancellationToken ct = default)
@@ -82,6 +89,17 @@ namespace BLL.Services
 
             var dto = _mapper.Map<ForumPostResponseDTO>(post);
 
+            dto.Images = post.MediaLinks?
+                .OrderBy(m => m.SortOrder)
+                .Select(m => new MediaLinkItemDTO
+                {
+                    Id = m.Id,
+                    ImagePublicId = m.ImagePublicId,
+                    ImageUrl = m.ImageUrl,
+                    SortOrder = m.SortOrder,
+                    Purpose = m.Purpose.ToString()
+                }).ToList() ?? new List<MediaLinkItemDTO>();
+
             dto.Comments = post.ForumComments
                 .Where(c => c.ParentId == null)
                 .OrderByDescending(c => c.CreatedAt)
@@ -91,7 +109,6 @@ namespace BLL.Services
             return dto;
         }
 
-        // ===================== CREATE =====================
         public async Task<ForumPostResponseDTO> CreateAsync(
            ulong userId,
            ForumPostCreateDTO dto,
@@ -100,19 +117,33 @@ namespace BLL.Services
         {
             var now = DateTime.UtcNow;
 
-            var contentBlocks = dto.Content?.Select(cb => new ContentBlock
-            {
-                Order = cb.Order,
-                Type = cb.Type,
-                Content = cb.Content
-            }).ToList() ?? new List<ContentBlock>();
+            string newSlug = await GenerateUniqueSlug(dto.Title, ct);
+
+            //var contentBlocks = dto.Content?.Select(cb => new ContentBlock
+            //{
+            //    Order = cb.Order,
+            //    Type = cb.Type,
+            //    Content = cb.Content
+            //}).ToList() ?? new List<ContentBlock>();
+
+            var contentBlocks = dto.Content?
+                .Select((text, index) => new ContentBlock
+                {
+                    Order = index,
+                    Type = "text",
+                    Content = text
+                })
+                .ToList()
+                ?? new List<ContentBlock>();
+
+
 
             var post = new ForumPost
             {
                 ForumCategoryId = dto.ForumCategoryId,
                 UserId = userId,
                 Title = dto.Title,
-                Slug = dto.Slug,
+                Slug = newSlug,
                 Tags = dto.Tags,
                 Content = contentBlocks,
                 ViewCount = 0,
@@ -124,19 +155,17 @@ namespace BLL.Services
                 UpdatedAt = now
             };
 
-            // Convert MediaLinkItemDTO -> MediaLink
             List<MediaLink>? mediaEntities = null;
 
-            if (addImages != null && addImages.Count > 0)
+            if (addImages != null && addImages.Any())
             {
                 mediaEntities = addImages.Select((m, index) => new MediaLink
                 {
                     OwnerType = MediaOwnerType.ForumPosts,
-                    OwnerId = post.Id,
                     ImagePublicId = m.ImagePublicId,
                     ImageUrl = m.ImageUrl,
                     Purpose = index == 0 ? MediaPurpose.Front : MediaPurpose.None,
-                    SortOrder = m.SortOrder,
+                    SortOrder = index,
                     CreatedAt = now,
                     UpdatedAt = now
                 }).ToList();
@@ -144,29 +173,30 @@ namespace BLL.Services
 
             await _repo.CreateAsync(post, mediaEntities, ct);
 
-            // =====================================================
-            // 🔔 Thêm thông báo (KHÔNG đổi logic xử lý post)
-            // =====================================================
-            var title = "🔥 Có bài viết mới dành cho bạn!";
-            var message =
-                $"'{post.Title}' vừa được đăng lên diễn đàn.\n" +
-                $"Hãy vào đọc và tham gia thảo luận nhé! 💬";
-
             await _notificationService.CreateAndSendNotificationAsync(
                 userId,
-                title,
-                message,
+                " Có bài viết mới dành cho bạn!",
+                $"'{post.Title}' vừa được đăng lên diễn đàn.",
                 NotificationReferenceType.ForumPost,
                 post.Id,
                 ct
             );
-            // =====================================================
 
             var result = _mapper.Map<ForumPostResponseDTO>(post);
+
+            // Map images
+            result.Images = mediaEntities?.Select(m => new MediaLinkItemDTO
+            {
+                Id = m.Id,
+                ImagePublicId = m.ImagePublicId,
+                ImageUrl = m.ImageUrl,
+                SortOrder = m.SortOrder,
+                Purpose = m.Purpose.ToString()
+            }).ToList();
+
             return result;
         }
 
-        // ===================== UPDATE =====================
         public async Task<ForumPostResponseDTO> UpdateAsync(
             ulong id,
             ForumPostUpdateDTO dto,
@@ -180,19 +210,28 @@ namespace BLL.Services
 
             var now = DateTime.UtcNow;
 
-            if (!string.IsNullOrWhiteSpace(dto.Title)) post.Title = dto.Title;
-            if (!string.IsNullOrWhiteSpace(dto.Slug)) post.Slug = dto.Slug;
-            if (dto.Tags != null) post.Tags = dto.Tags;
+            if (!string.IsNullOrWhiteSpace(dto.Title))
+            {
+                post.Title = dto.Title;
+
+                post.Slug = await GenerateUniqueSlug(dto.Title, ct);
+            }
+
+            if (dto.Tags != null)
+                post.Tags = dto.Tags;
 
             if (dto.Content != null)
             {
-                post.Content = dto.Content.Select(cb => new ContentBlock
-                {
-                    Order = cb.Order,
-                    Type = cb.Type,
-                    Content = cb.Content
-                }).ToList();
+                post.Content = dto.Content
+                    .Select((text, index) => new ContentBlock
+                    {
+                        Order = index,
+                        Type = "text",
+                        Content = text
+                    })
+                    .ToList();
             }
+
 
             post.UpdatedAt = now;
 
@@ -217,13 +256,10 @@ namespace BLL.Services
             return _mapper.Map<ForumPostResponseDTO>(post);
         }
 
-        // ===================== DELETE =====================
         public async Task DeleteAsync(ulong id, CancellationToken ct = default)
         {
             await _repo.DeleteAsync(id, ct);
         }
-
-        // ===================== PIN / STATUS =====================
         public async Task PinAsync(ulong id, bool isPinned, CancellationToken ct = default)
         {
             await _repo.PinAsync(id, isPinned, ct);
@@ -234,7 +270,6 @@ namespace BLL.Services
             await _repo.ChangeStatusAsync(id, status, ct);
         }
 
-        // ===================== COUNTERS =====================
         public async Task IncrementViewAsync(ulong id, CancellationToken ct = default)
         {
             await _repo.IncrementViewAsync(id, ct);
@@ -261,5 +296,18 @@ namespace BLL.Services
 
             return dto;
         }
+
+        private async Task<string> GenerateUniqueSlug(string title, CancellationToken ct)
+        {
+            string baseSlug = Utils.GenerateSlug(title);
+            string slug = baseSlug;
+            int i = 1;
+
+            while (await _repo.SlugExistsAsync(slug, ct))
+                slug = $"{baseSlug}-{i++}";
+
+            return slug;
+        }
+
     }
 }

@@ -137,8 +137,8 @@ namespace BLL.Helpers
 
             CreateMap<ForumPost, ForumPostResponseDTO>()
                 .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
-                .ForMember(d => d.Images, o => o.Ignore())   
-                .ForMember(d => d.Comments, o => o.Ignore());
+                .ForMember(d => d.Images, o => o.MapFrom(s => s.MediaLinks))
+                .ForMember(d => d.Comments, o => o.Ignore()); 
 
             // ===================== FORUM COMMENT =====================
             CreateMap<ForumComment, ForumCommentResponseDTO>()

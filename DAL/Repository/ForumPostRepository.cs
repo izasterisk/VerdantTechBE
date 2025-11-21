@@ -13,94 +13,91 @@ public class ForumPostRepository : IForumPostRepository
         _context = context;
     }
 
-    // ---------------------------------------------------------
-    // GET ALL
-    // ---------------------------------------------------------
+    
     public async Task<IEnumerable<ForumPost>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
     {
         return await _context.ForumPosts
-            .AsNoTracking()
-            .OrderByDescending(x => x.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(ct);
+             .AsNoTracking()
+             .Include(x => x.MediaLinks)
+             //.Include(x => x.Content)
+             .OrderByDescending(x => x.CreatedAt)
+             .Skip((page - 1) * pageSize)
+             .Take(pageSize)
+             .ToListAsync(ct);
     }
 
-    // ---------------------------------------------------------
-    // GET ALL BY CATEGORY
-    // ---------------------------------------------------------
+    
     public async Task<IEnumerable<ForumPost>> GetAllByCategoryIdAsync(
         ulong categoryId, int page, int pageSize, CancellationToken ct = default)
     {
         return await _context.ForumPosts
             .AsNoTracking()
             .Where(x => x.ForumCategoryId == categoryId)
+            .Include(x => x.MediaLinks)
+            //.Include(x => x.Content)
             .OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
     }
 
-    // ---------------------------------------------------------
-    // GET DETAIL
-    // ---------------------------------------------------------
+   
     public async Task<ForumPost?> GetDetailAsync(ulong id, CancellationToken ct = default)
     {
         return await _context.ForumPosts
             .Include(x => x.ForumCategory)
             .Include(x => x.User)
-            .Include(x => x.ForumComments)
+            //.Include(x => x.Content)
+            .Include(x => x.MediaLinks)
+            .Include(x => x.ForumComments).ThenInclude(c => c.User)
+            .Include(x => x.ForumComments).ThenInclude(c => c.InverseParent)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
-    // ---------------------------------------------------------
-    // CREATE
-    // ---------------------------------------------------------
-    public async Task CreateAsync(
-        ForumPost post,
-        IEnumerable<MediaLink>? addForumPostImg,
-        CancellationToken ct = default)
+   
+    public async Task CreateAsync( ForumPost post, IEnumerable<MediaLink>? addForumPostImg, CancellationToken ct = default)
     {
         await _context.ForumPosts.AddAsync(post, ct);
+        await _context.SaveChangesAsync(ct);
 
         if (addForumPostImg != null)
-            await _context.MediaLinks.AddRangeAsync(addForumPostImg, ct);
+        {
+            foreach (var img in addForumPostImg)
+                img.OwnerId = post.Id;
 
-        await _context.SaveChangesAsync(ct);
+            await _context.MediaLinks.AddRangeAsync(addForumPostImg, ct);
+            await _context.SaveChangesAsync(ct);
+        }
     }
 
-    // ---------------------------------------------------------
-    // UPDATE
-    // ---------------------------------------------------------
-    public async Task UpdateAsync(
-        ForumPost post,
-        IEnumerable<MediaLink>? addForumPostImg,
-        IEnumerable<string>? removeForumPostImg,
-        CancellationToken ct = default)
+    
+    public async Task UpdateAsync( ForumPost post, IEnumerable<MediaLink>? addForumPostImg, IEnumerable<string>? removeForumPostImg,CancellationToken ct = default)
     {
         _context.ForumPosts.Update(post);
 
-        // Thêm ảnh mới
         if (addForumPostImg != null)
-            await _context.MediaLinks.AddRangeAsync(addForumPostImg, ct);
+        {
+            foreach (var img in addForumPostImg)
+                img.OwnerId = post.Id;
 
-        // Xóa ảnh cũ
+            await _context.MediaLinks.AddRangeAsync(addForumPostImg, ct);
+        }
+
         if (removeForumPostImg != null)
         {
-            var removeList = await _context.MediaLinks
+            var toRemove = await _context.MediaLinks
                 .Where(x => removeForumPostImg.Contains(x.ImagePublicId!))
                 .ToListAsync(ct);
 
-            _context.MediaLinks.RemoveRange(removeList);
+            _context.MediaLinks.RemoveRange(toRemove);
         }
 
         await _context.SaveChangesAsync(ct);
     }
 
-    // ---------------------------------------------------------
-    // DELETE
-    // ---------------------------------------------------------
+
+    
     public async Task DeleteAsync(ulong id, CancellationToken ct = default)
     {
         var post = await _context.ForumPosts.FirstOrDefaultAsync(x => x.Id == id, ct);
@@ -118,9 +115,7 @@ public class ForumPostRepository : IForumPostRepository
         }
     }
 
-    // ---------------------------------------------------------
-    // PIN
-    // ---------------------------------------------------------
+   
     public async Task PinAsync(ulong id, bool isPinned, CancellationToken ct = default)
     {
         await _context.ForumPosts
@@ -131,9 +126,7 @@ public class ForumPostRepository : IForumPostRepository
             ct);
     }
 
-    // ---------------------------------------------------------
-    // CHANGE STATUS
-    // ---------------------------------------------------------
+   
     public async Task ChangeStatusAsync(ulong id, ForumPostStatus status, CancellationToken ct = default)
     {
         await _context.ForumPosts
@@ -144,9 +137,7 @@ public class ForumPostRepository : IForumPostRepository
             ct);
     }
 
-    // ---------------------------------------------------------
-    // COUNTERS
-    // ---------------------------------------------------------
+   
     public async Task IncrementViewAsync(ulong id, CancellationToken ct = default)
     {
         await _context.ForumPosts
@@ -174,15 +165,22 @@ public class ForumPostRepository : IForumPostRepository
             ct);
     }
 
-    // ---------------------------------------------------------
-    // GET POST WITH COMMENTS
-    // ---------------------------------------------------------
+    
     public async Task<ForumPost?> GetPostWithCommentsAsync(ulong id, CancellationToken ct = default)
     {
         return await _context.ForumPosts
-            .Include(x => x.ForumComments)
-            .ThenInclude(c => c.InverseParent)
+            //.Include(x => x.Content)
+            .Include(x => x.MediaLinks)
+            .Include(x => x.ForumComments).ThenInclude(c => c.User)
+            .Include(x => x.ForumComments).ThenInclude(c => c.InverseParent)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, ct);
+    }
+
+    public async Task<bool> SlugExistsAsync(string slug, CancellationToken ct)
+    {
+        return await _context.ForumPosts
+            .AsNoTracking()
+            .AnyAsync(x => x.Slug == slug, ct);
     }
 }
