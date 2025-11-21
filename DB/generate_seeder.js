@@ -217,11 +217,33 @@ function parseCSV() {
     const lines = csvContent.split('\n');
     const products = [];
     
+    // Helper function to parse CSV line properly (handles quotes)
+    function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current); // Add last field
+        return result;
+    }
+    
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line || line.split(',')[0] === '') continue;
         
-        const parts = line.split(',');
+        const parts = parseCSVLine(line);
         if (parts.length < 5) continue;
         
         products.push({

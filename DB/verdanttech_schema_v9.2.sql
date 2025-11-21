@@ -573,7 +573,7 @@ CREATE TABLE product_serials (
     batch_inventory_id BIGINT UNSIGNED NOT NULL,
     product_id BIGINT UNSIGNED NOT NULL,
     serial_number VARCHAR(255) UNIQUE NOT NULL COMMENT 'Số seri sản phẩm (có thể chứa chữ và số)',
-    status ENUM('stock', 'sold', 'refund') DEFAULT 'stock' COMMENT 'Trạng thái sản phẩm: stock (trong kho), sold (đã bán), refund (đã hoàn trả)',
+    status ENUM('stock', 'sold', 'refund', 'adjustment') DEFAULT 'stock' COMMENT 'Trạng thái sản phẩm: stock (trong kho), sold (đã bán), refund (đã hoàn trả), adjustment (điều chỉnh)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     

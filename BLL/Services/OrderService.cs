@@ -192,11 +192,11 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException($"Yêu cầu xuất hàng đang nhiều hơn số lượng hàng trong đơn mà khách hàng yêu cầu, đề nghị kiểm tra lại.");
             productQuantities[dto.ProductId]--;
 
-            var serialNumber = await _orderDetailRepository.ValidateIdentifyNumberAsync(dto.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
+            var serialNumberId = await _orderDetailRepository.ValidateIdentifyNumberAsync(dto.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
             exportInventories.Add(new ExportInventory
             {
                 ProductId = dto.ProductId,
-                ProductSerialId = serialNumber,
+                ProductSerialId = serialNumberId,
                 LotNumber = dto.LotNumber,
                 OrderId = order.Id,
                 MovementType = MovementType.Sale,
@@ -227,7 +227,7 @@ public class OrderService : IOrderService
             order.CourierId, order.Notes ?? "" , cancellationToken);
         order.Status = OrderStatus.Shipped;
         
-        await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(exportInventories, cancellationToken);
+        await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(exportInventories, ProductSerialStatus.Sold, cancellationToken);
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
         
         var finalResponse = _mapper.Map<OrderResponseDTO>(order);
