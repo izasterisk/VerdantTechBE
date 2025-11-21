@@ -201,6 +201,12 @@ function isMachinery(productName) {
     return machineryKeywords.some(k => productName.includes(k));
 }
 
+function getEnergyEfficiencyRating(productName) {
+    // Random rating from 1 to 5 based on product name hash for consistency
+    const hash = productName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return (hash % 5) + 1; // Returns 1, 2, 3, 4, or 5
+}
+
 // =====================================================
 // PARSE CSV
 // =====================================================
@@ -213,9 +219,9 @@ function parseCSV() {
     
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (!line || line.split(';')[0] === '') continue;
+        if (!line || line.split(',')[0] === '') continue;
         
-        const parts = line.split(';');
+        const parts = line.split(',');
         if (parts.length < 5) continue;
         
         products.push({
@@ -432,13 +438,14 @@ function generateProducts(products, categoryMap) {
         const specs = generateSpecs(p.productName, p.categoryName);
         const {weight, dimensions} = generateWeightDimensions(p.productName);
         const warranty = getWarrantyMonths(p.productName);
+        const energyRating = getEnergyEfficiencyRating(p.productName);
         
         // Rotate vendors every N products
         if (index > 0 && index % productsPerVendor === 0 && vendorId < 36) {
             vendorId++;
         }
         
-        rows.push(`(${productId}, ${categoryDbId}, ${vendorId}, '${productCode}', '${escapeSQL(p.productName)}', '${slug}', 'Sản phẩm ${escapeSQL(p.productName)} chất lượng cao', 1000.00, 10.00, 0.00, NULL, "${specs}", NULL, NULL, ${warranty}, 100, ${weight}, "${dimensions}", 1, 0, 0, 0.00, NOW(), NOW())`);
+        rows.push(`(${productId}, ${categoryDbId}, ${vendorId}, '${productCode}', '${escapeSQL(p.productName)}', '${slug}', 'Sản phẩm ${escapeSQL(p.productName)} chất lượng cao', 1000.00, 10.00, 0.00, ${energyRating}, "${specs}", NULL, NULL, ${warranty}, 100, ${weight}, "${dimensions}", 1, 0, 0, 0.00, NOW(), NOW())`);
         
         p.dbId = productId;
         p.vendorId = vendorId;
