@@ -370,7 +370,7 @@ CREATE TABLE product_registrations (
     proposed_product_name VARCHAR(255) NOT NULL,
     description TEXT,
     unit_price DECIMAL(12,2) NOT NULL COMMENT 'Đơn giá sản phẩm đề xuất',
-    energy_efficiency_rating INT CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5) COMMENT 'Xếp hạng hiệu suất năng lượng (0-5)',
+    energy_efficiency_rating DECIMAL(3,1) CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5) COMMENT 'Xếp hạng hiệu suất năng lượng (0-5)',
     specifications JSON COMMENT 'Thông số kỹ thuật dưới dạng cặp khóa-giá trị',
     manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn/sổ tay, phân cách bằng dấu phẩy',
     public_url VARCHAR(500) COMMENT 'URL công khai cho manual files',

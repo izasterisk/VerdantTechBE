@@ -40,7 +40,8 @@ internal static class MediaLinkEfMaps
         MediaPurpose.Back => "back",
         MediaPurpose.None => "none",
         MediaPurpose.ProductCertificatePdf => "productcertificatepdf",
-        MediaPurpose.VendorCertificatesPdf => "vendorCertificatesPdf",
+        MediaPurpose.VendorCertificatesPdf => "vendorcertificatesPdf",
+        MediaPurpose.ProductImage => "productimage",
         _ => "none"
     };
 
@@ -50,7 +51,8 @@ internal static class MediaLinkEfMaps
         "back" => MediaPurpose.Back,
         "none" => MediaPurpose.None,
         "productcertificatepdf" => MediaPurpose.ProductCertificatePdf,
-        "vendorCertificatesPdf" => MediaPurpose.VendorCertificatesPdf,
+        "vendorertificatesPdf" => MediaPurpose.VendorCertificatesPdf,
+        "productimage" => MediaPurpose.ProductImage,
         _ => MediaPurpose.None
     };
 }
@@ -104,7 +106,7 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
         builder.Property(e => e.Purpose)
             .HasConversion(purposeConverter)
             .HasMaxLength(500)
-            .HasColumnType("enum('front','back','none','productcertificatepdf','vendorCertificatesPdf')")
+            .HasColumnType("enum('front','back','none','productcertificatepdf','vendorcertificatesPdf','productimage')")
             .HasDefaultValue(MediaPurpose.None)
             .HasColumnName("purpose");
 

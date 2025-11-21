@@ -210,7 +210,7 @@ namespace BLL.Helpers
             CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
                 .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
                 .ForMember(d => d.EnergyEfficiencyRating,
-                    o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue ? s.EnergyEfficiencyRating.Value.ToString() : null))
+                    o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue? s.EnergyEfficiencyRating.Value.ToString("0.0"): null))
                 .ForMember(d => d.ManualUrl, o => o.MapFrom(s => s.ManualUrls))
                 .ForMember(d => d.ManualPublicUrl, o => o.MapFrom(s => s.PublicUrl))
                 .ForMember(d => d.Specifications, o => o.MapFrom(s => s.Specifications ?? new Dictionary<string, object>()))
@@ -222,6 +222,9 @@ namespace BLL.Helpers
                 // ảnh fill bằng service Hydrate => không map trực tiếp từ entity (để tránh null)
                 .ForMember(d => d.ProductImages, o => o.Ignore())
                 .ForMember(d => d.CertificateFiles, o => o.Ignore());
+
+            CreateMap<ProductCertificate, ProductCertificateResponseDTO>();
+
 
             // CreateDTO -> Entity
             CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
