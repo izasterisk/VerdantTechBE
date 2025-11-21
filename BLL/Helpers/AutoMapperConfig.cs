@@ -27,6 +27,7 @@ using BLL.DTO.ChatbotConversations;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
 using BLL.DTO.ForumPost;
 using BLL.DTO.ForumComment;
+using BLL.DTO.ExportInventory;
 
 namespace BLL.Helpers
 {
@@ -379,6 +380,11 @@ namespace BLL.Helpers
             CreateMap<ChatbotConversationUpdateDTO, ChatbotConversation>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<ChatbotMessage, ChatbotMessageCreateDTO>().ReverseMap();
+            
+            // ===================== EXPORT INVENTORY =====================
+            CreateMap<ExportInventory, ExportInventoryResponseDTO>()
+                .ForMember(d => d.CreatedBy, o => o.MapFrom(s => s.CreatedByNavigation))
+                .ForMember(d => d.ProductSerialNumber, o => o.MapFrom(s => s.ProductSerial != null ? s.ProductSerial.SerialNumber : null));
         }
     }
 }

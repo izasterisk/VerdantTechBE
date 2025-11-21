@@ -311,130 +311,43 @@ Bảng này tóm tắt các yêu cầu chứng nhận pháp lý và khuyến kh�
 
 ---
 
-## PHỤ LỤC: CHỨNG NHẬN CẦN THIẾT THEO DANH MỤC
+## PHỤ LỤC: CHỨNG NHẬN CẦN THIẾT & HƯỚNG DẪN TRA CỨU (VERIFICATION)
 
-### A. Phân Bón (Bắt Buộc)
-**Chứng nhận cần có:**
-- Giấy chứng nhận lưu hành phân bón - Cục Bảo vệ thực vật
-- Giấy phép kinh doanh phân bón
-- TCVN 7259:2003 (phân hữu cơ)
-- TCVN 8956:2011 (phân vi sinh)
+Phần này quy định các chứng từ mà Vendor cần cung cấp. Admin sử dụng các liên kết bên dưới để xác thực tính hợp lệ của giấy tờ.
 
-**Website tra cứu:**
-- Cục Bảo vệ thực vật: https://www.ppd.gov.vn
-- Cổng Dịch vụ công: https://dichvucong.gov.vn
-- Bộ NN&PTNT: https://www.mard.gov.vn
+### A. NHÓM GIẤY PHÉP BẮT BUỘC (KINH DOANH CÓ ĐIỀU KIỆN)
+*Nếu Vendor không cung cấp được hoặc tra cứu không ra kết quả -> **TỪ CHỐI DUYỆT SẢN PHẨM**.*
 
-### B. Thuốc BVTV (Bắt Buộc)
-**Chứng nhận cần có:**
-- Giấy chứng nhận đăng ký thuốc BVTV - Cục BVTV
-- Giấy phép kinh doanh thuốc BVTV
-- Thông tư 21/2015/TT-BNNPTNT (nhãn mác)
-
-**Website tra cứu:**
-- Cục Bảo vệ thực vật: https://www.ppd.gov.vn
-- Danh mục thuốc BVTV: https://www.ppd.gov.vn/thuoc-bao-ve-thuc-vat-67.html
-- Cổng Dịch vụ công: https://dichvucong.gov.vn
-
-### C. Giống Cây Trồng (Bắt Buộc)
-**Chứng nhận cần có:**
-- Giấy chứng nhận giống cây trồng - Cục Trồng trọt
-- Giấy chứng nhận kiểm dịch thực vật
-- Giấy phép kinh doanh giống cây trồng
-
-**Website tra cứu:**
-- Bộ NN&PTNT: https://www.mard.gov.vn
-- Cổng Dịch vụ công: https://dichvucong.gov.vn
-
-### D. Máy Móc & Thiết Bị
-**Chứng nhận cần có:**
-- Giấy chứng nhận hợp quy (CR) - nếu trong danh mục bắt buộc
-- ISO 9001:2015 (khuyến khích)
-- CE/IEC cho thiết bị điện
-
-**Website tra cứu:**
-- Tổng cục TCĐLCL: https://tcvn.gov.vn
-- Văn phòng Công nhận (BoA): https://www.boa.gov.vn
-- Cổng Dịch vụ công: https://dichvucong.gov.vn
-
-### E. Chứng Nhận Hữu Cơ (Organic)
-**Chi phí ước tính:**
-- Chứng nhận quốc tế (Control Union, Ecocert, etc): 30-60 triệu VNĐ/năm
-- TCVN 11041:2017 (Tiêu chuẩn VN): 15-30 triệu VNĐ/năm
-- **USDA Organic** (Mỹ): 30-50 triệu VNĐ/năm
-- **EU Organic**: 40-60 triệu VNĐ/năm
-
-**Website tra cứu:**
-- Văn phòng Công nhận Chất lượng (BoA): https://www.boa.gov.vn
-- Danh sách tổ chức chứng nhận: https://www.boa.gov.vn/vi/chuc-chung-nhan-0
-
-**Các tổ chức chứng nhận hữu cơ có văn phòng tại VN:**
-- Control Union Vietnam
-- NHO-QScert (NHONHO Vietnam)
-- Bioagricert, Ecocert, Onecert (liên hệ qua đại diện)
-
-### F. Chứng Nhận VietGAP
-**Chi phí ước tính:**
-- VietGAP cơ sở sản xuất: 5-10 triệu VNĐ
-- VietGAP chuỗi cung ứng: 15-25 triệu VNĐ
-
-**Website tra cứu:**
-- VietGAP Portal: http://www.vietgap.com
-- Danh sách tổ chức chứng nhận: http://www.vietgap.com/certification.html
-- Bộ NN&PTNT: https://www.mard.gov.vn
-
-**Cơ quan chỉ định:**
-- Cục Trồng trọt (VietGAP trồng trọt)
-- Cục Chăn nuôi (VietGAP chăn nuôi)
-- Tổng cục Thủy sản (VietGAP thủy sản)
-
-### G. ISO
-**Chi phí ước tính:**
-- ISO 9001 (Chất lượng): 30-50 triệu VNĐ
-- ISO 14001 (Môi trường): 35-55 triệu VNĐ
-- ISO 22000 (An toàn thực phẩm): 40-60 triệu VNĐ
-
-**Website tra cứu:**
-- Văn phòng Công nhận (BoA): https://www.boa.gov.vn
-- Danh sách tổ chức chứng nhận: https://www.boa.gov.vn/vi/chuc-chung-nhan-0
-
-**Các tổ chức chứng nhận ISO uy tín:**
-- ISOCERT: https://isocert.org.vn
-- VCA: https://vca.net.vn
-- GOODVN: https://chungnhanquocgia.com
-- Vinacontrol CE: https://vnce.vn
+| Danh mục (Category) | Loại giấy tờ BẮT BUỘC | Cơ quan quản lý | Trang tra cứu (Verification Link) |
+| :--- | :--- | :--- | :--- |
+| **1. Phân Bón**<br>*(Dinh dưỡng thực vật)* | **Quyết định công nhận lưu hành**<br>*(Kèm Mã số phân bón)* | Cục Bảo vệ thực vật | **[Tra cứu Phân bón Quốc gia](http://113.190.254.147/PhanBon/en/nhamaysanxuatphanbon/tracuu)**<br>*(Nhập Tên phân bón hoặc Mã số)* |
+| **2. Thuốc BVTV**<br>*(Trừ sâu, trừ bệnh)* | **Giấy chứng nhận đăng ký thuốc**<br>*(Kèm Tên thương phẩm)* | Cục Bảo vệ thực vật | **[CSDL Thuốc BVTV](https://csdl.ppd.gov.vn/page/danh-muc-thuoc-bvtv.html)**<br>*(Chọn tab Tra cứu danh mục -> Nhập tên thuốc)* |
+| **3. Giống Cây Trồng**<br>*(Hạt giống, cây con)* | **Quyết định công nhận lưu hành giống**<br>*(Hoặc Bản tự công bố)* | Cục Trồng trọt | **[Cổng thông tin Cục Trồng trọt](http://www.cuctrongtrot.gov.vn/)**<br>*(Tải danh sách tại mục Tin tức/Văn bản)* |
+| **4. Máy Móc & Thiết Bị Điện**<br>*(Bơm, Van, Động cơ)* | **Chứng nhận Hợp quy (Tem CR)**<br>*(An toàn kỹ thuật)* | Vinacontrol / VinaCert | **[Vinacontrol](https://vnce.vn/tra-cuu-chung-chi)** / **[VinaCert](https://vinacert.vn/vicb/tra-cuu-chung-chi-ket-qua-thu-nghiem-tai-website-vinacert)**<br>*(Nhập Mã số in trên giấy chứng nhận)* |
+| **9. Bao Bì & Dụng Cụ Ăn Uống**<br>*(Tiếp xúc thực phẩm)* | **Bản tự công bố sản phẩm**<br>*(Theo QCVN 12-1:2011/BYT)* | Sở Công Thương / Y Tế | *Yêu cầu Vendor gửi bản scan có dấu "Đã tiếp nhận" của cơ quan chức năng.* |
 
 ---
 
-## GHI CHÚ QUAN TRỌNG
+### B. NHÓM CHỨNG NHẬN KHUYẾN KHÍCH (GIA TĂNG GIÁ TRỊ)
+*Không bắt buộc về mặt pháp lý để mở bán, nhưng cần thiết để gắn nhãn "Sản phẩm Xanh/Bền vững" trên sàn.*
 
-### Về Pháp Lý
-- **Phân bón và thuốc BVTV** có quy định nghiêm ngặt nhất, cần đăng ký trước khi kinh doanh
-- Kiểm tra danh mục bắt buộc chứng nhận tại: https://www.quancn.gov.vn
-- Thời gian xin giấy phép: 3-12 tháng tùy loại sản phẩm
-
-### Về Nguồn Cung
-- **Nhà sản xuất trong nước**: Tribeco, Japfa, CP, Lâm Thao, Bình Điền
-- **Nhập khẩu**: Ấn Độ (phân hữu cơ), Thái Lan (giống), Trung Quốc (thiết bị)
-- **Đại lý phân phối**: Nông Nghiệp Xanh, Green Agri, Eco Farm Supply
-
-### Về Thị Trường
-- **Tập trung**: Đồng bằng sông Cửu Long (70%), Đông Nam Bộ (15%), Tây Nguyên (10%)
-- **Khách hàng chính**: Hợp tác xã, trang trại vừa và nhỏ, nông dân cá nhân
-- **Giá trị thị trường**: 500-700 triệu USD/năm (tăng 15-20%/năm)
-- **Xu hướng**: Tăng trưởng mạnh ở phân bón hữu cơ, hệ thống tưới tiêu tự động, giống rau sạch
-
-### Lời Khuyên Khởi Nghiệp
-1. Bắt đầu với **vật tư ít rào cản**: dụng cụ cầm tay, hệ thống tưới nhỏ giọt, vật liệu che phủ
-2. Hợp tác với nhà sản xuất có chứng nhận sẵn để giảm chi phí ban đầu
-3. Tập trung vào 3-5 category cốt lõi: phân bón hữu cơ, tưới tiêu, giống rau, thuốc BVTV sinh học
-4. Đầu tư vào marketing và đào tạo khách hàng về nông nghiệp hữu cơ
-5. Xây dựng mạng lưới tư vấn kỹ thuật để tạo giá trị gia tăng
-6. Ưu tiên sản phẩm có **tính thanh khoản cao, dễ vận chuyển, ít phức tạp về chứng nhận**
+| Tên chứng nhận | Ý nghĩa | Đơn vị cấp uy tín (Issuer) | Trang tra cứu (Verification Link) |
+| :--- | :--- | :--- | :--- |
+| **VietGAP**<br>*(Trồng trọt)* | Thực hành nông nghiệp tốt | TQC CGlobal, VinaCert, Vinacontrol | **[TQC CGlobal](https://tqc.vn/khach-hang-hieu-luc.htm)**<br>**[VinaCert](https://vinacert.vn/vicb/tra-cuu-chung-chi-ket-qua-thu-nghiem-tai-website-vinacert)** |
+| **Hữu cơ (Organic)**<br>*(TCVN 11041)* | Tiêu chuẩn Hữu cơ Việt Nam | NHO-QScert, VinaCert | **[NHO-QScert](https://qcert.vn/tra-cuu-khach-hang/)** (Nhập mã khách hàng)<br>**[VinaCert](https://vinacert.vn/vicb/tra-cuu-chung-chi-ket-qua-thu-nghiem-tai-website-vinacert)** |
+| **ISO 9001 / 14001** | Quản lý Chất lượng / Môi trường | ISOCERT, GOODVN | **[ISOCERT](https://isocert.org.vn/tra-cuu-chung-chi-iso)** (Nhập mã số)<br>**[GOODVN](https://chungnhanquocgia.com)** |
+| **USDA Organic** | Chuẩn Hữu cơ Mỹ (Quốc tế) | Control Union, Ecocert | **[USDA Integrity Database](https://organic.ams.usda.gov/integrity/)**<br>*(Nhập tên Doanh nghiệp vào ô Operation Name)* |
 
 ---
 
-**Tổng số sản phẩm**: 218 sản phẩm (đã tối ưu hóa)
-**Phiên bản**: 2.1 (Tối ưu cho E-commerce, đã điều chỉnh)
-**Ngày cập nhật**: Tháng 11/2025
-**Nguồn**: Tổng hợp từ quy định pháp luật Việt Nam và thực tế thị trường
+## GHI CHÚ QUAN TRỌNG VỀ KIỂM DUYỆT & VẬN HÀNH
+
+### 1. Quy Tắc Kiểm Duyệt (Dành cho Admin)
+* **Ưu tiên pháp lý:** Tuyệt đối không duyệt sản phẩm thuộc nhóm **Phân bón** và **Thuốc BVTV** nếu không tìm thấy thông tin trên CSDL của Cục Bảo vệ Thực vật.
+* **Kiểm tra chéo (Cross-check):** Tên doanh nghiệp trên Giấy chứng nhận phải trùng khớp hoàn toàn với Tên doanh nghiệp trong Hồ sơ nhà bán hàng (`vendor_profiles`).
+* **Hiệu lực:** Kiểm tra ngày hết hạn (Expiry Date) trên chứng chỉ. Nếu đã hết hạn, yêu cầu Vendor cập nhật mới.
+
+### 2. Cảnh Báo Thị Trường & Nguồn Cung
+* **Rủi ro cao:** Nhóm sản phẩm sinh học (chế phẩm vi sinh, phân bón lá) thường bị làm giả nhiều nhất. Cần kiểm tra kỹ mã số lưu hành.
+* **Nguồn cung uy tín:** Các thương hiệu lớn như *Bình Điền, Lâm Thao, Tribeco* hoặc các nhà nhập khẩu chính ngạch thường có giấy tờ rất đầy đủ, quá trình duyệt có thể nhanh hơn.
+* **Thời gian cấp phép:** Lưu ý rằng việc xin giấy phép mới cho Phân bón/Thuốc BVTV mất từ 3-12 tháng, nên Vendor thường sử dụng giấy phép cũ còn hạn. Cần check kỹ ngày tháng.

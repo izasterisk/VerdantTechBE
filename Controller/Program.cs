@@ -177,6 +177,7 @@ builder.Services.AddScoped<IVendorCertificateService, VendorCertificateService>(
 builder.Services.AddScoped<IVendorProfileService, VendorProfileService>();
 builder.Services.AddScoped<IChatbotConversationService, ChatbotConversationService>();
 builder.Services.AddScoped<ICropService, CropService>();
+builder.Services.AddScoped<IExportInventoryService, ExportInventoryService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

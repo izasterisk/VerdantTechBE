@@ -45,7 +45,7 @@ public class ProductSerialConfiguration : IEntityTypeConfiguration<ProductSerial
             .HasConversion(
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<ProductSerialStatus>(v, true))
-            .HasColumnType("enum('stock','sold','refund')")
+            .HasColumnType("enum('stock','sold','refund','adjustment')")
             .HasDefaultValue(ProductSerialStatus.Stock)
             .HasColumnName("status");
 
