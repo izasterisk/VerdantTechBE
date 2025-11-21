@@ -41,5 +41,6 @@ public class FarmProfileUpdateDTO
     [EnumDataType(typeof(FarmProfileStatus), ErrorMessage = "Trạng thái phải là Active, Maintenance hoặc Deleted")]
     public FarmProfileStatus? Status { get; set; }
 
-    public List<CropsUpdateDTO>? Crops { get; set; }
+    public List<CropsUpdateDTO>? CropsUpdate { get; set; }
+    public List<CropsCreateDTO>? CropsCreate { get; set; }
 }

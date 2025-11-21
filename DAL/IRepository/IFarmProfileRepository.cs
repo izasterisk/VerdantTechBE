@@ -11,4 +11,6 @@ public interface IFarmProfileRepository
     Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, List<Crop> crops, CancellationToken cancellationToken = default);
     Task<Crop> GetCropBelongToFarm(ulong cropId, ulong farmId, CancellationToken cancellationToken = default);
     Task<FarmProfile> GetFarmProfileByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default);
+    Task CreateCropAsync(ulong farmId, Crop crop, CancellationToken cancellationToken = default);
+    Task<bool> IsCropNameDuplicatedAsync(ulong farmId, string cropName, CancellationToken cancellationToken = default);
 }
