@@ -13,13 +13,10 @@ namespace BLL.DTO.ProductCertificate
     {
         public ulong Id { get; set; }
 
-        [Required(ErrorMessage = "Mã sản phẩm không được để trống")]
         public ulong ProductId { get; set; }
 
-        [Required(ErrorMessage = "Mã chứng chỉ không được để trống")]
         public string CertificationCode { get; set; } = null!;
 
-        [Required(ErrorMessage = "Tên chứng chỉ không được để trống")]
         public string CertificationName { get; set; } = null!;
 
         //[Required(ErrorMessage = "Trạng thái chứng chỉ không được để trống")]
