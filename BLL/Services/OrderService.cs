@@ -202,7 +202,7 @@ public class OrderService : IOrderService
             exportInventories.Add(new ExportInventory
             {
                 ProductId = dto.ProductId,
-                ProductSerialId = serialNumberId,
+                ProductSerialId = serialNumberId?.Id,
                 LotNumber = dto.LotNumber,
                 OrderId = order.Id,
                 MovementType = MovementType.Sale,

@@ -11,17 +11,20 @@ public class CashoutRepository : ICashoutRepository
     private readonly IRepository<Transaction> _transactionRepository;
     private readonly IRepository<Order> _orderRepository;
     private readonly IRepository<Payment> _paymentRepository;
+    private readonly IRepository<ProductSerial> _productSerialRepository; 
     private readonly VerdantTechDbContext _dbContext;
     private readonly IWalletRepository _walletRepository;
     
     public CashoutRepository(IRepository<Cashout> cashoutRepository, IRepository<Transaction> transactionRepository,
         IRepository<Order> orderRepository, IRepository<Payment> paymentRepository,
-        VerdantTechDbContext dbContext, IWalletRepository walletRepository)
+        IRepository<ProductSerial> productSerialRepository, VerdantTechDbContext dbContext,
+        IWalletRepository walletRepository)
     {
         _cashoutRepository = cashoutRepository;
         _transactionRepository = transactionRepository;
         _orderRepository = orderRepository;
         _paymentRepository = paymentRepository;
+        _productSerialRepository = productSerialRepository;
         _dbContext = dbContext;
         _walletRepository = walletRepository;
     }
@@ -56,7 +59,7 @@ public class CashoutRepository : ICashoutRepository
     }
 
     public async Task<Cashout> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr, 
-        Order order, CancellationToken cancellationToken = default)
+        Order order, List<ProductSerial> serialIds, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -72,6 +75,13 @@ public class CashoutRepository : ICashoutRepository
             payment.UpdatedAt = DateTime.UtcNow;
             payment.Status = PaymentStatus.Refunded;
             await _paymentRepository.UpdateAsync(payment, cancellationToken);
+
+            foreach (var serialId in serialIds)
+            {
+                serialId.Status = ProductSerialStatus.Refund;
+                serialId.UpdatedAt = DateTime.UtcNow;
+                await _productSerialRepository.UpdateAsync(serialId, cancellationToken);
+            }
             
             tr.CreatedAt = DateTime.UtcNow;
             tr.UpdatedAt = DateTime.UtcNow;

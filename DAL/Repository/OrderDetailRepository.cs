@@ -81,7 +81,7 @@ public class OrderDetailRepository : IOrderDetailRepository
     //     }
     // }
     
-    public async Task<ulong?> ValidateIdentifyNumberAsync(ulong productId, string? serialNumber, string lotNumber, CancellationToken cancellationToken = default)
+    public async Task<ProductSerial?> ValidateIdentifyNumberAsync(ulong productId, string? serialNumber, string lotNumber, CancellationToken cancellationToken = default)
     {
         var product = await _productRepository.GetAsync(p => p.Id == productId && p.IsActive, true, cancellationToken) ??
                       throw new KeyNotFoundException("Sản phẩm không còn tồn tại.");
@@ -99,7 +99,7 @@ public class OrderDetailRepository : IOrderDetailRepository
                 throw new KeyNotFoundException("Sản phẩm với số sê-ri này không đủ điều kiện để xuất hoặc số sê-ri không tồn tại trong hệ thống hoặc số sê-ri không phải của sản phẩm này.");
             if(lotNumber != null && !serial.BatchInventory.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidExpressionException($"Số lô nhận vào không đúng với số lô có trong hệ thống cho sản phẩm ID {productId}, số sê-ri {serialNumber}.");
-            return serial.Id;
+            return serial;
         }
         else
         {

@@ -51,6 +51,7 @@ public class CashoutService : ICashoutService
             throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
         
         var orderDetails = new List<OrderDetail>();
+        var serial = new List<ProductSerial>();
         foreach (var orderDetail in dto.OrderDetails)
         {
             var detail = await _orderDetailRepository.GetOrderDetailWithRelationByIdAsync(orderDetail.OrderDetailId, cancellationToken);
@@ -65,6 +66,14 @@ public class CashoutService : ICashoutService
                 throw new InvalidDataException($"Không tìm thấy sản phẩm đã xuất kho với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber}.");
             if(x < detail.Quantity)
                 throw new InvalidDataException($"Sản phầm với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber} chỉ được xuất {x} sản phẩm, vui lòng kiểm tra lại.");
+            
+            var serialNumber = await _orderDetailRepository.ValidateIdentifyNumberAsync(detail.ProductId, orderDetail.SerialNumber, orderDetail.LotNumber, cancellationToken);
+            if (serialNumber != null)
+            {
+                if (orderDetail.RefundQuantity != 1)
+                    throw new AggregateException("Khi hoàn tiền sản phẩm có số sê-ri, chỉ được phép hoàn 1 sản phẩm mỗi lần.");
+                serial.Add(serialNumber);
+            }
         }
         
         var order = await _orderRepository.GetOrderByIdAsync(orderDetails[0].OrderId, cancellationToken);
@@ -129,7 +138,7 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow,
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, serial, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(created.Id, cancellationToken);
         RefundReponseDTO reponseDto = new RefundReponseDTO();
         reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);
@@ -155,6 +164,7 @@ public class CashoutService : ICashoutService
         if(request.Status != RequestStatus.Approved || request.RequestType != RequestType.RefundRequest)
             throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
     
+        var serial = new List<ProductSerial>();
         var orderDetails = new List<OrderDetail>();
         foreach (var orderDetail in dto.OrderDetails)
         {
@@ -170,6 +180,14 @@ public class CashoutService : ICashoutService
                 throw new InvalidDataException($"Không tìm thấy sản phẩm đã xuất kho với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber}.");
             if(x < detail.Quantity)
                 throw new InvalidDataException($"Sản phầm với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber} chỉ được xuất {x} sản phẩm, vui lòng kiểm tra lại.");
+            
+            var serialNumber = await _orderDetailRepository.ValidateIdentifyNumberAsync(detail.ProductId, orderDetail.SerialNumber, orderDetail.LotNumber, cancellationToken);
+            if (serialNumber != null)
+            {
+                if (orderDetail.RefundQuantity != 1)
+                    throw new AggregateException("Khi hoàn tiền sản phẩm có số sê-ri, chỉ được phép hoàn 1 sản phẩm mỗi lần.");
+                serial.Add(serialNumber);
+            }
         }
         
         var order = await _orderRepository.GetOrderByIdAsync(orderDetails[0].OrderId, cancellationToken);
@@ -227,7 +245,7 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow,
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, serial, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(created.Id, cancellationToken);
         RefundReponseDTO reponseDto = new RefundReponseDTO();
         reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);

@@ -37,11 +37,12 @@ public class ExportInventoryService : IExportInventoryService
         {
             if(dto.MovementType == MovementType.Sale)
                 throw new ArgumentException("MovementType Sale chỉ được sử dụng khi xuất hàng bán.");
+            var productSerial = await _orderDetailRepository.ValidateIdentifyNumberAsync(
+                dto.ProductId, dto.ProductSerialNumber, dto.LotNumber, cancellationToken);
             exportInventories.Add(new ExportInventory
             {
                 ProductId = dto.ProductId,
-                ProductSerialId = await _orderDetailRepository.ValidateIdentifyNumberAsync(
-                    dto.ProductId, dto.ProductSerialNumber, dto.LotNumber, cancellationToken),
+                ProductSerialId = productSerial?.Id,
                 LotNumber = dto.LotNumber,
                 MovementType = dto.MovementType,
                 Notes = dto.Notes,
