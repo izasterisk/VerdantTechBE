@@ -14,7 +14,7 @@ namespace BLL.Services;
 
 public class CashoutService : ICashoutService
 {
-    private readonly IWalletRepository _walletRepository;
+    private readonly IPaymentRepository _paymentRepository;
     private readonly IMapper _mapper;
     private readonly IPayOSApiClient _payOSApiClient;
     private readonly ICashoutRepository _cashoutRepository;
@@ -24,18 +24,19 @@ public class CashoutService : ICashoutService
     private readonly IUserBankAccountsRepository _userBankAccountRepository;
     private readonly INotificationService _notificationService;
     
-    public CashoutService(IWalletRepository walletRepository, IMapper mapper, IPayOSApiClient payOSApiClient,
-        ICashoutRepository cashoutRepository, IOrderDetailRepository orderDetailRepository, IRequestRepository requestRepository,
-        IOrderRepository orderRepository, IUserBankAccountsRepository userBankAccountsRepository, INotificationService notificationService)
+    public CashoutService(IPaymentRepository paymentRepository, IMapper mapper, IPayOSApiClient payOSApiClient, 
+        ICashoutRepository cashoutRepository, IOrderDetailRepository orderDetailRepository,
+        IRequestRepository requestRepository, IOrderRepository orderRepository,
+        IUserBankAccountsRepository userBankAccountRepository, INotificationService notificationService)
     {
-        _walletRepository = walletRepository;
+        _paymentRepository = paymentRepository;
         _mapper = mapper;
         _payOSApiClient = payOSApiClient;
         _cashoutRepository = cashoutRepository;
         _orderDetailRepository = orderDetailRepository;
         _requestRepository = requestRepository;
         _orderRepository = orderRepository;
-        _userBankAccountRepository = userBankAccountsRepository;
+        _userBankAccountRepository = userBankAccountRepository;
         _notificationService = notificationService;
     }
     
@@ -111,7 +112,7 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow,
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, orderDetails, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(created.Id, cancellationToken);
         RefundReponseDTO reponseDto = new RefundReponseDTO();
         reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);
@@ -193,7 +194,7 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow,
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, orderDetails, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(created.Id, cancellationToken);
         RefundReponseDTO reponseDto = new RefundReponseDTO();
         reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);
