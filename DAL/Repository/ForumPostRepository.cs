@@ -16,7 +16,7 @@ public class ForumPostRepository : IForumPostRepository
     
     public async Task<IEnumerable<ForumPost>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
     {
-        return await _context.ForumPosts
+        var posts = await _context.ForumPosts
              .AsNoTracking()
              //.Include(x => x.MediaLinks)
              //.Include(x => x.Content)
@@ -24,13 +24,21 @@ public class ForumPostRepository : IForumPostRepository
              .Skip((page - 1) * pageSize)
              .Take(pageSize)
              .ToListAsync(ct);
+        foreach (var p in posts)
+        {
+            p.MediaLinks = await _context.MediaLinks
+                .Where(m => m.OwnerType == MediaOwnerType.ForumPosts && m.OwnerId == p.Id)
+                .OrderBy(m => m.SortOrder)
+                .ToListAsync(ct);
+        }
+        return posts;
     }
 
     
     public async Task<IEnumerable<ForumPost>> GetAllByCategoryIdAsync(
         ulong categoryId, int page, int pageSize, CancellationToken ct = default)
     {
-        return await _context.ForumPosts
+        var posts = await _context.ForumPosts
             .AsNoTracking()
             .Where(x => x.ForumCategoryId == categoryId)
             //.Include(x => x.MediaLinks)
@@ -39,6 +47,14 @@ public class ForumPostRepository : IForumPostRepository
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
+        foreach (var p in posts)
+        {
+            p.MediaLinks = await _context.MediaLinks
+                .Where(m => m.OwnerType == MediaOwnerType.ForumPosts && m.OwnerId == p.Id)
+                .OrderBy(m => m.SortOrder)
+                .ToListAsync(ct);
+        }
+        return posts;
     }
 
    
