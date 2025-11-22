@@ -14,7 +14,7 @@ namespace BLL.Services;
 
 public class CashoutService : ICashoutService
 {
-    private readonly IPaymentRepository _paymentRepository;
+    private readonly IExportInventoryRepository _exportedInventoryRepository;
     private readonly IMapper _mapper;
     private readonly IPayOSApiClient _payOSApiClient;
     private readonly ICashoutRepository _cashoutRepository;
@@ -24,12 +24,13 @@ public class CashoutService : ICashoutService
     private readonly IUserBankAccountsRepository _userBankAccountRepository;
     private readonly INotificationService _notificationService;
     
-    public CashoutService(IPaymentRepository paymentRepository, IMapper mapper, IPayOSApiClient payOSApiClient, 
-        ICashoutRepository cashoutRepository, IOrderDetailRepository orderDetailRepository,
-        IRequestRepository requestRepository, IOrderRepository orderRepository,
-        IUserBankAccountsRepository userBankAccountRepository, INotificationService notificationService)
+    public CashoutService(IExportInventoryRepository exportedInventoryRepository, IMapper mapper,
+        IPayOSApiClient payOSApiClient, ICashoutRepository cashoutRepository,
+        IOrderDetailRepository orderDetailRepository, IRequestRepository requestRepository,
+        IOrderRepository orderRepository, IUserBankAccountsRepository userBankAccountRepository,
+        INotificationService notificationService)
     {
-        _paymentRepository = paymentRepository;
+        _exportedInventoryRepository = exportedInventoryRepository;
         _mapper = mapper;
         _payOSApiClient = payOSApiClient;
         _cashoutRepository = cashoutRepository;
@@ -48,8 +49,24 @@ public class CashoutService : ICashoutService
         var request = await _requestRepository.GetRequestByIdAsync(requestId, cancellationToken);
         if(request.Status != RequestStatus.Approved || request.RequestType != RequestType.RefundRequest)
             throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
-    
-        var orderDetails = await _orderDetailRepository.GetListedOrderDetailsByIdAsync(dto.OrderDetailId, cancellationToken);
+        
+        var orderDetails = new List<OrderDetail>();
+        foreach (var orderDetail in dto.OrderDetails)
+        {
+            var detail = await _orderDetailRepository.GetOrderDetailWithRelationByIdAsync(orderDetail.OrderDetailId, cancellationToken);
+            if(orderDetail.RefundQuantity > detail.Quantity)
+                throw new InvalidDataException($"Số lượng hoàn tiền cho OrderDetailId {orderDetail.OrderDetailId} vượt quá số lượng đã mua.");
+            orderDetails.Add(detail);
+            if(detail.OrderId != orderDetails[0].OrderId)
+                throw new InvalidDataException("Tất cả OrderDetail phải thuộc về cùng một đơn hàng.");
+            var x = await _exportedInventoryRepository.GetNumberOfProductExportedAsync(orderDetail.LotNumber,
+                detail.OrderId, cancellationToken);
+            if(x == 0)
+                throw new InvalidDataException($"Không tìm thấy sản phẩm đã xuất kho với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber}.");
+            if(x < detail.Quantity)
+                throw new InvalidDataException($"Sản phầm với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber} chỉ được xuất {x} sản phẩm, vui lòng kiểm tra lại.");
+        }
+        
         var order = await _orderRepository.GetOrderByIdAsync(orderDetails[0].OrderId, cancellationToken);
         if(order.CustomerId != request.UserId)
             throw new UnauthorizedAccessException("Yêu cầu hoàn tiền không thuộc về người đặt hàng.");
@@ -112,7 +129,7 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow,
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, orderDetails, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(created.Id, cancellationToken);
         RefundReponseDTO reponseDto = new RefundReponseDTO();
         reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);
@@ -138,7 +155,23 @@ public class CashoutService : ICashoutService
         if(request.Status != RequestStatus.Approved || request.RequestType != RequestType.RefundRequest)
             throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
     
-        var orderDetails = await _orderDetailRepository.GetListedOrderDetailsByIdAsync(dto.OrderDetailId, cancellationToken);
+        var orderDetails = new List<OrderDetail>();
+        foreach (var orderDetail in dto.OrderDetails)
+        {
+            var detail = await _orderDetailRepository.GetOrderDetailWithRelationByIdAsync(orderDetail.OrderDetailId, cancellationToken);
+            if(orderDetail.RefundQuantity > detail.Quantity)
+                throw new InvalidDataException($"Số lượng hoàn tiền cho OrderDetailId {orderDetail.OrderDetailId} vượt quá số lượng đã mua.");
+            orderDetails.Add(detail);
+            if(detail.OrderId != orderDetails[0].OrderId)
+                throw new InvalidDataException("Tất cả OrderDetail phải thuộc về cùng một đơn hàng.");
+            var x = await _exportedInventoryRepository.GetNumberOfProductExportedAsync(orderDetail.LotNumber,
+                detail.OrderId, cancellationToken);
+            if(x == 0)
+                throw new InvalidDataException($"Không tìm thấy sản phẩm đã xuất kho với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber}.");
+            if(x < detail.Quantity)
+                throw new InvalidDataException($"Sản phầm với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber} chỉ được xuất {x} sản phẩm, vui lòng kiểm tra lại.");
+        }
+        
         var order = await _orderRepository.GetOrderByIdAsync(orderDetails[0].OrderId, cancellationToken);
         if(order.CustomerId != request.UserId)
             throw new UnauthorizedAccessException("Yêu cầu hoàn tiền không thuộc về người đặt hàng.");
@@ -194,7 +227,7 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow,
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, orderDetails, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(created.Id, cancellationToken);
         RefundReponseDTO reponseDto = new RefundReponseDTO();
         reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);

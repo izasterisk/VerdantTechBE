@@ -54,7 +54,7 @@ public partial class ForumPost
     public virtual User User { get; set; } = null!;
     public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
     [NotMapped]
-    public List<MediaLink> MediaLinks { get; set; }
+    public List<MediaLink> MediaLinks { get; set; } = new();
 
 
 }

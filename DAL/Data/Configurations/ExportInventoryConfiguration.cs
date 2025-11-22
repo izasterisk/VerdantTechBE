@@ -28,6 +28,7 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
 
         builder.Property(e => e.LotNumber)
             .HasMaxLength(100)
+            .IsRequired()
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("lot_number");
@@ -103,5 +104,9 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
 
         builder.HasIndex(e => e.LotNumber)
             .HasDatabaseName("idx_lot");
+
+        // Composite index for ProductId and LotNumber (used in inventory queries)
+        builder.HasIndex(e => new { e.ProductId, e.LotNumber })
+            .HasDatabaseName("idx_product_lot");
     }
 }

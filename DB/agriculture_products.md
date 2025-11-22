@@ -17,7 +17,7 @@
 ### 1.2. Phân Bón Vi Sinh (Microbial Fertilizers)
 - EM (Effective Microorganisms) - EM1, EM-Pro
 - Trichoderma harzianum dạng bột WP
-- Bacillus subtilis 10^8 CFU/ml
+- Bacillus subtilis 10^8 CFU/ml - Vi sinh vật có lợi
 - Azotobacter chroococcum cố định đạm
 - Mycorrhiza VAM (Vesicular Arbuscular Mycorrhiza)
 - Rhizobium đậu tương chuyên dụng
@@ -65,7 +65,7 @@
 
 ### 2.2. Thuốc Trừ Bệnh Sinh Học (Biological Fungicides)
 - Trichoderma harzianum 10^7-10^8 bào tử/g
-- Bacillus subtilis 10^8 CFU/ml
+- Bacillus subtilis 10^8 CFU/ml - Phòng trừ bệnh
 - Pseudomonas fluorescens 10^8 CFU/ml
 - Bordeaux mixture (đồng sunfat + vôi)
 - Lưu huỳnh dạng bột phun 80% WP

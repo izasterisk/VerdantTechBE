@@ -49,6 +49,14 @@ public class OrderDetailRepository : IOrderDetailRepository
         }
         return result;
     }
+    
+    public async Task<OrderDetail> GetOrderDetailWithRelationByIdAsync(ulong orderDetailId, CancellationToken cancellationToken = default)
+    {
+        return await _orderDetailRepository.GetWithRelationsAsync(o => o.Id == orderDetailId,
+            true, func => func.Include(od => od.Product),
+            cancellationToken) ?? 
+        throw new KeyNotFoundException($"Không tìm thấy chi tiết đơn hàng với ID {orderDetailId}.");
+    }
         
     
     // public async Task<ulong> GetRootProductCategoryIdByProductIdAsync(ulong id, CancellationToken cancellationToken = default)
@@ -73,7 +81,7 @@ public class OrderDetailRepository : IOrderDetailRepository
     //     }
     // }
     
-    public async Task<ulong?> ValidateIdentifyNumberAsync(ulong productId, string? serialNumber, string? lotNumber, CancellationToken cancellationToken = default)
+    public async Task<ulong?> ValidateIdentifyNumberAsync(ulong productId, string? serialNumber, string lotNumber, CancellationToken cancellationToken = default)
     {
         var product = await _productRepository.GetAsync(p => p.Id == productId && p.IsActive, true, cancellationToken) ??
                       throw new KeyNotFoundException("Sản phẩm không còn tồn tại.");
@@ -95,8 +103,8 @@ public class OrderDetailRepository : IOrderDetailRepository
         }
         else
         {
-            if(lotNumber == null)
-                throw new InvalidExpressionException("Với danh mục vật tư bắt buộc phải có số lô.");
+            if(serialNumber != null)
+                throw new InvalidExpressionException("Chỉ các danh mục máy móc mới được phép nhập số sê-ri.");
             if (await _batchInventoryRepository.AnyAsync(bi => bi.ProductId == productId && bi.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase), cancellationToken) == false)
                 throw new KeyNotFoundException("Số lô không tồn tại trong hệ thống hoặc số lô không phải của sản phẩm này.");
         }

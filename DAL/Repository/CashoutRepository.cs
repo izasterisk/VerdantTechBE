@@ -56,7 +56,7 @@ public class CashoutRepository : ICashoutRepository
     }
 
     public async Task<Cashout> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr, 
-        Order order, List<OrderDetail> orderDetails, CancellationToken cancellationToken = default)
+        Order order, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -72,11 +72,6 @@ public class CashoutRepository : ICashoutRepository
             payment.UpdatedAt = DateTime.UtcNow;
             payment.Status = PaymentStatus.Refunded;
             await _paymentRepository.UpdateAsync(payment, cancellationToken);
-
-            foreach (var orderDetail in orderDetails)
-            {
-                
-            }
             
             tr.CreatedAt = DateTime.UtcNow;
             tr.UpdatedAt = DateTime.UtcNow;

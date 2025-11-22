@@ -9,14 +9,18 @@ namespace DAL.Repository;
 public class ExportInventoryRepository : IExportInventoryRepository
 {
     private readonly IRepository<ExportInventory> _exportInventoryRepository;
+    private readonly IRepository<BatchInventory> _batchInventoryRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IRepository<ProductSerial> _productSerialRepository; 
     
-    public ExportInventoryRepository(VerdantTechDbContext context, IRepository<ExportInventory> exportInventory,
+    public ExportInventoryRepository(IRepository<ExportInventory> exportInventoryRepository,
+        IRepository<BatchInventory> batchInventoryRepository,
+        VerdantTechDbContext dbContext,
         IRepository<ProductSerial> productSerialRepository)
     {
-        _dbContext = context;
-        _exportInventoryRepository = exportInventory;
+        _exportInventoryRepository = exportInventoryRepository;
+        _batchInventoryRepository = batchInventoryRepository;
+        _dbContext = dbContext;
         _productSerialRepository = productSerialRepository;
     }
     
@@ -77,6 +81,28 @@ public class ExportInventoryRepository : IExportInventoryRepository
                 .Include(e => e.Product)
                 .Include(e => e.ProductSerial),
             cancellationToken);
+    }
+    
+    public async Task<int> GetNumberOfProductLeftInInventoryThruLotNumberAsync(string lotNumber, CancellationToken cancellationToken = default)
+    {
+        var export = await _dbContext.ExportInventories
+            .AsNoTracking()
+            .Where(e => e.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase))
+            .CountAsync(cancellationToken);
+        var import = await _batchInventoryRepository.GetAsync(
+            b => b.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase),
+            true, cancellationToken) ?? 
+                throw new KeyNotFoundException("Lô hàng không tồn tại trong kho.");
+        return import.Quantity - export;
+    }
+    
+    public async Task<int> GetNumberOfProductExportedAsync(string lotNumber, ulong orderId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.ExportInventories
+            .AsNoTracking()
+            .Where(e => e.OrderId == orderId 
+                && e.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase))
+            .CountAsync(cancellationToken);
     }
     
     public async Task<(List<ExportInventory>, int totalCount)> GetAllExportInventoriesAsync(int page, int pageSize, string? movementType = null, CancellationToken cancellationToken = default)

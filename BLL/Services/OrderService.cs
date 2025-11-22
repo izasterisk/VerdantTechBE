@@ -179,11 +179,12 @@ public class OrderService : IOrderService
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
         
         Dictionary<ulong, int> productQuantities = new();
+        Dictionary<string, int> validateLotNumber = new();
+        List<ExportInventory> exportInventories = new();
         foreach (var orderDetail in order.OrderDetails)
         {
             productQuantities[orderDetail.ProductId] = orderDetail.Quantity;
         }
-        List<ExportInventory> exportInventories = new();
         foreach (var dto in dtos)
         {
             if (!productQuantities.ContainsKey(dto.ProductId))
@@ -192,6 +193,11 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException($"Yêu cầu xuất hàng đang nhiều hơn số lượng hàng trong đơn mà khách hàng yêu cầu, đề nghị kiểm tra lại.");
             productQuantities[dto.ProductId]--;
 
+            if (!validateLotNumber.ContainsKey(dto.LotNumber.ToUpper()))
+                validateLotNumber[dto.LotNumber.ToUpper()] = 1;
+            else
+                validateLotNumber[dto.LotNumber.ToUpper()]++;
+            
             var serialNumberId = await _orderDetailRepository.ValidateIdentifyNumberAsync(dto.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
             exportInventories.Add(new ExportInventory
             {
@@ -207,6 +213,11 @@ public class OrderService : IOrderService
         {
             if (kvp.Value != 0)
                 throw new InvalidOperationException($"Sản phẩm với ID {kvp.Key} đang được xuất khác với số lượng trong đơn hàng.");
+        }
+        foreach (var validate in validateLotNumber)
+        {
+            if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key, cancellationToken) < validate.Value)
+                throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
         }
         
         var from = await _userService.GetUserByIdAsync(1, cancellationToken);

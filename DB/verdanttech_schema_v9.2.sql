@@ -603,7 +603,8 @@ CREATE TABLE export_inventory (
     INDEX idx_product (product_id),
     INDEX idx_order (order_id),
     INDEX idx_serial (product_serial_id),
-    INDEX idx_lot (lot_number)
+    INDEX idx_lot (lot_number),
+    INDEX idx_product_lot (product_id, lot_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi xuất kho - hỗ trợ cả sản phẩm có serial (máy móc) và không có serial (phân bón)';
 
 -- =====================================================
