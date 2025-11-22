@@ -1,10 +1,13 @@
 using AutoMapper;
 using BLL.DTO.Address;
+using BLL.DTO.BatchInventory;
 using BLL.DTO.Cart;
 using BLL.DTO.CO2;
 using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
+using BLL.DTO.ForumCategory;
 using BLL.DTO.MediaLink;
+using BLL.DTO.Notification;
 using BLL.DTO.Order;
 using BLL.DTO.Product;
 using BLL.DTO.ProductCategory;
@@ -15,10 +18,16 @@ using BLL.DTO.Request;
 using BLL.DTO.Transaction;
 using BLL.DTO.User;
 using BLL.DTO.UserBankAccount;
+using BLL.DTO.VendorCertificate;
 using BLL.DTO.Wallet;
 using BLL.Services.Payment;
 using DAL.Data.Models;
+using System.Numerics;
+using BLL.DTO.ChatbotConversations;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
+using BLL.DTO.ForumPost;
+using BLL.DTO.ForumComment;
+using BLL.DTO.ExportInventory;
 
 namespace BLL.Helpers
 {
@@ -37,6 +46,9 @@ namespace BLL.Helpers
             CreateMap<UserAddressCreateDTO, Address>().ReverseMap();
             CreateMap<UserAddressUpdateDTO, Address>().ReverseMap();
             CreateMap<UserAddressUpdateDTO, UserAddress>().ReverseMap();
+            
+            // ===================== NOTIFICATION MAPPINGS =====================
+            CreateMap<NotificationResponseDTO, Notification>().ReverseMap();
 
             // ===================== USER BANK ACCOUNT MAPPINGS =====================
             CreateMap<UserBankAccountCreateDTO, UserBankAccount>().ReverseMap();
@@ -55,11 +67,18 @@ namespace BLL.Helpers
             CreateMap<Transaction, WalletTransactionResponseDTO>();
             
             // ===================== FARM PROFILE =====================
-            CreateMap<FarmProfileCreateDto, FarmProfile>().ReverseMap();
+            CreateMap<FarmProfileCreateDto, FarmProfile>()
+                .ForMember(dest => dest.Crops, opt => opt.Ignore());
             CreateMap<FarmProfile, FarmProfileResponseDTO>().ReverseMap();
             CreateMap<FarmProfileUpdateDTO, FarmProfile>()
+                .ForMember(dest => dest.Crops, opt => opt.Ignore())
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
+            CreateMap<CropsCreateDTO, Crop>().ReverseMap();
+            CreateMap<CropsDTO, Crop>().ReverseMap();
+            CreateMap<CropsUpdateDTO, Crop>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            
             // ===================== ADDRESS =====================
             CreateMap<Address, AddressResponseDTO>().ReverseMap();
             CreateMap<UserAddress, AddressResponseDTO>()
@@ -99,6 +118,35 @@ namespace BLL.Helpers
 
             CreateMap<MediaLink, ImagesDTO>().ReverseMap();
             CreateMap<MediaLink, ProductImageResponseDTO>().ReverseMap();
+
+
+            // ===================== FORUM CATEGORY =====================
+            CreateMap<ForumCategoryCreateDTO, ForumCategory>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.Ignore());
+
+            CreateMap<ForumCategoryUpdateDTO, ForumCategory>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<ForumCategory, ForumCategoryResponseDto>();
+
+            // ===================== FORUM POST =====================
+            CreateMap<ContentBlockDTO, ContentBlock>().ReverseMap();
+
+            CreateMap<ForumPost, ForumPostResponseDTO>()
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.Images, o => o.MapFrom(s => s.MediaLinks))
+                .ForMember(d => d.Comments, o => o.Ignore()); 
+
+            // ===================== FORUM COMMENT =====================
+            CreateMap<ForumComment, ForumCommentResponseDTO>()
+                .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
+                .ForMember(d => d.FullName, o => o.MapFrom(s => s.User.FullName))
+                .ForMember(d => d.Replies, o => o.Ignore());
+
 
             // ===================== CART =====================
             CreateMap<CartDTO, CartItem>().ReverseMap();
@@ -165,7 +213,7 @@ namespace BLL.Helpers
             CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
                 .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
                 .ForMember(d => d.EnergyEfficiencyRating,
-                    o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue ? s.EnergyEfficiencyRating.Value.ToString() : null))
+                    o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue? s.EnergyEfficiencyRating.Value.ToString("0.0"): null))
                 .ForMember(d => d.ManualUrl, o => o.MapFrom(s => s.ManualUrls))
                 .ForMember(d => d.ManualPublicUrl, o => o.MapFrom(s => s.PublicUrl))
                 .ForMember(d => d.Specifications, o => o.MapFrom(s => s.Specifications ?? new Dictionary<string, object>()))
@@ -177,6 +225,9 @@ namespace BLL.Helpers
                 // ảnh fill bằng service Hydrate => không map trực tiếp từ entity (để tránh null)
                 .ForMember(d => d.ProductImages, o => o.Ignore())
                 .ForMember(d => d.CertificateFiles, o => o.Ignore());
+
+            CreateMap<ProductCertificate, ProductCertificateResponseDTO>();
+
 
             // CreateDTO -> Entity
             CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
@@ -230,6 +281,11 @@ namespace BLL.Helpers
                 .ForMember(d => d.CreatedAt, opt => opt.Ignore())
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<ProductCertificate, ProductCertificateResponseDTO>();
+            // ===================== VENDOR CERTIFICATE =====================
+            CreateMap<VendorCertificate, VendorCertificateResponseDTO>()
+                .ForMember(d => d.VendorName,opt => opt.MapFrom(s => s.Vendor != null ? s.Vendor.FullName : null))
+                .ForMember(d => d.VerifiedByName, opt => opt.MapFrom(s => s.VerifiedByNavigation != null ? s.VerifiedByNavigation.FullName : null))
+                .ForMember(d => d.Files, opt => opt.MapFrom(s => s.MediaLinks));
 
             // ===================== ORDER =====================
             CreateMap<OrderPreviewCreateDTO, OrderPreviewResponseDTO>()
@@ -266,6 +322,39 @@ namespace BLL.Helpers
                                         ? s.EnergyEfficiencyRating.Value.ToString()
                                         : null));
 
+
+            // ===================== BATCH INVENTORY =====================
+            CreateMap<BatchInventoryCreateDTO, BatchInventory>()
+                .ForMember(d => d.Id, o => o.Ignore())
+                .ForMember(d => d.CreatedAt, o => o.Ignore())
+                .ForMember(d => d.UpdatedAt, o => o.Ignore())
+                .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
+                .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
+                .ForMember(d => d.QualityCheckedAt, o => o.Ignore());
+            CreateMap<BatchInventoryQualityCheckDTO, BatchInventory>()
+                .ForMember(d => d.Id, o => o.Ignore())
+                .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
+                .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
+                .ForMember(d => d.Notes, o => o.Ignore());
+            CreateMap<BatchInventoryUpdateDTO, BatchInventory>()
+                .ForMember(d => d.Id, o => o.Ignore())
+                .ForMember(d => d.ProductId, o => o.Ignore())
+                .ForMember(d => d.Sku, o => o.Ignore())
+                .ForMember(d => d.BatchNumber, o => o.Ignore())
+                .ForMember(d => d.LotNumber, o => o.Ignore())
+                .ForMember(d => d.VendorId, o => o.Ignore())
+                .ForMember(d => d.CreatedAt, o => o.Ignore())
+                .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
+                .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
+                .ForMember(d => d.QualityCheckedAt, o => o.Ignore())
+                // CHỈ MAP GIÁ TRỊ KHÁC NULL (AutoMapper xử lý Optional Update)
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<BatchInventory, BatchInventoryResponeDTO>()
+                .ForMember(dest => dest.ProductName, o => o.MapFrom(src => src.Product != null ? src.Product.ProductName : null))
+                .ForMember(dest => dest.VendorName, o => o.MapFrom(src => src.Vendor != null ? src.Vendor.FullName : null))
+                .ForMember(dest => dest.QualityCheckedByName, o => o.MapFrom(src => src.QualityCheckedByNavigation != null ? src.QualityCheckedByNavigation.FullName : null));
+
             // ===================== REQUEST =====================
             CreateMap<RequestCreateDTO, Request>().ReverseMap();
             CreateMap<Request, RequestResponseDTO>()
@@ -284,6 +373,18 @@ namespace BLL.Helpers
             CreateMap<MediaLink, ProductReviewImageDTO>()
                 .ForMember(d => d.ImageUrl, o => o.MapFrom(s => s.ImageUrl))
                 .ForMember(d => d.ImagePublicId, o => o.MapFrom(s => s.ImagePublicId));
+            
+            // ===================== CHATBOT =====================
+            CreateMap<ChatbotConversation, ChatbotConversationsResponseDTO>().ReverseMap();
+            CreateMap<ChatbotMessage, ChatbotMessagesResponseDTO>().ReverseMap();
+            CreateMap<ChatbotConversationUpdateDTO, ChatbotConversation>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<ChatbotMessage, ChatbotMessageCreateDTO>().ReverseMap();
+            
+            // ===================== EXPORT INVENTORY =====================
+            CreateMap<ExportInventory, ExportInventoryResponseDTO>()
+                .ForMember(d => d.CreatedBy, o => o.MapFrom(s => s.CreatedByNavigation))
+                .ForMember(d => d.ProductSerialNumber, o => o.MapFrom(s => s.ProductSerial != null ? s.ProductSerial.SerialNumber : null));
         }
     }
 }

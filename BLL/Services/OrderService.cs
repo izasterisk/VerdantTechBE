@@ -25,11 +25,12 @@ public class OrderService : IOrderService
     private readonly IExportInventoryRepository _exportInventoryRepository;
     private readonly IUserRepository _userRepository;
     private readonly IWalletRepository _walletRepository;
+    private readonly INotificationService _notificationService;
     
     public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository,
         IAddressRepository addressRepository, IGoshipCourierApiClient courierApiClient, IMemoryCache memoryCache,
         IUserService userService, IExportInventoryRepository exportInventoryRepository, IUserRepository userRepository, 
-        IWalletRepository walletRepository)
+        IWalletRepository walletRepository, INotificationService notificationService)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
@@ -41,13 +42,13 @@ public class OrderService : IOrderService
         _exportInventoryRepository = exportInventoryRepository;
         _userRepository = userRepository;
         _walletRepository = walletRepository;
+        _notificationService = notificationService;
     }
 
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        if (await _orderRepository.GetActiveUserByIdAsync(userId, cancellationToken) == null)
-            throw new KeyNotFoundException($"Người dùng với ID {userId} không tồn tại.");
+        await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
         var address = await _addressRepository.GetAddressByIdAsync(dto.AddressId, cancellationToken);
         if (address == null)
             throw new KeyNotFoundException($"Địa chỉ với ID {dto.AddressId} không tồn tại.");
@@ -117,7 +118,7 @@ public class OrderService : IOrderService
         var selectedShipping = orderPreview.ShippingDetails.FirstOrDefault(s => s.PriceTableId == dto.PriceTableId);
         if (selectedShipping == null)
             throw new KeyNotFoundException($"Dịch vụ vận chuyển với ID {dto.PriceTableId} không tồn tại trong danh sách dịch vụ khả dụng.");
-        var user = await _orderRepository.GetActiveUserByIdAsync(orderPreview.CustomerId, cancellationToken);
+        var user = await _userRepository.GetVerifiedAndActiveUserByIdAsync(orderPreview.CustomerId, cancellationToken);
         if (user == null)
             throw new KeyNotFoundException($"Người dùng với ID {orderPreview.CustomerId} không tồn tại hoặc đã bị xóa.");
         
@@ -191,11 +192,11 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException($"Yêu cầu xuất hàng đang nhiều hơn số lượng hàng trong đơn mà khách hàng yêu cầu, đề nghị kiểm tra lại.");
             productQuantities[dto.ProductId]--;
 
-            var serialNumber = await _orderDetailRepository.ValidateIdentifyNumberAsync(dto.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
+            var serialNumberId = await _orderDetailRepository.ValidateIdentifyNumberAsync(dto.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
             exportInventories.Add(new ExportInventory
             {
                 ProductId = dto.ProductId,
-                ProductSerialId = serialNumber,
+                ProductSerialId = serialNumberId,
                 LotNumber = dto.LotNumber,
                 OrderId = order.Id,
                 MovementType = MovementType.Sale,
@@ -226,7 +227,7 @@ public class OrderService : IOrderService
             order.CourierId, order.Notes ?? "" , cancellationToken);
         order.Status = OrderStatus.Shipped;
         
-        await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(exportInventories, cancellationToken);
+        await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(exportInventories, ProductSerialStatus.Sold, cancellationToken);
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
         
         var finalResponse = _mapper.Map<OrderResponseDTO>(order);
@@ -237,8 +238,18 @@ public class OrderService : IOrderService
                 product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
             }
         }
-        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(order.CustomerId, cancellationToken));
+
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(
+                await _userRepository.GetVerifiedAndActiveUserByIdAsync(order.CustomerId, cancellationToken));
         finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(order.AddressId, cancellationToken)));
+        
+        await _notificationService.CreateAndSendNotificationAsync(
+            order.CustomerId,
+            "Đơn hàng đã được gửi đi",
+            $"Đơn hàng #{order.Id} của bạn đã được gửi đi. Mã vận đơn: {order.TrackingNumber}",
+            NotificationReferenceType.Order,
+            order.Id,
+            cancellationToken);
         return finalResponse;
     }
     
@@ -290,8 +301,23 @@ public class OrderService : IOrderService
                 product.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(product.Product.Id, cancellationToken));
             }
         }
-        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _orderRepository.GetActiveUserByIdAsync(response.CustomerId, cancellationToken));
+        finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _userRepository.GetVerifiedAndActiveUserByIdAsync(response.CustomerId, cancellationToken));
         finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken)));
+        
+        string notificationMessage = dto.Status switch
+        {
+            OrderStatus.Processing => "Đơn hàng của bạn đang được xử lý.",
+            OrderStatus.Delivered => "Đơn hàng của bạn đã được giao thành công.",
+            OrderStatus.Cancelled => "Đơn hàng của bạn đã bị hủy.",
+            _ => ""
+        };
+        await _notificationService.CreateAndSendNotificationAsync(
+            order.CustomerId,
+            "Đơn hàng của bạn vừa chuyển sang trạng thái mới.",
+            notificationMessage,
+            NotificationReferenceType.Order,
+            order.Id,
+            cancellationToken);
         return finalResponse;
     }
     

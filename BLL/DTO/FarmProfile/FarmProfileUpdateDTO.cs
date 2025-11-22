@@ -41,6 +41,6 @@ public class FarmProfileUpdateDTO
     [EnumDataType(typeof(FarmProfileStatus), ErrorMessage = "Trạng thái phải là Active, Maintenance hoặc Deleted")]
     public FarmProfileStatus? Status { get; set; }
 
-    [StringLength(500, ErrorMessage = "Thông tin cây trồng chính không được vượt quá 500 ký tự")]
-    public string? PrimaryCrops { get; set; }
+    public List<CropsUpdateDTO>? CropsUpdate { get; set; }
+    public List<CropsCreateDTO>? CropsCreate { get; set; }
 }

@@ -22,8 +22,8 @@ namespace BLL.Services
             _mapper = mapper;
         }
         
-        //CATEGORY CHỈ CÓ THỂ CÓ TỐI ĐA 2 CẤP CHA
-        //Ví dụ: Máy móc -> Máy cày -> Máy cày mini là hợp lệ. Nhưng không thể thêm một category là con của Máy cày mini nữa.
+        //CATEGORY CHỈ CÓ THỂ CÓ TỐI ĐA 1 CẤP CHA
+        //Ví dụ: Máy móc -> Máy cày. Nhưng không thể thêm một category là con của Máy cày nữa.
         
         public async Task<ProductCategoryResponseDTO> CreateProductCategoryAsync(ProductCategoryCreateDTO dto, CancellationToken cancellationToken = default)
         {
@@ -32,8 +32,8 @@ namespace BLL.Services
                 throw new ArgumentException("Tên danh mục sản phẩm đã tồn tại");
             if (dto.ParentId != null)
             {
-                if (await _productCategoryRepository.IsCategoryHasMoreThan2FatherAsync(dto.ParentId.Value, cancellationToken))
-                    throw new KeyNotFoundException("Danh mục không được phép có nhiều hơn 2 cha hoặc không tìm thấy danh mục cha / đã bị xóa.");
+                if (await _productCategoryRepository.IsCategoryAlreadySonsAsync(dto.ParentId.Value, cancellationToken))
+                    throw new KeyNotFoundException("Danh mục được chỉ định làm cha đang là danh mục con của một mục khác.");
             }
             string slug = Utils.GenerateSlug(dto.Name);
             var productCategory = _mapper.Map<ProductCategory>(dto);
@@ -81,16 +81,12 @@ namespace BLL.Services
                     throw new ArgumentException("Tên danh mục sản phẩm đã tồn tại");
                 productCategory.Slug = Utils.GenerateSlug(dto.Name);
             }
-            if (dto.ParentId.HasValue)
+            if (dto.ParentId != null)
             {
-                if (await _productCategoryRepository.IsCategoryHasMoreThan2FatherAsync(dto.ParentId.Value, cancellationToken))
-                {
-                    throw new ArgumentException("Danh mục không được phép có nhiều hơn 2 cha hoặc danh mục cha không tồn tại.");
-                }
+                if (await _productCategoryRepository.IsCategoryAlreadySonsAsync(dto.ParentId.Value, cancellationToken))
+                    throw new KeyNotFoundException("Danh mục được chỉ định làm cha đang là danh mục con của một mục khác.");
                 if (dto.ParentId == productCategory.Id)
-                {
                     throw new ArgumentException("Category không thể có parent ID giống với chính ID của nó.");
-                }
             }
             _mapper.Map(dto, productCategory);
             var result = await _productCategoryRepository.UpdateProductCategoryAsync(productCategory, cancellationToken);

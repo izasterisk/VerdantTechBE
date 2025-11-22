@@ -15,16 +15,19 @@ public class PayOSService : IPayOSService
     private readonly IOrderRepository _orderRepository;
     private readonly ITransactionRepository _transactionRepository;
     private readonly IPaymentRepository _paymentRepository;
+    private readonly INotificationService _notificationService;
     private readonly string _frontEndUrl;
     private readonly IMapper _mapper;
     
     public PayOSService(IPayOSApiClient payOSApiClient, IOrderRepository orderRepository, 
-        ITransactionRepository transactionRepository, IPaymentRepository paymentRepository, IMapper mapper)
+        ITransactionRepository transactionRepository, IPaymentRepository paymentRepository, 
+        INotificationService notificationService, IMapper mapper)
     {
         _payOSApiClient = payOSApiClient;
         _orderRepository = orderRepository;
         _transactionRepository = transactionRepository;
         _paymentRepository = paymentRepository;
+        _notificationService = notificationService;
         _mapper = mapper;
         _frontEndUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ??
                        throw new InvalidOperationException("FRONTEND_URL không được cấu hình trong .env file");
@@ -124,6 +127,15 @@ public class PayOSService : IPayOSService
             };
             await _paymentRepository.UpdateFullPaymentWithTransactionAsync(payment, payment.Order, 
                 _mapper.Map<DAL.Data.Models.Transaction>(transaction), cancellationToken);
+            
+            await _notificationService.CreateAndSendNotificationAsync(
+                userId: payment.Order.CustomerId,
+                title: "Thanh toán thành công",
+                message: $"Đơn hàng #{payment.OrderId} đã được thanh toán thành công qua PayOS với số tiền {webhookData.amount:N0} VND.",
+                referenceType: NotificationReferenceType.Payment,
+                referenceId: payment.Id,
+                cancellationToken: cancellationToken
+            );
         }
         return webhookData;
     }

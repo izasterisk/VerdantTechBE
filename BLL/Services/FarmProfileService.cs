@@ -13,19 +13,35 @@ namespace BLL.Services
     {
         private readonly IFarmProfileRepository _farmRepo;
         private readonly IMapper _mapper;
+        private readonly IAddressRepository _addressRepo;
         
-        public FarmProfileService(IFarmProfileRepository farmRepo, IMapper mapper)
+        public FarmProfileService(IFarmProfileRepository farmRepo, IMapper mapper, IAddressRepository addressRepo)
         {
             _farmRepo = farmRepo;
             _mapper = mapper;
+            _addressRepo = addressRepo;
         }
         public async Task<FarmProfileResponseDTO> CreateFarmProfileAsync(ulong currentUserId, FarmProfileCreateDto dto, CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
             var address = _mapper.Map<Address>(dto);
             var farmProfile = _mapper.Map<FarmProfile>(dto);
             farmProfile.UserId = currentUserId;
-
-            var createdFarmProfile = await _farmRepo.CreateFarmProfileWithTransactionAsync(farmProfile, address, cancellationToken);
+            
+            List<Crop> crops = new List<Crop>();
+            if(dto.Crops != null)
+            {
+                var uniqueNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var crop in dto.Crops)
+                {
+                    if (!uniqueNames.Add(crop.CropName))
+                        throw new ArgumentException($"Tên cây trồng '{crop.CropName}' bị trùng lặp.");
+                    if(crop.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                        throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+                    crops.Add(_mapper.Map<Crop>(crop));
+                }
+            }
+            var createdFarmProfile = await _farmRepo.CreateFarmProfileWithTransactionAsync(farmProfile, address, crops, cancellationToken);
             var response = _mapper.Map<FarmProfileResponseDTO>(createdFarmProfile);
             
             var userDto = _mapper.Map<UserResponseDTO>(createdFarmProfile.User);
@@ -40,17 +56,44 @@ namespace BLL.Services
 
         public async Task<FarmProfileResponseDTO> UpdateFarmProfileAsync(ulong id, FarmProfileUpdateDTO dto, CancellationToken cancellationToken = default)
         {
-            var farmProfile = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: false, cancellationToken);
-            if (farmProfile == null)
-                throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
-            if (farmProfile.Address == null)
-                throw new InvalidOperationException("Địa chỉ của trang trại không tồn tại");
+            ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
+            var farmProfile = await _farmRepo.GetFarmProfileByFarmIdAsync(id, cancellationToken);
+            var address = await _addressRepo.GetAddressByIdAsync(farmProfile.AddressId, cancellationToken)
+                ?? throw new KeyNotFoundException("Không tìm thấy địa chỉ của trang trại.");
             
             AddressHelper.ValidateAddressFields(dto.Province, dto.ProvinceCode, dto.District, dto.DistrictCode, dto.Commune, dto.CommuneCode);
             _mapper.Map(dto, farmProfile);
-            _mapper.Map(dto, farmProfile.Address);
+            _mapper.Map(dto, address);
             
-            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, farmProfile.Address, cancellationToken);
+            List<Crop> crops = new List<Crop>();
+            if(dto.CropsUpdate != null && dto.CropsUpdate.Count > 0)
+            {
+                foreach (var cropDto in dto.CropsUpdate)
+                {
+                    if(cropDto.PlantingDate.HasValue && cropDto.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                        throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+                    if(cropDto.CropName != null && await _farmRepo.IsCropNameDuplicatedAsync(id, cropDto.CropName, cancellationToken))
+                        throw new ArgumentException($"Cây trồng với tên '{cropDto.CropName}' đã tồn tại trong trang trại.");
+                    
+                    var existingCrop = await _farmRepo.GetCropBelongToFarm(cropDto.Id, farmProfile.Id, cancellationToken);
+                    crops.Add(_mapper.Map(cropDto, existingCrop));
+                }
+            }
+            
+            if(dto.CropsCreate != null && dto.CropsCreate.Count > 0)
+            {
+                foreach (var cropDto in dto.CropsCreate)
+                {
+                    if(cropDto.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                        throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+                    if(await _farmRepo.IsCropNameDuplicatedAsync(id, cropDto.CropName, cancellationToken))
+                        throw new ArgumentException($"Cây trồng với tên '{cropDto.CropName}' đã tồn tại trong trang trại.");
+                    
+                    await _farmRepo.CreateCropAsync(id, _mapper.Map<Crop>(cropDto), cancellationToken);
+                }
+            }
+            
+            var updatedFarmProfile = await _farmRepo.UpdateFarmProfileWithTransactionAsync(farmProfile, address, crops, cancellationToken);
             var response = _mapper.Map<FarmProfileResponseDTO>(updatedFarmProfile);
             
             var userDto = _mapper.Map<UserResponseDTO>(updatedFarmProfile.User);
@@ -65,7 +108,7 @@ namespace BLL.Services
         
         public async Task<FarmProfileResponseDTO?> GetFarmProfileByFarmIdAsync(ulong id, CancellationToken cancellationToken = default)
         {
-            var entity = await _farmRepo.GetFarmProfileByFarmIdAsync(id, useNoTracking: true, cancellationToken);
+            var entity = await _farmRepo.GetFarmProfileWithRelationByFarmIdAsync(id, useNoTracking: true, cancellationToken);
             if (entity == null) return null;
             
             var response = _mapper.Map<FarmProfileResponseDTO>(entity);

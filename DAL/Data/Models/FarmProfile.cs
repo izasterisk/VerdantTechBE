@@ -18,8 +18,6 @@ public partial class FarmProfile
     public decimal? FarmSizeHectares { get; set; }
 
     public ulong AddressId { get; set; }
-    [StringLength(500)]
-    public string? PrimaryCrops { get; set; }
 
     public FarmProfileStatus Status { get; set; } = FarmProfileStatus.Active;
 
@@ -31,4 +29,5 @@ public partial class FarmProfile
     public virtual User User { get; set; } = null!;
     public virtual Address? Address { get; set; }
     public virtual ICollection<EnvironmentalDatum> EnvironmentalData { get; set; } = new List<EnvironmentalDatum>();
+    public virtual ICollection<Crop> Crops { get; set; } = new List<Crop>();
 }

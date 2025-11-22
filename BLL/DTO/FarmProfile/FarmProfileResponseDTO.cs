@@ -11,7 +11,7 @@ public class FarmProfileResponseDTO
     public decimal? FarmSizeHectares { get; set; }
     public AddressResponseDTO Address { get; set; } = null!;
     public string Status { get; set; } = null!;
-    public string? PrimaryCrops { get; set; } 
+    public List<CropsDTO> Crops { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

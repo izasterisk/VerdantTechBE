@@ -118,6 +118,13 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .WithMany(p => p.ForumPosts)
             .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+        ////  MEDIA LINKS RELATIONSHIP
+        //builder.HasMany(e => e.MediaLinks)
+        //    .WithOne()
+        //    .HasForeignKey(m => m.OwnerId)
+        //    .HasPrincipalKey(e => e.Id)
+        //    .OnDelete(DeleteBehavior.Cascade);
+
 
 
         // Indexes

@@ -17,7 +17,7 @@ public partial class User
     [StringLength(255)]
     public string PasswordHash { get; set; } = null!;
 
-    public UserRole Role { get; set; } = UserRole.Customer;
+    public UserRole Role { get; set; } 
 
     [Required]
     [StringLength(255)]
@@ -76,6 +76,7 @@ public partial class User
     public virtual ICollection<Cashout> CashoutsProcessed { get; set; } = new List<Cashout>();
     public virtual ICollection<Cashout> CashoutsAsUser { get; set; } = new List<Cashout>();
     public virtual ICollection<UserBankAccount> UserBankAccounts { get; set; } = new List<UserBankAccount>();
+    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         
     // Vendor-related relationships (when user is vendor)
     public virtual ICollection<Product> ProductsAsVendor { get; set; } = new List<Product>();

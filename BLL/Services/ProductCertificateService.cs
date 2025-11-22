@@ -82,7 +82,7 @@ namespace BLL.Services
                     CertificationCode = dto.CertificationCode,
                     CertificationName = dto.CertificationName
                 };
-                var created = await _repo.CreateAsync(entity, mediaLinks, ct);
+            var created = await _repo.CreateAsync(entity, mediaLinks, ct);
             var dtoRes = _mapper.Map<ProductCertificateResponseDTO>(created);
             dtoRes.Files = await _db.MediaLinks
             .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates && m.OwnerId == created.Id)
@@ -193,7 +193,7 @@ namespace BLL.Services
             OwnerId = 0,
             ImagePublicId = src.ImagePublicId,
             ImageUrl = src.ImageUrl,
-            Purpose =MediaPurpose.CertificatePdf,
+            Purpose =MediaPurpose.ProductCertificatePdf,
             SortOrder = src.SortOrder == 0 ? 1 : src.SortOrder,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

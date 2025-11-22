@@ -104,14 +104,6 @@ public enum RequestStatus
     Cancelled
 }
 
-public enum RequestPriority
-{
-    Low,
-    Medium,
-    High,
-    Urgent
-}
-
 // =====================================================
 // ORDER AND PAYMENT ENUMS
 // =====================================================
@@ -226,7 +218,8 @@ public enum ProductSerialStatus
 {
     Stock,
     Sold,
-    Refund
+    Refund,
+    Adjustment
 }
 
 // =====================================================
@@ -250,6 +243,23 @@ public enum MediaPurpose
     None,
     Front,
     Back,
-    CertificatePdf
+    ProductCertificatePdf,
+    VendorCertificatesPdf,
+    ProductImage
 }
+
+public enum NotificationReferenceType
+{
+    Order,
+    Payment,
+    Request,
+    ForumPost,
+    ForumComment,
+    ChatbotConversation,
+    Refund,
+    WalletCashout,
+    ProductRegistration,
+    EnvironmentalData
+}
+
 

@@ -12,16 +12,21 @@ public class RequestService : IRequestService
 {
     private readonly IRequestRepository _requestRepository;
     private readonly IMapper _mapper;
+    private readonly IUserRepository _userRepository;
+    private readonly INotificationService _notificationService;
     
-    public RequestService(IRequestRepository requestRepository, IMapper mapper)
+    public RequestService(IRequestRepository requestRepository, IMapper mapper, IUserRepository userRepository, INotificationService notificationService)
     {
         _requestRepository = requestRepository;
         _mapper = mapper;
+        _userRepository = userRepository;
+        _notificationService = notificationService;
     }
     
     public async Task<RequestResponseDTO> CreateRequestAsync(ulong userId, RequestCreateDTO dto, CancellationToken cancellationToken = default)
     {
         var request = _mapper.Map<Request>(dto);
+        await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
         request.UserId = userId;
         request.Status = RequestStatus.Pending;
         var images = _mapper.Map<List<MediaLink>>(dto.Images);
@@ -56,6 +61,25 @@ public class RequestService : IRequestService
         }
         request.Status = dto.Status;
         var updatedRequest = await _requestRepository.UpdateRequestAsync(request, cancellationToken);
+        
+        var notificationMessage = dto.Status switch
+        {
+            RequestStatus.InReview => "Yêu cầu của bạn đang được xem xét.",
+            RequestStatus.Approved => $"Yêu cầu của bạn đã được phê duyệt.",
+            RequestStatus.Rejected => $"Yêu cầu của bạn đã bị từ chối.",
+            RequestStatus.Completed => $"Yêu cầu của bạn đã được hoàn thành.",
+            RequestStatus.Cancelled => $"Yêu cầu của bạn đã bị hủy.",
+            _ => "Yêu cầu của bạn đã được cập nhật."
+        };
+        await _notificationService.CreateAndSendNotificationAsync(
+            request.UserId,
+            "Cập nhật yêu cầu",
+            notificationMessage,
+            NotificationReferenceType.Request,
+            updatedRequest.Id,
+            cancellationToken
+        );
+        
         var responseDto = _mapper.Map<RequestResponseDTO>(await _requestRepository.GetRequestByIdWithRelationsAsync(updatedRequest.Id, cancellationToken));
         var imgs = await _requestRepository.GetAllImagesByRequestIdAsync(updatedRequest.Id, cancellationToken);
         responseDto.Images = _mapper.Map<List<RequestImageDTO>>(imgs);

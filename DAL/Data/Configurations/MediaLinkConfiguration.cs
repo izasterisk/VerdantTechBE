@@ -39,14 +39,20 @@ internal static class MediaLinkEfMaps
         MediaPurpose.Front => "front",
         MediaPurpose.Back => "back",
         MediaPurpose.None => "none",
+        MediaPurpose.ProductCertificatePdf => "productcertificatepdf",
+        MediaPurpose.VendorCertificatesPdf => "vendorcertificatespdf",
+        MediaPurpose.ProductImage => "productimage",
         _ => "none"
     };
 
-    public static MediaPurpose PurposeFromDb(string s) => s switch
+    public static MediaPurpose PurposeFromDb(string s) => s.ToLowerInvariant() switch
     {
         "front" => MediaPurpose.Front,
         "back" => MediaPurpose.Back,
         "none" => MediaPurpose.None,
+        "productcertificatepdf" => MediaPurpose.ProductCertificatePdf,
+        "vendorcertificatespdf" => MediaPurpose.VendorCertificatesPdf,
+        "productimage" => MediaPurpose.ProductImage,
         _ => MediaPurpose.None
     };
 }
@@ -58,12 +64,12 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
         builder.ToTable("media_links");
 
         builder.HasKey(e => e.Id);
+
         builder.Property(e => e.Id)
             .HasColumnType("bigint unsigned")
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
-        // ==== Converters (không dùng switch-expression trong lambda) ====
         var ownerTypeConverter = new ValueConverter<MediaOwnerType, string>(
             v => MediaLinkEfMaps.OwnerTypeToDb(v),
             s => MediaLinkEfMaps.OwnerTypeFromDb(s));
@@ -74,7 +80,7 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
 
         builder.Property(e => e.OwnerType)
             .HasConversion(ownerTypeConverter)
-            .HasMaxLength(500)                 // đủ dài cho ENUM string
+            .HasMaxLength(500)                 
             .HasColumnType("enum('vendor_certificates','chatbot_messages','products','product_registrations','product_certificates','product_reviews','forum_posts','request')")
             .IsRequired()
             .HasColumnName("owner_type");
@@ -100,9 +106,10 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
         builder.Property(e => e.Purpose)
             .HasConversion(purposeConverter)
             .HasMaxLength(500)
-            .HasColumnType("enum('front','back','none')")
+            .HasColumnType("enum('front','back','none','productcertificatepdf','vendorcertificatesPdf','productimage')")
             .HasDefaultValue(MediaPurpose.None)
             .HasColumnName("purpose");
+
 
         builder.Property(e => e.SortOrder)
             .HasColumnType("int")

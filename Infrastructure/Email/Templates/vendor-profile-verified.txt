@@ -1,0 +1,23 @@
+﻿Hồ sơ nhà cung cấp VerdantTech đã được duyệt
+
+Chào mừng {{fullName}},
+
+Hồ sơ nhà cung cấp của bạn đã được DUYỆT trên hệ thống VerdantTech.
+
+Thông tin tài khoản đăng nhập của bạn:
+
+- Email đăng nhập: {{email}}
+- Mật khẩu: {{password}}
+
+LƯU Ý QUAN TRỌNG:
+Vì lý do bảo mật, bạn nên đăng nhập và đổi mật khẩu ngay lần đầu tiên sử dụng.
+Không chia sẻ tài khoản này cho bất kỳ ai khác.
+
+Chào mừng bạn trở thành đối tác của VerdantTech!
+Nếu cần hỗ trợ thêm, hãy liên hệ với bộ phận chăm sóc đối tác của chúng tôi.
+
+Trân trọng,
+Đội ngũ VerdantTech
+
+---
+© 2025 Verdant Tech Solution. All rights reserved.

@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 9.1
+-- Phiên bản: 9.2
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -139,7 +139,6 @@ CREATE TABLE farm_profiles (
     farm_name VARCHAR(255) NOT NULL,
     farm_size_hectares DECIMAL(10,2),
     address_id BIGINT UNSIGNED NULL,
-    primary_crops VARCHAR(500) COMMENT 'Các loại cây trồng chính, danh sách phân cách bằng dấu phẩy',
     status ENUM('Active', 'Maintenance', 'Deleted') DEFAULT 'Active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -148,6 +147,21 @@ CREATE TABLE farm_profiles (
     INDEX idx_user (user_id),
     INDEX idx_address (address_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hồ sơ trang trại cho người dùng nông dân';
+
+-- Bảng cây trồng cho trang trại
+CREATE TABLE crops (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    farm_profile_id BIGINT UNSIGNED NOT NULL,
+    crop_name VARCHAR(255) NOT NULL COMMENT 'Tên loại cây trồng',
+    planting_date DATE NOT NULL COMMENT 'Ngày trồng',
+    is_active BOOLEAN DEFAULT TRUE COMMENT 'Trạng thái hoạt động',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
+    INDEX idx_farm_profile (farm_profile_id),
+    INDEX idx_is_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý cây trồng của trang trại (một trang trại có nhiều cây trồng)';
 
 -- Dữ liệu giám sát môi trường
 CREATE TABLE environmental_data (
@@ -209,16 +223,15 @@ CREATE TABLE energy_usage (
 CREATE TABLE chatbot_conversations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT UNSIGNED NOT NULL,
-    session_id VARCHAR(255) NOT NULL,
+    session_id VARCHAR(255) NOT NULL COMMENT 'UUID session identifier',
     title VARCHAR(255),
     context TEXT COMMENT 'Bối cảnh cuộc hội thoại và metadata',
     is_active BOOLEAN DEFAULT TRUE,
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ended_at TIMESTAMP NULL,
 
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_customer (customer_id),
-    INDEX idx_session (session_id)
+    INDEX idx_session_id (session_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các phiên hội thoại chatbot';
 
 -- Tin nhắn chatbot
@@ -359,7 +372,7 @@ CREATE TABLE product_registrations (
     proposed_product_name VARCHAR(255) NOT NULL,
     description TEXT,
     unit_price DECIMAL(12,2) NOT NULL COMMENT 'Đơn giá sản phẩm đề xuất',
-    energy_efficiency_rating INT CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5) COMMENT 'Xếp hạng hiệu suất năng lượng (0-5)',
+    energy_efficiency_rating DECIMAL(3,1) CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5) COMMENT 'Xếp hạng hiệu suất năng lượng (0-5)',
     specifications JSON COMMENT 'Thông số kỹ thuật dưới dạng cặp khóa-giá trị',
     manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn/sổ tay, phân cách bằng dấu phẩy',
     public_url VARCHAR(500) COMMENT 'URL công khai cho manual files',
@@ -425,8 +438,8 @@ CREATE TABLE media_links (
     owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
-    image_public_id VARCHAR(512) NOT NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
-    purpose ENUM('front', 'back', 'none', "certificate_pdf") DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
+    image_public_id VARCHAR(512) NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
+    purpose ENUM('front', 'back', 'none', 'vendorcertificate_pdf','productcertificate_pdf','productimage') DEFAULT 'none' COMMENT 'Mục đích của hình ảnh: front (ảnh chính), back (ảnh phụ), none (không xác định)',
     sort_order INT NOT NULL DEFAULT 0 COMMENT 'Thứ tự hiển thị',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -560,7 +573,7 @@ CREATE TABLE product_serials (
     batch_inventory_id BIGINT UNSIGNED NOT NULL,
     product_id BIGINT UNSIGNED NOT NULL,
     serial_number VARCHAR(255) UNIQUE NOT NULL COMMENT 'Số seri sản phẩm (có thể chứa chữ và số)',
-    status ENUM('stock', 'sold', 'refund') DEFAULT 'stock' COMMENT 'Trạng thái sản phẩm: stock (trong kho), sold (đã bán), refund (đã hoàn trả)',
+    status ENUM('stock', 'sold', 'refund', 'adjustment') DEFAULT 'stock' COMMENT 'Trạng thái sản phẩm: stock (trong kho), sold (đã bán), refund (đã hoàn trả), adjustment (điều chỉnh)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -704,6 +717,60 @@ CREATE TABLE wallets (
     FOREIGN KEY (last_updated_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_vendor (vendor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Ví nhà cung cấp theo dõi số dư';
+
+-- =====================================================
+-- CÁC BẢNG THÔNG BÁO
+-- =====================================================
+
+-- Bảng thông báo cho người dùng
+CREATE TABLE notifications (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người nhận thông báo (customer, vendor, staff, admin)',
+    title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề thông báo (hiển thị ngắn gọn)',
+    message TEXT NOT NULL COMMENT 'Nội dung chi tiết thông báo',
+    reference_type ENUM('order', 'payment', 'request', 'forum_post', 'chatbot_conversation', 'refund', 'wallet_cashout', 'product_registration', 'environmental_data') NULL COMMENT 'Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết',
+    reference_id BIGINT UNSIGNED NULL COMMENT 'ID của entity tham chiếu (ví dụ: order_id, post_id)',
+    is_read BOOLEAN DEFAULT FALSE COMMENT 'Thông báo đã đọc chưa (dùng để filter hiển thị)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_user_read (user_id, is_read),
+    INDEX idx_reference (reference_type, reference_id),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ thông báo cho người dùng, hỗ trợ real-time qua SignalR. Hard delete khi user xóa.';
+
+-- =====================================================
+-- TỔNG QUAN THAY ĐỔI v9.2 (từ v9.1)
+-- =====================================================
+
+-- VII) THÊM BẢNG NOTIFICATIONS (HỆ THỐNG THÔNG BÁO)
+-- • Tạo bảng mới: notifications
+-- • Mục đích: Lưu trữ thông báo cho người dùng về các sự kiện quan trọng
+-- • Các trường chính:
+--   + user_id: Người nhận thông báo (hỗ trợ tất cả role: customer, vendor, staff, admin)
+--   + title: Tiêu đề ngắn gọn (hiển thị trong danh sách)
+--   + message: Nội dung chi tiết thông báo
+--   + reference_type: ENUM loại entity tham chiếu (order, payment, request, forum_post, chatbot_conversation, refund, wallet_cashout, product_registration, environmental_data)
+--   + reference_id: ID của entity được tham chiếu (để link đến chi tiết)
+--   + is_read: Trạng thái đã đọc (dùng để filter, highlight thông báo mới)
+-- • Indexes:
+--   + idx_user_read (user_id, is_read): Tối ưu query lấy thông báo chưa đọc của user
+--   + idx_reference (reference_type, reference_id): Tối ưu query theo entity tham chiếu
+--   + idx_created (created_at): Tối ưu sắp xếp theo thời gian
+-- • Tính năng:
+--   - Hỗ trợ real-time notification qua SignalR
+--   - Hard delete khi user xóa thông báo (không dùng soft delete)
+--   - Linh hoạt link đến bất kỳ entity nào trong hệ thống
+-- • Use cases:
+--   + Thông báo đơn hàng mới/cập nhật trạng thái (order)
+--   + Thông báo thanh toán thành công/thất bại (payment)
+--   + Thông báo yêu cầu được duyệt/từ chối (request)
+--   + Thông báo bình luận mới trên forum (forum_post)
+--   + Thông báo hoàn tiền thành công (refund)
+--   + Thông báo rút tiền từ ví thành công (wallet_cashout)
+--   + Thông báo đăng ký sản phẩm được duyệt (product_registration)
+--   + Thông báo nhắc nhập dữ liệu môi trường (environmental_data)
 
 -- =====================================================
 -- TỔNG QUAN THAY ĐỔI v9.1 (từ v9.0)

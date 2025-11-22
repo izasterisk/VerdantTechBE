@@ -149,7 +149,18 @@ namespace DAL.Repositories
             return true;
         }
 
-        // ========== Helpers ==========
+        public async Task UpdateStockAsync(ulong productId, int newQuantity, CancellationToken ct = default)
+        {
+            var product = await _db.Products.FirstOrDefaultAsync(x => x.Id == productId, ct);
+            if (product == null) return;
+
+            product.StockQuantity = newQuantity;
+            product.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync(ct);
+        }
+
+
         private static void NormalizePaging(ref int page, ref int pageSize)
         {
             if (page <= 0) page = 1;
@@ -170,10 +181,7 @@ namespace DAL.Repositories
                 .ThenBy(m => m.SortOrder)
                 .ToListAsync(ct);
 
-            // Ở repo mình chỉ “kéo” ảnh để Service map ra DTO.
-            // Nếu entity Product có nav list (vd: List<MediaLink> ProductImages), có thể gán ở đây:
-            // var map = medias.GroupBy(m => m.OwnerId).ToDictionary(g => g.Key, g => g.ToList());
-            // foreach (var p in products) if (map.TryGetValue(p.Id, out var imgs)) p.ProductImages = imgs;
+            
         }
     }
 }
