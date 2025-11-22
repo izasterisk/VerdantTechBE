@@ -18,7 +18,7 @@ public class ForumPostRepository : IForumPostRepository
     {
         return await _context.ForumPosts
              .AsNoTracking()
-             .Include(x => x.MediaLinks)
+             //.Include(x => x.MediaLinks)
              //.Include(x => x.Content)
              .OrderByDescending(x => x.CreatedAt)
              .Skip((page - 1) * pageSize)
@@ -33,7 +33,7 @@ public class ForumPostRepository : IForumPostRepository
         return await _context.ForumPosts
             .AsNoTracking()
             .Where(x => x.ForumCategoryId == categoryId)
-            .Include(x => x.MediaLinks)
+            //.Include(x => x.MediaLinks)
             //.Include(x => x.Content)
             .OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize)
@@ -44,15 +44,24 @@ public class ForumPostRepository : IForumPostRepository
    
     public async Task<ForumPost?> GetDetailAsync(ulong id, CancellationToken ct = default)
     {
-        return await _context.ForumPosts
+        var post = await _context.ForumPosts
             .Include(x => x.ForumCategory)
             .Include(x => x.User)
             //.Include(x => x.Content)
-            .Include(x => x.MediaLinks)
+            //.Include(x => x.MediaLinks)
             .Include(x => x.ForumComments).ThenInclude(c => c.User)
             .Include(x => x.ForumComments).ThenInclude(c => c.InverseParent)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (post != null)
+        {
+            post.MediaLinks = await _context.MediaLinks
+                .Where(m => m.OwnerType == MediaOwnerType.ForumPosts && m.OwnerId == id)
+                .OrderBy(m => m.SortOrder)
+                .ToListAsync(ct);
+        }
+
+        return post;
     }
 
    
@@ -168,13 +177,21 @@ public class ForumPostRepository : IForumPostRepository
     
     public async Task<ForumPost?> GetPostWithCommentsAsync(ulong id, CancellationToken ct = default)
     {
-        return await _context.ForumPosts
+        var post = await _context.ForumPosts
             //.Include(x => x.Content)
-            .Include(x => x.MediaLinks)
+            //.Include(x => x.MediaLinks)
             .Include(x => x.ForumComments).ThenInclude(c => c.User)
             .Include(x => x.ForumComments).ThenInclude(c => c.InverseParent)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id, ct);
+        if (post != null)
+        {
+            post.MediaLinks = await _context.MediaLinks
+                .Where(m => m.OwnerType == MediaOwnerType.ForumPosts && m.OwnerId == id)
+                .OrderBy(m => m.SortOrder)
+                .ToListAsync(ct);
+        }
+        return post;
     }
 
     public async Task<bool> SlugExistsAsync(string slug, CancellationToken ct)
