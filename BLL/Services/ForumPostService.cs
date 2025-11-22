@@ -61,6 +61,7 @@ namespace BLL.Services
             var dto = _mapper.Map<ForumPostResponseDTO>(post);
 
             dto.Images = post.MediaLinks?
+                .Where(m => m.OwnerType == MediaOwnerType.ForumPosts)
                 .OrderBy(m => m.SortOrder)
                 .Select(m => new MediaLinkItemDTO
                 {
@@ -69,7 +70,8 @@ namespace BLL.Services
                     ImageUrl = m.ImageUrl,
                     SortOrder = m.SortOrder,
                     Purpose = m.Purpose.ToString()
-                }).ToList() ?? new List<MediaLinkItemDTO>();
+                })
+                .ToList() ?? new List<MediaLinkItemDTO>();
 
             dto.Comments = post.ForumComments
                 .Where(c => c.ParentId == null)
@@ -90,15 +92,17 @@ namespace BLL.Services
             var dto = _mapper.Map<ForumPostResponseDTO>(post);
 
             dto.Images = post.MediaLinks?
-                .OrderBy(m => m.SortOrder)
-                .Select(m => new MediaLinkItemDTO
-                {
-                    Id = m.Id,
-                    ImagePublicId = m.ImagePublicId,
-                    ImageUrl = m.ImageUrl,
-                    SortOrder = m.SortOrder,
-                    Purpose = m.Purpose.ToString()
-                }).ToList() ?? new List<MediaLinkItemDTO>();
+               .Where(m => m.OwnerType == MediaOwnerType.ForumPosts)
+               .OrderBy(m => m.SortOrder)
+               .Select(m => new MediaLinkItemDTO
+               {
+                   Id = m.Id,
+                   ImagePublicId = m.ImagePublicId,
+                   ImageUrl = m.ImageUrl,
+                   SortOrder = m.SortOrder,
+                   Purpose = m.Purpose.ToString()
+               })
+               .ToList() ?? new List<MediaLinkItemDTO>();
 
             dto.Comments = post.ForumComments
                 .Where(c => c.ParentId == null)
@@ -185,14 +189,18 @@ namespace BLL.Services
             var result = _mapper.Map<ForumPostResponseDTO>(post);
 
             // Map images
-            result.Images = mediaEntities?.Select(m => new MediaLinkItemDTO
+            result.Images = mediaEntities?
+            .Where(m => m.OwnerType == MediaOwnerType.ForumPosts)
+            .OrderBy(m => m.SortOrder)
+            .Select(m => new MediaLinkItemDTO
             {
                 Id = m.Id,
                 ImagePublicId = m.ImagePublicId,
                 ImageUrl = m.ImageUrl,
                 SortOrder = m.SortOrder,
                 Purpose = m.Purpose.ToString()
-            }).ToList();
+            })
+            .ToList();
 
             return result;
         }
