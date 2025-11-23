@@ -12,19 +12,21 @@ public class CashoutRepository : ICashoutRepository
     private readonly IRepository<Order> _orderRepository;
     private readonly IRepository<Payment> _paymentRepository;
     private readonly IRepository<ProductSerial> _productSerialRepository; 
+    private readonly IRepository<Request> _requestRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IWalletRepository _walletRepository;
     
     public CashoutRepository(IRepository<Cashout> cashoutRepository, IRepository<Transaction> transactionRepository,
         IRepository<Order> orderRepository, IRepository<Payment> paymentRepository,
-        IRepository<ProductSerial> productSerialRepository, VerdantTechDbContext dbContext,
-        IWalletRepository walletRepository)
+        IRepository<ProductSerial> productSerialRepository, IRepository<Request> requestRepository,
+        VerdantTechDbContext dbContext, IWalletRepository walletRepository)
     {
         _cashoutRepository = cashoutRepository;
         _transactionRepository = transactionRepository;
         _orderRepository = orderRepository;
         _paymentRepository = paymentRepository;
         _productSerialRepository = productSerialRepository;
+        _requestRepository = requestRepository;
         _dbContext = dbContext;
         _walletRepository = walletRepository;
     }
@@ -59,7 +61,7 @@ public class CashoutRepository : ICashoutRepository
     }
 
     public async Task<Cashout> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr, 
-        Order order, List<ProductSerial> serialIds, CancellationToken cancellationToken = default)
+        Order order, Request request, List<ProductSerial> serialIds, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -67,6 +69,10 @@ public class CashoutRepository : ICashoutRepository
             order.UpdatedAt = DateTime.UtcNow;
             order.Status = OrderStatus.Refunded;
             await _orderRepository.UpdateAsync(order, cancellationToken);
+            
+            request.UpdatedAt = DateTime.UtcNow;
+            request.Status = RequestStatus.Completed;
+            await _requestRepository.UpdateAsync(request, cancellationToken);
             
             var payment = await _paymentRepository.GetAsync(u => u.OrderId == order.Id, true, cancellationToken) ?? 
                 throw new KeyNotFoundException("Không tìm thấy thanh toán liên quan đến đơn hàng.");
