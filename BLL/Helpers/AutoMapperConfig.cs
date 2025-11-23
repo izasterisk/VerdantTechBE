@@ -83,6 +83,7 @@ namespace BLL.Helpers
             CreateMap<Address, AddressResponseDTO>().ReverseMap();
             CreateMap<UserAddress, AddressResponseDTO>()
                 .IncludeMembers(src => src.Address)
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Address.Id))
                 .ForMember(dest => dest.IsDeleted, opt => opt.MapFrom(src => src.IsDeleted))
                 .ForMember(dest => dest.DeletedAt, opt => opt.MapFrom(src => src.DeletedAt));
 
