@@ -23,6 +23,8 @@ public partial class ProductCategory
 
     public bool IsActive { get; set; } = true;
 
+    public bool SerialRequired { get; set; } = false;
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

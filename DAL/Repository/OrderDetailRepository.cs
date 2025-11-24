@@ -83,10 +83,12 @@ public class OrderDetailRepository : IOrderDetailRepository
     
     public async Task<ProductSerial?> ValidateIdentifyNumberAsync(ulong productId, string? serialNumber, string lotNumber, CancellationToken cancellationToken = default)
     {
-        var product = await _productRepository.GetAsync(p => p.Id == productId && p.IsActive, true, cancellationToken) ??
+        var product = await _productRepository.GetWithRelationsAsync(p => p.Id == productId && p.IsActive,
+                          true, 
+                          query => query.Include(p => p.Category), 
+                          cancellationToken) ??
                       throw new KeyNotFoundException("Sản phẩm không còn tồn tại.");
-        var categoryId = product.CategoryId;
-        if (categoryId is 24 or 25 or 28 or 29)
+        if (product.Category.SerialRequired == true)
         {
             if (serialNumber == null)
                 throw new InvalidExpressionException("Với danh mục máy móc bắt buộc phải có số sê-ri.");

@@ -18,6 +18,8 @@ namespace BLL.DTO.ProductCategory
         [StringLength(255, ErrorMessage = "Mô tả không được vượt quá 255 ký tự")]
         public string? Description { get; set; }
         
-        public bool? IsActive { get; set; } = true;
+        public bool? IsActive { get; set; }
+        
+        public bool? SerialRequired { get; set; }
     }
 }

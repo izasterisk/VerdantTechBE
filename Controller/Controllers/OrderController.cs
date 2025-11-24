@@ -77,7 +77,7 @@ public class OrderController : BaseController
     [HttpPost("{orderId:long}/ship")]
     [Authorize(Roles = "Admin, Staff")]
     [EndpointSummary("Ship Order")]
-    [EndpointDescription("Gửi sản phẩm đi, nếu là máy móc category ID = 24/25/28/29 thì chỉ cần nhập số seri, tất cả các loại khác thì chỉ cần nhập số lô không cần seri.")]
+    [EndpointDescription("Gửi sản phẩm đi, nếu là máy móc thì cần nhập số seri, tất cả các loại khác thì chỉ cần nhập số lô không cần seri.")]
     public async Task<ActionResult<APIResponse>> ShipOrder([FromRoute] ulong orderId,
         [FromBody] List<OrderDetailsShippingDTO> dtos)
     {

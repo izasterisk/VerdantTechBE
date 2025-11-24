@@ -404,7 +404,7 @@ function generateCategories(products) {
     
     const totalSubs = Array.from(categoryMap.values()).reduce((sum, cat) => sum + cat.subs.size, 0);
     let sql = `-- Insert Product Categories (11 parent + ${totalSubs} sub categories)\n`;
-    sql += `INSERT INTO product_categories (id, parent_id, name, slug, description, is_active, created_at, updated_at) VALUES\n`;
+    sql += `INSERT INTO product_categories (id, parent_id, name, slug, description, is_active, serial_required, created_at, updated_at) VALUES\n`;
     
     const rows = [];
     let catId = 1;
@@ -412,7 +412,7 @@ function generateCategories(products) {
     // Parent categories
     for (const [key, cat] of categoryMap) {
         const slug = slugify(cat.name);
-        rows.push(`(${catId}, NULL, '${escapeSQL(cat.name)}', '${slug}', 'Danh mục ${escapeSQL(cat.name)}', 1, NOW(), NOW())`);
+        rows.push(`(${catId}, NULL, '${escapeSQL(cat.name)}', '${slug}', 'Danh mục ${escapeSQL(cat.name)}', 1, 0, NOW(), NOW())`);
         cat.dbId = catId;
         catId++;
     }
@@ -421,7 +421,8 @@ function generateCategories(products) {
     for (const [key, cat] of categoryMap) {
         for (const [subKey, sub] of cat.subs) {
             const slug = slugify(sub.name);
-            rows.push(`(${catId}, ${cat.dbId}, '${escapeSQL(sub.name)}', '${slug}', 'Danh mục con ${escapeSQL(sub.name)}', 1, NOW(), NOW())`);
+            const serialRequired = [24, 25, 28, 29].includes(catId) ? 1 : 0;
+            rows.push(`(${catId}, ${cat.dbId}, '${escapeSQL(sub.name)}', '${slug}', 'Danh mục con ${escapeSQL(sub.name)}', 1, ${serialRequired}, NOW(), NOW())`);
             sub.dbId = catId;
             catId++;
         }
