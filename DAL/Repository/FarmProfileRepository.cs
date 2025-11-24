@@ -145,4 +145,19 @@ public class FarmProfileRepository : IFarmProfileRepository
         return await _cropRepository.GetAsync(c => c.Id == cropId && c.FarmProfileId == farmId, true, cancellationToken)
             ?? throw new KeyNotFoundException("Cây trồng không thuộc về trang trại hoặc không tồn tại");
     }
+    
+    public async Task CreateCropAsync(ulong farmId, Crop crop, CancellationToken cancellationToken = default)
+    {
+        crop.FarmProfileId = farmId;
+        crop.CreatedAt = DateTime.UtcNow;
+        crop.UpdatedAt = DateTime.UtcNow;
+        crop.IsActive = true;
+        await _cropRepository.CreateAsync(crop, cancellationToken);
+    }
+    
+    public async Task<bool> IsCropNameDuplicatedAsync(ulong farmId, string cropName, CancellationToken cancellationToken = default)
+    {
+        return await _cropRepository.AnyAsync(c => c.FarmProfileId == farmId 
+            && c.CropName.Equals(cropName, StringComparison.OrdinalIgnoreCase), cancellationToken);
+    }
 }

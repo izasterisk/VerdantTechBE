@@ -31,12 +31,13 @@ namespace BLL.Services
             List<Crop> crops = new List<Crop>();
             if(dto.Crops != null)
             {
+                var uniqueNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var crop in dto.Crops)
                 {
+                    if (!uniqueNames.Add(crop.CropName))
+                        throw new ArgumentException($"Tên cây trồng '{crop.CropName}' bị trùng lặp.");
                     if(crop.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
-                    {
                         throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
-                    }
                     crops.Add(_mapper.Map<Crop>(crop));
                 }
             }
@@ -65,15 +66,30 @@ namespace BLL.Services
             _mapper.Map(dto, address);
             
             List<Crop> crops = new List<Crop>();
-            if(dto.Crops != null && dto.Crops.Count > 0)
+            if(dto.CropsUpdate != null && dto.CropsUpdate.Count > 0)
             {
-                foreach (var cropDto in dto.Crops)
+                foreach (var cropDto in dto.CropsUpdate)
                 {
                     if(cropDto.PlantingDate.HasValue && cropDto.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
                         throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+                    if(cropDto.CropName != null && await _farmRepo.IsCropNameDuplicatedAsync(id, cropDto.CropName, cancellationToken))
+                        throw new ArgumentException($"Cây trồng với tên '{cropDto.CropName}' đã tồn tại trong trang trại.");
                     
                     var existingCrop = await _farmRepo.GetCropBelongToFarm(cropDto.Id, farmProfile.Id, cancellationToken);
                     crops.Add(_mapper.Map(cropDto, existingCrop));
+                }
+            }
+            
+            if(dto.CropsCreate != null && dto.CropsCreate.Count > 0)
+            {
+                foreach (var cropDto in dto.CropsCreate)
+                {
+                    if(cropDto.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                        throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+                    if(await _farmRepo.IsCropNameDuplicatedAsync(id, cropDto.CropName, cancellationToken))
+                        throw new ArgumentException($"Cây trồng với tên '{cropDto.CropName}' đã tồn tại trong trang trại.");
+                    
+                    await _farmRepo.CreateCropAsync(id, _mapper.Map<Crop>(cropDto), cancellationToken);
                 }
             }
             
