@@ -25,6 +25,7 @@ namespace BLL.DTO.VendorProfile
         public string CompanyName { get; set; } = null!;
         public string? Slug { get; set; } = null!;
         public string? BusinessRegistrationNumber { get; set; }
+        public string? Notes { get; set; }
         public string? CompanyAddress { get; set; }
         public string? Province { get; set; }
         public string? District { get; set; }

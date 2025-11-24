@@ -10,6 +10,7 @@ public interface IEmailSender
     Task SendStaffAccountCreatedEmailAsync(string toEmail, string fullName, string password, CancellationToken cancellationToken = default);
     Task SendVendorProfileVerifiedEmailAsync(string toEmail, string fullName, string loginEmail, string password, CancellationToken cancellationToken = default);
     Task SendVendorProfileRejectedEmailAsync(string toEmail, string fullName, string reason, CancellationToken cancellationToken = default);
+    Task SendVendorProfileSubmittedEmailAsync( string email, string fullName, CancellationToken ct = default);
 }
 
 

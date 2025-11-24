@@ -7,8 +7,9 @@ Rất tiếc, hồ sơ nhà cung cấp của bạn hiện CHƯA ĐƯỢC DUYỆT
 Lý do:
 {{reason}}
 
-Bạn vui lòng kiểm tra và cập nhật lại thông tin theo hướng dẫn ở trên.
-Sau khi hoàn tất chỉnh sửa, bạn có thể gửi lại hồ sơ để chúng tôi xem xét lần nữa.
+Vui lòng kiểm tra lại thông tin hồ sơ theo nội dung ở trên.
+Sau khi kiểm tra và cập nhật, bạn có thể gửi lại hồ sơ để chúng tôi xem xét lại.
+Trong trường hợp hồ sơ vẫn không đáp ứng yêu cầu, hệ thống sẽ tiếp tục từ chối hồ sơ của bạn.
 
 Nếu cần hỗ trợ thêm, hãy liên hệ với bộ phận chăm sóc đối tác của VerdantTech.
 

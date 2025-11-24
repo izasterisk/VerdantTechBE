@@ -56,7 +56,41 @@ namespace BLL.Service
             var user = await CreateVendorUserAsync(dto, ct);
 
             // 4. Tạo VendorProfile với slug auto-generate
-            var vendorProfile = await CreateVendorProfileAsync(user, dto, ct);
+            //var vendorProfile = await CreateVendorProfileAsync(user, dto, ct);
+
+            var existingProfile = await _vendorProfileRepository.GetByUserIdAsync(user.Id, ct);
+
+            VendorProfile vendorProfile;
+
+            if (existingProfile != null)
+            {
+                var oldCompanyName = existingProfile.CompanyName;
+
+                existingProfile.CompanyName = dto.CompanyName;
+                existingProfile.BusinessRegistrationNumber = dto.BusinessRegistrationNumber;
+
+                if (!string.Equals(oldCompanyName, dto.CompanyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    existingProfile.Slug = await GenerateUniqueSlugAsync(dto.CompanyName, ct);
+                }
+
+                existingProfile.VerifiedAt = null;
+                existingProfile.VerifiedBy = null;
+                existingProfile.Notes = null;
+                existingProfile.UpdatedAt = DateTime.UtcNow;
+
+                await _vendorProfileRepository.UpdateAsync(existingProfile, ct);
+                vendorProfile = existingProfile;
+
+                await _vendorCertificateRepository.DeleteAllByVendorIdAsync(user.Id, ct);
+            }
+            else
+            {
+                vendorProfile = await CreateVendorProfileAsync(user, dto, ct);
+            }
+
+
+
 
             // 5. Tạo Address (nếu có)
             await CreateUserAddressIfNeededAsync(user.Id, dto, ct);
@@ -64,7 +98,14 @@ namespace BLL.Service
             // 6. Tạo VendorCertificate + Media cho từng chứng chỉ
             await CreateVendorCertificatesAsync(user.Id, codes, names, mediaList, ct);
 
-            // 7. Map response
+            // 7. Email: gửi thông báo đăng ký thành công – đang chờ duyệt
+            await _emailSender.SendVendorProfileSubmittedEmailAsync(
+                user.Email!,
+                user.FullName ?? user.Email!,
+                ct
+            );
+
+            //8. Trả về kết quả
             vendorProfile.User = user;
             return await MapToResponseWithAddressAsync(vendorProfile, ct);
         }
@@ -105,7 +146,7 @@ namespace BLL.Service
         {
             // 1. VendorProfile
             var vp = await _vendorProfileRepository.GetByIdAsync(dto.Id, ct)
-                     ?? throw new KeyNotFoundException("VendorProfile không tồn tại");
+                     ?? throw new InvalidOperationException("Hồ sơ vendor không tồn tại.");
 
             //vp.CompanyName = dto.CompanyName;
             // vp.Slug = dto.Slug ?? vp.Slug;
@@ -147,7 +188,7 @@ namespace BLL.Service
         public async Task DeleteAsync(ulong id, CancellationToken ct = default)
         {
             var vp = await _vendorProfileRepository.GetByIdAsync(id, ct)
-                     ?? throw new KeyNotFoundException("VendorProfile không tồn tại");
+                     ?? throw new InvalidOperationException("Hồ sơ vendor không tồn tại.");
 
             await _vendorProfileRepository.DeleteAsync(vp, ct);
         }
@@ -165,6 +206,7 @@ namespace BLL.Service
 
             // 1. User: verify = true
             user.IsVerified = true;
+            user.Status = UserStatus.Active;
             user.VerificationSentAt = now;
             user.UpdatedAt = now;
             await _userRepository.UpdateUserWithTransactionAsync(user, ct);
@@ -205,6 +247,7 @@ namespace BLL.Service
 
             // 1. User: mark not verified
             user.IsVerified = false;
+            user.Status = UserStatus.Inactive;
             user.VerificationSentAt = now;
             user.UpdatedAt = now;
             await _userRepository.UpdateUserWithTransactionAsync(user, ct);
@@ -212,6 +255,7 @@ namespace BLL.Service
             // 2. VendorProfile
             vp.VerifiedAt = now;
             vp.VerifiedBy = dto.VerifiedBy;
+            vp.Notes = dto.RejectionReason;
             vp.UpdatedAt = now;
             await _vendorProfileRepository.UpdateAsync(vp, ct);
 
@@ -239,13 +283,17 @@ namespace BLL.Service
         private static void ValidateEmail(string? email)
         {
             if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("Email không được rỗng.", nameof(email));
+                //throw new ArgumentException("Email không được rỗng.", nameof(email));
+                throw new InvalidOperationException("Email không được để trống.");
+
         }
 
         private static void ValidatePassword(string? password)
         {
             if (string.IsNullOrWhiteSpace(password))
-                throw new ArgumentException("Password không được rỗng.", nameof(password));
+                //throw new ArgumentException("Password không được rỗng.", nameof(password));
+                throw new InvalidOperationException("Mật khẩu không được để trống.");
+
         }
 
         private static (List<string> Codes, List<string> Names, List<MediaLink> MediaList)
@@ -258,16 +306,16 @@ namespace BLL.Service
             var mediaList = addVendorCertificateFiles?.ToList() ?? new List<MediaLink>();
 
             if (codes.Count == 0)
-                throw new ArgumentException("CertificationCode không được rỗng.");
+                throw new InvalidOperationException("Thiếu mã chứng chỉ.");
 
             if (names.Count == 0)
-                throw new ArgumentException("CertificationName không được rỗng.");
+                throw new InvalidOperationException("Thiếu tên chứng chỉ.");
 
             if (mediaList.Count == 0)
-                throw new ArgumentException("Danh sách file chứng chỉ không được rỗng.");
+                throw new InvalidOperationException("Thiếu file chứng chỉ.");
 
             if (codes.Count != names.Count || codes.Count != mediaList.Count)
-                throw new ArgumentException("CertificationCode[], CertificationName[] và files phải có chung số lượng.");
+                throw new InvalidOperationException("Số lượng mã – tên – file chứng chỉ không khớp.");
 
             return (codes, names, mediaList);
         }
@@ -284,12 +332,83 @@ namespace BLL.Service
                    || !string.IsNullOrWhiteSpace(commune);
         }
 
-       
+
+
+        //private async Task<User> CreateVendorUserAsync(
+        //    VendorProfileCreateDTO dto,
+        //    CancellationToken ct)
+        //{
+        //    var user = new User
+        //    {
+        //        Email = dto.Email,
+        //        PasswordHash = AuthUtils.HashPassword(dto.Password),
+        //        FullName = dto.FullName ?? "",
+        //        PhoneNumber = dto.PhoneNumber,
+        //        TaxCode = dto.TaxCode,
+        //        Role = UserRole.Vendor,
+        //        Status = UserStatus.Inactive,
+        //        IsVerified = false,
+        //        CreatedAt = DateTime.UtcNow,
+        //        UpdatedAt = DateTime.UtcNow
+        //    };
+
+        //    try
+        //    {
+        //        user = await _userRepository.CreateUserWithTransactionAsync(user, ct);
+        //        user.Role = UserRole.Vendor;
+        //        user.Status = UserStatus.Inactive;
+        //        await _userRepository.UpdateUserWithTransactionAsync(user, ct);
+        //        return user;
+        //    }
+        //    catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("idx_email") == true)
+        //    {
+        //        // Lấy user cũ
+        //        var existingUser = await _vendorProfileRepository.GetUserByEmailAsync(dto.Email, ct);
+
+        //        if (existingUser == null)
+        //            throw;
+
+        //        // Ghi đè thông tin cần thiết
+        //        existingUser.FullName = dto.FullName ?? existingUser.FullName;
+        //        existingUser.PhoneNumber = dto.PhoneNumber ?? existingUser.PhoneNumber;
+        //        existingUser.TaxCode = dto.TaxCode ?? existingUser.TaxCode;
+        //        existingUser.IsVerified = false;
+        //        existingUser.Status = UserStatus.Inactive;
+        //        existingUser.UpdatedAt = DateTime.UtcNow;
+
+        //        await _userRepository.UpdateUserWithTransactionAsync(existingUser, ct);
+
+        //        return existingUser;
+        //    }
+        //    catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("idx_tax_code") == true)
+        //    {
+        //        throw new InvalidOperationException("Mã số thuế đã tồn tại trong hệ thống.", ex);
+        //    }
+        //}
+
 
         private async Task<User> CreateVendorUserAsync(
             VendorProfileCreateDTO dto,
             CancellationToken ct)
         {
+            // 1. Kiểm tra user đã tồn tại chưa
+            var existingUser = await _vendorProfileRepository.GetUserByEmailAsync(dto.Email, ct);
+
+            if (existingUser != null)
+            {
+                // Update thông tin của user cũ
+                existingUser.FullName = dto.FullName ?? existingUser.FullName;
+                existingUser.PhoneNumber = dto.PhoneNumber ?? existingUser.PhoneNumber;
+                existingUser.TaxCode = dto.TaxCode ?? existingUser.TaxCode;
+                existingUser.IsVerified = false;
+                existingUser.Status = UserStatus.Inactive;
+                existingUser.UpdatedAt = DateTime.UtcNow;
+
+                await _userRepository.UpdateUserWithTransactionAsync(existingUser, ct);
+                return existingUser;
+            }
+
+            // 2. Nếu chưa tồn tại → tạo mới
             var user = new User
             {
                 Email = dto.Email,
@@ -298,29 +417,16 @@ namespace BLL.Service
                 PhoneNumber = dto.PhoneNumber,
                 TaxCode = dto.TaxCode,
                 Role = UserRole.Vendor,
-                Status = UserStatus.Active,
+                Status = UserStatus.Inactive,
                 IsVerified = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            try
-            {
-                user = await _userRepository.CreateUserWithTransactionAsync(user, ct);
-                user.Role = UserRole.Vendor;
-                user.Status = UserStatus.Active;
-                await _userRepository.UpdateUserWithTransactionAsync(user, ct);
-                return user;
-            }
-            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("idx_email") == true)
-            {
-                throw new InvalidOperationException("Email đã tồn tại trong hệ thống.", ex);
-            }
-            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("idx_tax_code") == true)
-            {
-                throw new InvalidOperationException("Mã số thuế đã tồn tại trong hệ thống.", ex);
-            }
+            user = await _userRepository.CreateUserWithTransactionAsync(user, ct);
+            return user;
         }
+
 
         private async Task<VendorProfile> CreateVendorProfileAsync(
             User user,
@@ -349,7 +455,6 @@ namespace BLL.Service
             }
             catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("idx_slug") == true)
             {
-                // Trong TH cực hiếm vẫn trùng slug → báo lỗi rõ ràng
                 throw new InvalidOperationException("Slug công ty đã tồn tại. Vui lòng thử lại.", ex);
             }
         }
@@ -467,10 +572,10 @@ namespace BLL.Service
             GetVendorWithUserAndCertificatesAsync(ulong vendorProfileId, CancellationToken ct)
         {
             var vp = await _vendorProfileRepository.GetByIdAsync(vendorProfileId, ct)
-                     ?? throw new KeyNotFoundException("VendorProfile không tồn tại");
+                     ?? throw new InvalidOperationException("Không tìm thấy hồ sơ nhà cung cấp.");
 
             var user = await _userRepository.GetUserWithAddressesByIdAsync(vp.UserId, ct)
-                      ?? throw new KeyNotFoundException("User không tồn tại");
+                      ?? throw new InvalidOperationException("Không tìm thấy người dùng.");
 
             var certs = await _vendorCertificateRepository
                 .GetAllByVendorIdAsync(vp.UserId, 1, int.MaxValue, ct)
@@ -524,6 +629,7 @@ namespace BLL.Service
                 CompanyName = vp.CompanyName,
                 Slug = vp.Slug,
                 BusinessRegistrationNumber = vp.BusinessRegistrationNumber,
+                Notes = vp.Notes,
 
                 CompanyAddress = address?.LocationAddress,
                 Province = address?.Province,

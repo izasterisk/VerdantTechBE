@@ -16,5 +16,6 @@ namespace DAL.IRepository
         Task<List<VendorCertificate>> GetAllByVendorIdAsync( ulong vendorId, int page, int pageSize, CancellationToken ct = default);
         Task DeleteCertificateAsync( VendorCertificate vendorCertificate, CancellationToken ct = default);
         Task<VendorCertificate?> ApproveAsync( ulong id, VendorCertificateStatus status, ulong? verifiedByUserId, string? rejectionReason, CancellationToken ct = default);
+        Task DeleteAllByVendorIdAsync(ulong vendorId, CancellationToken ct = default);
     }
 }

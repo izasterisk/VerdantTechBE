@@ -227,5 +227,32 @@ namespace DAL.Repository
 
             return existing;
         }
+
+        public async Task DeleteAllByVendorIdAsync(ulong vendorId, CancellationToken ct = default)
+        {
+            var certs = await _context.VendorCertificates
+                .Where(c => c.VendorId == vendorId)
+                .ToListAsync(ct);
+
+            if (!certs.Any())
+                return;
+
+            var certIds = certs.Select(c => c.Id).ToList();
+            var medias = await _context.MediaLinks
+                .Where(m =>
+                    m.OwnerType == MediaOwnerType.VendorCertificates &&
+                    certIds.Contains(m.OwnerId))
+                .ToListAsync(ct);
+
+            if (medias.Any())
+            {
+                _context.MediaLinks.RemoveRange(medias);
+            }
+
+            _context.VendorCertificates.RemoveRange(certs);
+
+            await _context.SaveChangesAsync(ct);
+        }
+
     }
 }

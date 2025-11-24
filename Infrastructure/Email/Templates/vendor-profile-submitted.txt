@@ -1,0 +1,19 @@
+﻿Xác nhận gửi hồ sơ nhà cung cấp VerdantTech
+
+Chào {{fullName}},
+
+Cảm ơn bạn đã đăng ký trở thành nhà cung cấp của VerdantTech.
+
+Hồ sơ của bạn đã được gửi thành công và hiện đang trong quá trình xem xét.
+Đội ngũ VerdantTech sẽ kiểm tra và đánh giá hồ sơ của bạn trong thời gian sớm nhất.
+
+Bạn sẽ nhận được email tiếp theo khi hồ sơ được DUYỆT hoặc BỊ TỪ CHỐI.
+Vui lòng thường xuyên kiểm tra hộp thư (bao gồm cả thư mục Spam/Quảng cáo).
+
+Nếu bạn cần hỗ trợ thêm, hãy liên hệ với bộ phận chăm sóc đối tác của VerdantTech.
+
+Trân trọng,
+Đội ngũ VerdantTech
+
+---
+© 2025 Verdant Tech Solution. All rights reserved.
