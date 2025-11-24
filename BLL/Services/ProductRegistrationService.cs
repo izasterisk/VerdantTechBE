@@ -82,6 +82,8 @@ namespace BLL.Services
                 throw new InvalidOperationException("Vendor không tồn tại.");
             if (!await _db.ProductCategories.AnyAsync(x => x.Id == dto.CategoryId, ct))
                 throw new InvalidOperationException("Category không tồn tại.");
+            if (!await _db.ProductCategories.AnyAsync(x => x.ParentId == null, ct))
+                throw new InvalidOperationException("Category không thể là parent.");
 
             var rating = ParseNullableDecimal(dto.EnergyEfficiencyRating);
             if (rating is < 0 or > 5)
@@ -187,12 +189,12 @@ namespace BLL.Services
             var dims = ToDecimalDict(dto.DimensionsCm);
 
             // Update core fields
-            entity.VendorId = dto.VendorId;
-            entity.CategoryId = dto.CategoryId;
+            entity.VendorId = dto.VendorId ?? entity.VendorId;
+            entity.CategoryId = dto.CategoryId ?? entity.CategoryId;
             entity.ProposedProductCode = dto.ProposedProductCode;
             entity.ProposedProductName = dto.ProposedProductName;
             entity.Description = dto.Description;
-            entity.UnitPrice = dto.UnitPrice;
+            entity.UnitPrice = dto.UnitPrice ?? entity.UnitPrice;
             entity.EnergyEfficiencyRating = rating;
             entity.Specifications = dto.Specifications ?? entity.Specifications ?? new Dictionary<string, object>();
             entity.DimensionsCm = dims ?? entity.DimensionsCm;

@@ -49,6 +49,10 @@ public class ProductCategoryConfiguration : IEntityTypeConfiguration<ProductCate
             .HasDefaultValue(true)
             .HasColumnName("is_active");
         
+        builder.Property(e => e.SerialRequired)
+            .HasDefaultValue(false)
+            .HasColumnName("serial_required");
+        
         // DateTime fields
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")

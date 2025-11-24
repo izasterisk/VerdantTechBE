@@ -58,7 +58,8 @@ if (!int.TryParse(databaseTimeoutStr, out int databaseTimeout))
 builder.Services.AddDbContext<VerdantTechDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.Parse("8.0.43-mysql"),
         b => b.MigrationsAssembly("DAL")
-            .CommandTimeout(databaseTimeout)));
+            .CommandTimeout(databaseTimeout)
+            .EnableStringComparisonTranslations()));
 
 
 //cloudinary
