@@ -1,6 +1,7 @@
 ﻿using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repository;
 
@@ -30,14 +31,16 @@ public class DashboardRepository : IDashboardRepository
         _paymentRepository = paymentRepository;
     }
     
-    public async Task<decimal> GetTodayRevenueAsync()
+    public async Task<decimal> GetRevenueByTimeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
     {
-        var today = DateTime.Today;
-        var todayPayments = await _paymentRepository.GetAllByFilterAsync(
-            p => p.Status == PaymentStatus.Completed && 
-                 p.CreatedAt >= today && p.CreatedAt < today.AddDays(1),
-            useNoTracking: true
-        );
-        return todayPayments.Sum(p => p.Amount);
+        if (from > to)
+            throw new ArgumentException("Ngày kết thúc phải lớn hơn ngày bắt đầu ít nhất 1 ngày.", nameof(to));
+        var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+        var toDateTime = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+        return await _dbContext.Payments
+            .Where(p => p.Status == PaymentStatus.Completed && 
+                        p.CreatedAt >= fromDateTime && 
+                        p.CreatedAt < toDateTime)
+            .SumAsync(p => p.Amount, cancellationToken);
     }
 }

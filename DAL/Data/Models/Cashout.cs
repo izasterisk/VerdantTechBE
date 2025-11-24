@@ -3,23 +3,17 @@ using System.ComponentModel.DataAnnotations;
 namespace DAL.Data.Models;
 
 /// <summary>
-/// Money going out - vendor payouts and expenses with banking details
+/// Cashout-specific data - approval workflow and reference tracking
+/// Core data (amount, status, user_id, bank_account_id) resides in transactions table
 /// </summary>
 public partial class Cashout
 {
     public ulong Id { get; set; }
 
-    public ulong UserId { get; set; }
+    // Reference to transaction (required - single source of truth)
+    public ulong TransactionId { get; set; }
 
-    public ulong? TransactionId { get; set; }
-
-    public ulong BankAccountId { get; set; }
-
-    public decimal Amount { get; set; }
-
-    public CashoutStatus Status { get; set; } = CashoutStatus.Processing;
-
-    public CashoutReferenceType? ReferenceType { get; set; }
+    public CashoutReferenceType ReferenceType { get; set; }
 
     public ulong? ReferenceId { get; set; }
 
@@ -35,8 +29,6 @@ public partial class Cashout
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual User User { get; set; } = null!;
-    public virtual Transaction? Transaction { get; set; }
-    public virtual UserBankAccount BankAccount { get; set; } = null!;
+    public virtual Transaction Transaction { get; set; } = null!;
     public virtual User? ProcessedByNavigation { get; set; }
 }

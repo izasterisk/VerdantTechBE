@@ -17,39 +17,18 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
 
-        builder.Property(e => e.UserId)
-            .HasColumnName("user_id")
-            .HasColumnType("bigint unsigned")
-            .IsRequired();
-
         builder.Property(e => e.TransactionId)
             .HasColumnName("transaction_id")
-            .HasColumnType("bigint unsigned");
-
-        builder.Property(e => e.BankAccountId)
-            .HasColumnName("bank_account_id")
             .HasColumnType("bigint unsigned")
             .IsRequired();
-
-        builder.Property(e => e.Amount)
-            .HasColumnName("amount")
-            .HasColumnType("decimal(12,2)")
-            .IsRequired();
-
-        builder.Property(e => e.Status)
-            .HasConversion(
-                v => v.ToString().ToLowerInvariant(),
-                v => Enum.Parse<CashoutStatus>(v, true))
-            .HasColumnName("status")
-            .HasColumnType("enum('processing','completed','failed','cancelled')")
-            .HasDefaultValue(CashoutStatus.Processing);
 
         builder.Property(e => e.ReferenceType)
             .HasConversion(
-                v => v.HasValue ? v.Value.ToString().ToLowerInvariant().Replace("withdrawal", "_withdrawal").Replace("adjustment", "_adjustment") : null,
-                v => string.IsNullOrEmpty(v) ? null : Enum.Parse<CashoutReferenceType>(v.Replace("_", ""), true))
+                v => v.ToString().ToLowerInvariant().Replace("withdrawal", "_withdrawal").Replace("adjustment", "_adjustment"),
+                v => Enum.Parse<CashoutReferenceType>(v.Replace("_", ""), true))
             .HasColumnName("reference_type")
-            .HasColumnType("enum('vendor_withdrawal','refund','admin_adjustment')");
+            .HasColumnType("enum('vendor_withdrawal','refund','admin_adjustment')")
+            .IsRequired();
 
         builder.Property(e => e.ReferenceId)
             .HasColumnName("reference_id")
@@ -79,20 +58,11 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
 
         // Foreign keys
-        builder.HasOne(e => e.User)
-            .WithMany(v => v.CashoutsAsUser)
-            .HasForeignKey(e => e.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(e => e.BankAccount)
-            .WithMany(b => b.Cashouts)
-            .HasForeignKey(e => e.BankAccountId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(e => e.Transaction)
             .WithMany(t => t.Cashouts)
             .HasForeignKey(e => e.TransactionId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
 
         builder.HasOne(e => e.ProcessedByNavigation)
             .WithMany(u => u.CashoutsProcessed)
@@ -100,10 +70,8 @@ public class CashoutConfiguration : IEntityTypeConfiguration<Cashout>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
         builder.HasIndex(e => e.TransactionId).HasDatabaseName("idx_transaction");
-        builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
-        builder.HasIndex(e => e.ProcessedAt).HasDatabaseName("idx_processed");
         builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId }).HasDatabaseName("idx_reference");
+        builder.HasIndex(e => new { e.ProcessedBy, e.ProcessedAt }).HasDatabaseName("idx_processed");
     }
 }

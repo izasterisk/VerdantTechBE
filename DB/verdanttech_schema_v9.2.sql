@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 9.2
+-- Phiên bản: 10
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -637,36 +637,36 @@ CREATE TABLE requests (
 -- CÁC BẢNG ĐƠN HÀNG VÀ THANH TOÁN
 -- =====================================================
 
--- Bảng thanh toán
+-- Bảng thanh toán (chỉ lưu thông tin đặc thù về payment gateway)
 CREATE TABLE payments (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    transaction_id BIGINT UNSIGNED NOT NULL COMMENT 'Tham chiếu đến bảng transactions (nguồn sự thật cho amount, status, timestamps)',
     order_id BIGINT UNSIGNED NOT NULL,
     payment_method ENUM('credit_card', 'debit_card', 'stripe', 'cod', 'payos') NOT NULL,
     payment_gateway ENUM('stripe', 'manual', 'payos') NOT NULL,
-    gateway_payment_id VARCHAR(255) UNIQUE COMMENT 'ID giao dịch từ cổng thanh toán',
-    amount DECIMAL(12,2) NOT NULL,
-    status ENUM('pending', 'processing', 'completed', 'failed', 'refunded', 'partially_refunded') DEFAULT 'pending',
     gateway_response JSON COMMENT 'Phản hồi thô từ cổng thanh toán',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
+    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
-    INDEX idx_order (order_id),
-    INDEX idx_gateway_payment (gateway_payment_id),
-    INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='phương thức và trạng thái thanh toán cho đơn hàng';
+    INDEX idx_transaction (transaction_id),
+    INDEX idx_order (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Thông tin đặc thù về payment gateway - amount, status, gateway_payment_id nằm trong transactions';
 
 
 -- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
 CREATE TABLE transactions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     transaction_type ENUM('payment_in', 'wallet_cashout', 'refund', 'adjustment') NOT NULL,
-    amount DECIMAL(12,2) NOT NULL,
+    amount DECIMAL(12,2) NOT NULL COMMENT 'Số tiền giao dịch - NGUỒN SỰ THẬT DUY NHẤT',
     currency VARCHAR(3) DEFAULT 'VND',
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người dùng liên quan đến giao dịch này (khách hàng hoặc nhà cung cấp)',
-    status ENUM('completed','failed','cancelled') NOT NULL DEFAULT 'completed',
+    order_id BIGINT UNSIGNED NULL COMMENT 'Đơn hàng liên quan (cho payment_in từ khách hàng)',
+    bank_account_id BIGINT UNSIGNED NULL COMMENT 'Tài khoản ngân hàng sử dụng cho giao dịch này (người mua thanh toán hoặc người nhận rút tiền)',
+    status ENUM('pending', 'completed','failed','cancelled') NOT NULL DEFAULT 'pending' COMMENT 'Trạng thái giao dịch - NGUỒN SỰ THẬT DUY NHẤT',
     note VARCHAR(255) NOT NULL COMMENT 'Mô tả có thể đọc được',
-    gateway_payment_id VARCHAR(255) NULL COMMENT 'ID giao dịch từ cổng thanh toán',    
+    gateway_payment_id VARCHAR(255) NULL COMMENT 'ID giao dịch từ cổng thanh toán (nếu có)',    
     created_by BIGINT UNSIGNED NULL COMMENT 'Người dùng khởi tạo giao dịch này',
     processed_by BIGINT UNSIGNED NULL COMMENT 'Người dùng xử lý giao dịch này',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -674,39 +674,37 @@ CREATE TABLE transactions (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
+    FOREIGN KEY (bank_account_id) REFERENCES user_bank_accounts(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
     
     INDEX idx_user (user_id),
+    INDEX idx_order (order_id),
+    INDEX idx_bank_account (bank_account_id),
     INDEX idx_type_status (transaction_type, status),
     INDEX idx_gateway_payment (gateway_payment_id),
     INDEX idx_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sổ cái tài chính trung tâm - nguồn sự thật duy nhất cho tất cả chuyển động tiền tệ';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sổ cái tài chính trung tâm - lưu amount, status, bank_account_id, timestamps (single source of truth)';
 
--- Bảng rút tiền (tiền ra - thanh toán cho nhà cung cấp, chi phí)
+-- Bảng rút tiền (chỉ lưu thông tin đặc thù về cashout)
 CREATE TABLE cashouts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT UNSIGNED NOT NULL,
-    transaction_id BIGINT UNSIGNED NULL COMMENT 'Tham chiếu đến bảng giao dịch để đảm bảo tính nhất quán',
-    bank_account_id BIGINT UNSIGNED NOT NULL,
-    amount DECIMAL(12,2) NOT NULL,
-    status ENUM('processing','completed','failed','cancelled') NOT NULL DEFAULT 'processing',
-    reference_type ENUM('vendor_withdrawal', 'refund', 'admin_adjustment') NULL COMMENT 'Loại tham chiếu: vendor_withdrawal (vendor rút tiền), refund (hoàn tiền cho khách), admin_adjustment (điều chỉnh bởi admin)',
-    reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu',
-    notes VARCHAR(500) NULL,
+    transaction_id BIGINT UNSIGNED NOT NULL COMMENT 'Tham chiếu đến bảng transactions (nguồn sự thật cho amount, status, user_id, bank_account_id, timestamps)',
+    reference_type ENUM('vendor_withdrawal', 'refund', 'admin_adjustment') NOT NULL COMMENT 'Loại tham chiếu: vendor_withdrawal (vendor rút tiền), refund (hoàn tiền cho khách), admin_adjustment (điều chỉnh bởi admin)',
+    reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu (request_id cho refund, wallet_id cho vendor_withdrawal)',
+    notes VARCHAR(500) NULL COMMENT 'Ghi chú bổ sung về cashout',
     processed_by BIGINT UNSIGNED NULL COMMENT 'Admin đã xử lý lần rút tiền này',
-    processed_at TIMESTAMP NULL,
+    processed_at TIMESTAMP NULL COMMENT 'Thời điểm admin xử lý',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
-    FOREIGN KEY (bank_account_id) REFERENCES user_bank_accounts(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_user (user_id),
-    INDEX idx_status (status),
     INDEX idx_transaction (transaction_id),
-    INDEX idx_reference (reference_type, reference_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='bảng rút tiền cho vendor';
+    INDEX idx_reference (reference_type, reference_id),
+    INDEX idx_processed (processed_by, processed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Thông tin đặc thù về rút tiền - amount, status, user_id, bank_account_id nằm trong transactions';
 
 -- Ví cho nhà cung cấp (một ví cho một nhà cung cấp)
 CREATE TABLE wallets (
@@ -744,126 +742,117 @@ CREATE TABLE notifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ thông báo cho người dùng, hỗ trợ real-time qua SignalR. Hard delete khi user xóa.';
 
 -- =====================================================
--- TỔNG QUAN THAY ĐỔI v9.2 (từ v9.1)
+-- TỔNG QUAN THAY ĐỔI v10 (từ v9.2)
 -- =====================================================
 
--- VII) THÊM BẢNG NOTIFICATIONS (HỆ THỐNG THÔNG BÁO)
--- • Tạo bảng mới: notifications
--- • Mục đích: Lưu trữ thông báo cho người dùng về các sự kiện quan trọng
--- • Các trường chính:
---   + user_id: Người nhận thông báo (hỗ trợ tất cả role: customer, vendor, staff, admin)
---   + title: Tiêu đề ngắn gọn (hiển thị trong danh sách)
---   + message: Nội dung chi tiết thông báo
---   + reference_type: ENUM loại entity tham chiếu (order, payment, request, forum_post, chatbot_conversation, refund, wallet_cashout, product_registration, environmental_data)
---   + reference_id: ID của entity được tham chiếu (để link đến chi tiết)
---   + is_read: Trạng thái đã đọc (dùng để filter, highlight thông báo mới)
--- • Indexes:
---   + idx_user_read (user_id, is_read): Tối ưu query lấy thông báo chưa đọc của user
---   + idx_reference (reference_type, reference_id): Tối ưu query theo entity tham chiếu
---   + idx_created (created_at): Tối ưu sắp xếp theo thời gian
--- • Tính năng:
---   - Hỗ trợ real-time notification qua SignalR
---   - Hard delete khi user xóa thông báo (không dùng soft delete)
---   - Linh hoạt link đến bất kỳ entity nào trong hệ thống
--- • Use cases:
---   + Thông báo đơn hàng mới/cập nhật trạng thái (order)
---   + Thông báo thanh toán thành công/thất bại (payment)
---   + Thông báo yêu cầu được duyệt/từ chối (request)
---   + Thông báo bình luận mới trên forum (forum_post)
---   + Thông báo hoàn tiền thành công (refund)
---   + Thông báo rút tiền từ ví thành công (wallet_cashout)
---   + Thông báo đăng ký sản phẩm được duyệt (product_registration)
---   + Thông báo nhắc nhập dữ liệu môi trường (environmental_data)
+-- VIII) TÁI CẤU TRÚC PAYMENTS, TRANSACTIONS, CASHOUTS - SINGLE SOURCE OF TRUTH
+-- • Mục đích: Đảm bảo transactions là nguồn sự thật duy nhất cho amount, status, timestamps
+-- • Loại bỏ data redundancy và tăng tính toàn vẹn dữ liệu
 
--- =====================================================
--- TỔNG QUAN THAY ĐỔI v9.1 (từ v9.0)
--- =====================================================
+-- A) BẢNG TRANSACTIONS (Nguồn sự thật trung tâm):
+--   • Thêm trường mới:
+--     + order_id BIGINT UNSIGNED NULL: Liên kết trực tiếp với đơn hàng (cho payment_in)
+--     + bank_account_id BIGINT UNSIGNED NULL: Tài khoản ngân hàng sử dụng (người mua thanh toán hoặc người nhận rút tiền)
+--     + status thêm 'pending': Hỗ trợ trạng thái chờ xử lý
+--   • Cập nhật comment:
+--     + amount: 'NGUỒN SỰ THẬT DUY NHẤT' - rõ ràng đây là nơi lưu số tiền chính thống
+--     + status: 'NGUỒN SỰ THẬT DUY NHẤT' - trạng thái giao dịch duy nhất
+--   • Foreign Keys:
+--     + Thêm FK order_id → orders(id)
+--     + Thêm FK bank_account_id → user_bank_accounts(id)
+--   • Indexes:
+--     + Thêm idx_order (order_id): Tối ưu query theo đơn hàng
+--     + Thêm idx_bank_account (bank_account_id): Tối ưu query theo tài khoản
 
--- V) CẢI TIẾN BẢNG CASHOUTS - REFERENCE_TYPE ENUM
--- • Thay đổi: reference_type từ VARCHAR(50) → ENUM('vendor_withdrawal', 'refund', 'admin_adjustment')
--- • Lợi ích:
---   - Đảm bảo data integrity: chỉ cho phép 3 giá trị hợp lệ
---   - Tối ưu storage: ENUM chỉ tốn 1-2 bytes thay vì VARCHAR 50 bytes
---   - Tăng performance: index và query nhanh hơn
---   - Dễ maintain: rõ ràng các loại cashout được hỗ trợ
--- • Các giá trị ENUM:
---   + vendor_withdrawal: Vendor tự rút tiền từ ví (hoa hồng tích lũy)
---   + refund: Hoàn tiền cho khách hàng (từ yêu cầu hoàn tiền)
---   + admin_adjustment: Admin điều chỉnh số dư ví thủ công (sửa lỗi, bồi thường)
--- • Thêm INDEX mới: idx_reference (reference_type, reference_id)
---   - Tối ưu query theo loại reference và ID tham chiếu
+-- B) BẢNG PAYMENTS (Chỉ lưu thông tin đặc thù về payment gateway):
+--   • XÓA các trường:
+--     + amount: Di chuyển về transactions (single source of truth)
+--     + status: Di chuyển về transactions (tránh inconsistency)
+--     + gateway_payment_id: Di chuyển về transactions (để query dễ hơn, tránh duplicate)
+--   • THÊM trường:
+--     + transaction_id BIGINT UNSIGNED NOT NULL: FK bắt buộc đến transactions
+--   • GIỮ LẠI các trường đặc thù:
+--     + payment_method, payment_gateway: Phương thức thanh toán cụ thể
+--     + gateway_response: Raw response từ gateway (audit trail)
+--   • Foreign Keys:
+--     + Thêm FK transaction_id → transactions(id) ON DELETE RESTRICT
+--   • Indexes:
+--     + Thêm idx_transaction (transaction_id): Tối ưu join với transactions
+--     + XÓA idx_status (không còn field status)
+--     + XÓA idx_gateway_payment (gateway_payment_id đã chuyển về transactions)
+--   • Comment cập nhật: 'Thông tin đặc thù về payment gateway - amount, status, gateway_payment_id nằm trong transactions'
 
--- VI) ĐỔI TÊN BẢNG VENDOR_BANK_ACCOUNTS → USER_BANK_ACCOUNTS
--- • XÓA bảng cũ: vendor_bank_accounts
--- • TẠO bảng mới: user_bank_accounts
--- • Thay đổi chính:
---   + vendor_id → user_id: Bây giờ hỗ trợ tất cả users (customer, vendor, staff)
---   + unique_vendor_bank_account → unique_user_bank_account
---   + idx_vendor → idx_user
--- • Lợi ích:
---   - Customer cũng có thể lưu tài khoản ngân hàng (cho refund, cashback)
---   - Vendor rút tiền từ user_bank_accounts
---   - Linh hoạt hơn cho các tính năng tương lai (chuyển tiền P2P, v.v.)
---   - Thống nhất cấu trúc: một user có nhiều bank accounts
--- • Cập nhật foreign key:
---   + cashouts.bank_account_id → references user_bank_accounts(id)
--- • Model changes:
---   + VendorBankAccount → UserBankAccount
---   + Vendor navigation → User navigation
---   + User.VendorBankAccounts → User.UserBankAccounts
+-- C) BẢNG CASHOUTS (Chỉ lưu thông tin đặc thù về cashout):
+--   • XÓA các trường:
+--     + user_id: Đã có trong transactions (tránh duplicate)
+--     + amount: Di chuyển về transactions (single source of truth)
+--     + status: Di chuyển về transactions (tránh inconsistency)
+--     + bank_account_id: Di chuyển về transactions (dữ liệu chung, cả payment và cashout đều cần)
+--   • CẬP NHẬT trường:
+--     + transaction_id: NULL → NOT NULL (bắt buộc phải có transaction)
+--     + reference_type: NULL → NOT NULL (luôn phải xác định loại cashout)
+--   • GIỮ LẠI các trường đặc thù:
+--     + reference_type, reference_id: Tham chiếu đến entity gốc (request, wallet)
+--     + notes: Ghi chú bổ sung
+--     + processed_by, processed_at: Thông tin xử lý bởi admin
+--   • Foreign Keys:
+--     + transaction_id: Vẫn giữ FK → transactions(id)
+--     + XÓA FK user_id (không còn field này)
+--     + XÓA FK bank_account_id (đã chuyển về transactions)
+--   • Indexes:
+--     + XÓA idx_user (không còn field user_id)
+--     + XÓA idx_status (không còn field status)
+--     + XÓA idx_bank_account (bank_account_id đã chuyển về transactions)
+--     + Thêm idx_processed (processed_by, processed_at): Tối ưu query theo admin xử lý
+--   • Comment cập nhật: 'Thông tin đặc thù về rút tiền - amount, status, user_id, bank_account_id nằm trong transactions'
 
--- =====================================================
--- TỔNG QUAN THAY ĐỔI v9.0 (từ v8.1)
--- =====================================================
+-- D) LỢI ÍCH CỦA KIẾN TRÚC MỚI:
+--   1. Data Integrity:
+--      - Mỗi payment/cashout BẮT BUỘC phải có transaction tương ứng
+--      - Không thể tạo payment/cashout mồ côi (orphan records)
+--      - Amount và status luôn đồng bộ (chỉ có 1 nguồn duy nhất)
+--   
+--   2. Consistency:
+--      - Không có tình trạng payment.amount ≠ transaction.amount
+--      - Không có tình trạng payment.status ≠ transaction.status
+--      - Dễ dàng rollback/update thông qua transaction record
+--   
+--   3. Audit Trail:
+--      - Mọi chuyển động tiền đều được ghi lại trong transactions
+--      - Dễ dàng theo dõi lịch sử tài chính của user
+--      - Dễ dàng tạo báo cáo tổng hợp từ bảng transactions
+--   
+--   4. Simplified Queries:
+--      - Query amount/status: Chỉ cần JOIN với transactions (1 nguồn duy nhất)
+--      - Không cần UNION hoặc aggregate từ nhiều bảng
+--      - Index hiệu quả hơn (không duplicate index giữa các bảng)
+--   
+--   5. Maintainability:
+--      - Rõ ràng vai trò của từng bảng: transactions (chung), payments/cashouts (đặc thù)
+--      - Dễ extend thêm payment method mới (chỉ thêm vào payments)
+--      - Dễ extend thêm cashout type mới (chỉ thêm vào cashouts)
 
--- I) QUẢN LÝ SỐ SERI SẢN PHẨM (CHO MÁY MÓC/THIẾT BỊ)
--- • Tạo bảng mới: product_serials
---   - Quản lý từng số seri cụ thể của sản phẩm máy móc trong lô hàng
---   - Các trường: id, batch_inventory_id, product_id, serial_number (VARCHAR - hỗ trợ chữ và số)
---   - Trạng thái: status ENUM('stock', 'sold', 'refund') - mặc định 'stock'
---     + stock: Sản phẩm đang trong kho
---     + sold: Sản phẩm đã bán
---     + refund: Sản phẩm đã hoàn trả
---   - UNIQUE constraint trên serial_number để đảm bảo không trùng lặp
---   - Index: batch_inventory_id, product_id
+-- E) WORKFLOW THỰC TẾ:
+--   1. Payment từ khách hàng:
+--      a. Tạo transaction: (type='payment_in', amount=100000, status='pending', user_id=customer_id, order_id=123, bank_account_id=10, gateway_payment_id='ABC123')
+--      b. Tạo payment: (transaction_id=1, payment_method='payos', payment_gateway='payos')
+--      c. Khi gateway confirm: Update transaction.status='completed', transaction.completed_at=NOW()
+--   
+--   2. Cashout cho vendor:
+--      a. Tạo transaction: (type='wallet_cashout', amount=50000, status='pending', user_id=vendor_id, bank_account_id=5)
+--      b. Tạo cashout: (transaction_id=2, reference_type='vendor_withdrawal', reference_id=wallet_id)
+--      c. Khi admin approve: Update transaction.status='completed', cashout.processed_by=admin_id
+--   
+--   3. Refund cho khách:
+--      a. Tạo transaction: (type='refund', amount=20000, status='pending', user_id=customer_id, bank_account_id=8)
+--      b. Tạo cashout: (transaction_id=3, reference_type='refund', reference_id=request_id)
+--      c. Khi chuyển khoản xong: Update transaction.status='completed'
 
--- II) CẢI TIẾN EXPORT_INVENTORY (HỖ TRỢ CẢ MÁY MÓC VÀ PHÂN BÓN)
--- • Xóa trường: quantity (không còn cần thiết)
--- • Thay đổi: product_serial_id từ NOT NULL → NULL (linh hoạt)
--- • Thêm trường mới: lot_number VARCHAR(100) NULL
---   - Dùng cho sản phẩm không có serial (phân bón, vật tư)
--- • Xóa UNIQUE constraint trên product_serial_id
--- • Thêm INDEX cho lot_number
--- • Logic validation (ở application layer):
---   - Máy móc: có product_serial_id, lot_number = NULL
---   - Phân bón: có lot_number, product_serial_id = NULL
---   - Ít nhất 1 trong 2 phải có giá trị
-
--- III) LOGIC HOẠT ĐỘNG
--- A) Nhập hàng máy móc (có serial):
---   - Tạo 1 record batch_inventory với quantity = 100
---   - Tạo 100 records trong product_serials (status='stock')
--- B) Nhập hàng phân bón (không có serial):
---   - Chỉ tạo 1 record batch_inventory với quantity và lot_number
---   - KHÔNG tạo records trong product_serials
-
--- C) Xuất kho máy móc:
---   - Tạo record export_inventory với product_serial_id
---   - Cập nhật product_serials: status='sold'
--- D) Xuất kho phân bón:
---   - Tạo record export_inventory với lot_number
---   - Số lượng xuất được tracking qua số records có cùng lot_number
-
--- E) Hoàn trả:
---   - Máy móc: cập nhật product_serials status='refund'
---   - Phân bón: tạo record mới với lot_number tương ứng
---   - Export_inventory record giữ nguyên để audit trail
-
--- IV) LỢI ÍCH
--- • Linh hoạt quản lý cả sản phẩm có serial (máy móc) và không có serial (phân bón)
--- • Truy vết chính xác từng máy móc qua số seri
--- • Quản lý warranty và after-sales service theo serial number cho máy móc
--- • Truy xuất nguồn gốc phân bón qua lot number (theo lô sản xuất)
--- • Audit trail đầy đủ cho cả 2 loại sản phẩm
--- • Hỗ trợ số seri dạng chữ và số (VD: SN-2024-ABC-12345)
--- • Đơn giản hóa quản lý kho: không cần tạo serial cho từng bao phân bón
+-- F) MIGRATION NOTES (Nếu có dữ liệu cũ):
+--   • Bước 1: Tạo transaction cho mỗi payment hiện có (amount, status từ payment)
+--   • Bước 2: Update payment.transaction_id = transaction.id tương ứng
+--   • Bước 3: Tạo transaction cho mỗi cashout hiện có (amount, status, user_id từ cashout)
+--   • Bước 4: Update cashout.transaction_id = transaction.id tương ứng
+--   • Bước 5: Verify data consistency (payment count = transaction payment_in count, etc.)
+--   • Bước 6: Drop columns: payment.amount, payment.status, cashout.user_id, cashout.amount, cashout.status
+--   • Bước 7: Alter table: transaction_id NULL → NOT NULL cho cả payments và cashouts

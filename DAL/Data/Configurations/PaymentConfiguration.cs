@@ -18,6 +18,12 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnType("bigint unsigned")
             .ValueGeneratedOnAdd();
         
+        // Foreign Key to Transaction (REQUIRED)
+        builder.Property(e => e.TransactionId)
+            .HasColumnType("bigint unsigned")
+            .HasColumnName("transaction_id")
+            .IsRequired();
+        
         // Foreign Key to Order
         builder.Property(e => e.OrderId)
             .HasColumnType("bigint unsigned")
@@ -46,30 +52,6 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnType("enum('stripe','manual','payos')")
             .IsRequired()
             .HasColumnName("payment_gateway");
-            
-        builder.Property(e => e.Status)
-            .HasConversion(
-                v => v.ToString()
-                    .ToLowerInvariant()
-                    .Replace("partiallyrefunded", "partially_refunded"),
-                v => Enum.Parse<PaymentStatus>(v
-                    .Replace("partially_refunded", "PartiallyRefunded"), true))
-            .HasColumnType("enum('pending','processing','completed','failed','refunded','partially_refunded')")
-            .HasDefaultValue(PaymentStatus.Pending);
-        
-        // Gateway payment ID
-        builder.Property(e => e.GatewayPaymentId)
-            .HasMaxLength(255)
-            .HasCharSet("utf8mb4")
-            .UseCollation("utf8mb4_unicode_ci")
-            .HasColumnName("gateway_payment_id");
-        
-        // Amount field
-        builder.Property(e => e.Amount)
-            .HasPrecision(12, 2)
-            .IsRequired();
-            
-        // Refund fields
         
         // JSON field for gateway response using JsonHelpers
         builder.Property(e => e.GatewayResponse)
@@ -87,16 +69,24 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnName("updated_at");
         
         // Foreign Key Relationships
+        builder.HasOne(d => d.Transaction)
+            .WithMany(p => p.Payments)
+            .HasForeignKey(d => d.TransactionId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
         builder.HasOne(d => d.Order)
             .WithMany(p => p.Payments)
             .HasForeignKey(d => d.OrderId)
             .OnDelete(DeleteBehavior.Restrict);
-            
         
-        // Unique constraint for gateway payment ID
-        builder.HasIndex(e => e.GatewayPaymentId)
-            .IsUnique()
-            .HasDatabaseName("idx_gateway_payment");
+        // Indexes
+        builder.HasIndex(e => e.TransactionId)
+            .HasDatabaseName("idx_transaction");
+            
+        builder.HasIndex(e => e.OrderId)
+            .HasDatabaseName("idx_order");
+    }
+}
         
         // Indexes
         builder.HasIndex(e => e.OrderId)
