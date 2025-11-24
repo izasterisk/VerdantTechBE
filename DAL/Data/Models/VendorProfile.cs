@@ -23,6 +23,9 @@ public partial class VendorProfile
     [StringLength(100)]
     public string? BusinessRegistrationNumber { get; set; }
 
+    [StringLength(255)]
+    public string? Notes { get; set; }
+
     public DateTime? VerifiedAt { get; set; }
 
     public ulong? VerifiedBy { get; set; }

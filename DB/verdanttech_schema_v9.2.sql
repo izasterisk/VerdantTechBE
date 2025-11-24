@@ -84,6 +84,7 @@ CREATE TABLE vendor_profiles (
     company_name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
     business_registration_number VARCHAR(100) UNIQUE,
+    notes VARCHAR(255) NULL,
     verified_at TIMESTAMP NULL,
     verified_by BIGINT UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

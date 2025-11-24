@@ -48,6 +48,12 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("business_registration_number");
         
+        builder.Property(e => e.Notes)
+            .HasMaxLength(255)
+            .HasCharSet("utf8mb4")
+            .UseCollation("utf8mb4_unicode_ci")
+            .HasColumnName("notes");
+        
         // DateTime fields
         builder.Property(e => e.VerifiedAt)
             .HasColumnType("timestamp")

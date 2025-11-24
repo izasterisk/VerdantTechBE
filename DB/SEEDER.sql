@@ -251,27 +251,27 @@ INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `is_active
 -- =====================================================
 
 -- Insert Vendor Profiles (20 vendors)
-INSERT INTO vendor_profiles (id, user_id, company_name, slug, business_registration_number, verified_at, verified_by, created_at, updated_at) VALUES
-(1, 17, 'Công Ty Phân Bón Xanh Việt', 'cong-ty-phan-bon-xanh-viet', 'BRN1000000001', NOW(), 1, NOW(), NOW()),
-(2, 18, 'Công Ty Vi Sinh Việt', 'cong-ty-vi-sinh-viet', 'BRN1000000002', NOW(), 1, NOW(), NOW()),
-(3, 19, 'Công Ty Nông Nghiệp Sinh Thái', 'cong-ty-nong-nghiep-sinh-thai', 'BRN1000000003', NOW(), 1, NOW(), NOW()),
-(4, 20, 'Công Ty Hữu Cơ Việt Nam', 'cong-ty-huu-co-viet-nam', 'BRN1000000004', NOW(), 1, NOW(), NOW()),
-(5, 21, 'Công Ty Bảo Vệ Thực Vật Sinh Học', 'cong-ty-bao-ve-thuc-vat-sinh-hoc', 'BRN1000000005', NOW(), 1, NOW(), NOW()),
-(6, 22, 'Công Ty Giống Cây Sạch', 'cong-ty-giong-cay-sach', 'BRN1000000006', NOW(), 1, NOW(), NOW()),
-(7, 23, 'Công Ty Hệ Thống Tưới Tiêu', 'cong-ty-he-thong-tuoi-tieu', 'BRN1000000007', NOW(), 1, NOW(), NOW()),
-(8, 24, 'Công Ty Công Nghệ Nông Nghiệp Thông Minh', 'cong-ty-cong-nghe-nong-nghiep-thong-minh', 'BRN1000000008', NOW(), 1, NOW(), NOW()),
-(9, 25, 'Công Ty Máy Móc Nông Nghiệp Xanh', 'cong-ty-may-moc-nong-nghiep-xanh', 'BRN1000000009', NOW(), 1, NOW(), NOW()),
-(10, 26, 'Công Ty An Toàn Nông Nghiệp', 'cong-ty-an-toan-nong-nghiep', 'BRN1000000010', NOW(), 1, NOW(), NOW()),
-(11, 27, 'Công Ty Vật Liệu Che Phủ', 'cong-ty-vat-lieu-che-phu', 'BRN1000000011', NOW(), 1, NOW(), NOW()),
-(12, 28, 'Công Ty Bao Bì Sinh Học', 'cong-ty-bao-bi-sinh-hoc', 'BRN1000000012', NOW(), 1, NOW(), NOW()),
-(13, 29, 'Công Ty Thủy Canh Việt', 'cong-ty-thuy-canh-viet', 'BRN1000000013', NOW(), 1, NOW(), NOW()),
-(14, 30, 'Công Ty Thiết Bị Nông Nghiệp Công Nghệ Cao', 'cong-ty-thiet-bi-nong-nghiep-cong-nghe-cao', 'BRN1000000014', NOW(), 1, NOW(), NOW()),
-(15, 31, 'Công Ty Thu Hoạch Xanh', 'cong-ty-thu-hoach-xanh', 'BRN1000000015', NOW(), 1, NOW(), NOW()),
-(16, 32, 'Công Ty Chăm Sóc Đất', 'cong-ty-cham-soc-dat', 'BRN1000000016', NOW(), 1, NOW(), NOW()),
-(17, 33, 'Công Ty Kích Thích Sinh Trưởng', 'cong-ty-kich-thich-sinh-truong', 'BRN1000000017', NOW(), 1, NOW(), NOW()),
-(18, 34, 'Công Ty Cung Ứng Giống', 'cong-ty-cung-ung-giong', 'BRN1000000018', NOW(), 1, NOW(), NOW()),
-(19, 35, 'Công Ty Công Nghệ Nước', 'cong-ty-cong-nghe-nuoc', 'BRN1000000019', NOW(), 1, NOW(), NOW()),
-(20, 36, 'Công Ty Hỗ Trợ Nông Nghiệp', 'cong-ty-ho-tro-nong-nghiep', 'BRN1000000020', NOW(), 1, NOW(), NOW());
+INSERT INTO vendor_profiles (id, user_id, company_name, slug, business_registration_number, notes, verified_at, verified_by, created_at, updated_at) VALUES
+(1, 17, 'Công Ty Phân Bón Xanh Việt', 'cong-ty-phan-bon-xanh-viet', 'BRN1000000001', NULL, NOW(), 1, NOW(), NOW()),
+(2, 18, 'Công Ty Vi Sinh Việt', 'cong-ty-vi-sinh-viet', 'BRN1000000002', NULL, NOW(), 1, NOW(), NOW()),
+(3, 19, 'Công Ty Nông Nghiệp Sinh Thái', 'cong-ty-nong-nghiep-sinh-thai', 'BRN1000000003', NULL, NOW(), 1, NOW(), NOW()),
+(4, 20, 'Công Ty Hữu Cơ Việt Nam', 'cong-ty-huu-co-viet-nam', 'BRN1000000004', NULL, NOW(), 1, NOW(), NOW()),
+(5, 21, 'Công Ty Bảo Vệ Thực Vật Sinh Học', 'cong-ty-bao-ve-thuc-vat-sinh-hoc', 'BRN1000000005', NULL, NOW(), 1, NOW(), NOW()),
+(6, 22, 'Công Ty Giống Cây Sạch', 'cong-ty-giong-cay-sach', 'BRN1000000006', NULL, NOW(), 1, NOW(), NOW()),
+(7, 23, 'Công Ty Hệ Thống Tưới Tiêu', 'cong-ty-he-thong-tuoi-tieu', 'BRN1000000007', NULL, NOW(), 1, NOW(), NOW()),
+(8, 24, 'Công Ty Công Nghệ Nông Nghiệp Thông Minh', 'cong-ty-cong-nghe-nong-nghiep-thong-minh', 'BRN1000000008', NULL, NOW(), 1, NOW(), NOW()),
+(9, 25, 'Công Ty Máy Móc Nông Nghiệp Xanh', 'cong-ty-may-moc-nong-nghiep-xanh', 'BRN1000000009', NULL, NOW(), 1, NOW(), NOW()),
+(10, 26, 'Công Ty An Toàn Nông Nghiệp', 'cong-ty-an-toan-nong-nghiep', 'BRN1000000010', NULL, NOW(), 1, NOW(), NOW()),
+(11, 27, 'Công Ty Vật Liệu Che Phủ', 'cong-ty-vat-lieu-che-phu', 'BRN1000000011', NULL, NOW(), 1, NOW(), NOW()),
+(12, 28, 'Công Ty Bao Bì Sinh Học', 'cong-ty-bao-bi-sinh-hoc', 'BRN1000000012', NULL, NOW(), 1, NOW(), NOW()),
+(13, 29, 'Công Ty Thủy Canh Việt', 'cong-ty-thuy-canh-viet', 'BRN1000000013', NULL, NOW(), 1, NOW(), NOW()),
+(14, 30, 'Công Ty Thiết Bị Nông Nghiệp Công Nghệ Cao', 'cong-ty-thiet-bi-nong-nghiep-cong-nghe-cao', 'BRN1000000014', NULL, NOW(), 1, NOW(), NOW()),
+(15, 31, 'Công Ty Thu Hoạch Xanh', 'cong-ty-thu-hoach-xanh', 'BRN1000000015', NULL, NOW(), 1, NOW(), NOW()),
+(16, 32, 'Công Ty Chăm Sóc Đất', 'cong-ty-cham-soc-dat', 'BRN1000000016', NULL, NOW(), 1, NOW(), NOW()),
+(17, 33, 'Công Ty Kích Thích Sinh Trưởng', 'cong-ty-kich-thich-sinh-truong', 'BRN1000000017', NULL, NOW(), 1, NOW(), NOW()),
+(18, 34, 'Công Ty Cung Ứng Giống', 'cong-ty-cung-ung-giong', 'BRN1000000018', NULL, NOW(), 1, NOW(), NOW()),
+(19, 35, 'Công Ty Công Nghệ Nước', 'cong-ty-cong-nghe-nuoc', 'BRN1000000019', NULL, NOW(), 1, NOW(), NOW()),
+(20, 36, 'Công Ty Hỗ Trợ Nông Nghiệp', 'cong-ty-ho-tro-nong-nghiep', 'BRN1000000020', NULL, NOW(), 1, NOW(), NOW());
 
 -- Insert User Bank Accounts (20 vendors - all same account 970436/1045069359)
 INSERT INTO user_bank_accounts (id, user_id, bank_code, account_number, is_active, created_at, updated_at) VALUES
