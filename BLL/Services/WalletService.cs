@@ -53,8 +53,7 @@ public class WalletService : IWalletService
         return _mapper.Map<WalletResponseDTO>(await _walletRepository.GetWalletByUserIdWithRelationsAsync(userId, cancellationToken));
     }
     
-    public async Task<TransactionResponseDTO> CreateWalletCashoutRequestAsync(ulong userId,
-        WalletCashoutRequestCreateDTO dto, CancellationToken cancellationToken = default)
+    public async Task<TransactionResponseDTO> CreateWalletCashoutRequestAsync(ulong userId, WalletCashoutRequestCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         if (await _walletRepository.ValidateVendorQualified(userId, cancellationToken) == false)
@@ -89,68 +88,63 @@ public class WalletService : IWalletService
         return _mapper.Map<TransactionResponseDTO>(createdCashout);
     }
     
-    public async Task<WalletCashoutResponseDTO> ProcessWalletCashoutRequestAsync(ulong staffId, ulong userId, WalletProcessCreateDTO dto, CancellationToken cancellationToken = default)
+    public async Task<TransactionResponseDTO> ProcessWalletCashoutRequestAsync(ulong staffId, ulong userId, WalletProcessCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        var walletCashout = await _walletRepository.GetWalletCashoutRequestWithRelationsByUserIdAsync(userId, cancellationToken);
-        if (walletCashout == null)
+        var walletCashout = await _walletRepository.GetTransactionWithWalletCashoutRequestByUserIdAsync(userId, cancellationToken);
+        if (walletCashout == null || walletCashout.Cashout == null)
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");
-        if(dto.Status == CashoutStatus.Processing)
-            throw new InvalidOperationException("Trạng thái không thể là 'processing' khi xử lý yêu cầu rút tiền.");
+        if(dto.Status == TransactionStatus.Pending)
+            throw new InvalidOperationException("Trạng thái không thể là 'Pending' khi xử lý yêu cầu rút tiền.");
         
         walletCashout.Status = dto.Status;
         walletCashout.ProcessedBy = staffId; walletCashout.ProcessedAt = DateTime.UtcNow;
-        Cashout c;
+
+        string title; string message;
         
-        if (dto.Status == CashoutStatus.Completed)
+        if (dto.Status == TransactionStatus.Completed)
         {
             if(dto.GatewayPaymentId == null)
                 throw new InvalidOperationException("Khi hoàn thành yêu cầu rút tiền, mã giao dịch từ cổng thanh toán phải tồn tại.");
-            Transaction transaction = new Transaction
-            {
-                TransactionType = TransactionType.WalletCashout,
-                Currency = "VND",
-                Amount = walletCashout.Amount,
-                UserId = userId,
-                Status = TransactionStatus.Completed,
-                Note = $"Rút tiền từ ví người bán với yêu cầu ID {walletCashout.Id}",
-                GatewayPaymentId = dto.GatewayPaymentId,
-                CreatedBy = userId,
-                ProcessedBy = staffId,
-                ProcessedAt = DateTime.UtcNow
-            };
+            if(dto.CancelReason != null)
+                throw new InvalidOperationException("Khi hoàn thành yêu cầu rút tiền, lý do hủy không được phép tồn tại.");
+            
             var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
             wallet.Balance -= walletCashout.Amount;
             wallet.LastUpdatedBy = staffId;
-            c = await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(transaction, walletCashout, wallet, cancellationToken);
+            await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(walletCashout, walletCashout.Cashout, wallet, cancellationToken);
+
+            title = "Yêu cầu rút tiền đã được xử lý thành công.";
+            message = $"Yêu cầu rút tiền từ ví của bạn đã được xử lý thành công. Số tiền {walletCashout.Amount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.";
         }
         else
         {
-            walletCashout.Notes = dto.CancelReason ?? 
+            if(dto.GatewayPaymentId == null)
+                throw new InvalidOperationException("Khi hủy yêu cầu rút tiền, mã giao dịch từ cổng thanh toán phải tồn tại.");
+            walletCashout.Note = dto.CancelReason ?? 
                 throw new InvalidOperationException("Khi hủy yêu cầu rút tiền, lý do hủy phải tồn tại.");
-            c = await _cashoutRepository.UpdateCashoutAsync(walletCashout, cancellationToken);
+            await _cashoutRepository.UpdateCashoutAsync(walletCashout.Cashout, walletCashout, cancellationToken);
+            
+            title = "Yêu cầu rút tiền thất bại.";
+            message = $"Yêu cầu rút tiền từ ví của bạn đã bị hủy. Lý do: {walletCashout.Note}.";
         }
         
-        var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
+        var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(walletCashout.Id, cancellationToken);
         
-        if (dto.Status == CashoutStatus.Completed)
-        {
-            await _notificationService.CreateAndSendNotificationAsync(
-                userId,
-                "Yêu cầu rút tiền đã được xử lý thành công",
-                $"Yêu cầu rút tiền từ ví của bạn đã được xử lý thành công. Số tiền {walletCashout.Amount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.",
-                NotificationReferenceType.WalletCashout,
-                c.Id,
-                cancellationToken);
-        }
-        
-        return _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
+        await _notificationService.CreateAndSendNotificationAsync(
+            userId,
+            title,
+            message,
+            NotificationReferenceType.WalletCashout,
+            finalResponse.Id,
+            cancellationToken);
+        return _mapper.Map<TransactionResponseDTO>(finalResponse);
     }
     
-    public async Task<WalletCashoutResponseDTO> ProcessWalletCashoutRequestByPayOSAsync(ulong staffId, ulong userId, CancellationToken cancellationToken = default)
+    public async Task<TransactionResponseDTO> ProcessWalletCashoutRequestByPayOSAsync(ulong staffId, ulong userId, CancellationToken cancellationToken = default)
     {
-        var walletCashout = await _walletRepository.GetWalletCashoutRequestWithRelationsByUserIdAsync(userId, cancellationToken);
-        if (walletCashout == null)
+        var walletCashout = await _walletRepository.GetTransactionWithWalletCashoutRequestByUserIdAsync(userId, cancellationToken);
+        if (walletCashout == null || walletCashout.Cashout == null)
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");
         if(await _payOSApiClient.GetBalanceAsync(cancellationToken) < (int)Math.Ceiling(walletCashout.Amount))
             throw new InvalidOperationException("Số dư trong tài khoản PayOS không đủ để thực hiện yêu cầu rút tiền. Vui lòng liên hệ bộ phận quản lý.");
@@ -162,33 +156,19 @@ public class WalletService : IWalletService
             (int)Math.Ceiling(walletCashout.Amount), 
             $"WalletCashout", 
             categories, cancellationToken);
-        
-        Transaction transaction = new Transaction
-        {
-            TransactionType = TransactionType.WalletCashout,
-            Currency = "VND",
-            Amount = walletCashout.Amount,
-            UserId = userId,
-            Status = TransactionStatus.Completed,
-            Note = $"Rút tiền từ ví người bán với yêu cầu ID {walletCashout.Id}",
-            GatewayPaymentId = cashoutResponse.Id,
-            CreatedBy = userId,
-            ProcessedBy = staffId,
-            CompletedAt = DateTime.UtcNow
-        };
-        
-        walletCashout.Status = CashoutStatus.Completed;
+
+        walletCashout.GatewayPaymentId = cashoutResponse.Id;
+        walletCashout.Status = TransactionStatus.Completed;
         walletCashout.ProcessedBy = staffId; walletCashout.ProcessedAt = DateTime.UtcNow;
         
         var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
         wallet.Balance -= walletCashout.Amount;
         wallet.LastUpdatedBy = staffId;
         
-        var c = await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(transaction, walletCashout, wallet, cancellationToken);
+        var c = await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(walletCashout, walletCashout.Cashout, wallet, cancellationToken);
         
         var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
-        var mapped = _mapper.Map<WalletCashoutResponseDTO>(finalResponse);
-        mapped.ToAccountName = cashoutResponse.ToAccountName;
+        var mapped = _mapper.Map<TransactionResponseDTO>(finalResponse);
         
         await _notificationService.CreateAndSendNotificationAsync(
             userId,
@@ -201,28 +181,28 @@ public class WalletService : IWalletService
         return mapped;
     }
     
-    public async Task<WalletCashoutRequestResponseDTO> GetWalletCashoutRequestAsync(ulong userId, CancellationToken cancellationToken = default)
+    public async Task<TransactionResponseDTO> GetWalletCashoutRequestAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         var createdCashout = await _walletRepository.GetWalletCashoutRequestWithRelationsByUserIdAsync(userId, cancellationToken);
         if (createdCashout == null)
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");
-        return _mapper.Map<WalletCashoutRequestResponseDTO>(createdCashout);
+        return _mapper.Map<TransactionResponseDTO>(createdCashout);
     }
     
     public async Task<bool> DeleteWalletCashoutRequestAsync(ulong userId, CancellationToken cancellationToken = default)
     {
-        var existingCashout = await _walletRepository.GetWalletCashoutRequestByUserIdAsync(userId, cancellationToken);
-        if (existingCashout == null)
+        var existingCashout = await _walletRepository.GetTransactionWithWalletCashoutRequestByUserIdAsync(userId, cancellationToken);
+        if (existingCashout == null || existingCashout.Cashout == null)
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");
-        return await _cashoutRepository.DeleteCashoutAsync(existingCashout, cancellationToken);
+        return await _walletRepository.DeleteCashoutWithTransactionAsync(existingCashout, existingCashout.Cashout, cancellationToken);
     }
     
-    public async Task<PagedResponse<WalletCashoutRequestResponseDTO>> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<PagedResponse<TransactionResponseDTO>> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var (cashouts, totalCount) = await _walletRepository.GetAllWalletCashoutRequestAsync(page, pageSize, cancellationToken);
-        var cashoutDtos = _mapper.Map<List<WalletCashoutRequestResponseDTO>>(cashouts);
+        var cashoutDtos = _mapper.Map<List<TransactionResponseDTO>>(cashouts);
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-        return new PagedResponse<WalletCashoutRequestResponseDTO>
+        return new PagedResponse<TransactionResponseDTO>
         {
             Data = cashoutDtos,
             CurrentPage = page,
@@ -234,12 +214,12 @@ public class WalletService : IWalletService
         };
     }
     
-    public async Task<PagedResponse<WalletCashoutRequestResponseDTO>> GetAllWalletCashoutRequestByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<PagedResponse<TransactionResponseDTO>> GetAllWalletCashoutRequestByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var (cashouts, totalCount) = await _walletRepository.GetAllWalletCashoutRequestByUserIdAsync(userId, page, pageSize, cancellationToken);
-        var cashoutDtos = _mapper.Map<List<WalletCashoutRequestResponseDTO>>(cashouts);
+        var cashoutDtos = _mapper.Map<List<TransactionResponseDTO>>(cashouts);
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-        return new PagedResponse<WalletCashoutRequestResponseDTO>
+        return new PagedResponse<TransactionResponseDTO>
         {
             Data = cashoutDtos,
             CurrentPage = page,

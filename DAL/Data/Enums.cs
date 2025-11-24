@@ -171,14 +171,6 @@ public enum TransactionStatus
     Cancelled
 }
 
-public enum CashoutStatus
-{
-    Processing,
-    Completed,
-    Failed,
-    Cancelled
-}
-
 public enum CashoutReferenceType
 {
     VendorWithdrawal,

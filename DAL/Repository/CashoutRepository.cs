@@ -60,10 +60,13 @@ public class CashoutRepository : ICashoutRepository
         }
     }
     
-    public async Task<Cashout> UpdateCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default)
+    public async Task<Transaction> UpdateCashoutAsync(Cashout cashout, Transaction tr, CancellationToken cancellationToken = default)
     {
         cashout.UpdatedAt = DateTime.UtcNow;
-        return await _cashoutRepository.UpdateAsync(cashout, cancellationToken);
+        await _cashoutRepository.UpdateAsync(cashout, cancellationToken);
+        
+        tr.UpdatedAt = DateTime.UtcNow;
+        return await _transactionRepository.UpdateAsync(tr, cancellationToken);
     }
 
     public async Task<Cashout> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr, 
@@ -114,16 +117,12 @@ public class CashoutRepository : ICashoutRepository
         }
     }
     
-    public async Task<Cashout> GetCashoutRequestWithRelationsByIdAsync(ulong cashoutId, CancellationToken cancellationToken = default) =>
-        await _cashoutRepository.GetWithRelationsAsync(c => c.Id == cashoutId, true, 
-            query => query.Include(u => u.User)
-                .Include(u => u.Transaction)
-                .Include(u => u.BankAccount)
-                .Include(u => u.ProcessedByNavigation), cancellationToken) ?? 
+    public async Task<Transaction> GetCashoutRequestWithRelationsByIdAsync(ulong cashoutId, CancellationToken cancellationToken = default) =>
+        await _transactionRepository.GetWithRelationsAsync(c => c.Id == cashoutId, true, 
+            query => query.Include(u => u.BankAccount)
+                .Include(u => u.CreatedByNavigation)
+                .Include(u => u.ProcessedByNavigation)
+                .Include(u => u.User)
+                .Include(u => u.Cashout), cancellationToken) ?? 
         throw new KeyNotFoundException("Yêu cầu rút tiền không tồn tại.");
-
-    public async Task<bool> DeleteCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default)
-    {
-        return await _cashoutRepository.DeleteAsync(cashout, cancellationToken);
-    }
 }
