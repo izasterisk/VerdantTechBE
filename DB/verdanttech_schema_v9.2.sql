@@ -84,6 +84,7 @@ CREATE TABLE vendor_profiles (
     company_name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) UNIQUE NOT NULL,
     business_registration_number VARCHAR(100) UNIQUE,
+    notes VARCHAR(255) NULL,
     verified_at TIMESTAMP NULL,
     verified_by BIGINT UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -573,7 +574,7 @@ CREATE TABLE product_serials (
     batch_inventory_id BIGINT UNSIGNED NOT NULL,
     product_id BIGINT UNSIGNED NOT NULL,
     serial_number VARCHAR(255) UNIQUE NOT NULL COMMENT 'Số seri sản phẩm (có thể chứa chữ và số)',
-    status ENUM('stock', 'sold', 'refund') DEFAULT 'stock' COMMENT 'Trạng thái sản phẩm: stock (trong kho), sold (đã bán), refund (đã hoàn trả)',
+    status ENUM('stock', 'sold', 'refund', 'adjustment') DEFAULT 'stock' COMMENT 'Trạng thái sản phẩm: stock (trong kho), sold (đã bán), refund (đã hoàn trả), adjustment (điều chỉnh)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -603,7 +604,8 @@ CREATE TABLE export_inventory (
     INDEX idx_product (product_id),
     INDEX idx_order (order_id),
     INDEX idx_serial (product_serial_id),
-    INDEX idx_lot (lot_number)
+    INDEX idx_lot (lot_number),
+    INDEX idx_product_lot (product_id, lot_number)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi xuất kho - hỗ trợ cả sản phẩm có serial (máy móc) và không có serial (phân bón)';
 
 -- =====================================================

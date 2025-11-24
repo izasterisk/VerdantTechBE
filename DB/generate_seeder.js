@@ -13,24 +13,34 @@ const path = require('path');
 // =====================================================
 
 function slugify(text) {
-    const replacements = {
-        'á': 'a', 'à': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a', 'ă': 'a', 'ắ': 'a', 'ằ': 'a', 'ẳ': 'a', 'ẵ': 'a', 'ặ': 'a',
-        'â': 'a', 'ấ': 'a', 'ầ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ậ': 'a',
-        'đ': 'd',
-        'é': 'e', 'è': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e', 'ê': 'e', 'ế': 'e', 'ề': 'e', 'ể': 'e', 'ễ': 'e', 'ệ': 'e',
-        'í': 'i', 'ì': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
-        'ó': 'o', 'ò': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o', 'ô': 'o', 'ố': 'o', 'ồ': 'o', 'ổ': 'o', 'ỗ': 'o', 'ộ': 'o',
-        'ơ': 'o', 'ớ': 'o', 'ờ': 'o', 'ở': 'o', 'ỡ': 'o', 'ợ': 'o',
-        'ú': 'u', 'ù': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u', 'ư': 'u', 'ứ': 'u', 'ừ': 'u', 'ử': 'u', 'ữ': 'u', 'ự': 'u',
-        'ý': 'y', 'ỳ': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y',
-        ' ': '-', '/': '-', '&': '-', ',': '', '.': '', '(': '', ')': '', '"': '', "'": '', ':': ''
-    };
+    if (!text) return '';
     
-    let result = text.toLowerCase();
-    for (const [viet, latin] of Object.entries(replacements)) {
-        result = result.split(viet).join(latin);
+    // Replace đ/Đ first
+    text = text.replace(/đ/g, 'd').replace(/Đ/g, 'D');
+    
+    // Normalize to NFD (decompose) to separate base characters from combining marks
+    let s = text.normalize('NFD');
+    
+    // Remove combining marks (accents)
+    s = s.replace(/[\u0300-\u036f]/g, '');
+    
+    // Convert to lowercase
+    s = s.toLowerCase();
+    
+    // Replace all non-alphanumeric characters with dash
+    s = s.replace(/[^a-z0-9]+/g, '-');
+    
+    // Trim leading/trailing dashes
+    s = s.replace(/^-+|-+$/g, '');
+    
+    // Limit to 255 characters, cut at last dash if needed
+    if (s.length > 255) {
+        const cut = s.lastIndexOf('-', 255);
+        s = cut > 0 ? s.substring(0, cut) : s.substring(0, 255);
+        s = s.replace(/-+$/, '');
     }
-    return result.replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    
+    return s;
 }
 
 function escapeSQL(str) {
@@ -201,6 +211,12 @@ function isMachinery(productName) {
     return machineryKeywords.some(k => productName.includes(k));
 }
 
+function getEnergyEfficiencyRating(productName) {
+    // Random rating from 1 to 5 based on product name hash for consistency
+    const hash = productName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return (hash % 5) + 1; // Returns 1, 2, 3, 4, or 5
+}
+
 // =====================================================
 // PARSE CSV
 // =====================================================
@@ -211,11 +227,33 @@ function parseCSV() {
     const lines = csvContent.split('\n');
     const products = [];
     
+    // Helper function to parse CSV line properly (handles quotes)
+    function parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current); // Add last field
+        return result;
+    }
+    
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        if (!line || line.split(';')[0] === '') continue;
+        if (!line || line.split(',')[0] === '') continue;
         
-        const parts = line.split(';');
+        const parts = parseCSVLine(line);
         if (parts.length < 5) continue;
         
         products.push({
@@ -246,7 +284,7 @@ function generateVendorData() {
     
     // Vendor Profiles
     sql += `-- Insert Vendor Profiles (20 vendors)\n`;
-    sql += `INSERT INTO vendor_profiles (id, user_id, company_name, slug, business_registration_number, verified_at, verified_by, created_at, updated_at) VALUES\n`;
+    sql += `INSERT INTO vendor_profiles (id, user_id, company_name, slug, business_registration_number, notes, verified_at, verified_by, created_at, updated_at) VALUES\n`;
     
     const vendors = [
         'Công Ty Phân Bón Xanh Việt',
@@ -277,7 +315,7 @@ function generateVendorData() {
         const userId = 16 + id;
         const slug = slugify(name);
         const brn = `BRN${(1000000000 + id).toString()}`;
-        vendorRows.push(`(${id}, ${userId}, '${name}', '${slug}', '${brn}', NOW(), 1, NOW(), NOW())`);
+        vendorRows.push(`(${id}, ${userId}, '${name}', '${slug}', '${brn}', NULL, NOW(), 1, NOW(), NOW())`);
     });
     sql += vendorRows.join(',\n') + ';\n\n';
     
@@ -432,13 +470,14 @@ function generateProducts(products, categoryMap) {
         const specs = generateSpecs(p.productName, p.categoryName);
         const {weight, dimensions} = generateWeightDimensions(p.productName);
         const warranty = getWarrantyMonths(p.productName);
+        const energyRating = getEnergyEfficiencyRating(p.productName);
         
         // Rotate vendors every N products
         if (index > 0 && index % productsPerVendor === 0 && vendorId < 36) {
             vendorId++;
         }
         
-        rows.push(`(${productId}, ${categoryDbId}, ${vendorId}, '${productCode}', '${escapeSQL(p.productName)}', '${slug}', 'Sản phẩm ${escapeSQL(p.productName)} chất lượng cao', 1000.00, 10.00, 0.00, NULL, "${specs}", NULL, NULL, ${warranty}, 100, ${weight}, "${dimensions}", 1, 0, 0, 0.00, NOW(), NOW())`);
+        rows.push(`(${productId}, ${categoryDbId}, ${vendorId}, '${productCode}', '${escapeSQL(p.productName)}', '${slug}', 'Sản phẩm ${escapeSQL(p.productName)} chất lượng cao', 1000.00, 10.00, 0.00, ${energyRating}, "${specs}", NULL, NULL, ${warranty}, 100, ${weight}, "${dimensions}", 1, 0, 0, 0.00, NOW(), NOW())`);
         
         p.dbId = productId;
         p.vendorId = vendorId;

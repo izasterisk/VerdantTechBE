@@ -149,6 +149,7 @@ builder.Services.AddScoped<IVendorCertificateRepository, VendorCertificateReposi
 builder.Services.AddScoped<IVendorProfileRepository, VendorProfileRepository>();
 builder.Services.AddScoped<IChatbotConversationRepository, ChatbotConversationRepository>();
 builder.Services.AddScoped<ICropRepository, CropRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -177,6 +178,8 @@ builder.Services.AddScoped<IVendorCertificateService, VendorCertificateService>(
 builder.Services.AddScoped<IVendorProfileService, VendorProfileService>();
 builder.Services.AddScoped<IChatbotConversationService, ChatbotConversationService>();
 builder.Services.AddScoped<ICropService, CropService>();
+builder.Services.AddScoped<IExportInventoryService, ExportInventoryService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

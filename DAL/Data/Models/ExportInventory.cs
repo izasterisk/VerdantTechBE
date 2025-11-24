@@ -11,18 +11,11 @@ public partial class ExportInventory
 
     public ulong ProductId { get; set; }
 
-    /// <summary>
-    /// ID số seri sản phẩm (dùng cho máy móc/thiết bị có serial number)
-    /// NULL nếu sản phẩm không có serial (phân bón, vật tư)
-    /// </summary>
     public ulong? ProductSerialId { get; set; }
 
-    /// <summary>
-    /// Số lô sản xuất (dùng cho phân bón, vật tư không có serial number)
-    /// NULL nếu sản phẩm có serial number
-    /// </summary>
+    [Required]
     [StringLength(100)]
-    public string? LotNumber { get; set; }
+    public string LotNumber { get; set; } = string.Empty;
 
     public ulong? OrderId { get; set; }
 

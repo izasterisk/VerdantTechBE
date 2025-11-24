@@ -59,6 +59,7 @@ Các phần được generate:
    - Giá: 1000 VNĐ (tất cả)
    - Commission rate: 10%
    - Stock quantity: 100
+   - Energy efficiency rating: 1-5 (random based on product name hash)
    - Specifications: JSON (tự động generate theo loại sản phẩm)
    - Weight & Dimensions: Realistic dựa vào product type
    - Warranty: 0-24 tháng tùy loại

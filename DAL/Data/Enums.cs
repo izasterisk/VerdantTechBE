@@ -218,7 +218,8 @@ public enum ProductSerialStatus
 {
     Stock,
     Sold,
-    Refund
+    Refund,
+    Adjustment
 }
 
 // =====================================================
