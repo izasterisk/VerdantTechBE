@@ -4,15 +4,13 @@ namespace DAL.Data.Models;
 
 /// <summary>
 /// Payments table - stores payment gateway specific information only
-/// amount, status, gateway_payment_id are in transactions table
+/// amount, status, order_id, gateway_payment_id are in transactions table
 /// </summary>
 public partial class Payment
 {
     public ulong Id { get; set; }
 
     public ulong TransactionId { get; set; }
-
-    public ulong OrderId { get; set; }
 
     public PaymentMethod PaymentMethod { get; set; }
 
@@ -29,5 +27,4 @@ public partial class Payment
 
     // Navigation Properties
     public virtual Transaction Transaction { get; set; } = null!;
-    public virtual Order Order { get; set; } = null!;
 }

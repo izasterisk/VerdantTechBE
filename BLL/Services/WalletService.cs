@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BLL.DTO;
+using BLL.DTO.Transaction;
 using BLL.DTO.UserBankAccount;
 using BLL.DTO.Wallet;
 using BLL.Interfaces;
@@ -35,25 +36,24 @@ public class WalletService : IWalletService
 
     public async Task<WalletResponseDTO> ProcessWalletCreditsAsync(ulong userId, CancellationToken cancellationToken = default)
     {
-        if (await _walletRepository.ValidateVendorQualified(userId, cancellationToken) == false)
+        if (!await _walletRepository.ValidateVendorQualified(userId, cancellationToken))
             throw new KeyNotFoundException("Người dùng không tồn tại hoặc không đủ điều kiện.");
         
-        var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
         var orderDetails = await _walletRepository.GetAllOrderDetailsAvailableForCreditAsync(userId, cancellationToken);
-        decimal balance = 0;
-        List<OrderDetail> update = new List<OrderDetail>();
-        foreach (var orderDetail in orderDetails)
+        if(orderDetails.Count > 0)
         {
-            orderDetail.IsWalletCredited = true;
-            update.Add(orderDetail);
-            balance += orderDetail.Subtotal * ((100 - orderDetail.Product.CommissionRate) / 100);
+            var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
+            foreach (var orderDetail in orderDetails)
+            {
+                orderDetail.IsWalletCredited = true;
+                wallet.Balance += orderDetail.Subtotal * ((100 - orderDetail.Product.CommissionRate) / 100);
+            }
+            await _walletRepository.UpdateWalletAndOrderDetailsWithTransactionAsync(orderDetails, wallet, cancellationToken);
         }
-        wallet.Balance += balance;
-        await _walletRepository.UpdateWalletAndOrderDetailsWithTransactionAsync(update, wallet, cancellationToken);
         return _mapper.Map<WalletResponseDTO>(await _walletRepository.GetWalletByUserIdWithRelationsAsync(userId, cancellationToken));
     }
     
-    public async Task<WalletCashoutRequestResponseDTO> CreateWalletCashoutRequestAsync(ulong userId,
+    public async Task<TransactionResponseDTO> CreateWalletCashoutRequestAsync(ulong userId,
         WalletCashoutRequestCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
@@ -65,19 +65,28 @@ public class WalletService : IWalletService
         var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
         if (dto.Amount > wallet.Balance)
             throw new InvalidOperationException("Số dư trong ví không đủ để thực hiện yêu cầu rút tiền.");
-        
-        if (dto.Amount != 2000)
-            throw new InvalidOperationException("Vì lý do kinh tế làm ơn chỉ rút 2000.");
-        
-        var cashout = _mapper.Map<Cashout>(dto);
-        cashout.UserId = userId; cashout.Status = CashoutStatus.Processing;
-        cashout.ReferenceType = CashoutReferenceType.VendorWithdrawal; cashout.ReferenceId = wallet.Id;
-        await _cashoutRepository.CreateWalletCashoutAsync(cashout, cancellationToken);
+
+        var cashout = new Cashout
+        {
+            ReferenceType = CashoutReferenceType.VendorWithdrawal,
+            ReferenceId = wallet.Id,
+            Notes = dto.Notes
+        };
+        var transaction = new Transaction
+        {
+            TransactionType = TransactionType.WalletCashout,
+            Amount = dto.Amount,
+            Currency = "VND",
+            UserId = userId,
+            BankAccountId = dto.BankAccountId,
+            Status = TransactionStatus.Pending,
+            Note = "Yêu cầu rút tiền từ ví người bán",
+            CreatedBy = userId
+        };
+        await _cashoutRepository.CreateWalletCashoutAsync(cashout, transaction, cancellationToken);
         
         var createdCashout = await _walletRepository.GetWalletCashoutRequestWithRelationsByUserIdAsync(userId, cancellationToken);
-        if (createdCashout == null)
-            throw new KeyNotFoundException("Lỗi hệ thống khi tạo bản ghi, vui lòng liên hệ staff.");
-        return _mapper.Map<WalletCashoutRequestResponseDTO>(createdCashout);
+        return _mapper.Map<TransactionResponseDTO>(createdCashout);
     }
     
     public async Task<WalletCashoutResponseDTO> ProcessWalletCashoutRequestAsync(ulong staffId, ulong userId, WalletProcessCreateDTO dto, CancellationToken cancellationToken = default)
@@ -108,7 +117,7 @@ public class WalletService : IWalletService
                 GatewayPaymentId = dto.GatewayPaymentId,
                 CreatedBy = userId,
                 ProcessedBy = staffId,
-                CompletedAt = DateTime.UtcNow
+                ProcessedAt = DateTime.UtcNow
             };
             var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
             wallet.Balance -= walletCashout.Amount;

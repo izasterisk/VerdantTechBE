@@ -36,16 +36,18 @@ public partial class Transaction
     public ulong? CreatedBy { get; set; }
     public ulong? ProcessedBy { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime? CompletedAt { get; set; }
+    public DateTime? ProcessedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
     public virtual User User { get; set; } = null!;
-    public virtual Order? Order { get; set; };
-    public virtual UserBankAccount? BankAccount { get; set; };
-    public virtual User? CreatedByNavigation { get; set; };
-    public virtual User? ProcessedByNavigation { get; set; };
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
-    public virtual ICollection<Cashout> Cashouts { get; set; } = new List<Cashout>();
+    public virtual Order? Order { get; set; }
+    public virtual UserBankAccount? BankAccount { get; set; }
+    public virtual User? CreatedByNavigation { get; set; }
+    public virtual User? ProcessedByNavigation { get; set; }
+    
+    // 1:1 relationships - a transaction can have either a Payment OR a Cashout, not both
+    public virtual Payment? Payment { get; set; }
+    public virtual Cashout? Cashout { get; set; }
 }
 

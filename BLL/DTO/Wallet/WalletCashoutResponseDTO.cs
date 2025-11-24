@@ -61,6 +61,6 @@ public class WalletTransactionResponseDTO
     // public ulong? CreatedBy { get; set; }
     // public ulong? ProcessedBy { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime? CompletedAt { get; set; }
+    public DateTime? ProcessedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

@@ -640,8 +640,7 @@ CREATE TABLE requests (
 -- Bảng thanh toán (chỉ lưu thông tin đặc thù về payment gateway)
 CREATE TABLE payments (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    transaction_id BIGINT UNSIGNED NOT NULL COMMENT 'Tham chiếu đến bảng transactions (nguồn sự thật cho amount, status, timestamps)',
-    order_id BIGINT UNSIGNED NOT NULL,
+    transaction_id BIGINT UNSIGNED NOT NULL COMMENT 'Tham chiếu đến bảng transactions (nguồn sự thật cho amount, status, order_id, timestamps)',
     payment_method ENUM('credit_card', 'debit_card', 'stripe', 'cod', 'payos') NOT NULL,
     payment_gateway ENUM('stripe', 'manual', 'payos') NOT NULL,
     gateway_response JSON COMMENT 'Phản hồi thô từ cổng thanh toán',
@@ -649,10 +648,8 @@ CREATE TABLE payments (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
-    INDEX idx_transaction (transaction_id),
-    INDEX idx_order (order_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Thông tin đặc thù về payment gateway - amount, status, gateway_payment_id nằm trong transactions';
+    INDEX idx_transaction (transaction_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Thông tin đặc thù về payment gateway - amount, status, order_id, gateway_payment_id nằm trong transactions';
 
 
 -- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
@@ -670,7 +667,7 @@ CREATE TABLE transactions (
     created_by BIGINT UNSIGNED NULL COMMENT 'Người dùng khởi tạo giao dịch này',
     processed_by BIGINT UNSIGNED NULL COMMENT 'Người dùng xử lý giao dịch này',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    completed_at TIMESTAMP NULL,
+    processed_at TIMESTAMP NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
@@ -694,16 +691,12 @@ CREATE TABLE cashouts (
     reference_type ENUM('vendor_withdrawal', 'refund', 'admin_adjustment') NOT NULL COMMENT 'Loại tham chiếu: vendor_withdrawal (vendor rút tiền), refund (hoàn tiền cho khách), admin_adjustment (điều chỉnh bởi admin)',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID của thực thể tham chiếu (request_id cho refund, wallet_id cho vendor_withdrawal)',
     notes VARCHAR(500) NULL COMMENT 'Ghi chú bổ sung về cashout',
-    processed_by BIGINT UNSIGNED NULL COMMENT 'Admin đã xử lý lần rút tiền này',
-    processed_at TIMESTAMP NULL COMMENT 'Thời điểm admin xử lý',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE RESTRICT,
-    FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_transaction (transaction_id),
-    INDEX idx_reference (reference_type, reference_id),
-    INDEX idx_processed (processed_by, processed_at)
+    INDEX idx_reference (reference_type, reference_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Thông tin đặc thù về rút tiền - amount, status, user_id, bank_account_id nằm trong transactions';
 
 -- Ví cho nhà cung cấp (một ví cho một nhà cung cấp)
@@ -748,6 +741,7 @@ CREATE TABLE notifications (
 -- VIII) TÁI CẤU TRÚC PAYMENTS, TRANSACTIONS, CASHOUTS - SINGLE SOURCE OF TRUTH
 -- • Mục đích: Đảm bảo transactions là nguồn sự thật duy nhất cho amount, status, timestamps
 -- • Loại bỏ data redundancy và tăng tính toàn vẹn dữ liệu
+-- • Quan hệ: Transaction 1:1 Payment, Transaction 1:1 Cashout (mỗi transaction chỉ có 1 payment HOẶC 1 cashout)
 
 -- A) BẢNG TRANSACTIONS (Nguồn sự thật trung tâm):
 --   • Thêm trường mới:
@@ -768,6 +762,7 @@ CREATE TABLE notifications (
 --   • XÓA các trường:
 --     + amount: Di chuyển về transactions (single source of truth)
 --     + status: Di chuyển về transactions (tránh inconsistency)
+--     + order_id: Di chuyển về transactions (single source of truth, tránh duplicate)
 --     + gateway_payment_id: Di chuyển về transactions (để query dễ hơn, tránh duplicate)
 --   • THÊM trường:
 --     + transaction_id BIGINT UNSIGNED NOT NULL: FK bắt buộc đến transactions
@@ -776,11 +771,13 @@ CREATE TABLE notifications (
 --     + gateway_response: Raw response từ gateway (audit trail)
 --   • Foreign Keys:
 --     + Thêm FK transaction_id → transactions(id) ON DELETE RESTRICT
+--     + XÓA FK order_id (đã chuyển về transactions)
 --   • Indexes:
 --     + Thêm idx_transaction (transaction_id): Tối ưu join với transactions
 --     + XÓA idx_status (không còn field status)
+--     + XÓA idx_order (order_id đã chuyển về transactions)
 --     + XÓA idx_gateway_payment (gateway_payment_id đã chuyển về transactions)
---   • Comment cập nhật: 'Thông tin đặc thù về payment gateway - amount, status, gateway_payment_id nằm trong transactions'
+--   • Comment cập nhật: 'Thông tin đặc thù về payment gateway - amount, status, order_id, gateway_payment_id nằm trong transactions'
 
 -- C) BẢNG CASHOUTS (Chỉ lưu thông tin đặc thù về cashout):
 --   • XÓA các trường:
@@ -808,7 +805,8 @@ CREATE TABLE notifications (
 
 -- D) LỢI ÍCH CỦA KIẾN TRÚC MỚI:
 --   1. Data Integrity:
---      - Mỗi payment/cashout BẮT BUỘC phải có transaction tương ứng
+--      - Mỗi payment/cashout BẮT BUỘC phải có transaction tương ứng (quan hệ 1:1)
+--      - Mỗi transaction chỉ có thể có 1 payment HOẶC 1 cashout, không thể có cả 2
 --      - Không thể tạo payment/cashout mồ côi (orphan records)
 --      - Amount và status luôn đồng bộ (chỉ có 1 nguồn duy nhất)
 --   

@@ -20,15 +20,10 @@ public partial class Cashout
     [StringLength(500)]
     public string? Notes { get; set; }
 
-    public ulong? ProcessedBy { get; set; }
-
     public DateTime CreatedAt { get; set; }
-
-    public DateTime? ProcessedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
     public virtual Transaction Transaction { get; set; } = null!;
-    public virtual User? ProcessedByNavigation { get; set; }
 }

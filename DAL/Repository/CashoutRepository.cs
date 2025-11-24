@@ -31,16 +31,22 @@ public class CashoutRepository : ICashoutRepository
         _walletRepository = walletRepository;
     }
 
-    public async Task<Cashout> CreateWalletCashoutAsync(Cashout cashout, CancellationToken cancellationToken = default)
+    public async Task<Cashout> CreateWalletCashoutAsync(Cashout cashout, Transaction tr, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var existing = await _walletRepository.GetWalletCashoutRequestByUserIdAsync(cashout.UserId, cancellationToken);
+            var existing = await _walletRepository.GetWalletCashoutRequestByUserIdAsync(tr.UserId, cancellationToken);
             if (existing != null)
                 throw new InvalidOperationException(
                     "Yêu cầu rút tiền đang chờ xử lý, vui lòng chờ đến khi yêu cầu trước được xử lý. " +
                     "Mỗi tài khoản chỉ được tồn tại 1 yêu cầu chưa được xử lý.");
+            
+            tr.CreatedAt = DateTime.UtcNow;
+            tr.UpdatedAt = DateTime.UtcNow;
+            var createdTransaction =  await _transactionRepository.CreateAsync(tr, cancellationToken);
+            
+            cashout.TransactionId = createdTransaction.Id;
             cashout.CreatedAt = DateTime.UtcNow;
             cashout.UpdatedAt = DateTime.UtcNow;
             var result = await _cashoutRepository.CreateAsync(cashout, cancellationToken);

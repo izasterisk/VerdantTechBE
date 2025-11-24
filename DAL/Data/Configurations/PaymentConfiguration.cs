@@ -24,13 +24,6 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasColumnName("transaction_id")
             .IsRequired();
         
-        // Foreign Key to Order
-        builder.Property(e => e.OrderId)
-            .HasColumnType("bigint unsigned")
-            .HasColumnName("order_id")
-            .IsRequired();
-            
-        
         // Enum conversions
         builder.Property(e => e.PaymentMethod)
             .HasConversion(
@@ -68,31 +61,15 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
             .HasColumnName("updated_at");
         
-        // Foreign Key Relationships
+        // Foreign Key Relationships - 1:1 with Transaction
         builder.HasOne(d => d.Transaction)
-            .WithMany(p => p.Payments)
-            .HasForeignKey(d => d.TransactionId)
-            .OnDelete(DeleteBehavior.Restrict);
-            
-        builder.HasOne(d => d.Order)
-            .WithMany(p => p.Payments)
-            .HasForeignKey(d => d.OrderId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .WithOne(p => p.Payment)
+            .HasForeignKey<Payment>(d => d.TransactionId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
         
         // Indexes
         builder.HasIndex(e => e.TransactionId)
             .HasDatabaseName("idx_transaction");
-            
-        builder.HasIndex(e => e.OrderId)
-            .HasDatabaseName("idx_order");
-    }
-}
-        
-        // Indexes
-        builder.HasIndex(e => e.OrderId)
-            .HasDatabaseName("idx_order");
-            
-        builder.HasIndex(e => e.Status)
-            .HasDatabaseName("idx_status");
     }
 }

@@ -33,12 +33,12 @@ public class PayOSService : IPayOSService
                        throw new InvalidOperationException("FRONTEND_URL không được cấu hình trong .env file");
     }
     
-    public async Task<CreatePaymentResult> CreatePaymentLinkAsync(ulong orderId, CreatePaymentDataDTO dto)
+    public async Task<CreatePaymentResult> CreatePaymentLinkAsync(ulong orderId, CreatePaymentDataDTO dto, CancellationToken cancellationToken = default)
     {
         var cancelUrl = $"{_frontEndUrl}/payos/cancel";
         var returnUrl = $"{_frontEndUrl}/payos/return";
         
-        var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId);
+        var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (order == null || order.Status != OrderStatus.Pending || order.OrderPaymentMethod == OrderPaymentMethod.COD)
         {
             throw new ArgumentException($"Đơn hàng với ID {orderId} không tồn tại hoặc không khả dụng để thanh toán.");
@@ -74,14 +74,10 @@ public class PayOSService : IPayOSService
             returnUrl: returnUrl
         );
         var createdPayment = await _payOSApiClient.CreatePaymentLinkAsync(paymentData);
-        var payment = new PaymentResponseDTO
+        var payment = new DAL.Data.Models.Payment
         {
-            OrderId = order.Id,
             PaymentMethod = PaymentMethod.Payos,
             PaymentGateway = PaymentGateway.Payos,
-            GatewayPaymentId = createdPayment.orderCode.ToString(),
-            Amount = createdPayment.amount,
-            Status = PaymentStatus.Pending,
             GatewayResponse = new Dictionary<string, object>
             {
                 { "bin", createdPayment.bin },
@@ -96,7 +92,20 @@ public class PayOSService : IPayOSService
                 { "checkoutUrl", createdPayment.checkoutUrl },
             }
         };
-        await _paymentRepository.CreatePaymentWithTransactionAsync(_mapper.Map<DAL.Data.Models.Payment>(payment));
+        var transaction = new DAL.Data.Models.Transaction
+        {
+            TransactionType = TransactionType.PaymentIn,
+            Amount = paymentData.amount,
+            Currency = "VND",
+            UserId = order.CustomerId,
+            OrderId = order.Id,
+            // BankAccountId
+            Status = TransactionStatus.Pending,
+            Note = $"Thanh toán đơn hàng #{order.Id} qua PayOS",
+            GatewayPaymentId = orderCode.ToString(),
+            CreatedBy = order.CustomerId
+        };
+        await _paymentRepository.CreatePaymentWithTransactionAsync(payment, transaction, cancellationToken);
         return createdPayment;
     }
     
@@ -105,38 +114,37 @@ public class PayOSService : IPayOSService
         ArgumentNullException.ThrowIfNull(webhookBody, $"{nameof(webhookBody)} rỗng.");
         WebhookData webhookData = _payOSApiClient.VerifyWebhookData(webhookBody);
         
-        var payment = await _paymentRepository.GetPaymentByGatewayPaymentIdAsync(webhookData.orderCode.ToString(), cancellationToken);
-        if (payment == null)
-            throw new KeyNotFoundException($"Không tìm thấy thanh toán với mã đơn hàng: {webhookData.orderCode}");
+        var transaction = await _transactionRepository.GetTransactionForPaymentByGatewayPaymentIdAsync(webhookData.orderCode.ToString(), cancellationToken);
+        if (transaction.Order == null || transaction.Payment == null)
+            throw new KeyNotFoundException("Giao dịch này không liên kết với đơn hàng nào.");
 
+        string title; string message;
         if (webhookData.code == "00" || webhookData.desc == "Thành công")
         {
-            payment.Status = PaymentStatus.Completed;
-            payment.Order.Status = OrderStatus.Paid;
-            var transaction = new TransactionCreateDTO
-            {
-                TransactionType = TransactionType.PaymentIn,
-                Amount = webhookData.amount,
-                Currency = webhookData.currency,
-                UserId = payment.Order.CustomerId,
-                Status = TransactionStatus.Completed,
-                Note = $"Thanh toán đơn hàng #{payment.OrderId} qua PayOS",
-                GatewayPaymentId = webhookData.orderCode.ToString(),
-                CreatedBy = payment.Order.CustomerId,
-                CompletedAt = DateTime.UtcNow
-            };
-            await _paymentRepository.UpdateFullPaymentWithTransactionAsync(payment, payment.Order, 
-                _mapper.Map<DAL.Data.Models.Transaction>(transaction), cancellationToken);
+            transaction.Order.Status = OrderStatus.Paid;
             
-            await _notificationService.CreateAndSendNotificationAsync(
-                userId: payment.Order.CustomerId,
-                title: "Thanh toán thành công",
-                message: $"Đơn hàng #{payment.OrderId} đã được thanh toán thành công qua PayOS với số tiền {webhookData.amount:N0} VND.",
-                referenceType: NotificationReferenceType.Payment,
-                referenceId: payment.Id,
-                cancellationToken: cancellationToken
-            );
+            transaction.Status = TransactionStatus.Completed;
+            transaction.ProcessedAt = DateTime.UtcNow;
+            
+            await _paymentRepository.UpdateFullPaymentWithTransactionAsync(transaction.Payment, transaction.Order, transaction, cancellationToken);
+            title = "Thanh toán thành công";
+            message = $"Đơn hàng #{transaction.Order.Id} đã được thanh toán thành công qua PayOS với số tiền {webhookData.amount:N0} VND.";
         }
+        else
+        {
+            transaction.Status = TransactionStatus.Failed;
+            await _paymentRepository.UpdateFullPaymentWithTransactionAsync(transaction.Payment, transaction.Order, transaction, cancellationToken);
+            title = "Thanh toán thất bại";
+            message = $"Đơn hàng #{transaction.Order.Id} thanh toán thất bại.";
+        }
+        await _notificationService.CreateAndSendNotificationAsync(
+            userId: transaction.UserId,
+            title: title,
+            message: message,
+            referenceType: NotificationReferenceType.Payment,
+            referenceId: transaction.Payment.Id,
+            cancellationToken: cancellationToken
+        );
         return webhookData;
     }
     
@@ -145,10 +153,23 @@ public class PayOSService : IPayOSService
         await _payOSApiClient.ConfirmWebhookAsync(dto.WebhookUrl);
     }
     
-    // public async Task<PaymentLinkInformation> GetPaymentLinkInformationAsync(long orderCode)
-    // {
-    //     return await _payOSApiClient.GetPaymentLinkInformationAsync(orderCode);
-    // }
+    public async Task<TransactionResponseDTO> GetPaymentLinkInformationAsync(ulong transactionId, CancellationToken cancellationToken = default)
+    {
+        var transaction = await _paymentRepository.GetPaymentWithRelationByTransactionIdAsync(transactionId, cancellationToken);
+        if(transaction.TransactionType != TransactionType.PaymentIn)
+            throw new InvalidOperationException("Giao dịch này không phải là giao dịch thanh toán.");
+        
+        var response = _mapper.Map<TransactionResponseDTO>(transaction);
+        
+        if (!string.IsNullOrEmpty(transaction.GatewayPaymentId))
+        {
+            if (!long.TryParse(transaction.GatewayPaymentId, out long orderCode))
+                throw new FormatException($"GatewayPaymentId '{transaction.GatewayPaymentId}' không phải là định dạng hợp lệ.");
+            response.Payment.PaymentLinkInformation = await _payOSApiClient.GetPaymentLinkInformationAsync(orderCode);
+        }
+        
+        return response;
+    }
     
     // public async Task<PaymentLinkInformation> CancelPaymentLinkAsync(long orderCode)
     // {

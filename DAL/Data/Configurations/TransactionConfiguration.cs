@@ -89,8 +89,8 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-        builder.Property(e => e.CompletedAt)
-            .HasColumnName("completed_at")
+        builder.Property(e => e.ProcessedAt)
+            .HasColumnName("processed_at")
             .HasColumnType("timestamp");
 
         builder.Property(e => e.UpdatedAt)
@@ -123,6 +123,8 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .WithMany(u => u.TransactionsProcessed)
             .HasForeignKey(e => e.ProcessedBy)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // 1:1 relationships configured from Payment/Cashout side
 
         // Indexes
         builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
