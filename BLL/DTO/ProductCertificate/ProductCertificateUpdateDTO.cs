@@ -11,18 +11,17 @@ namespace BLL.DTO.ProductCertificate
 {
     public class ProductCertificateUpdateDTO
     {
+        [Required(ErrorMessage = "Id chứng chỉ là bắt buộc")]
         public ulong Id { get; set; }
 
-        public ulong ProductId { get; set; }
+        public ulong? ProductId { get; set; }
 
-        public string CertificationCode { get; set; } = null!;
+        public string? CertificationCode { get; set; }
 
-        public string CertificationName { get; set; } = null!;
+        public string? CertificationName { get; set; }
 
-        //[Required(ErrorMessage = "Trạng thái chứng chỉ không được để trống")]
-        //public ProductCertificateStatus Status { get; set; }
-
-        //public string? RejectionReason { get; set; }
-
+        // Các trường khác (nếu mở lại comment) cũng làm tương tự:
+        // public ProductCertificateStatus? Status { get; set; }
+        // public string? RejectionReason { get; set; }
     }
 }
