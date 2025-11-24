@@ -125,8 +125,8 @@ namespace DAL.Repository
         {
             var query = _context.VendorProfiles
                 .AsNoTracking()
-                .Include(v => v.User)
-                .Where(v => v.User.Status == UserStatus.Active);
+                .Include(v => v.User);
+                //.Where(v => v.User.Status == UserStatus.Active);
 
             var vendorProfiles = await query
                 .OrderBy(v => v.Id)
@@ -176,6 +176,7 @@ namespace DAL.Repository
             //existing.Commune = vendorProfile.Commune;
 
             // Thông tin verify (phục vụ duyệt / từ chối)
+            existing.Notes = vendorProfile.Notes;
             existing.VerifiedAt = vendorProfile.VerifiedAt;
             existing.VerifiedBy = vendorProfile.VerifiedBy;
 
@@ -210,6 +211,12 @@ namespace DAL.Repository
         public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
         {
             return await _context.VendorProfiles.AnyAsync(v => v.Slug == slug, ct);
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email, CancellationToken ct = default)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email, ct);
         }
 
     }

@@ -237,6 +237,39 @@ public class EmailSender : IEmailSender
             cancellationToken);
     }
 
+
+    public async Task SendVendorProfileSubmittedEmailAsync(
+    string toEmail,
+    string fullName,
+    CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(toEmail);
+
+        // Load templates vendor profile submitted
+        string htmlTemplate = GetEmbeddedResourceString("Email.Templates.vendor-profile-submitted.html") ?? "";
+        string textTemplate = GetEmbeddedResourceString("Email.Templates.vendor-profile-submitted.txt") ?? "";
+
+        string fullNameValue = string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName;
+
+        // Replace placeholders
+        string htmlBody = htmlTemplate.Replace("{{fullName}}", fullNameValue);
+        string textBody = textTemplate.Replace("{{fullName}}", fullNameValue);
+
+        await SendEmailAsync(
+            toEmail,
+            "Xác nhận gửi hồ sơ nhà cung cấp VerdantTech",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            "SUBMITTED",                // fallback text (không dùng cũng ok)
+            "vendor-profile-submitted",
+            cancellationToken
+        );
+    }
+
+
+
+
     private static string EncodeSubject(string subject)
     {
         // Check if subject contains non-ASCII characters
@@ -304,4 +337,6 @@ public class EmailSender : IEmailSender
             .Replace("{{fullName}}", fullName)
             .Replace("{{reason}}", reason);
     }
+
+
 }

@@ -33,6 +33,8 @@
     <EmbeddedResource Include="Email\Templates\vendor-profile-rejected.txt" />
     <EmbeddedResource Include="Email\Templates\vendor-profile-verified.html" />
     <EmbeddedResource Include="Email\Templates\vendor-profile-verified.txt" />
+    <EmbeddedResource Include="Email\Templates\vendor-profile-submitted.html" />
+    <EmbeddedResource Include="Email\Templates\vendor-profile-submitted.txt" />
   </ItemGroup>
 
 </Project>
