@@ -277,7 +277,8 @@ builder.Services.AddCors(options =>
     {
         builder.WithOrigins(
                 "http://localhost:5173",
-                "https://localhost:5173"
+                "https://localhost:5173",
+                "https://verdanttechsolution.verdev.id.vn"
             )
             .AllowAnyMethod()
             .AllowAnyHeader()
