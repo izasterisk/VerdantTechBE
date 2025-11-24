@@ -45,31 +45,6 @@ namespace BLL.Services
 
         }
 
-        public async Task<ProductCategoryResponseDTO> CreateSubProductCategoryAsync(ProductCategoryCreateDTO dto, CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
-            if (await _productCategoryRepository.IsCategoryNameNotUniqueAsync(dto.Name, cancellationToken))
-                throw new ArgumentException("Tên danh mục sản phẩm đã tồn tại");
-            if (dto.ParentId != null)
-            {
-                if (await _productCategoryRepository.IsCategoryAlreadySonsAsync(dto.ParentId.Value, cancellationToken))
-                    throw new KeyNotFoundException("Danh mục được chỉ định làm cha đang là danh mục con của một mục khác.");
-            }
-            if (dto.ParentId == null)
-            {
-                    throw new KeyNotFoundException("Danh mục phụ không thể là danh mục cha.");
-            }
-
-            string slug = Utils.GenerateSlug(dto.Name);
-            var productCategory = _mapper.Map<ProductCategory>(dto);
-            productCategory.Slug = slug;
-            var createdProductCategory = await _productCategoryRepository.CreateProductCategoryAsync(productCategory, cancellationToken);
-
-            var response = _mapper.Map<ProductCategoryResponseDTO>(createdProductCategory);
-            return response;
-
-        }
-
         public async Task<ProductCategoryResponseDTO> UpdateProductCategoryAsync(ulong id, ProductCategoryUpdateDTO dto, CancellationToken cancellationToken = default)
         {
             var productCategory = await _productCategoryRepository.GetProductCategoryByIdAsync(id, useNoTracking: false, cancellationToken);

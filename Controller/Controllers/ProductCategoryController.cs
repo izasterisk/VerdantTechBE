@@ -43,29 +43,6 @@ namespace Controller.Controllers
         }
 
         /// <summary>
-        /// Tạo danh mục sản phẩm phụ mới cho người dùng hiện tại
-        /// </summary>
-        /// <param name="dto">Thông tin danh mục sản phẩm cần tạo</param>
-        /// <returns>Thông tin danh mục sản phẩm đã tạo</returns>
-        [HttpPost]
-        [EndpointSummary("Create Product Category")]
-        public async Task<ActionResult<APIResponse>> CreateSubProductCategory([FromBody] ProductCategoryCreateDTO dto)
-        {
-            var validationResult = ValidateModel();
-            if (validationResult != null) return validationResult;
-
-            try
-            {
-                var result = await _productCategoryService.CreateSubProductCategoryAsync(dto, GetCancellationToken());
-                return SuccessResponse(result, HttpStatusCode.Created);
-            }
-            catch (Exception ex)
-            {
-                return HandleException(ex);
-            }
-        }
-
-        /// <summary>
         /// Lấy thông tin danh mục sản phẩm theo ID
         /// </summary>
         /// <param name="id">ID của danh mục sản phẩm</param>
