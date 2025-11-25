@@ -10,9 +10,9 @@ public class TransactionResponseDTO
 {
     public ulong Id { get; set; }
     
-    public PaymentResponseDTO Payment { get; set; } = null!;
+    public PaymentResponseDTO? Payment { get; set; }
     
-    public CashoutResponseDTO Cashout { get; set; } = null!;
+    public CashoutResponseDTO? Cashout { get; set; }
 
     public TransactionType TransactionType { get; set; }
 
