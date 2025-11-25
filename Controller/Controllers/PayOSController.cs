@@ -34,7 +34,7 @@ public class PayOSController : BaseController
 
         try
         {
-            var result = await _payOSService.CreatePaymentLinkAsync(orderId, dto);
+            var result = await _payOSService.CreatePaymentLinkAsync(orderId, dto, GetCancellationToken());
             return SuccessResponse(result, HttpStatusCode.Created);
         }
         catch (Exception ex)
@@ -80,6 +80,27 @@ public class PayOSController : BaseController
         {
             await _payOSService.ConfirmWebhookAsync(dto, GetCancellationToken());
             return SuccessResponse(new { message = "Webhook đã xác nhận thành công." });
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Lấy thông tin payment link theo transaction ID
+    /// </summary>
+    /// <param name="transactionId">ID của giao dịch</param>
+    /// <returns>Thông tin payment link</returns>
+    [HttpGet("payment-info/{transactionId}")]
+    [Authorize]
+    [EndpointDescription("Lấy thông tin chi tiết của một giao dịch thanh toán.")]
+    public async Task<ActionResult<APIResponse>> GetPaymentLinkInformation(ulong transactionId)
+    {
+        try
+        {
+            var result = await _payOSService.GetPaymentLinkInformationAsync(transactionId, GetCancellationToken());
+            return SuccessResponse(result);
         }
         catch (Exception ex)
         {

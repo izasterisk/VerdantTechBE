@@ -70,36 +70,8 @@ public class CashoutController : BaseController
     [HttpPost("refund/{requestId}")]
     [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Process Refund Request via PayOS")]
-    [EndpointDescription("Chuyển tiền tự động thông qua PayOS. Đơn hàng phải đã giao và chưa quá 7 ngày.")]
+    [EndpointDescription("Đơn hàng phải đã giao và chưa quá 7 ngày. Nếu truyền vào GatewayPaymentId thì tức là hệ thống tự nhận diện là đã thanh toán bằng tay, nếu GatewayPaymentId = null thì sẽ tự động chuyển tiền bằng payOS.")]
     public async Task<ActionResult<APIResponse>> ProcessRefundRequest(ulong requestId, [FromBody] RefundCreateDTO dto)
-    {
-        var validationResult = ValidateModel();
-        if (validationResult != null) return validationResult;
-
-        try
-        {
-            var staffId = GetCurrentUserId();
-            var refundResponse =
-                await _cashoutService.CreateCashoutRefundByPayOSAsync(staffId, requestId, dto, GetCancellationToken());
-            return SuccessResponse(refundResponse);
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex);
-        }
-    }
-
-    /// <summary>
-    /// Xử lý hoàn tiền cho yêu cầu refund
-    /// </summary>
-    /// <param name="requestId">ID của yêu cầu refund</param>
-    /// <param name="dto">Thông tin hoàn tiền</param>
-    /// <returns>Thông tin cashout refund đã được xử lý</returns>
-    [HttpPost("refund-request/{requestId}")]
-    [Authorize(Roles = "Admin,Staff")]
-    [EndpointSummary("Process Refund Request Manualy")]
-    [EndpointDescription("Staff tạo lịch sử giao dịch sau khi chuyển tiền bằng tay.")]
-    public async Task<ActionResult<APIResponse>> ProcessRefundRequestAsync(ulong requestId, [FromBody] RefundCreateDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;

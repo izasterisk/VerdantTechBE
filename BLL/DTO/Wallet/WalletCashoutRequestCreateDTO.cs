@@ -10,12 +10,12 @@ public class WalletCashoutRequestCreateDTO
 
     // public ulong? TransactionId { get; set; }
 
-    [Required(ErrorMessage = "Bank account ID is required")]
+    [Required(ErrorMessage = "ID tài khoản ngân hàng không được để trống.")]
     public ulong BankAccountId { get; set; }
 
-    [Required(ErrorMessage = "Amount is required")]
-    [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
-    public decimal Amount { get; set; }
+    [Required(ErrorMessage = "Sô tiền cần rút không được để trống.")]
+    [Range(1000, int.MaxValue, ErrorMessage = "Số tiền rút tối thiểu là 1000.")]
+    public int Amount { get; set; }
     
     // public CashoutStatus Status { get; set; } = CashoutStatus.Pending;
 
@@ -26,7 +26,7 @@ public class WalletCashoutRequestCreateDTO
     
     // public ulong? ReferenceId { get; set; }
 
-    [StringLength(500, ErrorMessage = "Notes cannot exceed 500 characters")]
+    [StringLength(500, ErrorMessage = "Notes không được quá 500 ký tự.")]
     public string? Notes { get; set; }
 
     // public ulong? ProcessedBy { get; set; }

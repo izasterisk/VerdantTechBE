@@ -27,5 +27,5 @@ public partial class UserBankAccount
 
     // Navigation
     public virtual User User { get; set; } = null!;
-    public virtual ICollection<Cashout> Cashouts { get; set; } = new List<Cashout>();
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

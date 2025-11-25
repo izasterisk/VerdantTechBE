@@ -73,8 +73,6 @@ public partial class User
     public virtual ICollection<Transaction> TransactionsCreated { get; set; } = new List<Transaction>();
     public virtual ICollection<Transaction> TransactionsProcessed { get; set; } = new List<Transaction>();
     public virtual ICollection<Transaction> TransactionsAsUser { get; set; } = new List<Transaction>();
-    public virtual ICollection<Cashout> CashoutsProcessed { get; set; } = new List<Cashout>();
-    public virtual ICollection<Cashout> CashoutsAsUser { get; set; } = new List<Cashout>();
     public virtual ICollection<UserBankAccount> UserBankAccounts { get; set; } = new List<UserBankAccount>();
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
         
