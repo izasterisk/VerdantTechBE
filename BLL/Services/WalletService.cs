@@ -129,7 +129,7 @@ public class WalletService : IWalletService
             message = $"Yêu cầu rút tiền từ ví của bạn đã bị hủy. Lý do: {walletCashout.Note}.";
         }
         
-        var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(walletCashout.Id, cancellationToken);
+        var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(walletCashout.Id, cancellationToken);
         
         await _notificationService.CreateAndSendNotificationAsync(
             userId,
@@ -167,7 +167,7 @@ public class WalletService : IWalletService
         
         var c = await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(walletCashout, walletCashout.Cashout, wallet, cancellationToken);
         
-        var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(c.Id, cancellationToken);
+        var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(c.Id, cancellationToken);
         var mapped = _mapper.Map<TransactionResponseDTO>(finalResponse);
         
         await _notificationService.CreateAndSendNotificationAsync(

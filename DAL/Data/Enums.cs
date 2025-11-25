@@ -141,16 +141,6 @@ public enum PaymentGateway
     Payos
 }
 
-public enum PaymentStatus
-{
-    Pending,
-    Processing,
-    Completed,
-    Failed,
-    Refunded,
-    PartiallyRefunded
-}
-
 // =====================================================
 // FINANCIAL SYSTEM ENUMS
 // =====================================================

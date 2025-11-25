@@ -69,7 +69,7 @@ public class CashoutRepository : ICashoutRepository
         return await _transactionRepository.UpdateAsync(tr, cancellationToken);
     }
 
-    public async Task<Cashout> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr, 
+    public async Task<Transaction> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr, 
         Order order, Request request, List<ProductSerial> serialIds, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -83,13 +83,10 @@ public class CashoutRepository : ICashoutRepository
             request.Status = RequestStatus.Completed;
             await _requestRepository.UpdateAsync(request, cancellationToken);
             
-            var payment = await _paymentRepository.GetAsync(u => u.OrderId == order.Id, true, cancellationToken) ?? 
+            var payment = await _transactionRepository.GetAsync(u => u.OrderId == order.Id, true, cancellationToken) ?? 
                 throw new KeyNotFoundException("Không tìm thấy thanh toán liên quan đến đơn hàng.");
-            if (payment.Status != PaymentStatus.Completed)
+            if (payment.Status != TransactionStatus.Completed)
                 throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán đã hoàn tất.");
-            payment.UpdatedAt = DateTime.UtcNow;
-            payment.Status = PaymentStatus.Refunded;
-            await _paymentRepository.UpdateAsync(payment, cancellationToken);
 
             foreach (var serialId in serialIds)
             {
@@ -105,10 +102,10 @@ public class CashoutRepository : ICashoutRepository
             cashout.TransactionId = createdTransaction.Id;
             cashout.CreatedAt = DateTime.UtcNow;
             cashout.UpdatedAt = DateTime.UtcNow;
-            var result = await _cashoutRepository.CreateAsync(cashout, cancellationToken);
+            await _cashoutRepository.CreateAsync(cashout, cancellationToken);
             
             await transaction.CommitAsync(cancellationToken);
-            return result;
+            return createdTransaction;
         }
         catch
         {
@@ -117,8 +114,8 @@ public class CashoutRepository : ICashoutRepository
         }
     }
     
-    public async Task<Transaction> GetCashoutRequestWithRelationsByIdAsync(ulong cashoutId, CancellationToken cancellationToken = default) =>
-        await _transactionRepository.GetWithRelationsAsync(c => c.Id == cashoutId, true, 
+    public async Task<Transaction> GetCashoutRequestWithRelationsByTransactionIdAsync(ulong transactionId, CancellationToken cancellationToken = default) =>
+        await _transactionRepository.GetWithRelationsAsync(c => c.Id == transactionId, true, 
             query => query.Include(u => u.BankAccount)
                 .Include(u => u.CreatedByNavigation)
                 .Include(u => u.ProcessedByNavigation)
