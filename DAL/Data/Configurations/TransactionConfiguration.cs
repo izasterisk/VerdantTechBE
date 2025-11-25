@@ -127,11 +127,22 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
         // 1:1 relationships configured from Payment/Cashout side
 
         // Indexes
-        builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
+        // idx_order: Query transaction bởi OrderId (CashoutRepository.CreateRefundCashoutWithTransactionAsync)
         builder.HasIndex(e => e.OrderId).HasDatabaseName("idx_order");
-        builder.HasIndex(e => e.BankAccountId).HasDatabaseName("idx_bank_account");
-        builder.HasIndex(e => new { e.TransactionType, e.Status }).HasDatabaseName("idx_type_status");
+        
+        // idx_gateway_payment: Query transaction bởi GatewayPaymentId (TransactionRepository.GetTransactionForPaymentByGatewayPaymentIdAsync)
         builder.HasIndex(e => e.GatewayPaymentId).HasDatabaseName("idx_gateway_payment");
-        builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created");
+        
+        // idx_user_type_status_created: Composite index cho pagination queries by user
+        // Queries: GetWalletCashoutRequestByUserIdAsync, GetAllWalletCashoutRequestByUserIdAsync
+        // Filter: UserId + TransactionType + Status, OrderBy: CreatedAt DESC
+        builder.HasIndex(e => new { e.UserId, e.TransactionType, e.Status, e.CreatedAt })
+            .HasDatabaseName("idx_user_type_status_created");
+        
+        // idx_type_status_created: Composite index cho admin pagination queries
+        // Queries: GetAllWalletCashoutRequestAsync
+        // Filter: TransactionType + Status, OrderBy: CreatedAt DESC
+        builder.HasIndex(e => new { e.TransactionType, e.Status, e.CreatedAt })
+            .HasDatabaseName("idx_type_status_created");
     }
 }

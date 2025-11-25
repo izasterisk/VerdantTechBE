@@ -93,6 +93,7 @@ CREATE TABLE vendor_profiles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_company_name (company_name)
+    -- Note: idx_verified (verified_at) đã bị xóa vì query sử dụng user_id làm filter chính (đã có UNIQUE constraint)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Hồ sơ nhà cung cấp/người bán và chi tiết xác minh';
 
 -- Thông tin chứng chỉ của nhà cung cấp
@@ -676,12 +677,10 @@ CREATE TABLE transactions (
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
     
-    INDEX idx_user (user_id),
     INDEX idx_order (order_id),
-    INDEX idx_bank_account (bank_account_id),
-    INDEX idx_type_status (transaction_type, status),
     INDEX idx_gateway_payment (gateway_payment_id),
-    INDEX idx_created (created_at)
+    INDEX idx_user_type_status_created (user_id, transaction_type, status, created_at) COMMENT 'Composite index cho pagination queries by user',
+    INDEX idx_type_status_created (transaction_type, status, created_at) COMMENT 'Composite index cho admin pagination queries'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sổ cái tài chính trung tâm - lưu amount, status, bank_account_id, timestamps (single source of truth)';
 
 -- Bảng rút tiền (chỉ lưu thông tin đặc thù về cashout)

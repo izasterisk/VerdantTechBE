@@ -96,8 +96,8 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
         builder.HasIndex(e => e.Slug)
             .IsUnique()
             .HasDatabaseName("idx_slug");
-            
-        builder.HasIndex(e => e.VerifiedAt)
-            .HasDatabaseName("idx_verified");
+        
+        // Note: idx_verified đã bị xóa vì query ValidateVendorQualified sử dụng UserId làm filter chính
+        // và unique_user_id constraint đã đủ để tối ưu query
     }
 }
