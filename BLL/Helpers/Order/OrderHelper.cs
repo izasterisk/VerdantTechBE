@@ -14,7 +14,7 @@ public class OrderHelper
         [OrderStatus.Pending] = new() { OrderStatus.Cancelled, OrderStatus.Processing },
         [OrderStatus.Paid] = new() { OrderStatus.Cancelled, OrderStatus.Processing },
         [OrderStatus.Processing] = new() { OrderStatus.Cancelled },
-        [OrderStatus.Shipped] = new() { OrderStatus.Delivered, OrderStatus.Cancelled },
+        [OrderStatus.Shipped] = new() { OrderStatus.Cancelled, OrderStatus.Delivered },
         [OrderStatus.Delivered] = new() { OrderStatus.Cancelled, OrderStatus.Refunded },
         [OrderStatus.Cancelled] = new() { },
         [OrderStatus.Refunded] = new() { }
