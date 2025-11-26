@@ -29,7 +29,9 @@ public class UserBankAccountsService : IUserBankAccountsService
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         VendorBankAccountsHelper.ValidateBankCode(dto.BankCode);
-        await _userRepository.ValidateUserVerifiedAndActiveAsync(userId, cancellationToken);
+        var user = await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
+        if(user.Role == UserRole.Customer)
+            await _userBankAccountsRepository.IsUserAlreadyHaveBankAccount(userId, cancellationToken);
         if (await _userBankAccountsRepository.ValidateImportedBankAccount(userId, dto.BankCode, dto.AccountNumber, cancellationToken))
             throw new DuplicateNameException("Tài khoản ngân hàng đã tồn tại.");
         

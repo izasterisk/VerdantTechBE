@@ -53,8 +53,6 @@ public class RequestService : IRequestService
         if(dto.RequestMessages == null && dto.Status == null)
             throw new InvalidOperationException("Phải có ít nhất một trong hai: ghi chú trả lời hoặc trạng thái yêu cầu để xử lý.");
         var request = await _requestRepository.GetRequestByIdAsync(requestId, cancellationToken);
-        if(request.Status != RequestStatus.Pending && request.Status != RequestStatus.InReview)
-            throw new InvalidOperationException("Chỉ có thể xử lý các yêu cầu ở trạng thái Pending hoặc InReview.");
         if(request.Status == dto.Status)
             throw new InvalidOperationException("Trạng thái mới phải khác với trạng thái hiện tại của yêu cầu.");
         if(dto.Status == RequestStatus.Pending || dto.Status == RequestStatus.Completed)

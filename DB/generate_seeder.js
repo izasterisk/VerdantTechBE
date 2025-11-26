@@ -541,7 +541,7 @@ function generateProductCertificates(products) {
     };
     
     let sql = `-- Insert Product Certificates (only for products requiring mandatory certs)\n`;
-    sql += `INSERT INTO product_certificates (id, product_id, certification_code, certification_name, status, rejection_reason, uploaded_at, verified_at, verified_by, created_at, updated_at) VALUES\n`;
+    sql += `INSERT INTO product_certificates (id, product_id, registration_id, certification_code, certification_name, status, rejection_reason, uploaded_at, verified_at, verified_by, created_at, updated_at) VALUES\n`;
     
     const rows = [];
     let certId = 1;
@@ -579,7 +579,7 @@ function generateProductCertificates(products) {
                     break;
             }
             
-            rows.push(`(${certId}, ${p.dbId}, '${code}', '${name}', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW())`);
+            rows.push(`(${certId}, ${p.dbId}, NULL, '${code}', '${name}', 'verified', NULL, NOW(), NOW(), 1, NOW(), NOW())`);
             certId++;
         }
     });

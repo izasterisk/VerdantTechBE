@@ -9,7 +9,12 @@ public partial class ProductCertificate
 {
     public ulong Id { get; set; }
 
-    public ulong ProductId { get; set; }
+    public ulong? ProductId { get; set; }
+
+    /// <summary>
+    /// Foreign key to product_registrations
+    /// </summary>
+    public ulong? RegistrationId { get; set; }
 
     [Required]
     [StringLength(50)]
@@ -38,6 +43,7 @@ public partial class ProductCertificate
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
-    public virtual Product Product { get; set; } = null!;
+    public virtual Product? Product { get; set; }
+    public virtual ProductRegistration? Registration { get; set; }
     public virtual User? VerifiedByNavigation { get; set; }
 }

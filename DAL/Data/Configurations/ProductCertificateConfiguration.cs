@@ -19,8 +19,13 @@ public class ProductCertificateConfiguration : IEntityTypeConfiguration<ProductC
         // Foreign Keys
         builder.Property(e => e.ProductId)
             .HasColumnType("bigint unsigned")
-            .IsRequired()
+            .IsRequired(false)
             .HasColumnName("product_id");
+
+        builder.Property(e => e.RegistrationId)
+            .HasColumnType("bigint unsigned")
+            .IsRequired(false)
+            .HasColumnName("registration_id");
 
         // Required fields
         builder.Property(e => e.CertificationCode)
@@ -78,6 +83,13 @@ public class ProductCertificateConfiguration : IEntityTypeConfiguration<ProductC
         builder.HasOne(d => d.Product)
             .WithMany(p => p.ProductCertificates)
             .HasForeignKey(d => d.ProductId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(d => d.Registration)
+            .WithMany(p => p.ProductCertificates)
+            .HasForeignKey(d => d.RegistrationId)
+            .IsRequired(false)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.VerifiedByNavigation)
@@ -88,6 +100,9 @@ public class ProductCertificateConfiguration : IEntityTypeConfiguration<ProductC
         // Indexes
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");
+
+        builder.HasIndex(e => e.RegistrationId)
+            .HasDatabaseName("idx_registration");
 
         builder.HasIndex(e => e.Status)
             .HasDatabaseName("idx_status");
