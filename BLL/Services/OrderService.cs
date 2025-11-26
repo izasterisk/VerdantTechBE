@@ -48,7 +48,7 @@ public class OrderService : IOrderService
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
+        await _userRepository.ValidateUserVerifiedAndActiveAsync(userId, cancellationToken);
         var address = await _addressRepository.GetAddressByIdAsync(dto.AddressId, cancellationToken);
         if (address == null)
             throw new KeyNotFoundException($"Địa chỉ với ID {dto.AddressId} không tồn tại.");
@@ -60,9 +60,12 @@ public class OrderService : IOrderService
         response.Address = _mapper.Map<AddressResponseDTO>(address);
     
         List<OrderDetailsPreviewResponseDTO> orderDetailsResponse = new();
+        var seen = new HashSet<ulong>();
         decimal subTotal = 0; decimal height = 0; decimal length = 0; decimal weight = 0; decimal width = 0;
         foreach (var orderDetail in dto.OrderDetails)
         {
+            if (!seen.Add(orderDetail.ProductId))
+                throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} bị lặp lại trong đơn hàng.");
             var productRaw = await _orderRepository.GetActiveProductByIdAsync(orderDetail.ProductId, cancellationToken);
             if (productRaw == null)
                 throw new KeyNotFoundException($"Sản phẩm với ID {orderDetail.ProductId} không tồn tại hoặc đã bị xóa.");
@@ -187,11 +190,13 @@ public class OrderService : IOrderService
         }
         foreach (var dto in dtos)
         {
+            productQuantities[dto.ProductId] -= dto.Quantity;
+            if(dto.SerialNumber != null && dto.Quantity != 1)
+                throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
             if (!productQuantities.ContainsKey(dto.ProductId))
                 throw new InvalidOperationException($"Sản phẩm với ID {dto.ProductId} không nằm trong đơn hàng này.");
-            if (productQuantities[dto.ProductId] <= 0)
+            if (productQuantities[dto.ProductId] < 0)
                 throw new InvalidOperationException($"Yêu cầu xuất hàng đang nhiều hơn số lượng hàng trong đơn mà khách hàng yêu cầu, đề nghị kiểm tra lại.");
-            productQuantities[dto.ProductId]--;
 
             if (!validateLotNumber.ContainsKey(dto.LotNumber.ToUpper()))
                 validateLotNumber[dto.LotNumber.ToUpper()] = 1;
@@ -204,7 +209,8 @@ public class OrderService : IOrderService
                 ProductId = dto.ProductId,
                 ProductSerialId = serialNumberId?.Id,
                 LotNumber = dto.LotNumber,
-                OrderId = order.Id,
+                OrderDetailId = await _orderDetailRepository.GetOrderDetailIdByOrderNProductIdAsync(order.Id, dto.ProductId, cancellationToken),
+                Quantity = dto.Quantity,
                 MovementType = MovementType.Sale,
                 CreatedBy = staffId
             });

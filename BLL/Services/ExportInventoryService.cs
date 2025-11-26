@@ -35,6 +35,8 @@ public class ExportInventoryService : IExportInventoryService
         var exportInventories = new List<ExportInventory>();
         foreach (var dto in dtos)
         {
+            if(dto.ProductSerialNumber != null && dto.Quantity != 1)
+                throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
             if(dto.MovementType == MovementType.Sale)
                 throw new ArgumentException("MovementType Sale chỉ được sử dụng khi xuất hàng bán.");
             var productSerial = await _orderDetailRepository.ValidateIdentifyNumberAsync(

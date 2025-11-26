@@ -14,6 +14,10 @@ public class ExportInventoryResponseDTO
     // public ulong ProductId { get; set; }
     public ProductResponseDTO Product { get; set; } = null!;
     
+    [Required(ErrorMessage = "Số lượng xuất là bắt buộc.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Số lượng phải ít nhất là 1.")]
+    public int Quantity { get; set; }
+    
     // [Range(1, ulong.MaxValue, ErrorMessage = "Số sê-ri sản phẩm phải lớn hơn 0")]
     // public ulong? ProductSerialId { get; set; }
     public string? ProductSerialNumber { get; set; }

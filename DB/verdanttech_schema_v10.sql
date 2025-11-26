@@ -595,7 +595,8 @@ CREATE TABLE export_inventory (
     product_id BIGINT UNSIGNED NOT NULL,
     product_serial_id BIGINT UNSIGNED NULL COMMENT 'ID số seri sản phẩm được xuất (cho máy móc/thiết bị)',
     lot_number VARCHAR(100) NULL COMMENT 'Số lô sản xuất cho sản phẩm không có serial (phân bón, vật tư)',
-    order_id BIGINT UNSIGNED NULL COMMENT 'Đơn hàng gây ra xuất kho',
+    order_detail_id BIGINT UNSIGNED NULL COMMENT 'Chi tiết đơn hàng gây ra xuất kho',
+    quantity INT NOT NULL DEFAULT 1 COMMENT 'Số lượng xuất kho',
     movement_type ENUM('sale', 'return to vendor', 'damage', 'loss', 'adjustment') DEFAULT 'sale',
     notes VARCHAR(500) NULL,
     created_by BIGINT UNSIGNED NOT NULL COMMENT 'Người thực hiện xuất kho',
@@ -604,10 +605,10 @@ CREATE TABLE export_inventory (
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     FOREIGN KEY (product_serial_id) REFERENCES product_serials(id) ON DELETE RESTRICT,
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
+    FOREIGN KEY (order_detail_id) REFERENCES order_details(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_product (product_id),
-    INDEX idx_order (order_id),
+    INDEX idx_order_detail (order_detail_id),
     INDEX idx_serial (product_serial_id),
     INDEX idx_lot (lot_number),
     INDEX idx_product_lot (product_id, lot_number)

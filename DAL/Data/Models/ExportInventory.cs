@@ -13,11 +13,12 @@ public partial class ExportInventory
 
     public ulong? ProductSerialId { get; set; }
 
-    [Required]
     [StringLength(100)]
-    public string LotNumber { get; set; } = string.Empty;
+    public string? LotNumber { get; set; }
 
-    public ulong? OrderId { get; set; }
+    public ulong? OrderDetailId { get; set; }
+
+    public int Quantity { get; set; } = 1;
 
     public MovementType MovementType { get; set; } = MovementType.Sale;
 
@@ -34,7 +35,7 @@ public partial class ExportInventory
     // Navigation Properties
     public virtual Product Product { get; set; } = null!;
     public virtual ProductSerial? ProductSerial { get; set; }
-    public virtual Order? Order { get; set; }
+    public virtual OrderDetail? OrderDetail { get; set; }
     public virtual User CreatedByNavigation { get; set; } = null!;
 }
 

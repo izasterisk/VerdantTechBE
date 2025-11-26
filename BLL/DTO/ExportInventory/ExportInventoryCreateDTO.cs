@@ -10,6 +10,10 @@ public class ExportInventoryCreateDTO
 
     [Range(1, ulong.MaxValue, ErrorMessage = "Mã sản phẩm phải lớn hơn 0")]
     public ulong ProductId { get; set; }
+    
+    [Required(ErrorMessage = "Số lượng xuất là bắt buộc.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Số lượng phải ít nhất là 1.")]
+    public int Quantity { get; set; }
 
     // public ulong? ProductSerialId { get; set; }
     [StringLength(100, ErrorMessage = "Số sê-ri sản phẩm không được quá 100 ký tự")]
