@@ -64,6 +64,15 @@ public class UserBankAccountsRepository : IUserBankAccountsRepository
             && u.UserId == userId && u.IsActive == true && u.BankCode == bankCode, cancellationToken);
     }
     
+    public async Task IsUserAlreadyHaveBankAccount(ulong userId, CancellationToken cancellationToken = default)
+    {
+        var hasBankAccount = await _userBankAccountRepository.AnyAsync(uba => uba.UserId == userId && uba.IsActive == true, cancellationToken);
+        if (hasBankAccount)
+        {
+            throw new InvalidOperationException("Người dùng chỉ có thể lưu 1 tài khoản ngân hàng.");
+        }
+    }
+    
     public async Task<List<UserBankAccount>> GetAllUserBankAccountsByUserIdAsync(ulong userId, CancellationToken cancellationToken = default) =>
         await _userBankAccountRepository.GetAllByFilterAsync(
             uba => uba.UserId == userId,
