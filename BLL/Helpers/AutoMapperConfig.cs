@@ -185,20 +185,31 @@ namespace BLL.Helpers
             CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
                 .ForMember(d => d.EnergyEfficiencyRating, o => o.Ignore())         // parse bên service
                 .ForMember(d => d.Specifications, o => o.Ignore())         // gán bên service sau khi binder parse
-                .ForMember(d => d.DimensionsCm, o => o.MapFrom(src => new Dictionary<string, decimal>{
-                    { "Width", src.DimensionsCm.Width },
-                    { "Height", src.DimensionsCm.Height },
-                    { "Length", src.DimensionsCm.Length }
+                //.ForMember(d => d.DimensionsCm, o => o.MapFrom(src => new Dictionary<string, decimal>{
+                //    { "Width", src.DimensionsCm.Width },
+                //    { "Height", src.DimensionsCm.Height },
+                //    { "Length", src.DimensionsCm.Length }
+                //}))
+                .ForMember(d => d.DimensionsCm, o => o.MapFrom(src => src.DimensionsCm == null ? new Dictionary<string, decimal>() : new Dictionary<string, decimal>{
+                { "Width", src.DimensionsCm.Width },
+                { "Height", src.DimensionsCm.Height },
+                { "Length", src.DimensionsCm.Length }
                 }));
+
 
             // UpdateDTO -> Entity
             CreateMap<ProductRegistrationUpdateDTO, ProductRegistration>()
                 .ForMember(d => d.EnergyEfficiencyRating, o => o.Ignore())
                 .ForMember(d => d.Specifications, o => o.Ignore())
-                .ForMember(d => d.DimensionsCm, o => o.MapFrom(src => new Dictionary<string, decimal>{
-                    { "Width", src.DimensionsCm.Width },
-                    { "Height", src.DimensionsCm.Height },
-                    { "Length", src.DimensionsCm.Length }
+                //.ForMember(d => d.DimensionsCm, o => o.MapFrom(src => new Dictionary<string, decimal>{
+                //    { "Width", src.DimensionsCm.Width },
+                //    { "Height", src.DimensionsCm.Height },
+                //    { "Length", src.DimensionsCm.Length }
+                //}))
+                .ForMember(d => d.DimensionsCm, o => o.MapFrom(src => src.DimensionsCm == null ? new Dictionary<string, decimal>() : new Dictionary<string, decimal>{
+                { "Width", src.DimensionsCm.Width },
+                { "Height", src.DimensionsCm.Height },
+                { "Length", src.DimensionsCm.Length }
                 }))
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
            
