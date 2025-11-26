@@ -88,4 +88,5 @@ public partial class User
     public virtual ICollection<VendorCertificate> VerifiedVendorCertificates { get; set; } = new List<VendorCertificate>();
     public virtual ICollection<ProductCertificate> VerifiedProductCertificates { get; set; } = new List<ProductCertificate>();
     public virtual ICollection<Request> RequestsProcessed { get; set; } = new List<Request>();
+    public virtual ICollection<RequestMessage> RequestMessagesAsStaff { get; set; } = new List<RequestMessage>();
 }

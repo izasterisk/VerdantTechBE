@@ -37,6 +37,7 @@ public class VerdantTechDbContext : DbContext
     
     // Request Management DbSets
     public DbSet<Request> Requests { get; set; }
+    public DbSet<RequestMessage> RequestMessages { get; set; }
     
     // Order and Payment DbSets
     public DbSet<Order> Orders { get; set; }
@@ -84,6 +85,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ProductSerialConfiguration());
         modelBuilder.ApplyConfiguration(new ExportInventoryConfiguration());
         modelBuilder.ApplyConfiguration(new RequestConfiguration());
+        modelBuilder.ApplyConfiguration(new RequestMessageConfiguration());
         modelBuilder.ApplyConfiguration(new OrderConfiguration());
         modelBuilder.ApplyConfiguration(new OrderDetailConfiguration());
         modelBuilder.ApplyConfiguration(new PaymentConfiguration());

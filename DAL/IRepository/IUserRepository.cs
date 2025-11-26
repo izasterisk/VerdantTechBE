@@ -11,4 +11,5 @@ public interface IUserRepository
     Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, string? role = null, CancellationToken cancellationToken = default);
     Task<bool> CheckEmailExistsAsync(string username, CancellationToken cancellationToken = default);
     Task<User> GetVerifiedAndActiveUserByIdAsync(ulong userId, CancellationToken cancellationToken = default);
+    Task ValidateUserVerifiedAndActiveAsync(ulong userId, CancellationToken cancellationToken = default);
 }

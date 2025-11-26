@@ -75,6 +75,11 @@ public partial class Product
 
     public decimal RatingAverage { get; set; } = 0.00m;
 
+    /// <summary>
+    /// Foreign key to product_registrations (nullable)
+    /// </summary>
+    public ulong? RegistrationId { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
@@ -82,6 +87,7 @@ public partial class Product
     // Navigation Properties
     public virtual ProductCategory Category { get; set; } = null!;
     public virtual User Vendor { get; set; } = null!;
+    public virtual ProductRegistration? Registration { get; set; }
     public virtual ICollection<BatchInventory> BatchInventories { get; set; } = new List<BatchInventory>();
     public virtual ICollection<ProductSerial> ProductSerials { get; set; } = new List<ProductSerial>();
     public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();

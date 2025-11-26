@@ -96,14 +96,7 @@ public class CashoutService : ICashoutService
         if(dto.RefundAmount > totalAmount * 2)
             throw new InvalidDataException("Số tiền hoàn không được gấp đôi số tiền của các đơn hàng.");
         
-        VendorBankAccountsHelper.ValidateBankCode(dto.UserBankAccount.BankCode);
-        var bankAccount = await _userBankAccountRepository.GetExistedBankAccount(request.UserId, dto.UserBankAccount.AccountNumber, cancellationToken);
-        if (bankAccount == null)
-        {
-            var userBankAccount = _mapper.Map<UserBankAccount>(dto.UserBankAccount);
-            userBankAccount.UserId = request.UserId;
-            bankAccount = await _userBankAccountRepository.CreateUserBankAccountWithTransactionAsync(userBankAccount, cancellationToken);
-        }
+        var bankAccount = await _userBankAccountRepository.GetUserBankAccountByIdAsync(dto.BankAccountId, cancellationToken);
 
         string cashoutResponseId;
         if (dto.GatewayPaymentId == null)

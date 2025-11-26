@@ -29,11 +29,10 @@ public class UserBankAccountsService : IUserBankAccountsService
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
         VendorBankAccountsHelper.ValidateBankCode(dto.BankCode);
-        await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
-        if (await _userBankAccountsRepository.ValidateImportedBankAccount(userId, dto.AccountNumber, cancellationToken))
-        {
+        await _userRepository.ValidateUserVerifiedAndActiveAsync(userId, cancellationToken);
+        if (await _userBankAccountsRepository.ValidateImportedBankAccount(userId, dto.BankCode, dto.AccountNumber, cancellationToken))
             throw new DuplicateNameException("Tài khoản ngân hàng đã tồn tại.");
-        }
+        
         var userBankAccount = _mapper.Map<UserBankAccount>(dto);
         userBankAccount.UserId = userId;
         var createdAccount = await _userBankAccountsRepository.CreateUserBankAccountWithTransactionAsync(userBankAccount, cancellationToken);

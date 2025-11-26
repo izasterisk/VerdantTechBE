@@ -14,7 +14,8 @@ public class RefundCreateDTO
     public int RefundAmount { get; set; }
     
     [Required(ErrorMessage = "Tài khoản nhận tiền là bắt buộc.")]
-    public UserBankAccountCreateDTO UserBankAccount { get; set; } = null!;
+    [Range(1, int.MaxValue, ErrorMessage = "BankAccountId phải lớn hơn 0")]
+    public ulong BankAccountId { get; set; }
     
     [StringLength(255, ErrorMessage = "GatewayPaymentId không được vượt quá 255 ký tự")]
     public string? GatewayPaymentId { get; set; }

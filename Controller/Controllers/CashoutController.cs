@@ -69,7 +69,7 @@ public class CashoutController : BaseController
     /// <returns>Thông tin cashout refund đã được xử lý</returns>
     [HttpPost("refund/{requestId}")]
     [Authorize(Roles = "Admin,Staff")]
-    [EndpointSummary("Process Refund Request via PayOS")]
+    [EndpointSummary("Process Refund Request")]
     [EndpointDescription("Đơn hàng phải đã giao và chưa quá 7 ngày. Nếu truyền vào GatewayPaymentId thì tức là hệ thống tự nhận diện là đã thanh toán bằng tay, nếu GatewayPaymentId = null thì sẽ tự động chuyển tiền bằng payOS.")]
     public async Task<ActionResult<APIResponse>> ProcessRefundRequest(ulong requestId, [FromBody] RefundCreateDTO dto)
     {

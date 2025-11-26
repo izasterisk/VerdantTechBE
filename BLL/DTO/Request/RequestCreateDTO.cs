@@ -11,6 +11,8 @@ public class RequestCreateDTO
     // public ulong UserId { get; set; }
 
     [Required(ErrorMessage = "Loại yêu cầu là bắt buộc")]
+    [EnumDataType(typeof(RequestType), ErrorMessage = "RequestType phải là một trong các giá trị hợp lệ: " +
+                                                      "RefundRequest, SupportRequest.")]
     public RequestType RequestType { get; set; }
 
     [Required(ErrorMessage = "Tiêu đề là bắt buộc")]
@@ -22,9 +24,6 @@ public class RequestCreateDTO
     public string Description { get; set; } = null!;
 
     // public RequestStatus Status { get; set; } = RequestStatus.Pending;
-
-    // [StringLength(1000, ErrorMessage = "Ghi chú trả lời không được vượt quá 1000 ký tự")]
-    // public string? ReplyNotes { get; set; }
 
     // public ulong? ProcessedBy { get; set; }
 
