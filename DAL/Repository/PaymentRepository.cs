@@ -10,10 +10,12 @@ public class PaymentRepository : IPaymentRepository
     private readonly IRepository<Payment> _paymentRepository;
     private readonly IRepository<Order> _orderRepository;
     private readonly VerdantTechDbContext _dbContext;
-    private readonly ITransactionRepository _transactionRepository;
+    private readonly IRepository<Transaction> _transactionRepository;
     
-    public PaymentRepository(IRepository<Payment> paymentRepository, IRepository<Order> orderRepository,
-        VerdantTechDbContext dbContext, ITransactionRepository transactionRepository)
+    public PaymentRepository(IRepository<Payment> paymentRepository,
+        IRepository<Order> orderRepository,
+        VerdantTechDbContext dbContext,
+        IRepository<Transaction> transactionRepository)
     {
         _paymentRepository = paymentRepository;
         _orderRepository = orderRepository;
@@ -21,11 +23,16 @@ public class PaymentRepository : IPaymentRepository
         _transactionRepository = transactionRepository;
     }
     
-    public async Task<Payment> CreatePaymentWithTransactionAsync(Payment payment, CancellationToken cancellationToken = default)
+    public async Task<Payment> CreatePaymentWithTransactionAsync(Payment payment, Transaction tr, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
+            tr.CreatedAt = DateTime.UtcNow;
+            tr.UpdatedAt = DateTime.UtcNow;
+            var createdTransaction =  await _transactionRepository.CreateAsync(tr, cancellationToken);
+            
+            payment.TransactionId = createdTransaction.Id;
             payment.CreatedAt = DateTime.UtcNow;
             payment.UpdatedAt = DateTime.UtcNow;
             var createdPayment = await _paymentRepository.CreateAsync(payment, cancellationToken);
@@ -44,11 +51,14 @@ public class PaymentRepository : IPaymentRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            payment.UpdatedAt = DateTime.UtcNow;
-            order.UpdatedAt = DateTime.UtcNow;
             
+            order.UpdatedAt = DateTime.UtcNow;
             await _orderRepository.UpdateAsync(order, cancellationToken);
-            await _transactionRepository.CreateTransactionAsync(transactions, cancellationToken);
+            
+            transactions.UpdatedAt = DateTime.UtcNow;
+            await _transactionRepository.UpdateAsync(transactions, cancellationToken);
+            
+            payment.UpdatedAt = DateTime.UtcNow;
             var updatedPayment = await _paymentRepository.UpdateAsync(payment, cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return updatedPayment;
@@ -60,11 +70,14 @@ public class PaymentRepository : IPaymentRepository
         }
     }
     
-    public async Task<Payment?> GetPaymentByGatewayPaymentIdAsync(string paymentGatewayId, CancellationToken cancellationToken = default)
+    public async Task<Transaction> GetPaymentWithRelationByTransactionIdAsync(ulong id, CancellationToken cancellationToken = default)
     {
-        return await _paymentRepository.GetWithRelationsAsync(
-            filter: p => p.GatewayPaymentId == paymentGatewayId,
-            useNoTracking: true, includeFunc: q => q.Include(p => p.Order),
-            cancellationToken: cancellationToken);
+        return await _transactionRepository.GetWithRelationsAsync(p => p.Id == id, true, 
+            query => query
+                .Include(p => p.Payment)
+                .Include(t => t.User)
+                .Include(t => t.ProcessedBy)
+                .Include(t => t.CreatedBy), cancellationToken) ?? 
+               throw new KeyNotFoundException($"Không tìm thấy giao dịch với ID {id}.");
     }
 }

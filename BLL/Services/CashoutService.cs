@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using BLL.DTO.Cashout;
 using BLL.DTO.Order;
+using BLL.DTO.Transaction;
 using BLL.DTO.UserBankAccount;
 using BLL.DTO.Wallet;
 using BLL.Helpers.VendorBankAccounts;
@@ -41,11 +42,9 @@ public class CashoutService : ICashoutService
         _notificationService = notificationService;
     }
     
-    public async Task<RefundReponseDTO> CreateCashoutRefundByPayOSAsync(ulong staffId, ulong requestId, RefundCreateDTO dto, CancellationToken cancellationToken = default)
+    public async Task<RefundReponseDTO> CreateCashoutRefundAsync(ulong staffId, ulong requestId, RefundCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        if(dto.GatewayPaymentId != null)
-            throw new InvalidDataException("GatewayPaymentId không cần thiết trong chức năng này.");
         var request = await _requestRepository.GetRequestByIdAsync(requestId, cancellationToken);
         if(request.Status != RequestStatus.Approved || request.RequestType != RequestType.RefundRequest)
             throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
@@ -97,164 +96,53 @@ public class CashoutService : ICashoutService
         if(dto.RefundAmount > totalAmount * 2)
             throw new InvalidDataException("Số tiền hoàn không được gấp đôi số tiền của các đơn hàng.");
         
-        VendorBankAccountsHelper.ValidateBankCode(dto.UserBankAccount.BankCode);
-        var bankAccount = await _userBankAccountRepository.GetExistedBankAccount(request.UserId, dto.UserBankAccount.AccountNumber, cancellationToken);
-        if (bankAccount == null)
+        var bankAccount = await _userBankAccountRepository.GetUserBankAccountByIdAsync(dto.BankAccountId, cancellationToken);
+
+        string cashoutResponseId;
+        if (dto.GatewayPaymentId == null)
         {
-            var userBankAccount = _mapper.Map<UserBankAccount>(dto.UserBankAccount);
-            userBankAccount.UserId = request.UserId;
-            bankAccount = await _userBankAccountRepository.CreateUserBankAccountWithTransactionAsync(userBankAccount, cancellationToken);
+            var categories = new List<string> { "RefundCashout" };
+            var cashoutResponse = await _payOSApiClient.CreateCashoutAsync(
+                _mapper.Map<UserBankAccountResponseDTO>(bankAccount),
+                dto.RefundAmount,
+                $"RefundCashout",
+                categories, cancellationToken);
+            cashoutResponseId = cashoutResponse.Id;
         }
+        else
+            cashoutResponseId = dto.GatewayPaymentId;
         
-        var categories = new List<string> { "RefundCashout" };
-        var cashoutResponse = await _payOSApiClient.CreateCashoutAsync(
-            _mapper.Map<UserBankAccountResponseDTO>(bankAccount), 
-            dto.RefundAmount, 
-            $"RefundCashout", 
-            categories, cancellationToken);
         
-        Transaction transaction = new Transaction
+        var cashout = new Cashout
+        {
+            ReferenceType = CashoutReferenceType.Refund,
+            ReferenceId = request.Id,
+            Notes = $"Hoàn tiền với yêu cầu ID {request.Id}."
+        };
+        var transaction = new Transaction
         {
             TransactionType = TransactionType.Refund,
             Amount = dto.RefundAmount,
             Currency = "VND",
             UserId = request.UserId,
+            BankAccountId = bankAccount.Id,
             Status = TransactionStatus.Completed,
-            Note = $"Hoàn tiền với yêu cầu ID {request.Id}",
-            GatewayPaymentId = cashoutResponse.Id,
+            Note = "Yêu cầu rút tiền từ ví người bán",
+            GatewayPaymentId = cashoutResponseId,
             CreatedBy = request.UserId,
             ProcessedBy = staffId,
-            CompletedAt = DateTime.UtcNow
-        };
-        Cashout cashout = new Cashout
-        {
-            UserId = request.UserId,
-            BankAccountId = bankAccount.Id,
-            Amount = dto.RefundAmount,
-            Status = CashoutStatus.Completed,
-            ReferenceType = CashoutReferenceType.Refund,
-            ReferenceId = request.Id,
-            Notes = $"Hoàn tiền với yêu cầu ID {request.Id}",
-            ProcessedBy = staffId,
-            ProcessedAt = DateTime.UtcNow,
+            ProcessedAt = DateTime.UtcNow
         };
         var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, request, serial, cancellationToken);
-        var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(created.Id, cancellationToken);
-        RefundReponseDTO reponseDto = new RefundReponseDTO();
-        reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);
-        reponseDto.TransactionInfo.ToAccountName = cashoutResponse.ToAccountName;
+        var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(created.Id, cancellationToken);
+        var reponseDto = new RefundReponseDTO();
+        reponseDto.TransactionInfo = _mapper.Map<TransactionResponseDTO>(cashoutRes);
         reponseDto.OrderDetails = products;
         
         await _notificationService.CreateAndSendNotificationAsync(
             request.UserId,
             "Hoàn tiền thành công",
             $"Yêu cầu hoàn tiền của bạn đã được xử lý thành công. Số tiền {dto.RefundAmount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.",
-            NotificationReferenceType.Refund,
-            created.Id,
-            cancellationToken);
-        return reponseDto;
-    }
-
-    public async Task<RefundReponseDTO> CreateCashoutRefundAsync(ulong staffId, ulong requestId, RefundCreateDTO dto, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
-        if(dto.GatewayPaymentId == null)
-            throw new InvalidDataException("GatewayPaymentId là bắt buộc.");
-        var request = await _requestRepository.GetRequestByIdAsync(requestId, cancellationToken);
-        if(request.Status != RequestStatus.Approved || request.RequestType != RequestType.RefundRequest)
-            throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
-    
-        var serial = new List<ProductSerial>();
-        var orderDetails = new List<OrderDetail>();
-        foreach (var orderDetail in dto.OrderDetails)
-        {
-            var detail = await _orderDetailRepository.GetOrderDetailWithRelationByIdAsync(orderDetail.OrderDetailId, cancellationToken);
-            if(orderDetail.RefundQuantity > detail.Quantity)
-                throw new InvalidDataException($"Số lượng hoàn tiền cho OrderDetailId {orderDetail.OrderDetailId} vượt quá số lượng đã mua.");
-            orderDetails.Add(detail);
-            if(detail.OrderId != orderDetails[0].OrderId)
-                throw new InvalidDataException("Tất cả OrderDetail phải thuộc về cùng một đơn hàng.");
-            var x = await _exportedInventoryRepository.GetNumberOfProductExportedAsync(orderDetail.LotNumber,
-                detail.OrderId, cancellationToken);
-            if(x == 0)
-                throw new InvalidDataException($"Không tìm thấy sản phẩm đã xuất kho với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber}.");
-            if(x < detail.Quantity)
-                throw new InvalidDataException($"Sản phầm với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber} chỉ được xuất {x} sản phẩm, vui lòng kiểm tra lại.");
-            
-            var serialNumber = await _orderDetailRepository.ValidateIdentifyNumberAsync(detail.ProductId, orderDetail.SerialNumber, orderDetail.LotNumber, cancellationToken);
-            if (serialNumber != null)
-            {
-                if (orderDetail.RefundQuantity != 1)
-                    throw new AggregateException("Khi hoàn tiền sản phẩm có số sê-ri, chỉ được phép hoàn 1 sản phẩm mỗi lần.");
-                serial.Add(serialNumber);
-            }
-        }
-        
-        var order = await _orderRepository.GetOrderByIdAsync(orderDetails[0].OrderId, cancellationToken);
-        if(order.CustomerId != request.UserId)
-            throw new UnauthorizedAccessException("Yêu cầu hoàn tiền không thuộc về người đặt hàng.");
-        if(order.Status == OrderStatus.Refunded)
-            throw new InvalidDataException("Đơn hàng đã được hoàn tiền trước đó.");
-        if(order.Status != OrderStatus.Delivered || order.DeliveredAt == null)
-            throw new InvalidDataException("Đơn hàng chưa được giao, không thể hoàn tiền.");
-        if(order.DeliveredAt.Value.AddDays(7) < request.CreatedAt)
-            throw new InvalidDataException("Không thể hoàn tiền cho đơn hàng đã quá 7 ngày kể từ khi giao hàng.");
-        
-        var products = _mapper.Map<List<OrderDetailsResponseDTO>>(orderDetails);
-        decimal totalAmount = 0.00m;
-        foreach(var item in products)
-        {
-            totalAmount += item.Subtotal;
-            item.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(
-                await _orderRepository.GetProductImagesByProductIdAsync(item.Product.Id, cancellationToken));
-        }
-        if(dto.RefundAmount > totalAmount * 2)
-            throw new InvalidDataException("Số tiền hoàn không được gấp đôi số tiền của các đơn hàng.");
-        
-        VendorBankAccountsHelper.ValidateBankCode(dto.UserBankAccount.BankCode);
-        var bankAccount = await _userBankAccountRepository.GetExistedBankAccount(request.UserId, dto.UserBankAccount.AccountNumber, cancellationToken);
-        if (bankAccount == null)
-        {
-            var userBankAccount = _mapper.Map<UserBankAccount>(dto.UserBankAccount);
-            userBankAccount.UserId = request.UserId;
-            bankAccount = await _userBankAccountRepository.CreateUserBankAccountWithTransactionAsync(userBankAccount, cancellationToken);
-        }
-    
-        Transaction transaction = new Transaction
-        {
-            TransactionType = TransactionType.Refund,
-            Amount = dto.RefundAmount,
-            Currency = "VND",
-            UserId = request.UserId,
-            Status = TransactionStatus.Completed,
-            Note = $"Hoàn tiền với yêu cầu ID {request.Id}",
-            GatewayPaymentId = dto.GatewayPaymentId,
-            CreatedBy = request.UserId,
-            ProcessedBy = staffId,
-            CompletedAt = DateTime.UtcNow
-        };
-        Cashout cashout = new Cashout
-        {
-            UserId = request.UserId,
-            BankAccountId = bankAccount.Id,
-            Amount = dto.RefundAmount,
-            Status = CashoutStatus.Completed,
-            ReferenceType = CashoutReferenceType.Refund,
-            ReferenceId = request.Id,
-            Notes = $"Hoàn tiền với yêu cầu ID {request.Id}",
-            ProcessedBy = staffId,
-            ProcessedAt = DateTime.UtcNow,
-        };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, request, serial, cancellationToken);
-        var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByIdAsync(created.Id, cancellationToken);
-        RefundReponseDTO reponseDto = new RefundReponseDTO();
-        reponseDto.TransactionInfo = _mapper.Map<WalletCashoutResponseDTO>(cashoutRes);
-        reponseDto.OrderDetails = products;
-        
-        await _notificationService.CreateAndSendNotificationAsync(
-            request.UserId,
-            "Rút tiền thành công",
-            $"Yêu cầu rút tiền của bạn đã được xử lý thành công. Số tiền {dto.RefundAmount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.",
             NotificationReferenceType.Refund,
             created.Id,
             cancellationToken);

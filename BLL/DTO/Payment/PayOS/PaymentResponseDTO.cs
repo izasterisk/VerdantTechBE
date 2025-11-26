@@ -1,20 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using BLL.DTO.Transaction;
 using DAL.Data;
+using Net.payOS.Types;
 
-namespace BLL.Services.Payment;
+namespace BLL.DTO.Payment.PayOS;
 
 public class PaymentResponseDTO
 {
     public ulong Id { get; set; }
+
+    // public ulong TransactionId { get; set; }
+    // public TransactionResponseDTO Transaction { get; set; } = null!;
+
     public ulong OrderId { get; set; }
+
     public PaymentMethod PaymentMethod { get; set; }
+
     public PaymentGateway PaymentGateway { get; set; }
-    public string? GatewayPaymentId { get; set; }
-    public decimal Amount { get; set; }
-    public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
-    public Dictionary<string, object> GatewayResponse { get; set; } = new();
     
+    public Dictionary<string, object> GatewayResponse { get; set; } = new();
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+    
+    public PaymentLinkInformation? PaymentLinkInformation { get; set; }
 }

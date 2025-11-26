@@ -1,6 +1,7 @@
 ﻿using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
+using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Repository;
 
@@ -15,12 +16,14 @@ public class TransactionRepository : ITransactionRepository
         _dbContext = dbContext;
     }
     
-    public async Task<Transaction> CreateTransactionAsync(Transaction transaction, CancellationToken cancellationToken = default)
+    public async Task<Transaction> GetTransactionForPaymentByGatewayPaymentIdAsync(string gatewayPaymentId, CancellationToken cancellationToken = default)
     {
-        transaction.CreatedAt = DateTime.UtcNow;
-        transaction.UpdatedAt = DateTime.UtcNow;
-        
-        var createdTransaction = await _transactionRepository.CreateAsync(transaction, cancellationToken);
-        return createdTransaction;
+        return await _transactionRepository.GetWithRelationsAsync(
+                   t => t.GatewayPaymentId != null && t.GatewayPaymentId.Equals(gatewayPaymentId, StringComparison.OrdinalIgnoreCase), 
+                   true, 
+                   query => query.Include(t => t.Payment)
+                       .Include(t => t.Order),
+                   cancellationToken) ?? 
+               throw new KeyNotFoundException($"Không tồn tại giao dịch với mã thanh toán {gatewayPaymentId}.");
     }
 }

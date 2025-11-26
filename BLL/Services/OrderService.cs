@@ -273,7 +273,7 @@ public class OrderService : IOrderService
         if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
             throw new InvalidOperationException("Khi cung cấp lý do hủy, trạng thái đơn hàng phải là 'Cancelled'.");
         OrderHelper.ValidateOrderStatusTransition(order.Status, dto.Status);
-        if (dto.Status == OrderStatus.Processing)
+        if (dto.Status == OrderStatus.Processing && order.Status == OrderStatus.Pending)
         {
             if(order.OrderPaymentMethod != OrderPaymentMethod.COD)
                 throw new InvalidOperationException("Đơn hàng không phải COD không thể chuyển sang 'Processing' nếu chưa 'Paid'.");
@@ -315,7 +315,7 @@ public class OrderService : IOrderService
         finalResponse.Customer = _mapper.Map<UserResponseDTO>(await _userRepository.GetVerifiedAndActiveUserByIdAsync(response.CustomerId, cancellationToken));
         finalResponse.Customer.UserAddresses.Insert(0, _mapper.Map<AddressResponseDTO>(await _addressRepository.GetAddressByIdAsync(response.AddressId, cancellationToken)));
         
-        string notificationMessage = dto.Status switch
+        var notificationMessage = dto.Status switch
         {
             OrderStatus.Processing => "Đơn hàng của bạn đang được xử lý.",
             OrderStatus.Delivered => "Đơn hàng của bạn đã được giao thành công.",

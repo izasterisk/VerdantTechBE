@@ -93,6 +93,13 @@ public class UserRepository : IUserRepository
                ?? throw new KeyNotFoundException("Người dùng không tồn tại hoặc đã bị xóa.");
     }
     
+    public async Task ValidateUserVerifiedAndActiveAsync(ulong userId, CancellationToken cancellationToken = default)
+    {
+        var x = await _userRepository.AnyAsync(u => u.Id == userId && u.IsVerified && u.Status == UserStatus.Active, cancellationToken);
+        if(!x)
+            throw new KeyNotFoundException("Người dùng không tồn tại hoặc đã bị xóa.");
+    }
+    
     public async Task<(List<User>, int totalCount)> GetAllUsersAsync(int page, int pageSize, String? role = null, CancellationToken cancellationToken = default)
     {
         Expression<Func<User, bool>> filter = u => u.Status == UserStatus.Active;

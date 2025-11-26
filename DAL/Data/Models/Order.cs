@@ -67,5 +67,5 @@ public partial class Order
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     public virtual ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

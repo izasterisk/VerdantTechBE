@@ -96,9 +96,10 @@ public class OrderDetailRepository : IOrderDetailRepository
                 ps => ps.ProductId == productId && ps.SerialNumber.Equals(serialNumber, StringComparison.OrdinalIgnoreCase),
                 true, 
                 query => query.Include(u => u.BatchInventory),
-                cancellationToken);
-            if(serial == null || serial.Status == ProductSerialStatus.Sold || serial.Status == ProductSerialStatus.Refund)
-                throw new KeyNotFoundException("Sản phẩm với số sê-ri này không đủ điều kiện để xuất hoặc số sê-ri không tồn tại trong hệ thống hoặc số sê-ri không phải của sản phẩm này.");
+                cancellationToken) ?? 
+                    throw new KeyNotFoundException("số sê-ri không tồn tại trong hệ thống hoặc số sê-ri không phải của sản phẩm này.");
+            if(serial.Status == ProductSerialStatus.Sold || serial.Status == ProductSerialStatus.Refund)
+                throw new KeyNotFoundException("Sản phẩm với số sê-ri này không đủ điều kiện để xuất.");
             if(lotNumber != null && !serial.BatchInventory.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidExpressionException($"Số lô nhận vào không đúng với số lô có trong hệ thống cho sản phẩm ID {productId}, số sê-ri {serialNumber}.");
             return serial;

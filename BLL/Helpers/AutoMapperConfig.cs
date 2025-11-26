@@ -2,6 +2,7 @@ using AutoMapper;
 using BLL.DTO.Address;
 using BLL.DTO.BatchInventory;
 using BLL.DTO.Cart;
+using BLL.DTO.Cashout;
 using BLL.DTO.CO2;
 using BLL.DTO.Courier;
 using BLL.DTO.FarmProfile;
@@ -28,6 +29,7 @@ using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
 using BLL.DTO.ForumPost;
 using BLL.DTO.ForumComment;
 using BLL.DTO.ExportInventory;
+using BLL.DTO.Payment.PayOS;
 
 namespace BLL.Helpers
 {
@@ -56,15 +58,6 @@ namespace BLL.Helpers
 
             // ===================== WALLET MAPPINGS =====================
             CreateMap<WalletResponseDTO, Wallet>().ReverseMap();
-            CreateMap<WalletCashoutRequestResponseDTO, UserBankAccount>().ReverseMap();
-            CreateMap<Cashout, WalletCashoutRequestResponseDTO>()
-                .ForMember(dest => dest.User, opt => opt.MapFrom(src => src.BankAccount.User))
-                .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation));
-            CreateMap<WalletCashoutRequestCreateDTO, Cashout>().ReverseMap();
-            
-            CreateMap<Cashout, WalletCashoutResponseDTO>()
-                .ForMember(dest => dest.ProcessedBy, opt => opt.MapFrom(src => src.ProcessedByNavigation));            
-            CreateMap<Transaction, WalletTransactionResponseDTO>();
             
             // ===================== FARM PROFILE =====================
             CreateMap<FarmProfileCreateDto, FarmProfile>()
@@ -304,7 +297,6 @@ namespace BLL.Helpers
             
             // ===================== PAYMENT =====================
             CreateMap<Payment, PaymentResponseDTO>().ReverseMap();
-            CreateMap<Transaction, TransactionCreateDTO>().ReverseMap();
 
             // ===================== PRODUCT =====================
             CreateMap<BLL.DTO.Product.ProductCreateDTO, Product>().ReverseMap();
@@ -357,10 +349,11 @@ namespace BLL.Helpers
                 .ForMember(dest => dest.QualityCheckedByName, o => o.MapFrom(src => src.QualityCheckedByNavigation != null ? src.QualityCheckedByNavigation.FullName : null));
 
             // ===================== REQUEST =====================
-            CreateMap<RequestCreateDTO, Request>().ReverseMap();
+            CreateMap<RequestCreateDTO, Request>();
             CreateMap<Request, RequestResponseDTO>()
                 .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation));
             CreateMap<MediaLink, RequestImageDTO>().ReverseMap();
+            CreateMap<RequestMessage, RequestMessageResponseDTO>();
 
             // ===================== PRODUCT REVIEW =====================
             CreateMap<ProductReviewCreateDTO, ProductReview>().ReverseMap();
@@ -386,6 +379,14 @@ namespace BLL.Helpers
             CreateMap<ExportInventory, ExportInventoryResponseDTO>()
                 .ForMember(d => d.CreatedBy, o => o.MapFrom(s => s.CreatedByNavigation))
                 .ForMember(d => d.ProductSerialNumber, o => o.MapFrom(s => s.ProductSerial != null ? s.ProductSerial.SerialNumber : null));
+            
+            // ===================== CASHOUT =====================
+            CreateMap<Cashout, CashoutResponseDTO>();
+            
+            // ===================== TRANSACTION =====================
+            CreateMap<Transaction, TransactionResponseDTO>()
+                .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation))
+                .ForMember(d => d.CreatedBy, o => o.MapFrom(s => s.CreatedByNavigation));
         }
     }
 }

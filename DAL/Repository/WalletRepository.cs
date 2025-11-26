@@ -13,12 +13,12 @@ public class WalletRepository : IWalletRepository
     private readonly IRepository<OrderDetail> _orderDetailRepository;
     private readonly IRepository<VendorProfile> _vendorProfileRepository;
     private readonly IRepository<Cashout> _cashoutRepository;
-    private readonly ITransactionRepository _transactionRepository;
+    private readonly IRepository<Transaction> _transactionRepository;
     
     public WalletRepository(IRepository<Wallet> walletRepository, IRepository<Order> orderRepository,
         VerdantTechDbContext dbContext, IRepository<OrderDetail> orderDetailRepository,
         IRepository<VendorProfile> vendorProfileRepository, IRepository<Cashout> cashoutRepository,
-        ITransactionRepository transactionRepository)
+        IRepository<Transaction> transactionRepository)
     {
         _walletRepository = walletRepository;
         _orderRepository = orderRepository;
@@ -35,11 +35,6 @@ public class WalletRepository : IWalletRepository
         wallet.UpdatedAt = DateTime.UtcNow;
 
         return await _walletRepository.CreateAsync(wallet, cancellationToken);
-    }
-    public async Task<Wallet> UpdateWalletAsync(Wallet wallet, CancellationToken cancellationToken = default)
-    {
-        wallet.UpdatedAt = DateTime.UtcNow;
-        return await _walletRepository.UpdateAsync(wallet, cancellationToken);
     }
 
     public async Task<Wallet> UpdateWalletAndOrderDetailsWithTransactionAsync(List<OrderDetail> orderDetails, Wallet wallet, CancellationToken cancellationToken = default)
@@ -64,20 +59,22 @@ public class WalletRepository : IWalletRepository
         }
     }
     
-    public async Task<Cashout> ProcessWalletCashoutRequestWithTransactionAsync(Transaction tr, Cashout cashout, Wallet wallet, CancellationToken cancellationToken = default)
+    public async Task<Transaction> ProcessWalletCashoutRequestWithTransactionAsync(Transaction tr, Cashout cashout, Wallet wallet, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var t = await _transactionRepository.CreateTransactionAsync(tr, cancellationToken);
-            await UpdateWalletAsync(wallet, cancellationToken);
+            tr.UpdatedAt = DateTime.UtcNow;
+            var t = await _transactionRepository.UpdateAsync(tr, cancellationToken);
             
-            cashout.TransactionId = t.Id;
+            wallet.UpdatedAt = DateTime.UtcNow;
+            await _walletRepository.UpdateAsync(wallet, cancellationToken);
+            
             cashout.UpdatedAt = DateTime.UtcNow;
-            var c = await _cashoutRepository.UpdateAsync(cashout, cancellationToken);
+            await _cashoutRepository.UpdateAsync(cashout, cancellationToken);
             
             await transaction.CommitAsync(cancellationToken);
-            return c;
+            return t;
         }
         catch (Exception)
         {
@@ -112,7 +109,7 @@ public class WalletRepository : IWalletRepository
         
     public async Task<Wallet> GetWalletByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default)
     {
-        var w = await _walletRepository.GetAsync(w => w.VendorId == vendorId, useNoTracking: false, cancellationToken);
+        var w = await _walletRepository.GetAsync(w => w.VendorId == vendorId, useNoTracking: true, cancellationToken);
         if (w == null)
         {
             var create = new Wallet
@@ -126,52 +123,86 @@ public class WalletRepository : IWalletRepository
     }
     
     public async Task<List<OrderDetail>> GetAllOrderDetailsAvailableForCreditAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _orderDetailRepository.GetAllWithRelationsByFilterAsync(o => o.IsWalletCredited == false 
-            && o.UpdatedAt.AddDays(7) < DateTime.UtcNow && o.Product.VendorId == vendorId, 
-            false, 
-            includeFunc: query => query.Include(od => od.Product), cancellationToken);
+        await _dbContext.OrderDetails
+            .Include(o => o.Product)
+            .Where(o => o.IsWalletCredited == false && o.UpdatedAt.AddDays(7) < DateTime.UtcNow)
+            .Where(o => o.Product.VendorId == vendorId) 
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
     
     public async Task<bool> ValidateVendorQualified(ulong userId, CancellationToken cancellationToken = default) =>
         await _vendorProfileRepository.AnyAsync(w => w.UserId == userId && w.VerifiedAt != null 
             && w.VerifiedBy != null, cancellationToken);
     
-    public async Task<Cashout?> GetWalletCashoutRequestByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _cashoutRepository.GetAsync(c => c.UserId == vendorId && c.Status == CashoutStatus.Processing
-            && c.ProcessedAt == null && c.ProcessedBy == null 
-            && c.ReferenceType == CashoutReferenceType.VendorWithdrawal, true, cancellationToken);
+    public async Task<Transaction?> GetWalletCashoutRequestByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
+        await _transactionRepository.GetAsync(c => c.UserId == vendorId 
+            && c.TransactionType == TransactionType.WalletCashout
+            && c.Status == TransactionStatus.Pending, true, cancellationToken);
     
-    public async Task<Cashout?> GetWalletCashoutRequestWithRelationsByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _cashoutRepository.GetWithRelationsAsync(c => c.UserId == vendorId && c.Status == CashoutStatus.Processing 
-            && c.ProcessedAt == null && c.ProcessedBy == null 
-            && c.ReferenceType == CashoutReferenceType.VendorWithdrawal, true, 
+    public async Task<Transaction?> GetTransactionWithWalletCashoutRequestByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
+        await _transactionRepository.GetWithRelationsAsync(c => c.UserId == vendorId 
+           && c.TransactionType == TransactionType.WalletCashout
+           && c.Status == TransactionStatus.Pending, true, 
+            query => query.Include(u => u.Cashout)
+                .Include(u => u.BankAccount), cancellationToken);
+    
+    public async Task<Transaction> GetWalletCashoutRequestWithRelationsByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
+        await _transactionRepository.GetWithRelationsAsync(c => c.UserId == vendorId 
+            && c.TransactionType == TransactionType.WalletCashout 
+            && c.Status == TransactionStatus.Pending, true, 
             query => query.Include(u => u.BankAccount)
-                .ThenInclude(u => u.User), cancellationToken);
+                .Include(u => u.CreatedByNavigation)
+                .Include(u => u.User)
+                .Include(u => u.Cashout), cancellationToken)
+        ?? throw new KeyNotFoundException($"Yêu cầu rút tiền của vendor ID {vendorId} không tồn tại.");
     
-    public async Task<(List<Cashout>, int totalCount)> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteCashoutWithTransactionAsync(Transaction tr, Cashout cashout, CancellationToken cancellationToken = default)
     {
-        return await _cashoutRepository.GetPaginatedWithRelationsAsync(
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await _cashoutRepository.DeleteAsync(cashout, cancellationToken);
+            await _transactionRepository.DeleteAsync(tr, cancellationToken);
+            
+            await transaction.CommitAsync(cancellationToken);
+            return true;
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+    
+    public async Task<(List<Transaction>, int totalCount)> GetAllWalletCashoutRequestAsync(int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        return await _transactionRepository.GetPaginatedWithRelationsAsync(
             page,
             pageSize,
-            c => c.ReferenceType == CashoutReferenceType.VendorWithdrawal,
+            c => c.TransactionType == TransactionType.WalletCashout && c.Status == TransactionStatus.Pending,
             useNoTracking: true,
             orderBy: query => query.OrderByDescending(c => c.CreatedAt),
-            includeFunc: query => query.Include(c => c.BankAccount).ThenInclude(u => u.User),
+            includeFunc: query => query.Include(u => u.BankAccount)
+                .Include(u => u.CreatedByNavigation)
+                .Include(u => u.User)
+                .Include(u => u.Cashout),
             cancellationToken
         );
     }
     
-    public async Task<(List<Cashout>, int totalCount)> GetAllWalletCashoutRequestByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(List<Transaction>, int totalCount)> GetAllWalletCashoutRequestByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        return await _cashoutRepository.GetPaginatedWithRelationsAsync(
+        return await _transactionRepository.GetPaginatedWithRelationsAsync(
             page,
             pageSize,
-            c => c.UserId == userId && c.ReferenceType == CashoutReferenceType.VendorWithdrawal,
+            c => c.UserId == userId && c.TransactionType == TransactionType.WalletCashout,
             useNoTracking: true,
             orderBy: query => query.OrderByDescending(c => c.CreatedAt),
-            includeFunc: query => query.Include(c => c.BankAccount)
-                .ThenInclude(u => u.User)
-                .Include(c => c.Transaction)
-                .Include(c => c.ProcessedByNavigation),
+            includeFunc: query => query.Include(u => u.BankAccount)
+                .Include(u => u.CreatedByNavigation)
+                .Include(u => u.ProcessedByNavigation)
+                .Include(u => u.User)
+                .Include(u => u.Cashout),
             cancellationToken
         );
     }

@@ -47,14 +47,22 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasColumnType("bigint unsigned")
             .IsRequired();
 
+        builder.Property(e => e.OrderId)
+            .HasColumnName("order_id")
+            .HasColumnType("bigint unsigned");
+
+        builder.Property(e => e.BankAccountId)
+            .HasColumnName("bank_account_id")
+            .HasColumnType("bigint unsigned");
+
         // Status and metadata
         builder.Property(e => e.Status)
             .HasConversion(
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<TransactionStatus>(v, true))
             .HasColumnName("status")
-            .HasColumnType("enum('completed','failed','cancelled')")
-            .HasDefaultValue(TransactionStatus.Completed);
+            .HasColumnType("enum('pending','completed','failed','cancelled')")
+            .HasDefaultValue(TransactionStatus.Pending);
 
         builder.Property(e => e.Note)
             .HasColumnName("note")
@@ -81,8 +89,8 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-        builder.Property(e => e.CompletedAt)
-            .HasColumnName("completed_at")
+        builder.Property(e => e.ProcessedAt)
+            .HasColumnName("processed_at")
             .HasColumnType("timestamp");
 
         builder.Property(e => e.UpdatedAt)
@@ -96,6 +104,16 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasForeignKey(e => e.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(e => e.Order)
+            .WithMany(o => o.Transactions)
+            .HasForeignKey(e => e.OrderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.BankAccount)
+            .WithMany(b => b.Transactions)
+            .HasForeignKey(e => e.BankAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(e => e.CreatedByNavigation)
             .WithMany(u => u.TransactionsCreated)
             .HasForeignKey(e => e.CreatedBy)
@@ -106,10 +124,25 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasForeignKey(e => e.ProcessedBy)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // 1:1 relationships configured from Payment/Cashout side
+
         // Indexes
-        builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
-        builder.HasIndex(e => new { e.TransactionType, e.Status }).HasDatabaseName("idx_type_status");
+        // idx_order: Query transaction bởi OrderId (CashoutRepository.CreateRefundCashoutWithTransactionAsync)
+        builder.HasIndex(e => e.OrderId).HasDatabaseName("idx_order");
+        
+        // idx_gateway_payment: Query transaction bởi GatewayPaymentId (TransactionRepository.GetTransactionForPaymentByGatewayPaymentIdAsync)
         builder.HasIndex(e => e.GatewayPaymentId).HasDatabaseName("idx_gateway_payment");
-        builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created");
+        
+        // idx_user_type_status_created: Composite index cho pagination queries by user
+        // Queries: GetWalletCashoutRequestByUserIdAsync, GetAllWalletCashoutRequestByUserIdAsync
+        // Filter: UserId + TransactionType + Status, OrderBy: CreatedAt DESC
+        builder.HasIndex(e => new { e.UserId, e.TransactionType, e.Status, e.CreatedAt })
+            .HasDatabaseName("idx_user_type_status_created");
+        
+        // idx_type_status_created: Composite index cho admin pagination queries
+        // Queries: GetAllWalletCashoutRequestAsync
+        // Filter: TransactionType + Status, OrderBy: CreatedAt DESC
+        builder.HasIndex(e => new { e.TransactionType, e.Status, e.CreatedAt })
+            .HasDatabaseName("idx_type_status_created");
     }
 }
