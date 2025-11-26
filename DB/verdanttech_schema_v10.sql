@@ -402,7 +402,8 @@ CREATE TABLE product_registrations (
 -- Thông tin chứng chỉ của sản phẩm
 CREATE TABLE product_certificates (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    product_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NULL,
+    registration_id BIGINT UNSIGNED NULL COMMENT 'Khóa ngoại đến product_registrations',
     certification_code VARCHAR(50) NOT NULL,
     certification_name VARCHAR(255) NOT NULL,
     status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
@@ -414,8 +415,10 @@ CREATE TABLE product_certificates (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
+    FOREIGN KEY (registration_id) REFERENCES product_registrations(id) ON DELETE RESTRICT,
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_product (product_id),
+    INDEX idx_registration (registration_id),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do sản phẩm gắn kết để xác minh';
 
