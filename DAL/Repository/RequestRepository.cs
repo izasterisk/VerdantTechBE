@@ -129,6 +129,22 @@ public class RequestRepository : IRequestRepository
                 .ThenInclude(rm => rm.Staff), cancellationToken);
     }
     
+    public async Task<(List<Request>, int totalCount)> GetAllRequestByUserIdWithRelationsAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        return await _requestRepository.GetPaginatedWithRelationsAsync(
+            page,
+            pageSize,
+            r => r.UserId == userId,
+            useNoTracking: true,
+            orderBy: query => query.OrderByDescending(r => r.UpdatedAt),
+            includeFunc: query => query.Include(r => r.User)
+                .Include(r => r.ProcessedByNavigation)
+                .Include(r => r.RequestMessages.OrderBy(rm => rm.Id))
+                .ThenInclude(rm => rm.Staff),
+            cancellationToken
+        );
+    }
+    
     public async Task<Request> GetRequestByIdAsync(ulong id, CancellationToken cancellationToken = default)
     {
         return await _requestRepository.GetAsync(r => r.Id == id, true, cancellationToken)

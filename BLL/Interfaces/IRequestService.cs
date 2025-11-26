@@ -10,6 +10,6 @@ public interface IRequestService
     Task<RequestResponseDTO> ProcessRequestAsync(ulong staffId, ulong requestId, RequestProcessDTO dto, CancellationToken cancellationToken = default);
     Task<RequestResponseDTO> SendNewRequestMessageAsync(ulong userId, ulong requestId, RequestMessageCreateDTO dto, CancellationToken cancellationToken = default);
     Task<RequestResponseDTO> GetRequestByIdAsync(ulong requestId, CancellationToken cancellationToken = default);
-    Task<List<RequestResponseDTO>> GetAllRequestByUserIdAsync(ulong userId, CancellationToken cancellationToken = default);
+    Task<PagedResponse<RequestResponseDTO>> GetAllRequestByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<PagedResponse<RequestResponseDTO>> GetAllRequestByFiltersAsync(int page, int pageSize, RequestType? requestType = null, RequestStatus? requestStatus = null, CancellationToken cancellationToken = default);
 }

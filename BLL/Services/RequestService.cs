@@ -55,7 +55,8 @@ public class RequestService : IRequestService
         var request = await _requestRepository.GetRequestByIdAsync(requestId, cancellationToken);
         if(request.Status != RequestStatus.Pending && request.Status != RequestStatus.InReview)
             throw new InvalidOperationException("Chỉ có thể xử lý các yêu cầu ở trạng thái Pending hoặc InReview.");
-        
+        if(request.Status == dto.Status)
+            throw new InvalidOperationException("Trạng thái mới phải khác với trạng thái hiện tại của yêu cầu.");
         if(dto.Status == RequestStatus.Pending || dto.Status == RequestStatus.Completed)
             throw new InvalidOperationException("Không thể cập nhật trạng thái về Pending hoặc Completed."); //Không về completed vì phải refund.
         if(dto.Status == RequestStatus.InReview && dto.RequestMessages != null)
@@ -157,22 +158,22 @@ public class RequestService : IRequestService
         return responseDto;
     }
     
-    public async Task<List<RequestResponseDTO>> GetAllRequestByUserIdAsync(ulong userId, CancellationToken cancellationToken = default)
+    public async Task<PagedResponse<RequestResponseDTO>> GetAllRequestByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        var requests = await _requestRepository.GetAllRequestByUserIdWithRelationsAsync(userId, cancellationToken);
+        var (requests, totalCount) = await _requestRepository.GetAllRequestByUserIdWithRelationsAsync(userId, page, pageSize, cancellationToken);
         var responseDtos = _mapper.Map<List<RequestResponseDTO>>(requests);
-        foreach (var responseDto in responseDtos)
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<RequestResponseDTO>
         {
-            if (responseDto.RequestMessages != null)
-            {
-                foreach (var requestMessage in responseDto.RequestMessages)
-                {
-                    var i = await _requestRepository.GetAllImagesByRequestMessageIdAsync(requestMessage.Id, cancellationToken);
-                    requestMessage.Images = _mapper.Map<List<RequestImageDTO>>(i);
-                }
-            }
-        }
-        return responseDtos;
+            Data = responseDtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
     }
     
     public async Task<PagedResponse<RequestResponseDTO>> GetAllRequestByFiltersAsync(int page, int pageSize, 

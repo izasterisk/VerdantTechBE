@@ -11,6 +11,7 @@ public interface IRequestRepository
     Task<Request> GetRequestByIdWithMessagesAsync(ulong id, CancellationToken cancellationToken = default);
     Task<RequestMessage> GetRequestMessageByIdAsync(ulong id, CancellationToken cancellationToken = default);
     Task<List<Request>> GetAllRequestByUserIdWithRelationsAsync(ulong userId, CancellationToken cancellationToken = default);
+    Task<(List<Request>, int totalCount)> GetAllRequestByUserIdWithRelationsAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<ulong> UpdateRequestWithTransactionAsync(ulong requestId, Request? request, RequestMessage? requestMessage, CancellationToken cancellationToken = default);
     Task<List<MediaLink>> GetAllImagesByRequestMessageIdAsync(ulong id, CancellationToken cancellationToken = default);
     Task<(List<Request>, int totalCount)> GetAllRequestByFiltersAsync(int page, int pageSize, RequestType? requestType = null,

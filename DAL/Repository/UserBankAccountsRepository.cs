@@ -58,16 +58,10 @@ public class UserBankAccountsRepository : IUserBankAccountsRepository
         await _userBankAccountRepository.GetAsync(uba => uba.Id == id, useNoTracking: true, cancellationToken) ??
             throw new KeyNotFoundException("Không tồn tại tài khoản ngân hàng với ID này.");
 
-    public async Task<bool> ValidateImportedBankAccount(ulong userId, string accountNumber, CancellationToken cancellationToken = default)
+    public async Task<bool> ValidateImportedBankAccount(ulong userId, string bankCode, string accountNumber, CancellationToken cancellationToken = default)
     {
         return await _userBankAccountRepository.AnyAsync(u => u.AccountNumber == accountNumber
-            && u.UserId == userId && u.IsActive == true, cancellationToken);
-    }
-    
-    public async Task<UserBankAccount?> GetExistedBankAccount(ulong userId, string accountNumber, CancellationToken cancellationToken = default)
-    {
-        return await _userBankAccountRepository.GetAsync(u => u.AccountNumber == accountNumber
-            && u.UserId == userId && u.IsActive == true, true, cancellationToken);
+            && u.UserId == userId && u.IsActive == true && u.BankCode == bankCode, cancellationToken);
     }
     
     public async Task<List<UserBankAccount>> GetAllUserBankAccountsByUserIdAsync(ulong userId, CancellationToken cancellationToken = default) =>

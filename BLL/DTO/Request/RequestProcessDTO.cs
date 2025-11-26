@@ -18,7 +18,7 @@ public class RequestProcessDTO
     // public string Title { get; set; } = null!;
 
     [EnumDataType(typeof(RequestStatus), ErrorMessage = "Trạng thái phải là 1 trong InReview, Approved, Rejected, Cancelled.")]
-    public RequestStatus? Status { get; set; } = RequestStatus.Pending;
+    public RequestStatus? Status { get; set; }
 
     // public ulong? ProcessedBy { get; set; }
 

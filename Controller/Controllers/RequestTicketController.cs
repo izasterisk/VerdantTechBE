@@ -126,17 +126,27 @@ public class RequestTicketController : BaseController
     /// <summary>
     /// Lấy danh sách yêu cầu của người dùng hiện tại
     /// </summary>
-    /// <returns>Danh sách yêu cầu</returns>
+    /// <param name="page">Số trang (mặc định: 1)</param>
+    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
+    /// <returns>Danh sách yêu cầu có phân trang</returns>
     [HttpGet("my-requests")]
     [Authorize]
     [EndpointSummary("Get My Requests")]
-    [EndpointDescription("Lấy danh sách tất cả yêu cầu của người dùng hiện tại")]
-    public async Task<ActionResult<APIResponse>> GetMyRequests()
+    [EndpointDescription("Lấy danh sách tất cả yêu cầu của người dùng hiện tại với phân trang")]
+    public async Task<ActionResult<APIResponse>> GetMyRequests(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
         try
         {
+            if (page < 1)
+                return ErrorResponse("Page number must be greater than 0");
+
+            if (pageSize < 1 || pageSize > 100)
+                return ErrorResponse("Page size must be between 1 and 100");
+
             var userId = GetCurrentUserId();
-            var requests = await _requestService.GetAllRequestByUserIdAsync(userId, GetCancellationToken());
+            var requests = await _requestService.GetAllRequestByUserIdAsync(userId, page, pageSize, GetCancellationToken());
             return SuccessResponse(requests);
         }
         catch (Exception ex)
