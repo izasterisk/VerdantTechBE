@@ -18,9 +18,9 @@ namespace BLL.DTO.ProductRegistration
 
         public ulong CategoryId { get; set; }
 
-        public string ProposedProductCode { get; set; } 
+        public string ProposedProductCode { get; set; } = string.Empty;
+        public string ProposedProductName { get; set; } = string.Empty;
 
-        public string ProposedProductName { get; set; }
 
         public string? Description { get; set; }
 
