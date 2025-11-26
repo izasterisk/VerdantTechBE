@@ -349,10 +349,11 @@ namespace BLL.Helpers
                 .ForMember(dest => dest.QualityCheckedByName, o => o.MapFrom(src => src.QualityCheckedByNavigation != null ? src.QualityCheckedByNavigation.FullName : null));
 
             // ===================== REQUEST =====================
-            CreateMap<RequestCreateDTO, Request>().ReverseMap();
+            CreateMap<RequestCreateDTO, Request>();
             CreateMap<Request, RequestResponseDTO>()
                 .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation));
             CreateMap<MediaLink, RequestImageDTO>().ReverseMap();
+            CreateMap<RequestMessage, RequestMessageResponseDTO>();
 
             // ===================== PRODUCT REVIEW =====================
             CreateMap<ProductReviewCreateDTO, ProductReview>().ReverseMap();

@@ -3,7 +3,7 @@ using DAL.Data;
 
 namespace BLL.DTO.Request;
 
-public class RequestUpdateDTO
+public class RequestProcessDTO
 {
     // public ulong Id { get; set; }
 
@@ -17,15 +17,8 @@ public class RequestUpdateDTO
     // [StringLength(255, MinimumLength = 3, ErrorMessage = "Tiêu đề phải từ 3 đến 255 ký tự")]
     // public string Title { get; set; } = null!;
 
-    // [Required(ErrorMessage = "Mô tả là bắt buộc")]
-    // [StringLength(2000, MinimumLength = 10, ErrorMessage = "Mô tả phải từ 10 đến 2000 ký tự")]
-    // public string Description { get; set; } = null!;
-
     [EnumDataType(typeof(RequestStatus), ErrorMessage = "Trạng thái phải là 1 trong InReview, Approved, Rejected, Cancelled.")]
-    public RequestStatus Status { get; set; } = RequestStatus.Pending;
-
-    [StringLength(1000, ErrorMessage = "Ghi chú trả lời không được vượt quá 1000 ký tự")]
-    public string? ReplyNotes { get; set; }
+    public RequestStatus? Status { get; set; } = RequestStatus.Pending;
 
     // public ulong? ProcessedBy { get; set; }
 
@@ -34,4 +27,17 @@ public class RequestUpdateDTO
     // public DateTime CreatedAt { get; set; }
 
     // public DateTime UpdatedAt { get; set; }
+    
+    public RequestMessageProcessDTO? RequestMessages { get; set; }
+}
+
+public class RequestMessageProcessDTO
+{
+    [Required(ErrorMessage = "Id tin nhắn là bắt buộc")]
+    [Range(0, ulong.MaxValue, ErrorMessage = "Id không được âm.")]
+    public ulong Id { get; set; }
+    
+    [Required(ErrorMessage = "Nội dung tin nhắn là bắt buộc")]
+    [StringLength(1000, ErrorMessage = "Ghi chú trả lời không được vượt quá 1000 ký tự")]
+    public string ReplyNotes { get; set; } = null!;
 }

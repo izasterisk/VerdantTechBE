@@ -438,7 +438,7 @@ CREATE TABLE product_reviews (
 -- Bảng quản lý media tập trung
 CREATE TABLE media_links (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request') NOT NULL,
+    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request_message') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
     image_public_id VARCHAR(512) NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
@@ -619,10 +619,8 @@ CREATE TABLE requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     request_type ENUM('refund_request', 'support_request') NOT NULL,
-    title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề/chủ đề yêu cầu',
-    description TEXT NOT NULL COMMENT 'Mô tả chi tiết về yêu cầu',
+    title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề yêu cầu',
     status ENUM('pending', 'in_review', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending',
-    reply_notes TEXT NULL,
     processed_by BIGINT UNSIGNED NULL COMMENT 'Admin/nhân viên đã xử lý yêu cầu',
     processed_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -631,8 +629,23 @@ CREATE TABLE requests (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_user (user_id),
-    INDEX idx_type_status (request_type, status)
+    INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Hệ thống quản lý yêu cầu tổng quát';
+
+-- Bảng tin nhắn yêu cầu (lưu trữ nội dung trao đổi giữa user và admin)
+CREATE TABLE request_messages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    request_id BIGINT UNSIGNED NOT NULL,
+    staff_id BIGINT UNSIGNED NULL COMMENT 'Admin/staff phản hồi tin nhắn (NULL nếu là tin nhắn từ user)',
+    description TEXT NOT NULL COMMENT 'Nội dung tin nhắn',
+    reply_notes TEXT NULL COMMENT 'Ghi chú phản hồi từ admin/staff',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (request_id) REFERENCES requests(id) ON DELETE RESTRICT,
+    FOREIGN KEY (staff_id) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_request (request_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tin nhắn trao đổi trong yêu cầu hỗ trợ/hoàn tiền';
 
 -- =====================================================
 -- CÁC BẢNG ĐƠN HÀNG VÀ THANH TOÁN

@@ -17,7 +17,7 @@ internal static class MediaLinkEfMaps
         MediaOwnerType.ProductCertificates => "product_certificates",
         MediaOwnerType.ProductReviews => "product_reviews",
         MediaOwnerType.ForumPosts => "forum_posts",
-        MediaOwnerType.Request => "request",
+        MediaOwnerType.RequestMessage => "request_message",
         _ => throw new ArgumentOutOfRangeException(nameof(v), v, null)
     };
 
@@ -30,7 +30,7 @@ internal static class MediaLinkEfMaps
         "product_certificates" => MediaOwnerType.ProductCertificates,
         "product_reviews" => MediaOwnerType.ProductReviews,
         "forum_posts" => MediaOwnerType.ForumPosts,
-        "request" => MediaOwnerType.Request,
+        "request_message" => MediaOwnerType.RequestMessage,
         _ => throw new ArgumentOutOfRangeException(nameof(s), s, null)
     };
 

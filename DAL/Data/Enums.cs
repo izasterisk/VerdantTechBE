@@ -218,7 +218,7 @@ public enum MediaOwnerType
     ProductCertificates,
     ProductReviews,
     ForumPosts,
-    Request
+    RequestMessage
 }
 
 public enum MediaPurpose

@@ -40,11 +40,6 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasMaxLength(255)
             .IsRequired();
 
-        builder.Property(e => e.Description)
-            .HasColumnName("description")
-            .HasColumnType("text")
-            .IsRequired();
-
         builder.Property(e => e.Status)
             .HasConversion(
                 v => v.ToString()
@@ -55,10 +50,6 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasColumnName("status")
             .HasColumnType("enum('pending','in_review','approved','rejected','completed','cancelled')")
             .HasDefaultValue(RequestStatus.Pending);
-
-        builder.Property(e => e.ReplyNotes)
-            .HasColumnName("reply_notes")
-            .HasColumnType("text");
 
         builder.Property(e => e.ProcessedBy)
             .HasColumnName("processed_by")
@@ -89,8 +80,8 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .HasForeignKey(e => e.ProcessedBy)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Indexes (matching schema v7)
-        builder.HasIndex(e => new { e.RequestType, e.Status }).HasDatabaseName("idx_type_status");
-        builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created_at");
+        // Indexes
+        builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
+        builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
     }
 }

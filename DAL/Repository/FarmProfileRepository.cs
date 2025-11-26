@@ -113,8 +113,15 @@ public class FarmProfileRepository : IFarmProfileRepository
         {
             foreach (var crop in crops)
             {
-                crop.UpdatedAt = DateTime.UtcNow;
-                await _cropRepository.UpdateAsync(crop, cancellationToken);
+                if (crop.IsActive)
+                {
+                    crop.UpdatedAt = DateTime.UtcNow;
+                    await _cropRepository.UpdateAsync(crop, cancellationToken);
+                }
+                else
+                {
+                    await _cropRepository.DeleteAsync(crop, cancellationToken);
+                }
             }
             
             address.UpdatedAt = DateTime.UtcNow;
