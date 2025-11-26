@@ -13,7 +13,8 @@ namespace BLL.DTO.ProductCertificate
     {
         public ulong Id { get; set; }
 
-        public ulong ProductId { get; set; }
+        public ulong? ProductId { get; set; }
+        public ulong? RegistrationId { get; set; }
 
         public string? CertificationCode { get; set; } 
 

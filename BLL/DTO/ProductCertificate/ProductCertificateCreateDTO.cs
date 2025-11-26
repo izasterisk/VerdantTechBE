@@ -11,8 +11,7 @@ namespace BLL.DTO.ProductCertificate
 {
     public class ProductCertificateCreateDTO
     {
-        [Required(ErrorMessage = "Mã sản phẩm không được để trống")]
-        public ulong ProductId { get; set; }
+        public ulong? ProductId { get; set; }
         [Required(ErrorMessage = "Mã chứng chỉ không được để trống")]
         public string CertificationCode { get; set; } = null!;
 

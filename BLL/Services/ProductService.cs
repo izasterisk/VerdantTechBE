@@ -29,13 +29,11 @@ namespace BLL.Services
             _db = db;
         }
 
-        // ========== READS (Paged) ==========
         public async Task<PagedResponse<ProductListItemDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
         {
             var (items, total) = await _repo.GetAllProductAsync(page, pageSize, ct);
             var list = _mapper.Map<List<ProductListItemDTO>>(items);
 
-            // hydrate ảnh (thumbnail đầu tiên) nếu muốn
             await HydrateImagesAsync(list.Select(x => x.Id).ToList(), list, ct);
 
             return ToPaged(list, total, page, pageSize);
@@ -63,15 +61,12 @@ namespace BLL.Services
             if (entity is null) return null;
 
             var dto = _mapper.Map<ProductResponseDTO>(entity);
-            // Chuyển rating int? -> string (DTO đang là string?)
             dto.EnergyEfficiencyRating = entity.EnergyEfficiencyRating?.ToString();
 
-            // Nạp toàn bộ images
             dto.Images = await LoadImagesAsDtoAsync(id, ct);
             return dto;
         }
 
-        // ========== UPDATE (base fields + images add/remove) ==========
         public async Task<ProductResponseDTO> UpdateAsync(
             ulong id,
             ProductUpdateDTO dto,
@@ -82,7 +77,6 @@ namespace BLL.Services
             var entity = await _repo.GetProductByIdAsync(id, useNoTracking: false, ct)
                          ?? throw new KeyNotFoundException("Product không tồn tại.");
 
-            // Update base fields
             entity.CategoryId = dto.CategoryId;
             entity.VendorId = dto.VendorId;
             entity.ProductCode = dto.ProductCode;
@@ -99,7 +93,6 @@ namespace BLL.Services
             entity.StockQuantity = dto.StockQuantity;
             entity.WeightKg = dto.WeightKg;
 
-            // Dimensions từ DTO (Width/Height/Length) -> dict
             if (dto.DimensionsCm != null)
             {
                 entity.DimensionsCm = new Dictionary<string, decimal>
@@ -116,10 +109,8 @@ namespace BLL.Services
             entity.RatingAverage = dto.RatingAverage;
             entity.UpdatedAt = DateTime.UtcNow;
 
-            // Lưu entity
             entity = await _repo.UpdateProductAsync(entity, ct);
 
-            // Xoá ảnh theo publicId
             if (removeImagePublicIds is { Count: > 0 })
             {
                 var toRemove = await _db.MediaLinks
@@ -136,28 +127,23 @@ namespace BLL.Services
                 }
             }
 
-            // Thêm ảnh mới
             if (addImages is { Count: > 0 })
             {
                 await SaveImagesAsync(entity.Id, addImages, ct);
             }
 
-            // Trả về DTO đầy đủ
             var result = _mapper.Map<ProductResponseDTO>(entity);
             result.EnergyEfficiencyRating = entity.EnergyEfficiencyRating?.ToString();
             result.Images = await LoadImagesAsDtoAsync(entity.Id, ct);
             return result;
         }
 
-        // ========== UPDATE EMISSION (CommissionRate) ==========
         public Task<bool> UpdateEmissionAsync(ProductUpdateEmissionDTO dto, CancellationToken ct = default)
             => _repo.UpdateEmissionAsync(dto.Id, dto.CommissionRate, ct);
 
-        // ========== DELETE ==========
         public Task<bool> DeleteAsync(ulong id, CancellationToken ct = default)
             => _repo.DeleteAsync(id, ct);
 
-        // ========== Helpers ==========
         private static PagedResponse<T> ToPaged<T>(List<T> items, int totalRecords, int page, int pageSize)
         {
             var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
@@ -224,21 +210,17 @@ namespace BLL.Services
             return Enum.TryParse<MediaPurpose>(s, true, out var p) ? p : MediaPurpose.None;
         }
 
-        /// <summary>
-        /// Gắn thumbnail (ảnh sort nhỏ nhất) vào ProductListItemDTO
-        /// </summary>
+
         private async Task HydrateImagesAsync(List<ulong> ids, List<ProductListItemDTO> rows, CancellationToken ct)
         {
             if (ids.Count == 0) return;
 
-            // ✅ CÁCH 1: Lấy tất cả images rồi group ở client-side (đơn giản, dễ debug)
             var allImages = await _db.MediaLinks.AsNoTracking()
                 .Where(m => m.OwnerType == MediaOwnerType.Products && ids.Contains(m.OwnerId))
                 .OrderBy(m => m.OwnerId)
                 .ThenBy(m => m.SortOrder)
                 .ToListAsync(ct);
 
-            // Group và lấy ảnh đầu tiên cho mỗi product (client-side)
             var firstImagesByProduct = allImages
                 .GroupBy(m => m.OwnerId)
                 .Select(g => g.First())
@@ -250,7 +232,6 @@ namespace BLL.Services
             {
                 if (!byId.TryGetValue(img.OwnerId, out var row)) continue;
 
-                // ✅ CHỈ GÁN 1 ẢNH VÀO MẢNG
                 row.Images = new List<MediaLinkItemDTO>
         {
             new MediaLinkItemDTO
