@@ -72,6 +72,7 @@ public partial class ProductRegistration
     public virtual User Vendor { get; set; } = null!;
     public virtual ProductCategory Category { get; set; } = null!;
     public virtual User? ApprovedByUser { get; set; }
+    public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 
     [NotMapped] public List<MediaLink> ProductImages { get; set; } = new();
     [NotMapped] public List<MediaLink> CertificateFiles { get; set; } = new();

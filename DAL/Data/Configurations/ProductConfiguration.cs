@@ -142,6 +142,12 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
             .HasColumnName("updated_at");
+
+        // Foreign key to product_registrations (nullable)
+        builder.Property(e => e.RegistrationId)
+            .HasColumnType("bigint unsigned")
+            .IsRequired(false)
+            .HasColumnName("registration_id");
         
         // Foreign Key Relationships
         builder.HasOne(d => d.Category)
@@ -153,6 +159,11 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .WithMany(p => p.ProductsAsVendor)
             .HasForeignKey(d => d.VendorId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(d => d.Registration)
+            .WithMany(p => p.Products)
+            .HasForeignKey(d => d.RegistrationId)
+            .OnDelete(DeleteBehavior.SetNull);
         
         // Unique constraints
         builder.HasIndex(e => e.ProductCode)
@@ -169,6 +180,9 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             
         builder.HasIndex(e => e.VendorId)
             .HasDatabaseName("idx_vendor");
+
+        builder.HasIndex(e => e.RegistrationId)
+            .HasDatabaseName("idx_registration");
             
         // Full text index (updated for v7.1)
         builder.HasIndex(e => new { e.ProductName, e.Description })

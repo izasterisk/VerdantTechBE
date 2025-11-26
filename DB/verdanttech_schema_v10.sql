@@ -355,15 +355,18 @@ CREATE TABLE products (
     view_count BIGINT DEFAULT 0,
     sold_count BIGINT DEFAULT 0,
     rating_average DECIMAL(3,2) DEFAULT 0.00,
+    registration_id BIGINT UNSIGNED NULL COMMENT 'Khóa ngoại đến product_registrations',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (registration_id) REFERENCES product_registrations(id) ON DELETE RESTRICT,
     INDEX idx_category (category_id),
     INDEX idx_vendor (vendor_id),
     INDEX idx_product_code (product_code),
     INDEX idx_slug (slug),
+    INDEX idx_registration (registration_id),
     FULLTEXT idx_search (product_name, description)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sản phẩm thiết bị nông nghiệp xanh trong kho công ty';
 
