@@ -18,9 +18,9 @@ namespace BLL.DTO.ProductRegistration
 
         public ulong CategoryId { get; set; }
 
-        public string ProposedProductCode { get; set; } = null!;
+        public string ProposedProductCode { get; set; } 
 
-        public string ProposedProductName { get; set; } = null!;
+        public string ProposedProductName { get; set; }
 
         public string? Description { get; set; }
 
@@ -57,10 +57,11 @@ namespace BLL.DTO.ProductRegistration
         // Trả media ra dạng list
         public List<MediaLinkItemDTO> ProductImages { get; set; } = new();
 
-        public string? CertificationCode { get; set; }
-        public string? CertificationName { get; set; }
+        public List<string> CertificationCode { get; set; } = new();
+        public List<string> CertificationName { get; set; } = new();
+
         public List<ProductCertificateResponseDTO> Certificates { get; set; } = new();
-        public List<MediaLinkItemDTO> CertificateFiles { get; set; }  = new();
+        //public List<MediaLinkItemDTO> CertificateFiles { get; set; }  = new();
 
     }
 }
