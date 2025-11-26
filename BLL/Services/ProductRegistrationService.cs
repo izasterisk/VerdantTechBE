@@ -117,19 +117,26 @@ namespace BLL.Services
 
 
             // ================= CERTIFICATE CREATE =================
-            if (dto.CertificationName != null &&
-                dto.CertificationCode != null &&
-                dto.CertificationName.Count == dto.CertificationCode.Count &&
-                dto.CertificationName.Count == addCertificates.Count)
+            if (dto.CertificationName != null &&dto.CertificationCode != null)
             {
+                // Check số lượng file VS số lượng tên chứng chỉ
+                if (addCertificates.Count != dto.CertificationName.Count)
+                    throw new InvalidOperationException("Số lượng file chứng chỉ không khớp số lượng tên chứng chỉ.");
+
+                if (dto.CertificationName.Count != dto.CertificationCode.Count)
+                    throw new InvalidOperationException("Tên chứng chỉ và mã chứng chỉ không khớp số lượng.");
+
                 for (int i = 0; i < dto.CertificationName.Count; i++)
                 {
                     // Create certificate entity
                     var cert = new ProductCertificate
                     {
-                        ProductId = entity.Id,
+                        RegistrationId = entity.Id,
+                        ProductId = null,
                         CertificationName = dto.CertificationName[i],
                         CertificationCode = dto.CertificationCode[i],
+                        Status = ProductCertificateStatus.Pending,
+                        UploadedAt = DateTime.UtcNow,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
@@ -216,18 +223,26 @@ namespace BLL.Services
                 ct);
 
             // New certificates
-            if (dto.CertificationName != null &&
-                dto.CertificationCode != null &&
-                dto.CertificationName.Count == dto.CertificationCode.Count &&
-                dto.CertificationName.Count == addCertificates.Count)
+            if (addCertificates.Count > 0 &&
+    dto.CertificationName != null &&
+    dto.CertificationCode != null)
             {
-                for (int i = 0; i < dto.CertificationName.Count; i++)
+                int totalNames = dto.CertificationName.Count;
+                int totalNew = addCertificates.Count;
+
+                // New certificate name/code are always LAST items in arrays
+                for (int i = 0; i < totalNew; i++)
                 {
+                    int idx = totalNames - totalNew + i;
+
                     var cert = new ProductCertificate
                     {
-                        ProductId = entity.Id,
-                        CertificationName = dto.CertificationName[i],
-                        CertificationCode = dto.CertificationCode[i],
+                        RegistrationId = entity.Id,
+                        ProductId = null,
+                        CertificationName = dto.CertificationName[idx],
+                        CertificationCode = dto.CertificationCode[idx],
+                        Status = ProductCertificateStatus.Pending,
+                        UploadedAt = DateTime.UtcNow,
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow
                     };
@@ -267,44 +282,76 @@ namespace BLL.Services
         // ================= CHANGE STATUS =================
 
         public async Task<bool> ChangeStatusAsync(
-            ulong id,
-            ProductRegistrationStatus status,
-            string? rejectionReason,
-            ulong? approvedBy,
-            CancellationToken ct = default)
+    ulong id,
+    ProductRegistrationStatus status,
+    string? rejectionReason,
+    ulong? approvedBy,
+    CancellationToken ct = default)
         {
+            // 1) Load registration
             var reg = await _db.ProductRegistrations
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (reg == null)
-                return false;
+                throw new InvalidOperationException("Đơn đăng ký không tồn tại.");
 
-            if (reg.Status == status &&
-                reg.RejectionReason == rejectionReason &&
-                reg.ApprovedBy == approvedBy)
-                return true;
+            if (reg.Status == ProductRegistrationStatus.Approved)
+                throw new InvalidOperationException("Đơn đăng ký đã được duyệt trước đó.");
 
-            reg.Status = status;
-            reg.RejectionReason = status == ProductRegistrationStatus.Rejected
-                ? (rejectionReason ?? "")
-                : null;
+            if (reg.Status == ProductRegistrationStatus.Rejected)
+                throw new InvalidOperationException("Đơn đăng ký đã bị từ chối trước đó.");
 
-            reg.ApprovedBy = status == ProductRegistrationStatus.Approved ? approvedBy : null;
-            reg.ApprovedAt = status == ProductRegistrationStatus.Approved ? DateTime.UtcNow : null;
             reg.UpdatedAt = DateTime.UtcNow;
 
-            // NOT APPROVED → save only
-            if (status != ProductRegistrationStatus.Approved)
+            // =======================
+            // CASE REJECT
+            // =======================
+            if (status == ProductRegistrationStatus.Rejected)
             {
+                reg.Status = ProductRegistrationStatus.Rejected;
+                reg.RejectionReason = rejectionReason ?? "";
+
+                // Chỉ select Id để tránh NULL cast lỗi
+                var certIds = await _db.ProductCertificates
+                    .Where(c => c.RegistrationId == reg.Id)
+                    .Select(c => c.Id)
+                    .ToListAsync(ct);
+
+                foreach (var certId in certIds)
+                {
+                    // Không dùng FirstAsync nữa
+                    var entityCert = new ProductCertificate { Id = certId };
+                    _db.ProductCertificates.Attach(entityCert);
+
+                    entityCert.Status = ProductCertificateStatus.Rejected;
+                    entityCert.RejectionReason = rejectionReason ?? "";
+                    entityCert.UpdatedAt = DateTime.UtcNow;
+                }
+
                 await _db.SaveChangesAsync(ct);
                 return true;
             }
 
-            // APPROVED → CREATE PRODUCT
+
+            // =======================
+            // CASE APPROVE
+            // =======================
+            if (status != ProductRegistrationStatus.Approved)
+                throw new InvalidOperationException("Trạng thái không hợp lệ.");
+
             using var tx = await _db.Database.BeginTransactionAsync(ct);
 
             try
             {
+                // update registration
+                reg.Status = ProductRegistrationStatus.Approved;
+                reg.ApprovedBy = approvedBy;
+                reg.ApprovedAt = DateTime.UtcNow;
+                reg.RejectionReason = null;
+
+                await _db.SaveChangesAsync(ct);
+
+                // Tạo product
                 var product = _mapper.Map<Product>(reg);
                 product.Slug = Slugify(reg.ProposedProductName);
                 product.IsActive = true;
@@ -312,9 +359,9 @@ namespace BLL.Services
                 product.UpdatedAt = DateTime.UtcNow;
 
                 _db.Products.Add(product);
-                await _db.SaveChangesAsync(ct);
+                await _db.SaveChangesAsync(ct);   // now product.Id is VALID and SAFE
 
-                // Copy product images
+                // Copy images
                 var regImages = await _db.MediaLinks
                     .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations && m.OwnerId == reg.Id)
                     .OrderBy(m => m.SortOrder)
@@ -339,46 +386,63 @@ namespace BLL.Services
                     await _db.SaveChangesAsync(ct);
                 }
 
-                // Copy certificate entities + files
+                // Copy certificates
                 var regCerts = await _db.ProductCertificates
-                    .Where(c => c.ProductId == reg.Id)
+                    .Where(c => c.RegistrationId == reg.Id)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.CertificationCode,
+                        c.CertificationName
+                    })
                     .ToListAsync(ct);
 
-                foreach (var cert in regCerts)
+
+
+
+                foreach (var old in regCerts)
                 {
                     var newCert = new ProductCertificate
                     {
                         ProductId = product.Id,
-                        CertificationName = cert.CertificationName,
-                        CertificationCode = cert.CertificationCode,
+                        RegistrationId = null,
+                        CertificationName = old.CertificationName,
+                        CertificationCode = old.CertificationCode,
+                        Status = ProductCertificateStatus.Verified,
+                        VerifiedBy = approvedBy,
+                        VerifiedAt = DateTime.UtcNow,
                         CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
+                        UpdatedAt = DateTime.UtcNow,
+                        UploadedAt = DateTime.UtcNow
                     };
 
                     _db.ProductCertificates.Add(newCert);
                     await _db.SaveChangesAsync(ct);
 
+                    // Clone certificate files
                     var files = await _db.MediaLinks
-                        .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates && m.OwnerId == cert.Id)
+                        .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates &&
+                                    m.OwnerId == old.Id)
                         .OrderBy(m => m.SortOrder)
                         .ToListAsync(ct);
 
                     if (files.Count > 0)
                     {
                         var now = DateTime.UtcNow;
-                        var newLinks = files.Select(m => new MediaLink
+                        var fclones = files.Select(f => new MediaLink
                         {
                             OwnerType = MediaOwnerType.ProductCertificates,
                             OwnerId = newCert.Id,
-                            ImagePublicId = m.ImagePublicId,
-                            ImageUrl = m.ImageUrl,
+                            ImagePublicId = f.ImagePublicId,
+                            ImageUrl = f.ImageUrl,
                             Purpose = MediaPurpose.ProductCertificatePdf,
-                            SortOrder = m.SortOrder,
+                            SortOrder = f.SortOrder,
                             CreatedAt = now,
                             UpdatedAt = now
-                        }).ToList();
+                        })
+                        .ToList();
 
-                        _db.MediaLinks.AddRange(newLinks);
+                        _db.MediaLinks.AddRange(fclones);
                         await _db.SaveChangesAsync(ct);
                     }
                 }
@@ -392,6 +456,7 @@ namespace BLL.Services
                 throw;
             }
         }
+
 
 
         // ================= DELETE =================
@@ -461,8 +526,15 @@ namespace BLL.Services
 
             // Certificates (entity + files)
             var certEntities = await _db.ProductCertificates.AsNoTracking()
-                .Where(c => ids.Contains(c.ProductId))
-                .ToListAsync(ct);
+               .Where(c => c.RegistrationId.HasValue && ids.Contains(c.RegistrationId.Value))
+               .Select(c => new
+               {
+                   c.Id,
+                   c.RegistrationId,
+                   c.CertificationCode,
+                   c.CertificationName
+               })
+               .ToListAsync(ct);
 
             foreach (var cert in certEntities)
             {
@@ -470,23 +542,27 @@ namespace BLL.Services
                     .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates &&
                                 m.OwnerId == cert.Id)
                     .OrderBy(m => m.SortOrder)
+                    .Select(f => new MediaLinkItemDTO
+                    {
+                        Id = f.Id,
+                        ImagePublicId = f.ImagePublicId,
+                        ImageUrl = f.ImageUrl,
+                        Purpose = f.Purpose.ToString(),
+                        SortOrder = f.SortOrder
+                    })
                     .ToListAsync(ct);
 
-                if (map.TryGetValue(cert.ProductId, out var dto))
+                if (cert.RegistrationId.HasValue && map.TryGetValue(cert.RegistrationId.Value, out var dto))
                 {
+                    dto.CertificationCode.Add(cert.CertificationCode);
+                    dto.CertificationName.Add(cert.CertificationName);
+
                     dto.Certificates.Add(new BLL.DTO.ProductCertificate.ProductCertificateResponseDTO
                     {
                         Id = cert.Id,
                         CertificationName = cert.CertificationName,
                         CertificationCode = cert.CertificationCode,
-                        Files = files.Select(f => new MediaLinkItemDTO
-                        {
-                            Id = f.Id,
-                            ImagePublicId = f.ImagePublicId,
-                            ImageUrl = f.ImageUrl,
-                            Purpose = f.Purpose.ToString(),
-                            SortOrder = f.SortOrder
-                        }).ToList()
+                        Files = files
                     });
                 }
             }

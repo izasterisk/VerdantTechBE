@@ -264,29 +264,55 @@ public sealed class ProductRegistrationRepository : IProductRegistrationReposito
     {
         if (ids.Count == 0) return;
 
+        var byId = registrations.ToDictionary(x => x.Id);
+
+        
         var regMedias = await _db.MediaLinks
             .AsNoTracking()
-            .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations && ids.Contains(m.OwnerId))
+            .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations &&
+                        ids.Contains(m.OwnerId))
             .OrderBy(m => m.SortOrder)
             .ToListAsync(ct);
 
-        var certMedias = await _db.MediaLinks
-            .AsNoTracking()
-            .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates && ids.Contains(m.OwnerId))
-            .OrderBy(m => m.SortOrder)
-            .ToListAsync(ct);
-
-        var byId = registrations.ToDictionary(x => x.Id);
-        foreach (var g in regMedias.GroupBy(x => x.OwnerId))
+        foreach (var g in regMedias.GroupBy(m => m.OwnerId))
         {
-            if (byId.TryGetValue(g.Key, out var r))
-                r.ProductImages = g.ToList(); // đảm bảo entity có nav/list tương ứng
+            if (byId.TryGetValue(g.Key, out var reg))
+                reg.ProductImages = g.ToList();
         }
 
-        foreach (var g in certMedias.GroupBy(x => x.OwnerId))
+       
+        var certs = await _db.ProductCertificates
+            .AsNoTracking()
+            .Where(c => c.RegistrationId.HasValue &&
+                        ids.Contains(c.RegistrationId.Value))
+            .Select(c => new
+            {
+                c.Id,
+                c.RegistrationId
+            })
+            .ToListAsync(ct);
+
+        if (certs.Count == 0) return;
+
+        var certIds = certs.Select(c => c.Id).ToList();
+
+        
+        var certFiles = await _db.MediaLinks
+            .AsNoTracking()
+            .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates &&
+                        certIds.Contains(m.OwnerId))
+            .OrderBy(m => m.SortOrder)
+            .ToListAsync(ct);
+
+        
+        foreach (var cert in certs)
         {
-            if (byId.TryGetValue(g.Key, out var r))
-                r.CertificateFiles = g.ToList(); // đảm bảo entity có nav/list tương ứng
+            if (cert.RegistrationId.HasValue &&
+                byId.TryGetValue(cert.RegistrationId.Value, out var reg))
+            {
+                reg.CertificateFiles ??= new List<MediaLink>();
+                reg.CertificateFiles.AddRange(certFiles.Where(f => f.OwnerId == cert.Id));
+            }
         }
     }
 }

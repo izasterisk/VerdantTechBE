@@ -157,57 +157,12 @@ namespace BLL.Helpers
                 .ForMember(d => d.RatingAverage, o => o.MapFrom(s => s.Product.RatingAverage));
 
             //// ===================== PRODUCT REGISTRATION =====================
-            //CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
-            //    // basic info
-            //    .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
-            //    .ForMember(d => d.EnergyEfficiencyRating,
-            //        o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue
-            //                            ? s.EnergyEfficiencyRating.Value.ToString()
-            //                            : null))
-            //    // manual file URLs
-            //    .ForMember(d => d.ManualUrl, o => o.MapFrom(s => s.ManualUrls))
-            //    .ForMember(d => d.ManualPublicUrl, o => o.MapFrom(s => s.PublicUrl))
-            //    // media
-            //    .ForMember(d => d.ProductImages, o => o.MapFrom(s => s.ProductImages))
-            //    .ForMember(d => d.CertificateFiles, o => o.MapFrom(s => s.CertificateFiles))
-            //    // specs & dimensions
-            //    .ForMember(d => d.DimensionsCm,
-            //        o => o.MapFrom(s => s.DimensionsCm != null
-            //            ? s.DimensionsCm.ToDictionary(k => k.Key, v => (object)v.Value)
-            //            : new Dictionary<string, object>()))
-            //    .ForMember(d => d.Specifications,
-            //        o => o.MapFrom(s => s.Specifications ?? new Dictionary<string, object>()));
-
-            //CreateMap<ProductRegistrationCreateDTO, ProductRegistration>()
-            //    .ForMember(d => d.EnergyEfficiencyRating, o => o.Ignore())
-            //    //.ForMember(d => d.Specifications,
-            //    //    o => o.MapFrom(s => s.Specifications ?? new Dictionary<string, object>()))
-            //    .ForMember(d => d.Specifications, o => o.Ignore())
-            //    .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>
-            //    {
-            //        { "Width", src.DimensionsCm.Width },
-            //        { "Height", src.DimensionsCm.Height },
-            //        { "Length", src.DimensionsCm.Length }
-            //    }));
-
-            //CreateMap<ProductRegistrationUpdateDTO, ProductRegistration>()
-            //    .ForMember(d => d.EnergyEfficiencyRating, o => o.Ignore())
-            //    //.ForMember(d => d.Specifications,
-            //    //    o => o.MapFrom(s => s.Specifications ?? new Dictionary<string, object>()))
-            //    .ForMember(d => d.Specifications, o => o.Ignore())
-            //    .ForMember(dest => dest.DimensionsCm, opt => opt.MapFrom(src => new Dictionary<string, decimal>
-            //    {
-            //        { "Width", src.DimensionsCm.Width },
-            //        { "Height", src.DimensionsCm.Height },
-            //        { "Length", src.DimensionsCm.Length }
-            //    }))
-            //    .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-
+            
             // ProductRegistration -> ResponseDTO
             CreateMap<ProductRegistration, ProductRegistrationReponseDTO>()
                 .ForMember(d => d.Status, o => o.MapFrom(s => s.Status.ToString()))
                 .ForMember(d => d.EnergyEfficiencyRating,
-                    o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue? s.EnergyEfficiencyRating.Value.ToString("0.0"): null))
+                    o => o.MapFrom(s => s.EnergyEfficiencyRating.HasValue ? s.EnergyEfficiencyRating.Value.ToString("0.0") : null))
                 .ForMember(d => d.ManualUrl, o => o.MapFrom(s => s.ManualUrls))
                 .ForMember(d => d.ManualPublicUrl, o => o.MapFrom(s => s.PublicUrl))
                 .ForMember(d => d.Specifications, o => o.MapFrom(s => s.Specifications ?? new Dictionary<string, object>()))
@@ -217,10 +172,13 @@ namespace BLL.Helpers
                         ? s.DimensionsCm.ToDictionary(k => k.Key, v => (object)v.Value)
                         : new Dictionary<string, object>()))
                 // ảnh fill bằng service Hydrate => không map trực tiếp từ entity (để tránh null)
-                .ForMember(d => d.ProductImages, o => o.Ignore())
-                .ForMember(d => d.CertificateFiles, o => o.Ignore());
+                .ForMember(d => d.ProductImages, o => o.Ignore());
+            //.ForMember(d => d.CertificateFiles, o => o.Ignore());
+
+
 
             CreateMap<ProductCertificate, ProductCertificateResponseDTO>();
+
 
 
             // CreateDTO -> Entity
