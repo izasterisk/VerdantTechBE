@@ -205,10 +205,6 @@ public enum ProductSerialStatus
     Adjustment
 }
 
-// =====================================================
-// MEDIA MANAGEMENT ENUMS (v8.1)
-// =====================================================
-
 public enum MediaOwnerType
 {
     VendorCertificates,

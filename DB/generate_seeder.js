@@ -202,11 +202,21 @@ function getWarrantyMonths(productName) {
     return 0;
 }
 
+// Categories that require serial numbers (by DB ID):
+// 25: Hệ Thống Điều Khiển Tưới, 27: Thiết Bị Giám Sát, 28: Hệ Thống IoT & Tự Động Hóa, 29: Máy Móc Nhỏ
+const SERIAL_REQUIRED_CATEGORY_IDS = [25, 27, 28, 29];
+
+function requiresSerial(categoryDbId) {
+    return SERIAL_REQUIRED_CATEGORY_IDS.includes(categoryDbId);
+}
+
+// Legacy function for warranty calculation (still useful)
 function isMachinery(productName) {
     const machineryKeywords = [
         'Máy xới', 'Máy phun thuốc', 'Máy phun sương', 'Máy phun phân', 'Máy gieo hạt',
         'Máy bơm nước', 'Máy bơm tăng áp', 'Máy bơm biến tần', 'Máy bơm chìm',
-        'Đèn bẫy', 'Trạm thời tiết', 'Relay', 'Bộ điều khiển', 'Van điện từ'
+        'Đèn bẫy', 'Trạm thời tiết', 'Relay', 'Bộ điều khiển', 'Van điện từ',
+        'Cảm biến', 'Bộ nguồn', 'Ắc quy', 'Timer', 'Van điện'
     ];
     return machineryKeywords.some(k => productName.includes(k));
 }
@@ -421,7 +431,8 @@ function generateCategories(products) {
     for (const [key, cat] of categoryMap) {
         for (const [subKey, sub] of cat.subs) {
             const slug = slugify(sub.name);
-            const serialRequired = [24, 25, 28, 29].includes(catId) ? 1 : 0;
+            // Use SERIAL_REQUIRED_CATEGORY_IDS constant for consistency
+            const serialRequired = SERIAL_REQUIRED_CATEGORY_IDS.includes(catId) ? 1 : 0;
             rows.push(`(${catId}, ${cat.dbId}, '${escapeSQL(sub.name)}', '${slug}', 'Danh mục con ${escapeSQL(sub.name)}', 1, ${serialRequired}, NOW(), NOW())`);
             sub.dbId = catId;
             catId++;
@@ -482,6 +493,7 @@ function generateProducts(products, categoryMap) {
         
         p.dbId = productId;
         p.vendorId = vendorId;
+        p.categoryDbId = categoryDbId; // Store category DB ID for serial generation
         productId++;
     });
     
@@ -630,20 +642,22 @@ function generateBatchInventory(products) {
     
     sql += rows.join(',\n') + ';\n\n';
     
-    // Product serials for machinery only
-    const machineryProducts = products.filter(p => isMachinery(p.productName));
+    // Product serials for categories that require serial numbers
+    // Categories: Máy Móc Nhỏ (29), Hệ Thống IoT & Tự Động Hóa (28), Thiết Bị Giám Sát (27), Hệ Thống Điều Khiển Tưới (25)
+    const serialRequiredProducts = products.filter(p => p.categoryDbId && requiresSerial(p.categoryDbId));
     
-    if (machineryProducts.length > 0) {
-        sql += `-- Insert Product Serials for Machinery (${machineryProducts.length} products x 10 units = ${machineryProducts.length * 10} serials)\n`;
+    if (serialRequiredProducts.length > 0) {
+        sql += `-- Insert Product Serials for Serial-Required Categories (${serialRequiredProducts.length} products x 10 units = ${serialRequiredProducts.length * 10} serials)\n`;
+        sql += `-- Categories: Máy Móc Nhỏ, Hệ Thống IoT & Tự Động Hóa, Thiết Bị Giám Sát, Hệ Thống Điều Khiển Tưới\n`;
         sql += `INSERT INTO product_serials (id, batch_inventory_id, product_id, serial_number, status, created_at, updated_at) VALUES\n`;
         
         const serialRows = [];
         let serialId = 1;
         
-        machineryProducts.forEach(p => {
+        serialRequiredProducts.forEach(p => {
             if (!p.dbId) return;
             
-            // Generate 10 serial numbers per machinery product
+            // Generate 10 serial numbers per product
             for (let i = 1; i <= 10; i++) {
                 const serialNum = `SN-${p.dbId.toString().padStart(4, '0')}-${i.toString().padStart(3, '0')}`;
                 const status = i <= 2 ? 'sold' : 'stock'; // First 2 are sold
@@ -653,7 +667,7 @@ function generateBatchInventory(products) {
         });
         
         sql += serialRows.join(',\n') + ';\n\n';
-        console.log(`✅ Generated ${serialRows.length} product serials`);
+        console.log(`✅ Generated ${serialRows.length} product serials for ${serialRequiredProducts.length} products`);
     }
     
     console.log(`✅ Generated ${rows.length} batch inventory records`);

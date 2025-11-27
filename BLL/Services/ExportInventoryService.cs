@@ -42,8 +42,10 @@ public class ExportInventoryService : IExportInventoryService
                 if(dto.Quantity != 1)
                     throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
                 var s = await _orderDetailRepository.GetProductSerialAsync(dto.ProductId, dto.ProductSerialNumber, dto.LotNumber, cancellationToken);
-                if(s.Status != ProductSerialStatus.Stock)
+                if(s.Status is ProductSerialStatus.Sold or ProductSerialStatus.Adjustment)
                     throw new InvalidOperationException("Số sê-ri không đủ điều kiện để xuất kho.");
+                if(s.Status == ProductSerialStatus.Refund && dto.MovementType != MovementType.ReturnToVendor)
+                    throw new InvalidOperationException("Vì đây là hàng hoàn trả, chỉ có thể xuất kho với hình thức Trả lại nhà cung cấp.");
                 serial = s.Id;
                 exportSerials.Add(s);
             }
