@@ -325,22 +325,19 @@ public class OrderService : IOrderService
         }
         if (dto.Status == OrderStatus.Paid)
             throw new InvalidCastException("Không thể chuyển trạng thái đơn hàng thành 'Paid', đây là quá trình tự động.");
+        var productsToUpdate = new List<Product>();
         if (dto.Status == OrderStatus.Cancelled)
         {
             foreach (var orderDetail in order.OrderDetails)
             {
-                var product = await _orderRepository.GetProductByIdAsync(orderDetail.ProductId, cancellationToken);
-                if(product != null)
-                {
-                    product.StockQuantity += orderDetail.Quantity;
-                    await _orderRepository.UpdateProductWithTransactionAsync(product, cancellationToken);
-                }
+                orderDetail.Product.StockQuantity += orderDetail.Quantity;
+                productsToUpdate.Add(orderDetail.Product);
             }
             order.CancelledAt = DateTime.UtcNow;
             order.CancelledReason = dto.CancelledReason;
         }
         order.Status = dto.Status;
-        await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
+        await _orderRepository.UpdateOrderWithProductsTransactionAsync(order, productsToUpdate, cancellationToken);
         var response = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if(response == null)
             throw new InvalidOperationException("Không thể cập nhật đơn hàng, vui lòng liên hệ với Staff để được hỗ trợ.");

@@ -100,4 +100,27 @@ public class ExportInventoryController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Lấy danh sách số lô hoặc số sê-ri có sẵn theo ProductId
+    /// </summary>
+    /// <param name="productId">ID của sản phẩm</param>
+    /// <returns>Danh sách số lô (nếu sản phẩm không yêu cầu serial) hoặc danh sách số sê-ri (nếu yêu cầu serial)</returns>
+    [HttpGet("identity-numbers/{productId}")]
+    [Authorize]
+    [EndpointSummary("Get Identity Numbers By ProductId")]
+    [EndpointDescription("Lấy danh sách số lô (kèm số lượng còn lại) hoặc số sê-ri (kèm số lô) có sẵn trong kho theo ProductId. " +
+                         "Tất cả người dùng đã đăng nhập đều có quyền truy cập.")]
+    public async Task<ActionResult<APIResponse>> GetIdentityNumbers(ulong productId)
+    {
+        try
+        {
+            var identityNumbers = await _exportInventoryService.GetIdentityNumbersAsync(productId, GetCancellationToken());
+            return SuccessResponse(identityNumbers);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }

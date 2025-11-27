@@ -78,6 +78,29 @@ public class OrderRepository : IOrderRepository
         }
     }
     
+    public async Task<Order> UpdateOrderWithProductsTransactionAsync(Order order, List<Product> productsToUpdate, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            foreach (var product in productsToUpdate)
+            {
+                product.UpdatedAt = DateTime.UtcNow;
+                await _productRepository.UpdateAsync(product, cancellationToken);
+            }
+            
+            order.UpdatedAt = DateTime.UtcNow;
+            var updatedOrder = await _orderRepository.UpdateAsync(order, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return updatedOrder;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+    
     public async Task<Order> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         return await _orderRepository.GetAsync(o => o.Id == orderId, true, cancellationToken) ?? 
@@ -153,30 +176,9 @@ public class OrderRepository : IOrderRepository
         return await _productRepository.GetAsync(p => p.Id == productId && p.IsActive == true, true, cancellationToken);
     }
     
-    public async Task<Product?> GetProductByIdAsync(ulong productId, CancellationToken cancellationToken = default)
-    {
-        return await _productRepository.GetAsync(p => p.Id == productId, true, cancellationToken);
-    }
-    
     public async Task<List<MediaLink>> GetProductImagesByProductIdAsync(ulong productId, CancellationToken cancellationToken = default)
     {
         var mediaLinks = await _mediaLinkRepository.GetAllByFilterAsync(m => m.OwnerId == productId && m.OwnerType == MediaOwnerType.Products, true, cancellationToken);
         return mediaLinks.OrderBy(m => m.SortOrder).ToList();
-    }
-    
-    public async Task UpdateProductWithTransactionAsync(Product product, CancellationToken cancellationToken = default)
-    {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            product.UpdatedAt = DateTime.UtcNow;
-            await _productRepository.UpdateAsync(product, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
     }
 }

@@ -85,15 +85,40 @@ public class ExportInventoryRepository : IExportInventoryRepository
     
     public async Task<int> GetNumberOfProductLeftInInventoryThruLotNumberAsync(string lotNumber, CancellationToken cancellationToken = default)
     {
-        var export = await _dbContext.ExportInventories
+        var exportQuantity = await _dbContext.ExportInventories
             .AsNoTracking()
             .Where(e => e.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase))
-            .CountAsync(cancellationToken);
+            .SumAsync(e => e.Quantity, cancellationToken);
         var import = await _batchInventoryRepository.GetAsync(
             b => b.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase),
             true, cancellationToken) ?? 
                 throw new KeyNotFoundException("Lô hàng không tồn tại trong kho.");
-        return import.Quantity - export;
+        return import.Quantity - exportQuantity;
+    }
+    
+    public async Task<List<(string LotNumber, int RemainingQuantity)>> GetNumberOfProductsLeftInInventoryThruLotNumbersAsync(List<string> lotNumbers, CancellationToken cancellationToken = default)
+    {
+        var imports = _dbContext.BatchInventories
+            .AsNoTracking()
+            .Where(b => lotNumbers.Contains(b.LotNumber))
+            .Select(b => new { b.LotNumber, Quantity = b.Quantity });
+
+        var exports = _dbContext.ExportInventories
+            .AsNoTracking()
+            .Where(e => lotNumbers.Contains(e.LotNumber))
+            .Select(e => new { e.LotNumber, Quantity = -e.Quantity });
+
+        var result = await imports.Concat(exports)
+            .GroupBy(x => x.LotNumber)
+            .Select(g => new 
+            {
+                LotNumber = g.Key,
+                Remaining = g.Sum(x => x.Quantity)
+            })
+            .Where(x => x.Remaining > 0)
+            .ToListAsync(cancellationToken);
+
+        return result.Select(x => (x.LotNumber, x.Remaining)).ToList();
     }
     
     public async Task<(List<ExportInventory>, int totalCount)> GetAllExportInventoriesAsync(int page, int pageSize, string? movementType = null, CancellationToken cancellationToken = default)
@@ -121,5 +146,35 @@ public class ExportInventoryRepository : IExportInventoryRepository
                 .Include(e => e.ProductSerial),
             cancellationToken
         );
+    }
+    
+    public async Task<List<string>> GetAllLotNumbersByProductIdAsync(ulong productId, CancellationToken cancellationToken = default)
+    {
+        var lotNumbers = await _dbContext.BatchInventories
+            .AsNoTracking()
+            .Where(b => b.ProductId == productId)
+            .Select(b => b.LotNumber)
+            .Distinct()
+            .OrderBy(lot => lot)
+            .ToListAsync(cancellationToken);
+        return lotNumbers;
+    }
+    
+    public async Task<List<(string LotNumber, string SerialNumber)>> GetSerialNumbersWithLotNumbersByProductIdAsync(ulong productId, CancellationToken cancellationToken = default)
+    {
+        var result = await _dbContext.ProductSerials
+            .AsNoTracking()
+            .Where(ps => ps.ProductId == productId && ps.Status == ProductSerialStatus.Stock)
+            .Include(ps => ps.BatchInventory)
+            .Select(ps => new 
+            {
+                LotNumber = ps.BatchInventory.LotNumber,
+                SerialNumber = ps.SerialNumber
+            })
+            .OrderBy(x => x.LotNumber)
+            .ThenBy(x => x.SerialNumber)
+            .ToListAsync(cancellationToken);
+        
+        return result.Select(x => (x.LotNumber, x.SerialNumber)).ToList();
     }
 }

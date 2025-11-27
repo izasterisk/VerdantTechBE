@@ -15,6 +15,5 @@ public interface IOrderRepository
     Task<(List<Order>, int totalCount)> GetAllOrdersAsync(int page, int pageSize, string? status = null, CancellationToken cancellationToken = default);
     Task<Product?> GetActiveProductByIdAsync(ulong productId, CancellationToken cancellationToken = default);
     Task<List<MediaLink>> GetProductImagesByProductIdAsync(ulong productId, CancellationToken cancellationToken = default);
-    Task UpdateProductWithTransactionAsync(Product product, CancellationToken cancellationToken = default);
-    Task<Product?> GetProductByIdAsync(ulong productId, CancellationToken cancellationToken = default);
+    Task<Order> UpdateOrderWithProductsTransactionAsync(Order order, List<Product> productsToUpdate, CancellationToken cancellationToken = default);
 }

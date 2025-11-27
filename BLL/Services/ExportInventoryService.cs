@@ -106,4 +106,32 @@ public class ExportInventoryService : IExportInventoryService
             HasPreviousPage = page > 1
         };
     }
+    
+    public async Task<IdentityNumberDTO> GetIdentityNumbersAsync(ulong productId, CancellationToken cancellationToken = default)
+    {
+        var check = await _orderDetailRepository.IsSerialRequiredByProductIdAsync(productId, cancellationToken);
+        var response = new IdentityNumberDTO();
+        if (!check)
+        {
+            var lotNumbers = await _exportInventoryRepository.GetAllLotNumbersByProductIdAsync(productId, cancellationToken);
+            var lotQuantities = await _exportInventoryRepository.GetNumberOfProductsLeftInInventoryThruLotNumbersAsync(lotNumbers, cancellationToken);
+            response.LotNumberInfo = lotQuantities.Select(lq => new LotNumberResponseDTO
+            {
+                LotNumber = lq.LotNumber,
+                Quantity = lq.RemainingQuantity
+            }).ToList();
+            response.SerialNumberInfo = null;
+        }
+        else
+        {
+            var serialNumbers = await _exportInventoryRepository.GetSerialNumbersWithLotNumbersByProductIdAsync(productId, cancellationToken);
+            response.SerialNumberInfo = serialNumbers.Select(sn => new SerialNumberResponseDTO
+            {
+                LotNumber = sn.LotNumber,
+                SerialNumber = sn.SerialNumber
+            }).ToList();
+            response.LotNumberInfo = null;
+        }
+        return response;
+    }
 }
