@@ -28,4 +28,5 @@ public partial class OrderDetail
     // Navigation Properties
     public virtual Order Order { get; set; } = null!;
     public virtual Product Product { get; set; } = null!;
+    public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
 }

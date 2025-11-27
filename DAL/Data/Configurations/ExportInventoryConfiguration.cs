@@ -27,15 +27,20 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasColumnName("product_serial_id");
 
         builder.Property(e => e.LotNumber)
-            .HasMaxLength(100)
             .IsRequired()
+            .HasMaxLength(100)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("lot_number");
 
-        builder.Property(e => e.OrderId)
+        builder.Property(e => e.OrderDetailId)
             .HasColumnType("bigint unsigned")
-            .HasColumnName("order_id");
+            .HasColumnName("order_detail_id");
+
+        builder.Property(e => e.Quantity)
+            .IsRequired()
+            .HasDefaultValue(1)
+            .HasColumnName("quantity");
 
         builder.Property(e => e.CreatedBy)
             .HasColumnType("bigint unsigned")
@@ -82,9 +87,9 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasForeignKey<ExportInventory>(d => d.ProductSerialId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(d => d.Order)
+        builder.HasOne(d => d.OrderDetail)
             .WithMany(p => p.ExportInventories)
-            .HasForeignKey(d => d.OrderId)
+            .HasForeignKey(d => d.OrderDetailId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasOne(d => d.CreatedByNavigation)
@@ -96,8 +101,8 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");
 
-        builder.HasIndex(e => e.OrderId)
-            .HasDatabaseName("idx_order");
+        builder.HasIndex(e => e.OrderDetailId)
+            .HasDatabaseName("idx_order_detail");
 
         builder.HasIndex(e => e.ProductSerialId)
             .HasDatabaseName("idx_serial");
