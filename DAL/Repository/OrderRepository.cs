@@ -136,11 +136,6 @@ public class OrderRepository : IOrderRepository
         );
     }
     
-    public async Task<User?> GetActiveUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
-    {
-        return await _userRepository.GetAsync(o => o.Id == userId && o.IsVerified == true && o.DeletedAt == null, true, cancellationToken);
-    }
-    
     public async Task<User?> GetUserByIdAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         return await _userRepository.GetAsync(o => o.Id == userId, true, cancellationToken);

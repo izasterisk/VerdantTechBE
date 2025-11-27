@@ -24,7 +24,7 @@ public class ExportInventoryRepository : IExportInventoryRepository
         _productSerialRepository = productSerialRepository;
     }
     
-    public async Task<List<ulong>> CreateExportNUpdateProductSerialsWithTransactionAsync(List<ExportInventory> exportInventories, ProductSerialStatus x, CancellationToken cancellationToken = default)
+    public async Task<List<ulong>> CreateExportNUpdateProductSerialsWithTransactionAsync(List<ExportInventory> exportInventories, ProductSerialStatus x, List<ProductSerial> s, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -36,14 +36,14 @@ public class ExportInventoryRepository : IExportInventoryRepository
                 exportInventory.UpdatedAt = DateTime.UtcNow;
                 var export = await _exportInventoryRepository.CreateAsync(exportInventory, cancellationToken);
                 exportIds.Add(export.Id);
-                if (export.ProductSerialId != null)
+            }
+            if (s.Count > 0)
+            {
+                foreach (var serial in s)
                 {
-                    var productSerial = await _productSerialRepository.GetAsync(
-                        ps => ps.Id == export.ProductSerialId.Value, true, cancellationToken)
-                        ?? throw new Exception("Số sê-ri sản phẩm nhận vào không hợp lệ.");
-                    productSerial.Status = x;
-                    productSerial.UpdatedAt = DateTime.UtcNow;
-                    await _productSerialRepository.UpdateAsync(productSerial, cancellationToken);
+                    serial.Status = x;
+                    serial.UpdatedAt = DateTime.UtcNow;
+                    await _productSerialRepository.UpdateAsync(serial, cancellationToken);
                 }
             }
             await transaction.CommitAsync(cancellationToken);
@@ -94,15 +94,6 @@ public class ExportInventoryRepository : IExportInventoryRepository
             true, cancellationToken) ?? 
                 throw new KeyNotFoundException("Lô hàng không tồn tại trong kho.");
         return import.Quantity - export;
-    }
-    
-    public async Task<int> GetNumberOfProductExportedAsync(string lotNumber, ulong orderId, CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.ExportInventories
-            .AsNoTracking()
-            .Where(e => e.OrderId == orderId 
-                && e.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase))
-            .CountAsync(cancellationToken);
     }
     
     public async Task<(List<ExportInventory>, int totalCount)> GetAllExportInventoriesAsync(int page, int pageSize, string? movementType = null, CancellationToken cancellationToken = default)

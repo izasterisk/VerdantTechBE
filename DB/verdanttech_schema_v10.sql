@@ -594,7 +594,7 @@ CREATE TABLE export_inventory (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT UNSIGNED NOT NULL,
     product_serial_id BIGINT UNSIGNED NULL COMMENT 'ID số seri sản phẩm được xuất (cho máy móc/thiết bị)',
-    lot_number VARCHAR(100) NULL COMMENT 'Số lô sản xuất cho sản phẩm không có serial (phân bón, vật tư)',
+    lot_number VARCHAR(100) NOT NULL COMMENT 'Số lô sản xuất cho sản phẩm không có serial (phân bón, vật tư)',
     order_detail_id BIGINT UNSIGNED NULL COMMENT 'Chi tiết đơn hàng gây ra xuất kho',
     quantity INT NOT NULL DEFAULT 1 COMMENT 'Số lượng xuất kho',
     movement_type ENUM('sale', 'return to vendor', 'damage', 'loss', 'adjustment') DEFAULT 'sale',

@@ -13,8 +13,9 @@ public partial class ExportInventory
 
     public ulong? ProductSerialId { get; set; }
 
+    [Required]
     [StringLength(100)]
-    public string? LotNumber { get; set; }
+    public string LotNumber { get; set; } = null!;
 
     public ulong? OrderDetailId { get; set; }
 

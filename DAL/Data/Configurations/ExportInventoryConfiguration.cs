@@ -27,6 +27,7 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasColumnName("product_serial_id");
 
         builder.Property(e => e.LotNumber)
+            .IsRequired()
             .HasMaxLength(100)
             .HasCharSet("utf8mb4")
             .UseCollation("utf8mb4_unicode_ci")

@@ -51,27 +51,22 @@ public class CashoutService : ICashoutService
         
         var orderDetails = new List<OrderDetail>();
         var serial = new List<ProductSerial>();
-        foreach (var orderDetail in dto.OrderDetails)
+        foreach (var orderDetailDto in dto.OrderDetails)
         {
-            var detail = await _orderDetailRepository.GetOrderDetailWithRelationByIdAsync(orderDetail.OrderDetailId, cancellationToken);
-            if(orderDetail.RefundQuantity > detail.Quantity)
-                throw new InvalidDataException($"Số lượng hoàn tiền cho OrderDetailId {orderDetail.OrderDetailId} vượt quá số lượng đã mua.");
+            var detail = await _orderDetailRepository.GetOrderDetailWithRelationByIdAsync(orderDetailDto.OrderDetailId, cancellationToken);
+            if(orderDetailDto.RefundQuantity > detail.Quantity)
+                throw new InvalidDataException($"Số lượng hoàn tiền cho OrderDetailId {orderDetailDto.OrderDetailId} vượt quá số lượng đã mua.");
             orderDetails.Add(detail);
             if(detail.OrderId != orderDetails[0].OrderId)
                 throw new InvalidDataException("Tất cả OrderDetail phải thuộc về cùng một đơn hàng.");
-            var x = await _exportedInventoryRepository.GetNumberOfProductExportedAsync(orderDetail.LotNumber,
-                detail.OrderId, cancellationToken);
-            if(x == 0)
-                throw new InvalidDataException($"Không tìm thấy sản phẩm đã xuất kho với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber}.");
-            if(x < orderDetail.RefundQuantity)
-                throw new InvalidDataException($"Sản phầm với OrderDetailId {orderDetail.OrderDetailId}, số lô {orderDetail.LotNumber} chỉ được xuất {x} sản phẩm, vui lòng kiểm tra lại.");
-            
-            var serialNumber = await _orderDetailRepository.ValidateIdentifyNumberAsync(detail.ProductId, orderDetail.SerialNumber, orderDetail.LotNumber, cancellationToken);
-            if (serialNumber != null)
+
+            if (orderDetailDto.SerialNumber != null)
             {
-                if (orderDetail.RefundQuantity != 1)
-                    throw new AggregateException("Khi hoàn tiền sản phẩm có số sê-ri, chỉ được phép hoàn 1 sản phẩm mỗi lần.");
-                serial.Add(serialNumber);
+                // if(orderDetailDto.RefundQuantity != 1)
+                //     throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
+                // var s = await _orderDetailRepository.GetProductSerialAsync(detail.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
+                // if(s.Status != ProductSerialStatus.Stock)
+                //     throw new InvalidOperationException("Số sê-ri không đủ điều kiện để xuất kho.");
             }
         }
         

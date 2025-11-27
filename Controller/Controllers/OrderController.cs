@@ -103,10 +103,11 @@ public class OrderController : BaseController
     /// <param name="dto">Thông tin cập nhật đơn hàng (trạng thái mới và lý do hủy nếu có)</param>
     /// <returns>Thông tin đơn hàng sau khi cập nhật</returns>
     [HttpPut("{orderId:long}")]
-    [Authorize(Roles = "Admin, Staff")]
+    [Authorize]
     [EndpointSummary("Process Order")]
     [EndpointDescription(
-        "Cập nhật trạng thái đơn hàng: Paid, Processing, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do.")]
+        "Cập nhật trạng thái đơn hàng: Paid, Processing, Delivered, Cancelled, Refunded. Hoặc hủy đơn hàng với lý do. " +
+        "Người dùng chỉ có quyền cancel đơn hàng ở trạng thái Pending.")]
     public async Task<ActionResult<APIResponse>> ProcessOrder([FromRoute] ulong orderId, [FromBody] OrderUpdateDTO dto)
     {
         var validationResult = ValidateModel();

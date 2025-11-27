@@ -26,33 +26,58 @@ public class ExportInventoryService : IExportInventoryService
     
     public async Task<List<ExportInventoryResponseDTO>> CreateExportInventoriesAsync(ulong staffId, List<ExportInventoryCreateDTO> dtos, CancellationToken cancellationToken = default)
     {
-        var staff = await _userRepository.GetVerifiedAndActiveUserByIdAsync(staffId, cancellationToken);
-        if(staff.Role != UserRole.Admin && staff.Role != UserRole.Staff)
-            throw new UnauthorizedAccessException("Người dùng không có quyền tạo đơn xuất kho.");
         if(dtos == null || dtos.Count == 0)
             throw new ArgumentException("Danh sách đơn xuất kho không được rỗng.");
 
         var exportInventories = new List<ExportInventory>();
+        List<ProductSerial> exportSerials = new();
+        Dictionary<string, int> validateLotNumber = new(StringComparer.OrdinalIgnoreCase);
         foreach (var dto in dtos)
         {
-            if(dto.ProductSerialNumber != null && dto.Quantity != 1)
-                throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
             if(dto.MovementType == MovementType.Sale)
                 throw new ArgumentException("MovementType Sale chỉ được sử dụng khi xuất hàng bán.");
-            var productSerial = await _orderDetailRepository.ValidateIdentifyNumberAsync(
-                dto.ProductId, dto.ProductSerialNumber, dto.LotNumber, cancellationToken);
+            ulong? serial = null;
+            if (dto.ProductSerialNumber != null)
+            {
+                if(dto.Quantity != 1)
+                    throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
+                var s = await _orderDetailRepository.GetProductSerialAsync(dto.ProductId, dto.ProductSerialNumber, dto.LotNumber, cancellationToken);
+                if(s.Status != ProductSerialStatus.Stock)
+                    throw new InvalidOperationException("Số sê-ri không đủ điều kiện để xuất kho.");
+                serial = s.Id;
+                exportSerials.Add(s);
+            }
+            else
+            {
+                if(await _orderDetailRepository.IsSerialRequiredByProductIdAsync(dto.ProductId, cancellationToken))
+                    throw new InvalidOperationException("Sản phẩm này yêu cầu số sê-ri khi xuất kho.");
+                if (validateLotNumber.TryGetValue(dto.LotNumber, out var count))
+                {
+                    validateLotNumber[dto.LotNumber] = count + dto.Quantity;
+                }
+                else
+                {
+                    validateLotNumber[dto.LotNumber] = dto.Quantity;
+                }
+            }
             exportInventories.Add(new ExportInventory
             {
                 ProductId = dto.ProductId,
-                ProductSerialId = productSerial?.Id,
+                ProductSerialId = serial,
+                Quantity = dto.Quantity,
                 LotNumber = dto.LotNumber,
                 MovementType = dto.MovementType,
                 Notes = dto.Notes,
                 CreatedBy = staffId
             });
         }
+        foreach (var validate in validateLotNumber)
+        {
+            if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key, cancellationToken) < validate.Value)
+                throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
+        }
         var listUlongResponseExport = await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(
-            exportInventories, ProductSerialStatus.Adjustment, cancellationToken);
+            exportInventories, ProductSerialStatus.Adjustment, exportSerials, cancellationToken);
         var createdExportInventories = await _exportInventoryRepository.GetListedExportInventoriesByIdsAsync(
             listUlongResponseExport, cancellationToken);
         return _mapper.Map<List<ExportInventoryResponseDTO>>(createdExportInventories);

@@ -5,7 +5,7 @@ public class OrderDetailsShippingDTO
 {
     [Required(ErrorMessage = "Mã sản phẩm là bắt buộc.")]
     [Range(1, ulong.MaxValue, ErrorMessage = "Mã sản phẩm ít nhất là 1.")]
-    public ulong ProductId { get; set; }
+    public ulong OrderDetailId { get; set; }
     
     [Required(ErrorMessage = "Số lượng xuất là bắt buộc.")]
     [Range(1, int.MaxValue, ErrorMessage = "Số lượng phải ít nhất là 1.")]
