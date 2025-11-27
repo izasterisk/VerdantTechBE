@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 namespace Controller.Controllers;
 
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin,Staff")]
 public class ExportInventoryController : BaseController
 {
     private readonly IExportInventoryService _exportInventoryService;
@@ -24,6 +23,7 @@ public class ExportInventoryController : BaseController
     /// <param name="dtos">Danh sách thông tin đơn xuất kho cần tạo</param>
     /// <returns>Danh sách đơn xuất kho đã tạo</returns>
     [HttpPost]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Create Export Inventories")]
     [EndpointDescription("Tạo đơn xuất kho cho các loại: ReturnToVendor, Damage, Loss, Adjustment. " +
                          "không được nhập MovementType = Sale vì chỉ được sử dụng khi xuất hàng bán qua OrderService. " +
@@ -51,6 +51,7 @@ public class ExportInventoryController : BaseController
     /// <param name="id">ID của đơn xuất kho</param>
     /// <returns>Thông tin đơn xuất kho</returns>
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Get Export Inventory By ID")]
     [EndpointDescription("Lấy chi tiết đơn xuất kho theo ID. Chỉ Admin/Staff mới có quyền.")]
     public async Task<ActionResult<APIResponse>> GetExportInventoryById(ulong id)
@@ -74,6 +75,7 @@ public class ExportInventoryController : BaseController
     /// <param name="movementType">Loại xuất kho để filter (Sale, ReturnToVendor, Damage, Loss, Adjustment). Mặc định: tất cả</param>
     /// <returns>Danh sách đơn xuất kho có phân trang</returns>
     [HttpGet]
+    [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Get All Export Inventories (note.)")]
     [EndpointDescription("Lọc đơn xuất kho theo MovementType. Nếu không ghi ra, trả về tất cả. " +
                          "Mẫu: /api/ExportInventory?page=2&pageSize=20&movementType=Damage")]
