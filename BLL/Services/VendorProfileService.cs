@@ -342,7 +342,7 @@ namespace BLL.Service
 
             if (existingUser != null)
             {
-                // Nếu user đã active → không cho phép đăng ký lại
+                // Nếu user đã active → không cho phép đăng ký
                 if (existingUser.Status == UserStatus.Active || existingUser.IsVerified)
                     throw new InvalidOperationException("Email này đã được đăng ký và đang hoạt động.");
 
