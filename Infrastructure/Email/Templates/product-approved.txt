@@ -1,0 +1,12 @@
+﻿SẢN PHẨM ĐƯỢC PHÊ DUYỆT
+
+Kính gửi {{fullName}},
+
+VerdantTech xin thông báo rằng sản phẩm "{{productName}}" của Quý đối tác đã được phê duyệt và kích hoạt trên hệ thống.
+
+Sản phẩm hiện đã được kích hoạt trên hệ thống và sẵn sàng để hiển thị tới khách hàng/đối tác.
+
+Trân trọng,
+Đội ngũ VerdantTech
+
+(Email tự động – vui lòng không trả lời.)

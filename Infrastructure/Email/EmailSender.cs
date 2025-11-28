@@ -269,6 +269,124 @@ public class EmailSender : IEmailSender
 
 
 
+    public async Task SendProductRegistrationSubmittedEmailAsync(
+        string toEmail,
+        string fullName,
+        string productName,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(toEmail);
+        ArgumentException.ThrowIfNullOrEmpty(productName);
+
+        // Load templates
+        string htmlTemplate = GetEmbeddedResourceString("Email.Templates.product-registration-created.html") ?? "";
+        string textTemplate = GetEmbeddedResourceString("Email.Templates.product-registration-created.txt") ?? "";
+
+        string fullNameValue = string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName;
+
+        // Replace placeholders
+        string htmlBody = htmlTemplate
+            .Replace("{{fullName}}", fullNameValue)
+            .Replace("{{productName}}", productName);
+
+        string textBody = textTemplate
+            .Replace("{{fullName}}", fullNameValue)
+            .Replace("{{productName}}", productName);
+
+        await SendEmailAsync(
+            toEmail,
+            "Xác nhận tiếp nhận đăng ký sản phẩm VerdantTech",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            productName,                      
+            "product-registration-submitted",
+            cancellationToken
+        );
+    }
+
+    public async Task SendProductRegistrationApprovedEmailAsync(
+        string toEmail,
+        string fullName,
+        string productName,
+        string productCode,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(toEmail);
+        ArgumentException.ThrowIfNullOrEmpty(productName);
+        ArgumentException.ThrowIfNullOrEmpty(productCode);
+
+        // Load templates
+        string htmlTemplate = GetEmbeddedResourceString("Email.Templates.product-approved.html") ?? "";
+        string textTemplate = GetEmbeddedResourceString("Email.Templates.product-approved.txt") ?? "";
+
+        string fullNameValue = string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName;
+
+        // Replace placeholders
+        string htmlBody = htmlTemplate
+            .Replace("{{fullName}}", fullNameValue)
+            .Replace("{{productName}}", productName)
+            .Replace("{{productCode}}", productCode);
+
+        string textBody = textTemplate
+            .Replace("{{fullName}}", fullNameValue)
+            .Replace("{{productName}}", productName)
+            .Replace("{{productCode}}", productCode);
+
+        await SendEmailAsync(
+            toEmail,
+            "Thông báo phê duyệt đăng ký sản phẩm VerdantTech",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            productCode,                      
+            "product-registration-approved",
+            cancellationToken
+        );
+    }
+
+    public async Task SendProductRegistrationRejectedEmailAsync(
+        string toEmail,
+        string fullName,
+        string productName,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(toEmail);
+        ArgumentException.ThrowIfNullOrEmpty(productName);
+        ArgumentException.ThrowIfNullOrEmpty(reason);
+
+        // Load templates
+        string htmlTemplate = GetEmbeddedResourceString("Email.Templates.product-rejected.html") ?? "";
+        string textTemplate = GetEmbeddedResourceString("Email.Templates.product-rejected.txt") ?? "";
+
+        string fullNameValue = string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName;
+
+        // Replace placeholders
+        string htmlBody = htmlTemplate
+            .Replace("{{fullName}}", fullNameValue)
+            .Replace("{{productName}}", productName)
+            .Replace("{{reason}}", reason);
+
+        string textBody = textTemplate
+            .Replace("{{fullName}}", fullNameValue)
+            .Replace("{{productName}}", productName)
+            .Replace("{{reason}}", reason);
+
+        await SendEmailAsync(
+            toEmail,
+            "Thông báo từ chối đăng ký sản phẩm VerdantTech",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            reason,                           
+            "product-registration-rejected",
+            cancellationToken
+        );
+    }
+
+
+
 
     private static string EncodeSubject(string subject)
     {
@@ -338,5 +456,8 @@ public class EmailSender : IEmailSender
             .Replace("{{reason}}", reason);
     }
 
-
+    public Task SendProductRegistrationApprovedEmailAsync(string toEmail, string fullName, string productName, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
 }

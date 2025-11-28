@@ -34,7 +34,13 @@
     <EmbeddedResource Include="Email\Templates\vendor-profile-verified.html" />
     <EmbeddedResource Include="Email\Templates\vendor-profile-verified.txt" />
     <EmbeddedResource Include="Email\Templates\vendor-profile-submitted.html" />
-    <EmbeddedResource Include="Email\Templates\vendor-profile-submitted.txt" />
+    <EmbeddedResource Include="Email\Templates\vendor-profile-submitted.txt" />	  
+	<EmbeddedResource Include="Email\Templates\product-approved.html" />
+	<EmbeddedResource Include="Email\Templates\product-approved.txt" />
+	<EmbeddedResource Include="Email\Templates\product-registration-created.html" />
+	<EmbeddedResource Include="Email\Templates\product-registration-created.txt" />
+	<EmbeddedResource Include="Email\Templates\product-rejected.html" />
+	<EmbeddedResource Include="Email\Templates\product-rejected.txt" />
   </ItemGroup>
 
 </Project>

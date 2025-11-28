@@ -1,0 +1,15 @@
+﻿XÁC NHẬN ĐĂNG KÝ SẢN PHẨM
+
+Kính gửi {{fullName}},
+
+VerdantTech xin thông báo rằng yêu cầu đăng ký sản phẩm "{{productName}}" của Quý đối tác đã được tiếp nhận thành công.
+
+Đơn đăng ký hiện đang trong quá trình xem xét và thẩm định bởi đội ngũ của chúng tôi.
+Quý đối tác sẽ nhận được thông báo ngay khi sản phẩm được phê duyệt hoặc cần điều chỉnh thêm.
+
+Trân trọng,
+Đội ngũ VerdantTech
+
+(Lưu ý: Đây là email tự động, vui lòng không trả lời trực tiếp.)
+---
+© 2025 Verdant Tech Solution. All rights reserved.

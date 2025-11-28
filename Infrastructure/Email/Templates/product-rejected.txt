@@ -1,0 +1,15 @@
+﻿THÔNG BÁO TỪ CHỐI SẢN PHẨM
+
+Kính gửi {{fullName}},
+
+Sau quá trình thẩm định, VerdantTech rất tiếc phải thông báo rằng sản phẩm "{{productName}}" chưa thể được phê duyệt.
+
+Lý do từ chối:
+{{reason}}
+
+Quý đối tác vui lòng rà soát và điều chỉnh thông tin, sau đó gửi lại yêu cầu nếu cần.
+
+Trân trọng,
+Đội ngũ VerdantTech
+
+(Email tự động – vui lòng không trả lời.)
