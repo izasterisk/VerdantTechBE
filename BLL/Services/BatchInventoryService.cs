@@ -5,6 +5,7 @@ using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 using DAL.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace BLL.Services
 {
@@ -64,9 +65,10 @@ namespace BLL.Services
 
         public async Task<BatchInventoryResponeDTO> CreateAsync(BatchInventoryCreateDTO dto, CancellationToken ct = default)
         {
-            var product = await _productRepo.GetProductByIdAsync(dto.ProductId, useNoTracking: true, ct);
+            var product = await _productRepo.GetProductByIdAsync(dto.ProductId, true, ct);
             if (product == null)
                 throw new KeyNotFoundException($"Không tìm thấy sản phẩm có ID {dto.ProductId}");
+
 
             if (dto.VendorId.HasValue)
             {

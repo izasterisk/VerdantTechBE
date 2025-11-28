@@ -30,7 +30,6 @@ namespace DAL.Repositories
                 .Take(pageSize)
                 .ToListAsync(ct);
 
-            // Nếu muốn nạp media để Service map sang DTO, gọi helper (không gán vào entity nếu không có nav)
             await LoadMediaAsync(items, ct);
 
             return (items, total);

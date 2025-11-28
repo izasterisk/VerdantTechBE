@@ -85,6 +85,7 @@ namespace DAL.Repository
         {
             return await _context.BatchInventories
                 .Include(x => x.Product)
+                    .ThenInclude(p => p.Category)
                 .Include(x => x.Vendor)
                 .Include(x => x.QualityCheckedByNavigation)
                 .Include(x => x.ProductSerials)
