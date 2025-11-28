@@ -42,6 +42,11 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasDefaultValue(1)
             .HasColumnName("quantity");
 
+        builder.Property(e => e.RefundQuantity)
+            .IsRequired()
+            .HasDefaultValue(0)
+            .HasColumnName("refund_quantity");
+
         builder.Property(e => e.CreatedBy)
             .HasColumnType("bigint unsigned")
             .IsRequired()

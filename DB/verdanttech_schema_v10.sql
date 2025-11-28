@@ -601,6 +601,7 @@ CREATE TABLE export_inventory (
     lot_number VARCHAR(100) NOT NULL COMMENT 'Số lô sản xuất cho sản phẩm không có serial (phân bón, vật tư)',
     order_detail_id BIGINT UNSIGNED NULL COMMENT 'Chi tiết đơn hàng gây ra xuất kho',
     quantity INT NOT NULL DEFAULT 1 COMMENT 'Số lượng xuất kho',
+    refund_quantity INT NOT NULL DEFAULT 0 COMMENT 'Số lượng đã hoàn trả',
     movement_type ENUM('sale', 'return to vendor', 'damage', 'loss', 'adjustment') DEFAULT 'sale',
     notes VARCHAR(500) NULL,
     created_by BIGINT UNSIGNED NOT NULL COMMENT 'Người thực hiện xuất kho',

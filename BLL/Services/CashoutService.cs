@@ -49,39 +49,37 @@ public class CashoutService : ICashoutService
         if(request.Status != RequestStatus.Approved || request.RequestType != RequestType.RefundRequest)
             throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
         
+        var serials = new HashSet<string>();
         var orderDetailIds = new HashSet<ulong>();
-        var orderDetails = new List<OrderDetail>();
-        var serial = new List<ProductSerial>();
+        var checkSerialRequired = new HashSet<ulong>();
+        Dictionary<string, (ulong, int)> validateLotNumber = new(StringComparer.OrdinalIgnoreCase);
         foreach (var dto in dtos.OrderDetails)
         {
             orderDetailIds.Add(dto.OrderDetailId);
             if (dto.SerialNumber != null)
             {
-                
+                if(dto.Quantity != 1)
+                    throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng phải là 1.");
+                if(!serials.Add(dto.SerialNumber.ToUpper()))
+                    throw new InvalidOperationException($"Số sê-ri {dto.SerialNumber} bị lặp lại trong danh sách.");
             }
             else
             {
-                
-            }
-            
-            var detail = await _orderDetailRepository.GetOrderDetailWithRelationByIdAsync(dto.OrderDetailId, cancellationToken);
-            if(dto.RefundQuantity > detail.Quantity)
-                throw new InvalidDataException($"Số lượng hoàn tiền cho OrderDetailId {dto.OrderDetailId} vượt quá số lượng đã mua.");
-            orderDetails.Add(detail);
-            if(detail.OrderId != orderDetails[0].OrderId)
-                throw new InvalidDataException("Tất cả OrderDetail phải thuộc về cùng một đơn hàng.");
-
-            if (dto.SerialNumber != null)
-            {
-                // if(orderDetailDto.RefundQuantity != 1)
-                //     throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
-                // var s = await _orderDetailRepository.GetProductSerialAsync(detail.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
-                // if(s.Status != ProductSerialStatus.Stock)
-                //     throw new InvalidOperationException("Số sê-ri không đủ điều kiện để xuất kho.");
+                checkSerialRequired.Add(dto.OrderDetailId);
+                if (validateLotNumber.TryGetValue(dto.LotNumber, out var count))
+                {
+                    validateLotNumber[dto.LotNumber] = count + dto.Quantity;
+                }
+                else
+                {
+                    validateLotNumber[dto.LotNumber] = dto.Quantity;
+                }
             }
         }
+        var order = await _cashoutRepository.ValidateOrderByOrderDetailIdsAsync(orderDetailIds.ToList(), checkSerialRequired.ToList(), cancellationToken);
+        var serialProducts = await _cashoutRepository.GetSoldProductSerialsBySerialNumbersAsync(serials.ToList(), cancellationToken);
+        var exportInventories = await _cashoutRepository.GetSoldProductByLotNumbersAsynca
         
-        var order = await _orderRepository.GetOrderByIdAsync(orderDetails[0].OrderId, cancellationToken);
         if(order.CustomerId != request.UserId)
             throw new UnauthorizedAccessException("Yêu cầu hoàn tiền không thuộc về người đặt hàng.");
         if(order.Status == OrderStatus.Refunded)
@@ -139,7 +137,7 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, request, serial, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, request, serials, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(created.Id, cancellationToken);
         var reponseDto = new RefundReponseDTO();
         reponseDto.TransactionInfo = _mapper.Map<TransactionResponseDTO>(cashoutRes);

@@ -18,6 +18,7 @@ namespace DAL.IRepository
         //Task<T> GetByNameAsync(Expression<Func<T, bool>> filter);
         Task<T> CreateAsync(T dbRecord, CancellationToken cancellationToken = default);
         Task<T> UpdateAsync(T dbRecord, CancellationToken cancellationToken = default);
+        Task<List<T>> BatchUpdateAsync(List<T> dbRecords, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(T dbRecord, CancellationToken cancellationToken = default);
         Task<int> CountAsync(Expression<Func<T, bool>>? filter = null, CancellationToken cancellationToken = default);
         Task<bool> AnyAsync(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default);

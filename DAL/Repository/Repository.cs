@@ -98,6 +98,17 @@ namespace DAL.Repository
             await _dbContext.SaveChangesAsync(cancellationToken);
             return dbRecord;
         }
+        
+        public async Task<List<T>> BatchUpdateAsync(List<T> dbRecords, CancellationToken cancellationToken = default)
+        {
+            if (dbRecords.Count == 0)
+            {
+                return dbRecords;
+            }
+            _dbContext.UpdateRange(dbRecords);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return dbRecords;
+        }
 
         public async Task<List<T>> GetAllWithRelationsByFilterAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null, CancellationToken cancellationToken = default)
         {

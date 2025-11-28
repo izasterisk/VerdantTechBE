@@ -183,6 +183,7 @@ public class OrderService : IOrderService
         
         Dictionary<ulong, int> productQuantities = new();
         Dictionary<string, int> validateLotNumber = new(StringComparer.OrdinalIgnoreCase);
+        HashSet<ulong> serialsSeen = new();
         List<ExportInventory> exportInventories = new();
         List<ProductSerial> exportSerials = new();
         var originalOrderMap = order.OrderDetails.ToDictionary(x => x.Id);
@@ -199,6 +200,8 @@ public class OrderService : IOrderService
                 if(s.Status != ProductSerialStatus.Stock)
                     throw new InvalidOperationException("Số sê-ri không đủ điều kiện để xuất kho.");
                 serial = s.Id;
+                if(!serialsSeen.Add(s.Id))
+                    throw new InvalidOperationException($"Số sê-ri {dto.SerialNumber} bị lặp lại trong danh sách xuất kho.");
                 exportSerials.Add(s);
             }
             else
