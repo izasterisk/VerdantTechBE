@@ -19,6 +19,9 @@ public partial class UserBankAccount
     [StringLength(50)]
     public string AccountNumber { get; set; } = null!;
 
+    [StringLength(50)]
+    public string? OwnerName { get; set; }
+
     public bool IsActive { get; set; }
 
     public DateTime CreatedAt { get; set; }

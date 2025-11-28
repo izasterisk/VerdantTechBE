@@ -79,7 +79,7 @@ public class OrderController : BaseController
     [EndpointSummary("Ship Order")]
     [EndpointDescription("Gửi sản phẩm đi, nếu là máy móc thì cần nhập số seri, tất cả các loại khác thì chỉ cần nhập số lô không cần seri.")]
     public async Task<ActionResult<APIResponse>> ShipOrder([FromRoute] ulong orderId,
-        [FromBody] List<OrderDetailsShippingDTO> dtos)
+        [FromBody] List<OrderDetailsExportDTO> dtos)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;

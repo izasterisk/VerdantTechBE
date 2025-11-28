@@ -122,13 +122,19 @@ public class WalletRepository : IWalletRepository
         return w;
     }
     
-    public async Task<List<OrderDetail>> GetAllOrderDetailsAvailableForCreditAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _dbContext.OrderDetails
+    public async Task<List<OrderDetail>> GetAllOrderDetailsAvailableForCreditAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    { 
+        var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
+        return await _dbContext.OrderDetails
             .Include(o => o.Product)
-            .Where(o => o.IsWalletCredited == false && o.UpdatedAt.AddDays(7) < DateTime.UtcNow)
-            .Where(o => o.Product.VendorId == vendorId) 
+            .Where(o => o.IsWalletCredited == false)
+            .Where(o => o.Product.VendorId == vendorId)
+            .Where(o => o.Order.Status != OrderStatus.Refunded && o.Order.DeliveredAt != null
+                && o.Order.DeliveredAt < sevenDaysAgo)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+    }
+        
     
     public async Task<bool> ValidateVendorQualified(ulong userId, CancellationToken cancellationToken = default) =>
         await _vendorProfileRepository.AnyAsync(w => w.UserId == userId && w.VerifiedAt != null 

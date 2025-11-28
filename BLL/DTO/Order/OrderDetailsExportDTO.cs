@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace BLL.DTO.Order;
-public class OrderDetailsShippingDTO
+
+public class OrderDetailsExportDTO
 {
     [Required(ErrorMessage = "Mã sản phẩm là bắt buộc.")]
     [Range(1, ulong.MaxValue, ErrorMessage = "Mã sản phẩm ít nhất là 1.")]

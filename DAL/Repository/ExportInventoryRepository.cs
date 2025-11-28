@@ -12,19 +12,20 @@ public class ExportInventoryRepository : IExportInventoryRepository
     private readonly IRepository<BatchInventory> _batchInventoryRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IRepository<ProductSerial> _productSerialRepository; 
+    private readonly IRepository<Product> _productRepository; 
     
-    public ExportInventoryRepository(IRepository<ExportInventory> exportInventoryRepository,
-        IRepository<BatchInventory> batchInventoryRepository,
-        VerdantTechDbContext dbContext,
-        IRepository<ProductSerial> productSerialRepository)
+    public ExportInventoryRepository(IRepository<ExportInventory> exportInventoryRepository, IRepository<BatchInventory> batchInventoryRepository,
+        VerdantTechDbContext dbContext, IRepository<ProductSerial> productSerialRepository,
+        IRepository<Product> productRepository)
     {
         _exportInventoryRepository = exportInventoryRepository;
         _batchInventoryRepository = batchInventoryRepository;
         _dbContext = dbContext;
         _productSerialRepository = productSerialRepository;
+        _productRepository = productRepository;
     }
     
-    public async Task<List<ulong>> CreateExportNUpdateProductSerialsWithTransactionAsync(List<ExportInventory> exportInventories, ProductSerialStatus x, List<ProductSerial> s, CancellationToken cancellationToken = default)
+    public async Task<List<ulong>> CreateExportForOrderWithTransactionAsync(List<ExportInventory> exportInventories, List<ProductSerial> s, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -41,7 +42,52 @@ public class ExportInventoryRepository : IExportInventoryRepository
             {
                 foreach (var serial in s)
                 {
-                    serial.Status = x;
+                    serial.Status = ProductSerialStatus.Sold;
+                    serial.UpdatedAt = DateTime.UtcNow;
+                    await _productSerialRepository.UpdateAsync(serial, cancellationToken);
+                }
+            }
+            await transaction.CommitAsync(cancellationToken);
+            return exportIds;
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+    
+    public async Task<List<ulong>> CreateExportForExportWithTransactionAsync(List<ExportInventory> exportInventories, Dictionary<ulong, int> productQuantities, List<ProductSerial> s, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var exportIds = new List<ulong>();
+            foreach (var exportInventory in exportInventories)
+            {
+                exportInventory.CreatedAt = DateTime.UtcNow;
+                exportInventory.UpdatedAt = DateTime.UtcNow;
+                var export = await _exportInventoryRepository.CreateAsync(exportInventory, cancellationToken);
+                exportIds.Add(export.Id);
+            }
+            if (productQuantities.Count > 0)
+            {
+                foreach (var productQuantity in productQuantities)
+                {
+                    var product = await _productRepository.GetAsync(p => p.Id == productQuantity.Key, true, cancellationToken)
+                        ?? throw new KeyNotFoundException($"Sản phẩm với ID {productQuantity.Key} không tồn tại.");
+                    if(product.StockQuantity < productQuantity.Value)
+                        throw new InvalidOperationException($"Sản phẩm với ID {product.Id} không đủ số lượng trong kho để xuất. Số lượng hiện có: {product.StockQuantity}, Số lượng yêu cầu: {productQuantity.Value}.");
+                    product.StockQuantity -= productQuantity.Value;
+                    product.UpdatedAt = DateTime.UtcNow;
+                    await _productRepository.UpdateAsync(product, cancellationToken);
+                }
+            }
+            if (s.Count > 0)
+            {
+                foreach (var serial in s)
+                {
+                    serial.Status = ProductSerialStatus.Adjustment;
                     serial.UpdatedAt = DateTime.UtcNow;
                     await _productSerialRepository.UpdateAsync(serial, cancellationToken);
                 }

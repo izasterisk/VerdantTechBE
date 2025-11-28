@@ -173,7 +173,7 @@ public class OrderService : IOrderService
         return finalResponse;
     }
 
-    public async Task<OrderResponseDTO> ShipOrderAsync(ulong staffId, ulong orderId, List<OrderDetailsShippingDTO> dtos, CancellationToken cancellationToken = default)
+    public async Task<OrderResponseDTO> ShipOrderAsync(ulong staffId, ulong orderId, List<OrderDetailsExportDTO> dtos, CancellationToken cancellationToken = default)
     {
         if(dtos == null || dtos.Count == 0)
             throw new ArgumentNullException($"{nameof(dtos)} rỗng.");
@@ -265,7 +265,7 @@ public class OrderService : IOrderService
         order.Status = OrderStatus.Shipped;
         
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
-        await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(exportInventories, ProductSerialStatus.Sold, exportSerials, cancellationToken);
+        await _exportInventoryRepository.CreateExportForOrderWithTransactionAsync(exportInventories, exportSerials, cancellationToken);
         
         var finalResponse = _mapper.Map<OrderResponseDTO>(order);
         if (finalResponse.OrderDetails != null)
@@ -305,9 +305,9 @@ public class OrderService : IOrderService
         }
         else
         {
-            if(dto.Status != OrderStatus.Cancelled)
-                throw new UnauthorizedAccessException("Khách hàng chỉ có thể hủy đơn hàng của mình.");
-            if(order.Status != OrderStatus.Pending)
+            if(dto.Status != OrderStatus.Cancelled && dto.Status != OrderStatus.Delivered)
+                throw new UnauthorizedAccessException("Khách hàng chỉ có thể hủy hoặc đánh dấu đơn hàng đã giao.");
+            if(dto.Status == OrderStatus.Cancelled && order.Status != OrderStatus.Pending)
                 throw new InvalidCastException("Chỉ những đơn hàng ở trạng thái 'Pending' mới có thể hủy bởi khách hàng.");
         }
         if (dto.CancelledReason != null && dto.Status != OrderStatus.Cancelled)
