@@ -27,9 +27,12 @@ namespace DAL.Repository
             if (page <= 0) page = 1;
             if (pageSize <= 0) pageSize = 20;
 
-            return await _context.Set<BatchInventory>()
-                .AsNoTracking()
+             return await _context.Set<BatchInventory>()
+                .Include(x => x.Product)
+                .Include(x => x.Vendor)
+                .Include(x => x.QualityCheckedByNavigation)
                 .OrderByDescending(x => x.CreatedAt)
+                .AsNoTracking()
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(ct);
@@ -45,9 +48,12 @@ namespace DAL.Repository
             if (pageSize <= 0) pageSize = 20;
 
             return await _context.Set<BatchInventory>()
-                .AsNoTracking()
+                .Include(x => x.Product)
+                .Include(x => x.Vendor)
+                .Include(x => x.QualityCheckedByNavigation)
                 .Where(x => x.ProductId == productId)
                 .OrderByDescending(x => x.CreatedAt)
+                .AsNoTracking()
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(ct);
@@ -63,21 +69,111 @@ namespace DAL.Repository
             if (pageSize <= 0) pageSize = 20;
 
             return await _context.Set<BatchInventory>()
-                .AsNoTracking()
+                .Include(x => x.Product)
+                .Include(x => x.Vendor)
+                .Include(x => x.QualityCheckedByNavigation)
                 .Where(x => x.VendorId == vendorId)
                 .OrderByDescending(x => x.CreatedAt)
+                .AsNoTracking()
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(ct);
         }
 
-        public async Task<BatchInventory?> GetByIdAsync(
-            ulong id,
-            CancellationToken ct = default)
+        public async Task<BatchInventory?> GetByIdAsync(ulong id, CancellationToken ct = default)
         {
-            return await _context.Set<BatchInventory>()
+            return await _context.BatchInventories
+                .Include(x => x.Product)
+                .Include(x => x.Vendor)
+                .Include(x => x.QualityCheckedByNavigation)
+                .Include(x => x.ProductSerials)
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
         }
+
+        //public async Task<BatchInventory> CreateAsync(
+        //    BatchInventory entity,
+        //    CancellationToken ct = default)
+        //{
+        //    entity.CreatedAt = DateTime.UtcNow;
+        //    entity.UpdatedAt = DateTime.UtcNow;
+
+        //    await _context.Set<BatchInventory>().AddAsync(entity, ct);
+        //    await _context.SaveChangesAsync(ct);
+        //    return entity;
+        //}
+
+
+        public async Task<BatchInventory> CreateAsync(BatchInventory entity, CancellationToken ct = default)
+        {
+            using var tran = await _context.Database.BeginTransactionAsync(ct);
+
+            try
+            {
+                entity.CreatedAt = DateTime.UtcNow;
+                entity.UpdatedAt = DateTime.UtcNow;
+
+                var product = await _context.Products
+                    .Include(p => p.Category)
+                    .FirstOrDefaultAsync(p => p.Id == entity.ProductId, ct);
+
+                if (product == null)
+                    throw new InvalidOperationException($"Product {entity.ProductId} not found.");
+
+                bool serialRequired = product.Category?.SerialRequired ?? false;
+
+                // VALIDATE
+                if (serialRequired)
+                {
+                    if (entity.Quantity <= 0)
+                        throw new InvalidOperationException("Quantity must be > 0 for serial-required products.");
+
+                    if (string.IsNullOrEmpty(entity.LotNumber))
+                        throw new InvalidOperationException("LotNumber is required for serial-managed products.");
+                }
+
+                // 1) Insert batch
+                await _context.BatchInventories.AddAsync(entity, ct);
+                await _context.SaveChangesAsync(ct);
+
+                // 2) If category requires serial → generate
+                if (serialRequired)
+                {
+                    var serials = new List<ProductSerial>();
+                    var now = DateTime.UtcNow;
+
+                    for (int i = 0; i < entity.Quantity; i++)
+                    {
+                        serials.Add(new ProductSerial
+                        {
+                            BatchInventoryId = entity.Id,
+                            ProductId = entity.ProductId,
+                            SerialNumber = GenerateSerialNumber(),
+                            Status = ProductSerialStatus.Stock,
+                            CreatedAt = now,
+                            UpdatedAt = now
+                        });
+                    }
+
+                    await _context.ProductSerials.AddRangeAsync(serials, ct);
+                    await _context.SaveChangesAsync(ct);
+                }
+
+                await tran.CommitAsync(ct);
+
+                return entity;
+            }
+            catch
+            {
+                await tran.RollbackAsync(ct);
+                throw;
+            }
+        }
+
+        private string GenerateSerialNumber()
+        {
+            return Guid.NewGuid().ToString("N");
+        }
+
 
         public async Task<BatchInventory> CreateAsync(
             BatchInventory entity,
@@ -86,10 +182,56 @@ namespace DAL.Repository
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
 
-            await _context.Set<BatchInventory>().AddAsync(entity, ct);
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(p => p.Id == entity.ProductId, ct);
+
+            if (product == null)
+                throw new InvalidOperationException($"Product {entity.ProductId} not found.");
+
+            bool serialRequired = product.Category?.SerialRequired ?? false;
+
+            if (serialRequired)
+            {
+                if (entity.Quantity <= 0)
+                    throw new InvalidOperationException("Quantity must be > 0 for serial-required products.");
+
+                if (string.IsNullOrWhiteSpace(entity.LotNumber))
+                    throw new InvalidOperationException("LotNumber is required for serial-managed products.");
+            }
+
+            await _context.BatchInventories.AddAsync(entity, ct);
             await _context.SaveChangesAsync(ct);
+
+            if (serialRequired)
+            {
+                for (int i = 1; i <= entity.Quantity; i++)
+                {
+                    var serial = new ProductSerial
+                    {
+                        BatchInventoryId = entity.Id,
+                        ProductId = entity.ProductId,
+                        SerialNumber = GenerateSerialNumber(entity, i),
+                        Status = ProductSerialStatus.Stock,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _context.ProductSerials.AddAsync(serial, ct);
+                }
+
+                await _context.SaveChangesAsync(ct);
+            }
+
             return entity;
         }
+
+        private string GenerateSerialNumber(BatchInventory batch, int index)
+        {
+            return $"{batch.Sku}-{batch.BatchNumber}-{index:D3}";
+        }
+
+
 
         public async Task UpdateAsync(
             BatchInventory entity,
@@ -101,18 +243,20 @@ namespace DAL.Repository
             await _context.SaveChangesAsync(ct);
         }
 
-        public async Task DeleteAsync(
-            ulong id,
-            CancellationToken ct = default)
+        public async Task DeleteAsync(ulong id, CancellationToken ct = default)
         {
-            var entity = await _context.Set<BatchInventory>()
+            var entity = await _context.BatchInventories
+                .Include(x => x.ProductSerials)
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
 
             if (entity == null) return;
 
-            _context.Set<BatchInventory>().Remove(entity);
+            _context.ProductSerials.RemoveRange(entity.ProductSerials);
+            _context.BatchInventories.Remove(entity);
+
             await _context.SaveChangesAsync(ct);
         }
+
 
         public async Task QualityCheckAsync(
             ulong id,
