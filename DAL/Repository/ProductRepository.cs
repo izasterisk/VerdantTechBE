@@ -42,6 +42,8 @@ namespace DAL.Repositories
                 ? _db.Products.AsNoTracking()
                 : _db.Products.AsQueryable();
 
+            query = query.Include(x => x.Category);
+
             var entity = await query.FirstOrDefaultAsync(x => x.Id == id, ct);
             if (entity is null) return null;
 
