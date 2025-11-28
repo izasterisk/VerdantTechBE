@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using DAL.Repositories;
 using System.Globalization;
+using BLL.Interfaces.Infrastructure;
 
 namespace BLL.Services
 {
@@ -23,15 +24,20 @@ namespace BLL.Services
         private readonly IProductRegistrationRepository _repo;
         private readonly IMapper _mapper;
         private readonly VerdantTechDbContext _db;
+        private readonly IEmailSender _emailSender;
+
 
         public ProductRegistrationService(
             IProductRegistrationRepository repo,
             IMapper mapper,
-            VerdantTechDbContext db)
+            VerdantTechDbContext db,
+            IEmailSender emailSender
+            )
         {
             _repo = repo;
             _mapper = mapper;
             _db = db;
+            _emailSender = emailSender;
         }
 
 
@@ -77,7 +83,6 @@ namespace BLL.Services
             List<MediaLinkItemDTO> addCertificates,
             CancellationToken ct = default)
         {
-            // validate FK
             if (!await _db.Users.AnyAsync(x => x.Id == dto.VendorId, ct))
                 throw new InvalidOperationException("Vendor không tồn tại.");
             if (!await _db.ProductCategories.AnyAsync(x => x.Id == dto.CategoryId, ct))
@@ -94,7 +99,6 @@ namespace BLL.Services
                 throw new InvalidOperationException("Kích thước không hợp lệ.");
 
 
-            // Map
             var entity = _mapper.Map<ProductRegistration>(dto);
 
             entity.Specifications = dto.Specifications?.Count > 0
@@ -110,7 +114,6 @@ namespace BLL.Services
             entity.CreatedAt = DateTime.UtcNow;
             entity.UpdatedAt = DateTime.UtcNow;
 
-            // Map product images
             var productImages = ToMediaLinks(addImages, MediaOwnerType.ProductRegistrations);
 
             entity = await _repo.CreateAsync(entity, productImages, null, ct);
@@ -119,7 +122,6 @@ namespace BLL.Services
             // ================= CERTIFICATE CREATE =================
             if (dto.CertificationName != null &&dto.CertificationCode != null)
             {
-                // Check số lượng file VS số lượng tên chứng chỉ
                 if (addCertificates.Count != dto.CertificationName.Count)
                     throw new InvalidOperationException("Số lượng file chứng chỉ không khớp số lượng tên chứng chỉ.");
 
@@ -128,7 +130,6 @@ namespace BLL.Services
 
                 for (int i = 0; i < dto.CertificationName.Count; i++)
                 {
-                    // Create certificate entity
                     var cert = new ProductCertificate
                     {
                         RegistrationId = entity.Id,
@@ -144,7 +145,6 @@ namespace BLL.Services
                     await _db.ProductCertificates.AddAsync(cert, ct);
                     await _db.SaveChangesAsync(ct);
 
-                    // Attach file
                     var file = addCertificates[i];
 
                     var media = new MediaLink
@@ -169,6 +169,18 @@ namespace BLL.Services
 
             var result = _mapper.Map<ProductRegistrationReponseDTO>(fresh);
             await HydrateMediaAsync(new List<ProductRegistrationReponseDTO> { result }, ct);
+
+            // ==== SEND EMAIL====
+            var vendor = await _db.Users.FirstOrDefaultAsync(u => u.Id == dto.VendorId, ct);
+            if (vendor != null)
+            {
+                await _emailSender.SendProductRegistrationSubmittedEmailAsync(
+                    vendor.Email!,
+                    vendor.FullName ?? vendor.Email!,
+                    dto.ProposedProductName,
+                    ct
+                );
+            }
 
             return result;
         }
@@ -195,7 +207,6 @@ namespace BLL.Services
 
             var dims = ToDecimalDict(dto.DimensionsCm);
 
-            // Update core fields
             entity.VendorId = dto.VendorId ?? entity.VendorId;
             entity.CategoryId = dto.CategoryId ?? entity.CategoryId;
             entity.ProposedProductCode = dto.ProposedProductCode;
@@ -222,15 +233,13 @@ namespace BLL.Services
                 removedCertificates ?? new List<string>(),
                 ct);
 
-            // New certificates
             if (addCertificates.Count > 0 &&
-    dto.CertificationName != null &&
-    dto.CertificationCode != null)
+                dto.CertificationName != null &&
+                dto.CertificationCode != null)
             {
                 int totalNames = dto.CertificationName.Count;
                 int totalNew = addCertificates.Count;
 
-                // New certificate name/code are always LAST items in arrays
                 for (int i = 0; i < totalNew; i++)
                 {
                     int idx = totalNames - totalNew + i;
@@ -282,13 +291,12 @@ namespace BLL.Services
         // ================= CHANGE STATUS =================
 
         public async Task<bool> ChangeStatusAsync(
-    ulong id,
-    ProductRegistrationStatus status,
-    string? rejectionReason,
-    ulong? approvedBy,
-    CancellationToken ct = default)
+            ulong id,
+            ProductRegistrationStatus status,
+            string? rejectionReason,
+            ulong? approvedBy,
+            CancellationToken ct = default)
         {
-            // 1) Load registration
             var reg = await _db.ProductRegistrations
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
 
@@ -303,15 +311,12 @@ namespace BLL.Services
 
             reg.UpdatedAt = DateTime.UtcNow;
 
-            // =======================
             // CASE REJECT
-            // =======================
             if (status == ProductRegistrationStatus.Rejected)
             {
                 reg.Status = ProductRegistrationStatus.Rejected;
                 reg.RejectionReason = rejectionReason ?? "";
 
-                // Chỉ select Id để tránh NULL cast lỗi
                 var certIds = await _db.ProductCertificates
                     .Where(c => c.RegistrationId == reg.Id)
                     .Select(c => c.Id)
@@ -319,7 +324,6 @@ namespace BLL.Services
 
                 foreach (var certId in certIds)
                 {
-                    // Không dùng FirstAsync nữa
                     var entityCert = new ProductCertificate { Id = certId };
                     _db.ProductCertificates.Attach(entityCert);
 
@@ -329,13 +333,27 @@ namespace BLL.Services
                 }
 
                 await _db.SaveChangesAsync(ct);
+
+
+                // ==== SEND EMAIL: PRODUCT REJECTED ====
+                var vendor = await _db.Users.FirstOrDefaultAsync(u => u.Id == reg.VendorId, ct);
+                if (vendor != null)
+                {
+                    await _emailSender.SendProductRegistrationRejectedEmailAsync(
+                        vendor.Email!,
+                        vendor.FullName ?? vendor.Email!,
+                        reg.ProposedProductName,
+                        rejectionReason ?? "",
+                        ct
+                    );
+                }
+
+
                 return true;
             }
 
 
-            // =======================
             // CASE APPROVE
-            // =======================
             if (status != ProductRegistrationStatus.Approved)
                 throw new InvalidOperationException("Trạng thái không hợp lệ.");
 
@@ -343,7 +361,6 @@ namespace BLL.Services
 
             try
             {
-                // update registration
                 reg.Status = ProductRegistrationStatus.Approved;
                 reg.ApprovedBy = approvedBy;
                 reg.ApprovedAt = DateTime.UtcNow;
@@ -351,7 +368,6 @@ namespace BLL.Services
 
                 await _db.SaveChangesAsync(ct);
 
-                // Tạo product
                 var product = _mapper.Map<Product>(reg);
                 product.Slug = Slugify(reg.ProposedProductName);
                 product.IsActive = true;
@@ -359,9 +375,8 @@ namespace BLL.Services
                 product.UpdatedAt = DateTime.UtcNow;
 
                 _db.Products.Add(product);
-                await _db.SaveChangesAsync(ct);   // now product.Id is VALID and SAFE
+                await _db.SaveChangesAsync(ct);  
 
-                // Copy images
                 var regImages = await _db.MediaLinks
                     .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations && m.OwnerId == reg.Id)
                     .OrderBy(m => m.SortOrder)
@@ -386,7 +401,6 @@ namespace BLL.Services
                     await _db.SaveChangesAsync(ct);
                 }
 
-                // Copy certificates
                 var regCerts = await _db.ProductCertificates
                     .Where(c => c.RegistrationId == reg.Id)
                     .Select(c => new
@@ -419,7 +433,6 @@ namespace BLL.Services
                     _db.ProductCertificates.Add(newCert);
                     await _db.SaveChangesAsync(ct);
 
-                    // Clone certificate files
                     var files = await _db.MediaLinks
                         .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates &&
                                     m.OwnerId == old.Id)
@@ -447,6 +460,19 @@ namespace BLL.Services
                     }
                 }
 
+                // ==== SEND EMAIL: PRODUCT APPROVED ====
+                var vendor = await _db.Users.FirstOrDefaultAsync(u => u.Id == reg.VendorId, ct);
+                if (vendor != null)
+                {
+                    await _emailSender.SendProductRegistrationApprovedEmailAsync(
+                        vendor.Email!,
+                        vendor.FullName ?? vendor.Email!,
+                        reg.ProposedProductName,
+                        ct
+                    );
+                }
+
+
                 await tx.CommitAsync(ct);
                 return true;
             }
@@ -465,7 +491,6 @@ namespace BLL.Services
             => _repo.DeleteAsync(id, ct);
 
 
-        // ================ HELPERS =================
 
         private static string Slugify(string? text)
         {
@@ -493,7 +518,6 @@ namespace BLL.Services
         }
 
 
-        // Hydrate images & certificates
         private async Task HydrateMediaAsync(
             IReadOnlyList<ProductRegistrationReponseDTO> items,
             CancellationToken ct)
@@ -503,7 +527,6 @@ namespace BLL.Services
             var ids = items.Select(x => x.Id).ToList();
             var map = items.ToDictionary(x => x.Id);
 
-            // Product images
             var imgs = await _db.MediaLinks.AsNoTracking()
                 .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations &&
                             ids.Contains(m.OwnerId))
@@ -524,7 +547,6 @@ namespace BLL.Services
                         .ToList();
 
 
-            // Certificates (entity + files)
             var certEntities = await _db.ProductCertificates.AsNoTracking()
                .Where(c => c.RegistrationId.HasValue && ids.Contains(c.RegistrationId.Value))
                .Select(c => new

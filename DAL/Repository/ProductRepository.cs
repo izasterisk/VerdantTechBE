@@ -30,7 +30,6 @@ namespace DAL.Repositories
                 .Take(pageSize)
                 .ToListAsync(ct);
 
-            // Nếu muốn nạp media để Service map sang DTO, gọi helper (không gán vào entity nếu không có nav)
             await LoadMediaAsync(items, ct);
 
             return (items, total);
@@ -42,6 +41,8 @@ namespace DAL.Repositories
             var query = useNoTracking
                 ? _db.Products.AsNoTracking()
                 : _db.Products.AsQueryable();
+
+            query = query.Include(x => x.Category);
 
             var entity = await query.FirstOrDefaultAsync(x => x.Id == id, ct);
             if (entity is null) return null;

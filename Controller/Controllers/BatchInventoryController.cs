@@ -38,8 +38,17 @@ namespace API.Controllers
         [EndpointDescription("Returns a paginated list of batch inventories linked to a specific product.")]
         public async Task<IActionResult> GetByProduct(ulong productId, int page = 1, int pageSize = 20,CancellationToken ct = default)
         {
-            var result = await _service.GetByProductIdAsync(productId, page, pageSize, ct);
-            return Ok(result);
+            try
+            {
+                var result = await _service.GetByProductIdAsync(productId, page, pageSize, ct);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException e)
+            {
+                //return NotFound(new { error = e.Message });
+                return NotFound();
+            }
+            
         }
 
         // ============================
@@ -115,13 +124,14 @@ namespace API.Controllers
 
             try
             {
-                await _service.UpdateAsync(dto, ct);
-                return NoContent();
+                var result = await _service.UpdateAsync(dto, ct);
+                return Ok(result);
             }
-            catch (KeyNotFoundException)
+            catch (KeyNotFoundException e)
             {
                 return NotFound();
             }
+          
         }
 
         // ============================
@@ -130,7 +140,7 @@ namespace API.Controllers
 
         [HttpDelete("{id}")]
         [EndpointSummary("Delete a batch inventory entry.")]
-        [EndpointDescription("Deletes a batch inventory record by its unique identifier.")]
+        [EndpointDescription("Delete a batch inventory record by its unique identifier.")]
         public async Task<IActionResult> Delete(ulong id, CancellationToken ct = default)
         {
             try
@@ -163,6 +173,18 @@ namespace API.Controllers
                 return NotFound();
             }
                      
+        }
+
+
+        // ===========================================
+        // GET SERIALS BY BATCH ID
+        // ===========================================
+        [HttpGet("{batchId}/serials")]
+        [EndpointSummary ("Get all serials of a batch.")]
+        public async Task<IActionResult> GetSerialsByBatch(ulong batchId, CancellationToken ct = default)
+        {
+            var serials = await _service.GetAllSerialsByBatchIdAsync(batchId, ct);
+            return Ok(serials);
         }
     }
 }
