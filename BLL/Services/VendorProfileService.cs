@@ -333,60 +333,6 @@ namespace BLL.Service
         }
 
 
-
-        //private async Task<User> CreateVendorUserAsync(
-        //    VendorProfileCreateDTO dto,
-        //    CancellationToken ct)
-        //{
-        //    var user = new User
-        //    {
-        //        Email = dto.Email,
-        //        PasswordHash = AuthUtils.HashPassword(dto.Password),
-        //        FullName = dto.FullName ?? "",
-        //        PhoneNumber = dto.PhoneNumber,
-        //        TaxCode = dto.TaxCode,
-        //        Role = UserRole.Vendor,
-        //        Status = UserStatus.Inactive,
-        //        IsVerified = false,
-        //        CreatedAt = DateTime.UtcNow,
-        //        UpdatedAt = DateTime.UtcNow
-        //    };
-
-        //    try
-        //    {
-        //        user = await _userRepository.CreateUserWithTransactionAsync(user, ct);
-        //        user.Role = UserRole.Vendor;
-        //        user.Status = UserStatus.Inactive;
-        //        await _userRepository.UpdateUserWithTransactionAsync(user, ct);
-        //        return user;
-        //    }
-        //    catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("idx_email") == true)
-        //    {
-        //        // Lấy user cũ
-        //        var existingUser = await _vendorProfileRepository.GetUserByEmailAsync(dto.Email, ct);
-
-        //        if (existingUser == null)
-        //            throw;
-
-        //        // Ghi đè thông tin cần thiết
-        //        existingUser.FullName = dto.FullName ?? existingUser.FullName;
-        //        existingUser.PhoneNumber = dto.PhoneNumber ?? existingUser.PhoneNumber;
-        //        existingUser.TaxCode = dto.TaxCode ?? existingUser.TaxCode;
-        //        existingUser.IsVerified = false;
-        //        existingUser.Status = UserStatus.Inactive;
-        //        existingUser.UpdatedAt = DateTime.UtcNow;
-
-        //        await _userRepository.UpdateUserWithTransactionAsync(existingUser, ct);
-
-        //        return existingUser;
-        //    }
-        //    catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("idx_tax_code") == true)
-        //    {
-        //        throw new InvalidOperationException("Mã số thuế đã tồn tại trong hệ thống.", ex);
-        //    }
-        //}
-
-
         private async Task<User> CreateVendorUserAsync(
             VendorProfileCreateDTO dto,
             CancellationToken ct)
@@ -396,7 +342,12 @@ namespace BLL.Service
 
             if (existingUser != null)
             {
-                // Update thông tin của user cũ
+                // Nếu user đã active → không cho phép đăng ký
+                if (existingUser.Status == UserStatus.Active || existingUser.IsVerified)
+                    throw new InvalidOperationException("Email này đã được đăng ký và đang hoạt động.");
+
+
+                // Nếu user chưa active → CHO PHÉP ghi đè
                 existingUser.FullName = dto.FullName ?? existingUser.FullName;
                 existingUser.PhoneNumber = dto.PhoneNumber ?? existingUser.PhoneNumber;
                 existingUser.TaxCode = dto.TaxCode ?? existingUser.TaxCode;
