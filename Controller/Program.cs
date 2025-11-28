@@ -129,6 +129,7 @@ builder.Services.AddScoped<IEnergyUsageRepository, EnergyUsageRepository>();
 builder.Services.AddScoped<IEnvironmentalDataRepository, EnvironmentalDataRepository>();
 builder.Services.AddScoped<IProductCategoryRepository, ProductCategoryRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductSerialRepository, ProductSerialRepository>();
 builder.Services.AddScoped<IForumCategoryRepository, ForumCategoryRepository>();
 builder.Services.AddScoped<IForumPostRepository, ForumPostRepository>();
 builder.Services.AddScoped<IForumCommentRepository, ForumCommentRepository>();

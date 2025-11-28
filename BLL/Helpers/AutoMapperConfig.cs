@@ -290,14 +290,17 @@ namespace BLL.Helpers
                 .ForMember(d => d.Id, o => o.Ignore())
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
                 .ForMember(d => d.UpdatedAt, o => o.Ignore())
+                .ForMember(d => d.ProductSerials, o => o.Ignore())
                 .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
                 .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
                 .ForMember(d => d.QualityCheckedAt, o => o.Ignore());
+
             CreateMap<BatchInventoryQualityCheckDTO, BatchInventory>()
                 .ForMember(d => d.Id, o => o.Ignore())
                 .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
                 .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
                 .ForMember(d => d.Notes, o => o.Ignore());
+
             CreateMap<BatchInventoryUpdateDTO, BatchInventory>()
                 .ForMember(d => d.Id, o => o.Ignore())
                 .ForMember(d => d.ProductId, o => o.Ignore())
@@ -306,10 +309,10 @@ namespace BLL.Helpers
                 .ForMember(d => d.LotNumber, o => o.Ignore())
                 .ForMember(d => d.VendorId, o => o.Ignore())
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
+                .ForMember(d => d.ProductSerials, o => o.Ignore())
                 .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
                 .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
                 .ForMember(d => d.QualityCheckedAt, o => o.Ignore())
-                // CHỈ MAP GIÁ TRỊ KHÁC NULL (AutoMapper xử lý Optional Update)
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<BatchInventory, BatchInventoryResponeDTO>()
