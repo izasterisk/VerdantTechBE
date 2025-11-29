@@ -331,11 +331,11 @@ function generateVendorData() {
     
     // User Bank Accounts
     sql += `-- Insert User Bank Accounts (20 vendors - all same account 970436/1045069359)\n`;
-    sql += `INSERT INTO user_bank_accounts (id, user_id, bank_code, account_number, is_active, created_at, updated_at) VALUES\n`;
+    sql += `INSERT INTO user_bank_accounts (id, user_id, bank_code, account_number, owner_name, is_active, created_at, updated_at) VALUES\n`;
     
     const bankRows = [];
     for (let i = 1; i <= 20; i++) {
-        bankRows.push(`(${i}, ${16 + i}, '970436', '1045069359', 1, NOW(), NOW())`);
+        bankRows.push(`(${i}, ${16 + i}, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW())`);
     }
     sql += bankRows.join(',\n') + ';\n\n';
     

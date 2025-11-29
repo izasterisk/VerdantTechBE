@@ -21,6 +21,8 @@ public partial class ExportInventory
 
     public int Quantity { get; set; } = 1;
 
+    public int RefundQuantity { get; set; } = 0;
+
     public MovementType MovementType { get; set; } = MovementType.Sale;
 
     [StringLength(500)]

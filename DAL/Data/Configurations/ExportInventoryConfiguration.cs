@@ -42,6 +42,11 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasDefaultValue(1)
             .HasColumnName("quantity");
 
+        builder.Property(e => e.RefundQuantity)
+            .IsRequired()
+            .HasDefaultValue(0)
+            .HasColumnName("refund_quantity");
+
         builder.Property(e => e.CreatedBy)
             .HasColumnType("bigint unsigned")
             .IsRequired()
@@ -96,6 +101,11 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .WithMany(p => p.ExportInventories)
             .HasForeignKey(d => d.CreatedBy)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Unique Constraint
+        builder.HasIndex(e => new { e.OrderDetailId, e.LotNumber })
+            .IsUnique()
+            .HasDatabaseName("uk_order_detail_lot");
 
         // Indexes
         builder.HasIndex(e => e.ProductId)

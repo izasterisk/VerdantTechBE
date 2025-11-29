@@ -30,6 +30,7 @@ public class ExportInventoryService : IExportInventoryService
             throw new ArgumentException("Danh sách đơn xuất kho không được rỗng.");
 
         var exportInventories = new List<ExportInventory>();
+        Dictionary<ulong, int> productQuantities = new();
         List<ProductSerial> exportSerials = new();
         Dictionary<string, int> validateLotNumber = new(StringComparer.OrdinalIgnoreCase);
         foreach (var dto in dtos)
@@ -62,6 +63,14 @@ public class ExportInventoryService : IExportInventoryService
                     validateLotNumber[dto.LotNumber] = dto.Quantity;
                 }
             }
+            if (productQuantities.TryGetValue(dto.ProductId, out var currentQuantity))
+            {
+                productQuantities[dto.ProductId] = currentQuantity + dto.Quantity;
+            }
+            else
+            {
+                productQuantities.Add(dto.ProductId, dto.Quantity);
+            }
             exportInventories.Add(new ExportInventory
             {
                 ProductId = dto.ProductId,
@@ -75,11 +84,11 @@ public class ExportInventoryService : IExportInventoryService
         }
         foreach (var validate in validateLotNumber)
         {
-            if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key, cancellationToken) < validate.Value)
-                throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
+            // if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key, cancellationToken) < validate.Value)
+            //     throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
         }
-        var listUlongResponseExport = await _exportInventoryRepository.CreateExportNUpdateProductSerialsWithTransactionAsync(
-            exportInventories, ProductSerialStatus.Adjustment, exportSerials, cancellationToken);
+        var listUlongResponseExport = await _exportInventoryRepository.CreateExportForExportWithTransactionAsync(
+            exportInventories, productQuantities, exportSerials, cancellationToken);
         var createdExportInventories = await _exportInventoryRepository.GetListedExportInventoriesByIdsAsync(
             listUlongResponseExport, cancellationToken);
         return _mapper.Map<List<ExportInventoryResponseDTO>>(createdExportInventories);

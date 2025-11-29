@@ -274,27 +274,27 @@ INSERT INTO vendor_profiles (id, user_id, company_name, slug, business_registrat
 (20, 36, 'Công Ty Hỗ Trợ Nông Nghiệp', 'cong-ty-ho-tro-nong-nghiep', 'BRN1000000020', NULL, NOW(), 1, NOW(), NOW());
 
 -- Insert User Bank Accounts (20 vendors - all same account 970436/1045069359)
-INSERT INTO user_bank_accounts (id, user_id, bank_code, account_number, is_active, created_at, updated_at) VALUES
-(1, 17, '970436', '1045069359', 1, NOW(), NOW()),
-(2, 18, '970436', '1045069359', 1, NOW(), NOW()),
-(3, 19, '970436', '1045069359', 1, NOW(), NOW()),
-(4, 20, '970436', '1045069359', 1, NOW(), NOW()),
-(5, 21, '970436', '1045069359', 1, NOW(), NOW()),
-(6, 22, '970436', '1045069359', 1, NOW(), NOW()),
-(7, 23, '970436', '1045069359', 1, NOW(), NOW()),
-(8, 24, '970436', '1045069359', 1, NOW(), NOW()),
-(9, 25, '970436', '1045069359', 1, NOW(), NOW()),
-(10, 26, '970436', '1045069359', 1, NOW(), NOW()),
-(11, 27, '970436', '1045069359', 1, NOW(), NOW()),
-(12, 28, '970436', '1045069359', 1, NOW(), NOW()),
-(13, 29, '970436', '1045069359', 1, NOW(), NOW()),
-(14, 30, '970436', '1045069359', 1, NOW(), NOW()),
-(15, 31, '970436', '1045069359', 1, NOW(), NOW()),
-(16, 32, '970436', '1045069359', 1, NOW(), NOW()),
-(17, 33, '970436', '1045069359', 1, NOW(), NOW()),
-(18, 34, '970436', '1045069359', 1, NOW(), NOW()),
-(19, 35, '970436', '1045069359', 1, NOW(), NOW()),
-(20, 36, '970436', '1045069359', 1, NOW(), NOW());
+INSERT INTO user_bank_accounts (id, user_id, bank_code, account_number, owner_name, is_active, created_at, updated_at) VALUES
+(1, 17, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(2, 18, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(3, 19, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(4, 20, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(5, 21, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(6, 22, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(7, 23, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(8, 24, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(9, 25, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(10, 26, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(11, 27, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(12, 28, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(13, 29, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(14, 30, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(15, 31, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(16, 32, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(17, 33, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(18, 34, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(19, 35, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(20, 36, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW());
 
 -- Insert Wallets (20 vendors - starting balance 10,000,000 VND)
 INSERT INTO wallets (id, vendor_id, balance, last_updated_by, created_at, updated_at) VALUES

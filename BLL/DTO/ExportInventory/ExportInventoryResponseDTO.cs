@@ -26,7 +26,7 @@ public class ExportInventoryResponseDTO
     public string? LotNumber { get; set; }
 
     // [Range(1, ulong.MaxValue, ErrorMessage = "Mã đơn hàng phải lớn hơn 0")]
-    // public ulong? OrderId { get; set; }
+    // public ulong? OrderDetailId { get; set; }
 
     [Required(ErrorMessage = "MovementType là bắt buộc")]
     [EnumDataType(typeof(MovementType), ErrorMessage = "MovementType phải là một trong các giá trị hợp lệ: " +

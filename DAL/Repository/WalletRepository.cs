@@ -8,20 +8,20 @@ namespace DAL.Repository;
 public class WalletRepository : IWalletRepository
 {
     private readonly IRepository<Wallet> _walletRepository;
-    private readonly IRepository<Order> _orderRepository;
+    private readonly IRepository<UserBankAccount> _userBankAccountRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IRepository<OrderDetail> _orderDetailRepository;
     private readonly IRepository<VendorProfile> _vendorProfileRepository;
     private readonly IRepository<Cashout> _cashoutRepository;
     private readonly IRepository<Transaction> _transactionRepository;
     
-    public WalletRepository(IRepository<Wallet> walletRepository, IRepository<Order> orderRepository,
+    public WalletRepository(IRepository<Wallet> walletRepository, IRepository<UserBankAccount> userBankAccountRepository,
         VerdantTechDbContext dbContext, IRepository<OrderDetail> orderDetailRepository,
         IRepository<VendorProfile> vendorProfileRepository, IRepository<Cashout> cashoutRepository,
         IRepository<Transaction> transactionRepository)
     {
         _walletRepository = walletRepository;
-        _orderRepository = orderRepository;
+        _userBankAccountRepository = userBankAccountRepository;
         _dbContext = dbContext;
         _orderDetailRepository = orderDetailRepository;
         _vendorProfileRepository = vendorProfileRepository;
@@ -59,7 +59,8 @@ public class WalletRepository : IWalletRepository
         }
     }
     
-    public async Task<Transaction> ProcessWalletCashoutRequestWithTransactionAsync(Transaction tr, Cashout cashout, Wallet wallet, CancellationToken cancellationToken = default)
+    public async Task<Transaction> ProcessWalletCashoutRequestWithTransactionAsync(Transaction tr, Cashout cashout, 
+        Wallet wallet, UserBankAccount bank, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -72,6 +73,9 @@ public class WalletRepository : IWalletRepository
             
             cashout.UpdatedAt = DateTime.UtcNow;
             await _cashoutRepository.UpdateAsync(cashout, cancellationToken);
+            
+            bank.UpdatedAt = DateTime.UtcNow;
+            await _userBankAccountRepository.UpdateAsync(bank, cancellationToken);
             
             await transaction.CommitAsync(cancellationToken);
             return t;
@@ -122,13 +126,19 @@ public class WalletRepository : IWalletRepository
         return w;
     }
     
-    public async Task<List<OrderDetail>> GetAllOrderDetailsAvailableForCreditAsync(ulong vendorId, CancellationToken cancellationToken = default) =>
-        await _dbContext.OrderDetails
+    public async Task<List<OrderDetail>> GetAllOrderDetailsAvailableForCreditAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    { 
+        var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
+        return await _dbContext.OrderDetails
             .Include(o => o.Product)
-            .Where(o => o.IsWalletCredited == false && o.UpdatedAt.AddDays(7) < DateTime.UtcNow)
-            .Where(o => o.Product.VendorId == vendorId) 
+            .Where(o => o.IsWalletCredited == false)
+            .Where(o => o.Product.VendorId == vendorId)
+            .Where(o => o.Order.Status != OrderStatus.Refunded && o.Order.DeliveredAt != null
+                && o.Order.DeliveredAt < sevenDaysAgo)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+    }
+        
     
     public async Task<bool> ValidateVendorQualified(ulong userId, CancellationToken cancellationToken = default) =>
         await _vendorProfileRepository.AnyAsync(w => w.UserId == userId && w.VerifiedAt != null 

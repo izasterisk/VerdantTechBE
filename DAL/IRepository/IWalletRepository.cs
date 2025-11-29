@@ -7,7 +7,7 @@ public interface IWalletRepository
     Task<Wallet> CreateWalletAsync(Wallet wallet, CancellationToken cancellationToken = default);
     Task<bool> DeleteCashoutWithTransactionAsync(Transaction tr, Cashout cashout, CancellationToken cancellationToken = default);
     Task<Transaction?> GetTransactionWithWalletCashoutRequestByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
-    Task<Transaction> ProcessWalletCashoutRequestWithTransactionAsync(Transaction tr, Cashout cashout, Wallet wallet, CancellationToken cancellationToken = default);
+    Task<Transaction> ProcessWalletCashoutRequestWithTransactionAsync(Transaction tr, Cashout cashout, Wallet wallet, UserBankAccount bank, CancellationToken cancellationToken = default);
     Task<Wallet> UpdateWalletAndOrderDetailsWithTransactionAsync(List<OrderDetail> orderDetails, Wallet wallet, CancellationToken cancellationToken = default);
     Task<Wallet> GetWalletByUserIdWithRelationsAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<Wallet> GetWalletByUserIdAsync(ulong vendorId, CancellationToken cancellationToken = default);

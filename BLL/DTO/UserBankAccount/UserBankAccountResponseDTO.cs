@@ -8,6 +8,8 @@ public class UserBankAccountResponseDTO
     public string BankCode { get; set; } = null!;
     public string AccountNumber { get; set; } = null!;
     
+    public string? OwnerName { get; set; }
+    
     public bool IsActive { get; set; }
 
     public DateTime CreatedAt { get; set; }

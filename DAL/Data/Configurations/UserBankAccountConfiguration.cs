@@ -34,6 +34,12 @@ public class UserBankAccountConfiguration : IEntityTypeConfiguration<UserBankAcc
             .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(e => e.OwnerName)
+            .HasColumnName("owner_name")
+            .HasColumnType("varchar(50)")
+            .HasMaxLength(50)
+            .IsRequired(false);
+
         builder.Property(e => e.IsActive)
             .HasDefaultValue(true)
             .HasColumnName("is_active");

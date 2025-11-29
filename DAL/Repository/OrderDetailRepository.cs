@@ -36,14 +36,6 @@ public class OrderDetailRepository : IOrderDetailRepository
         return await _orderDetailRepository.CreateAsync(orderDetail, cancellationToken);
     }
     
-    public async Task<OrderDetail> GetOrderDetailWithRelationByIdAsync(ulong orderDetailId, CancellationToken cancellationToken = default)
-    {
-        return await _orderDetailRepository.GetWithRelationsAsync(o => o.Id == orderDetailId,
-            true, func => func.Include(od => od.Product),
-            cancellationToken) ?? 
-        throw new KeyNotFoundException($"Không tìm thấy chi tiết đơn hàng với ID {orderDetailId}.");
-    }
-    
     public async Task<ProductSerial> GetProductSerialAsync(ulong productId, string serialNumber, string lotNumber, CancellationToken cancellationToken = default)
     {
         if (await _batchInventoryRepository.AnyAsync(bi => bi.ProductId == productId && bi.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase), cancellationToken) == false)
