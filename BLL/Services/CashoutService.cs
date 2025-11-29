@@ -50,33 +50,36 @@ public class CashoutService : ICashoutService
             throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
         
         var serials = new HashSet<string>();
-        var orderDetailIds = new HashSet<ulong>();
+        var orderDetailIdSeen = new HashSet<ulong>();
         var checkSerialRequired = new HashSet<ulong>();
         Dictionary<string, (ulong, int)> validateLotNumber = new(StringComparer.OrdinalIgnoreCase);
-        foreach (var dto in dtos.OrderDetails)
+        foreach (var orderDetail in dtos.OrderDetails)
         {
-            orderDetailIds.Add(dto.OrderDetailId);
-            if (dto.SerialNumber != null)
+            orderDetailIdSeen.Add(dto.OrderDetailId);
+            foreach (var dto in orderDetail.IdentityNumbers)
             {
-                if(dto.Quantity != 1)
-                    throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng phải là 1.");
-                if(!serials.Add(dto.SerialNumber.ToUpper()))
-                    throw new InvalidOperationException($"Số sê-ri {dto.SerialNumber} bị lặp lại trong danh sách.");
-            }
-            else
-            {
-                checkSerialRequired.Add(dto.OrderDetailId);
-                if (validateLotNumber.TryGetValue(dto.LotNumber, out var count))
+                if (dto.SerialNumber != null)
                 {
-                    validateLotNumber[dto.LotNumber] = count + dto.Quantity;
+                    if(dto.Quantity != 1)
+                        throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng phải là 1.");
+                    if(!serials.Add(dto.SerialNumber.ToUpper()))
+                        throw new InvalidOperationException($"Số sê-ri {dto.SerialNumber} bị lặp lại trong danh sách.");
                 }
                 else
                 {
-                    validateLotNumber[dto.LotNumber] = dto.Quantity;
+                    checkSerialRequired.Add(dto.OrderDetailId);
+                    if (validateLotNumber.TryGetValue(dto.LotNumber, out var count))
+                    {
+                        validateLotNumber[dto.LotNumber] = count + dto.Quantity;
+                    }
+                    else
+                    {
+                        validateLotNumber[dto.LotNumber] = dto.Quantity;
+                    }
                 }
             }
         }
-        var order = await _cashoutRepository.ValidateOrderByOrderDetailIdsAsync(orderDetailIds.ToList(), checkSerialRequired.ToList(), cancellationToken);
+        var order = await _cashoutRepository.ValidateOrderByOrderDetailIdsAsync(orderDetailIdSeen.ToList(), checkSerialRequired.ToList(), cancellationToken);
         var serialProducts = await _cashoutRepository.GetSoldProductSerialsBySerialNumbersAsync(serials.ToList(), cancellationToken);
         var exportInventories = await _cashoutRepository.GetSoldProductByLotNumbersAsynca
         
