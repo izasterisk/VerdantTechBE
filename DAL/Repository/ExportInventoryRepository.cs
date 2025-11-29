@@ -129,14 +129,14 @@ public class ExportInventoryRepository : IExportInventoryRepository
             cancellationToken);
     }
     
-    public async Task<int> GetNumberOfProductLeftInInventoryThruLotNumberAsync(string lotNumber, CancellationToken cancellationToken = default)
+    public async Task<int> GetNumberOfProductLeftInInventoryThruLotNumberAsync(string lotNumber, ulong productId, CancellationToken cancellationToken = default)
     {
         var exportQuantity = await _dbContext.ExportInventories
             .AsNoTracking()
-            .Where(e => e.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase))
+            .Where(e => e.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase) && e.ProductId == productId)
             .SumAsync(e => e.Quantity, cancellationToken);
         var import = await _batchInventoryRepository.GetAsync(
-            b => b.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase),
+            b => b.LotNumber.Equals(lotNumber, StringComparison.OrdinalIgnoreCase) && b.ProductId == productId,
             true, cancellationToken) ?? 
                 throw new KeyNotFoundException("Lô hàng không tồn tại trong kho.");
         return import.Quantity - exportQuantity;
