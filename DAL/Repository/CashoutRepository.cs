@@ -123,60 +123,104 @@ public class CashoutRepository : ICashoutRepository
                 .Include(u => u.Cashout), cancellationToken) ?? 
         throw new KeyNotFoundException("Yêu cầu rút tiền không tồn tại.");
     
-    public async Task<List<ProductSerial>> GetSoldProductSerialsBySerialNumbersAsync(List<string> serialNumbers, CancellationToken cancellationToken = default)
+    public async Task<List<ProductSerial>> GetSoldProductSerialsBySerialNumbersAsync(Dictionary<string, string> serials, CancellationToken cancellationToken = default)
     {
-        if (serialNumbers.Count == 0)
+        if (serials.Count == 0)
         {
             return new List<ProductSerial>();
         }
+        var serialKeys = serials.Keys.ToList();
         var foundSerials = await _dbContext.Set<ProductSerial>()
-            .Where(ps => serialNumbers.Contains(ps.SerialNumber) && ps.Status == ProductSerialStatus.Sold)
             .AsNoTracking()
+            .Include(ps => ps.BatchInventory)
+            .Where(ps => serialKeys.Contains(ps.SerialNumber))
             .ToListAsync(cancellationToken);
-
-        if (foundSerials.Count != serialNumbers.Count)
+        
+        var foundMap = foundSerials.ToDictionary(
+            ps => ps.SerialNumber, 
+            ps => ps, 
+            StringComparer.OrdinalIgnoreCase
+        );
+        
+        foreach (var req in serials)
         {
-            var foundSet = foundSerials.Select(x => x.SerialNumber).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var missingSerials = serialNumbers.Where(s => !foundSet.Contains(s));
-            throw new KeyNotFoundException($"Các serial sau không hợp lệ (không tồn tại hoặc chưa bán): {string.Join(", ", missingSerials)}");
+            var reqSerial = req.Key;
+            var reqLotNumber = req.Value;
+
+            if (!foundMap.TryGetValue(reqSerial, out var entity))
+            {
+                throw new KeyNotFoundException($"Serial number '{reqSerial}' không tồn tại trong hệ thống.");
+            }
+            if (entity.Status != ProductSerialStatus.Sold)
+            {
+                throw new InvalidOperationException($"Serial '{reqSerial}' có trạng thái không hợp lệ: {entity.Status}. Yêu cầu trạng thái: 'Sold'.");
+            }
+            var actualLotNumber = entity.BatchInventory.LotNumber;
+            if (!string.Equals(actualLotNumber, reqLotNumber, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"Serial '{reqSerial}' thuộc lô '{actualLotNumber}', không khớp với lô yêu cầu '{reqLotNumber}'.");
+            }
         }
         return foundSerials;
     }
     
-    public async Task<Order> ValidateOrderByOrderDetailIdsAsync(List<ulong> orderDetailIds, List<ulong> checkSerialRequired, CancellationToken cancellationToken = default)
+    public async Task<(Order, List<ExportInventory>)> ValidateExportedOrderByOrderDetailIdsAsync(
+        Dictionary<(ulong OrderDetailId, string LotNumber), int> validateLotNumber, CancellationToken cancellationToken = default)
     {
-        if (orderDetailIds == null || !orderDetailIds.Any())
+        if (validateLotNumber == null || validateLotNumber.Count == 0)
         {
-            throw new ArgumentException("Danh sách OrderDetailId không được để trống.");
+            throw new ArgumentException("Danh sách yêu cầu kiểm tra không được để trống.");
         }
-        var distinctOrderIds = await _dbContext.Set<OrderDetail>()
+        var orderDetailIds = validateLotNumber.Keys.Select(k => k.OrderDetailId).Distinct().ToList();
+        var relevantLotNumbers = validateLotNumber.Keys.Select(k => k.LotNumber).Distinct().ToList();
+    
+        var orderDetailsWithOrder = await _dbContext.Set<OrderDetail>()
+            .Include(od => od.Order) 
             .Where(od => orderDetailIds.Contains(od.Id))
-            .Select(od => od.OrderId)
-            .Distinct() // Đây là chìa khóa: SQL sẽ thực hiện SELECT DISTINCT
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
+        if (orderDetailsWithOrder.Count == 0)
+            throw new KeyNotFoundException("Không tìm thấy OrderDetail nào khớp với danh sách ID cung cấp.");
+        var distinctOrderIds = orderDetailsWithOrder.Select(od => od.OrderId).Distinct().ToList();
         if (distinctOrderIds.Count > 1)
         {
-            // Nếu List trả về > 1 phần tử => Có nhiều hơn 1 OrderId khác nhau
-            throw new InvalidOperationException($"Các chi tiết đơn hàng (OrderDetail) được cung cấp thuộc về {distinctOrderIds.Count} đơn hàng khác nhau. Không hợp lệ.");
+            throw new InvalidOperationException($"Dữ liệu không hợp lệ: Các chi tiết đơn hàng (OrderDetail) được cung cấp thuộc về {distinctOrderIds.Count} đơn hàng khác nhau.");
         }
-        if (distinctOrderIds.Count == 0)
+        var order = orderDetailsWithOrder.First().Order;
+    
+        // Lưu ý: Query này có thể lấy dư một chút (nếu trùng LotNumber ở OrderDetail khác), nhưng ta sẽ lọc kỹ lại ở Memory.
+        // Đây là cách nhanh nhất để tránh query trong vòng lặp foreach.
+        var candidateExportInventories = await _dbContext.Set<ExportInventory>()
+            .Where(ei => ei.OrderDetailId.HasValue 
+                         && orderDetailIds.Contains(ei.OrderDetailId.Value) 
+                         && relevantLotNumbers.Contains(ei.LotNumber))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    
+        var validatedExportInventories = new List<ExportInventory>();
+    
+        // Duyệt qua Dictionary đầu vào để kiểm tra logic nghiệp vụ
+        foreach (var req in validateLotNumber)
         {
-            throw new KeyNotFoundException("Không tìm thấy OrderDetail nào khớp với danh sách ID cung cấp.");
-        }
-        if (checkSerialRequired.Count > 0)
-        {
-            var invalidProduct = await _dbContext.Set<OrderDetail>()
-                .Where(od => checkSerialRequired.Contains(od.Id) && od.Product.Category.SerialRequired)
-                .Select(od => od.Product.ProductName)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (invalidProduct != null)
+            var (reqOrderDetailId, reqLotNumber) = req.Key;
+            var reqQuantity = req.Value;
+    
+            // Tìm các bản ghi ExportInventory khớp chính xác trong list đã fetch từ DB
+            var matchedExports = candidateExportInventories
+                .Where(ei => ei.OrderDetailId == reqOrderDetailId && ei.LotNumber == reqLotNumber).ToList();
+    
+            // Tính tổng số lượng đã xuất kho (Exported Quantity) trừ số đã hoàn cho cặp ID/Lot này
+            var totalExportedQty = matchedExports.Sum(x => x.Quantity - x.RefundQuantity);
+            if (totalExportedQty < reqQuantity)
             {
                 throw new InvalidOperationException(
-                    $"Sản phẩm '{invalidProduct}' bắt buộc phải có số sê-ri.");
+                    $"Số lượng không hợp lệ cho OrderDetail {reqOrderDetailId} (Lot: {reqLotNumber}). " +
+                    $"Số lượng trong yêu cầu ({reqQuantity}) lớn hơn số lượng thực tế đã xuất kho ({totalExportedQty}).");
             }
+            validatedExportInventories.AddRange(matchedExports);
         }
-        return await _orderRepository.GetAsync(o => o.Id == distinctOrderIds.First(), true, cancellationToken)
-            ?? throw new KeyNotFoundException($"Đơn hàng với ID {distinctOrderIds.First()} không tồn tại.");
+        return (order, validatedExportInventories);
     }
     
     public async Task<List<ExportInventory>> GetSoldProductByLotNumbersAsync(Dictionary<string, int> validateLotNumber,
@@ -224,5 +268,36 @@ public class CashoutRepository : ICashoutRepository
             }
         }
         return exportInventories;
+    }
+
+    public async Task<decimal> GetTotalRefundedAmountByOrderDetailIdsAsync(Dictionary<(ulong OrderDetailId, string LotNumber), int> validateLotNumber, CancellationToken cancellationToken = default)
+    {
+        if (validateLotNumber.Count == 0)
+        {
+            return 0;
+        }
+        var orderDetailIds = validateLotNumber.Keys.Select(k => k.OrderDetailId).Distinct().ToList();
+        var orderDetailMap = await _dbContext.Set<OrderDetail>()
+            .AsNoTracking()
+            .Where(od => orderDetailIds.Contains(od.Id))
+            .Select(od => new 
+            { 
+                od.Id, 
+                od.Subtotal, 
+                od.Quantity 
+            }) 
+            .ToDictionaryAsync(x => x.Id, x => x, cancellationToken);
+        decimal totalRefundAmount = 0;
+        foreach (var req in validateLotNumber)
+        {
+            var orderDetailId = req.Key.OrderDetailId;
+            var refundQuantity = req.Value;
+            if (orderDetailMap.TryGetValue(orderDetailId, out var info))
+            {
+                decimal effectiveUnitPrice = info.Subtotal / info.Quantity;
+                totalRefundAmount += effectiveUnitPrice * refundQuantity;
+            }
+        }
+        return totalRefundAmount;
     }
 }

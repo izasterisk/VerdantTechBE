@@ -42,69 +42,64 @@ public class CashoutService : ICashoutService
         _notificationService = notificationService;
     }
     
-    public async Task<RefundReponseDTO> CreateCashoutRefundAsync(ulong staffId, ulong requestId, RefundCreateDTO dtos, CancellationToken cancellationToken = default)
+    public async Task<TransactionResponseDTO> CreateCashoutRefundAsync(ulong staffId, ulong requestId, RefundCreateDTO dtos, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dtos, $"{nameof(dtos)} rỗng.");
         var request = await _requestRepository.GetRequestByIdAsync(requestId, cancellationToken);
         if(request.Status != RequestStatus.Approved || request.RequestType != RequestType.RefundRequest)
             throw new InvalidDataException("Yêu cầu không đủ điều kiện để hoàn tiền.");
         
-        var serials = new HashSet<string>();
+        Dictionary<string, string> serials = new(StringComparer.OrdinalIgnoreCase);
+        Dictionary<(ulong OrderDetailId, string LotNumber), int> validateLotNumber = new();
         var orderDetailIdSeen = new HashSet<ulong>();
-        var checkSerialRequired = new HashSet<ulong>();
-        Dictionary<string, (ulong, int)> validateLotNumber = new(StringComparer.OrdinalIgnoreCase);
         foreach (var orderDetail in dtos.OrderDetails)
         {
-            orderDetailIdSeen.Add(dto.OrderDetailId);
+            if(!orderDetailIdSeen.Add(orderDetail.OrderDetailId))
+                throw new InvalidOperationException($"OrderDetailId {orderDetail.OrderDetailId} bị lặp lại trong danh sách.");
+            var isThisMachine = false;
+            var isThisNotMachine = false;
             foreach (var dto in orderDetail.IdentityNumbers)
             {
                 if (dto.SerialNumber != null)
                 {
+                    isThisMachine = true;
+                    if(isThisNotMachine)
+                        throw new InvalidOperationException($"Đơn hàng ID {orderDetail.OrderDetailId} tất cả phải cùng có số sê-ri hoặc tất cả đều không có.");
                     if(dto.Quantity != 1)
                         throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng phải là 1.");
-                    if(!serials.Add(dto.SerialNumber.ToUpper()))
+                    if (serials.TryGetValue(dto.SerialNumber, out var serial))
                         throw new InvalidOperationException($"Số sê-ri {dto.SerialNumber} bị lặp lại trong danh sách.");
+                    serials.Add(dto.SerialNumber, dto.LotNumber);
                 }
                 else
                 {
-                    checkSerialRequired.Add(dto.OrderDetailId);
-                    if (validateLotNumber.TryGetValue(dto.LotNumber, out var count))
-                    {
-                        validateLotNumber[dto.LotNumber] = count + dto.Quantity;
-                    }
-                    else
-                    {
-                        validateLotNumber[dto.LotNumber] = dto.Quantity;
-                    }
+                    isThisNotMachine = true;
+                    if(isThisMachine)
+                        throw new InvalidOperationException($"Đơn hàng ID {orderDetail.OrderDetailId} tất cả phải cùng có số sê-ri hoặc tất cả đều không có.");
+                    var compositeKey = (orderDetail.OrderDetailId, dto.LotNumber.Trim().ToUpper());
+                    if (validateLotNumber.TryGetValue(compositeKey, out var count))
+                        throw new InvalidOperationException($"Số lô {dto.LotNumber} cho đơn hàng ID {orderDetail.OrderDetailId} bị lặp lại, vui lòng gộp số lượng.");
+                    validateLotNumber[compositeKey] = dto.Quantity;
                 }
             }
         }
-        var order = await _cashoutRepository.ValidateOrderByOrderDetailIdsAsync(orderDetailIdSeen.ToList(), checkSerialRequired.ToList(), cancellationToken);
-        var serialProducts = await _cashoutRepository.GetSoldProductSerialsBySerialNumbersAsync(serials.ToList(), cancellationToken);
-        var exportInventories = await _cashoutRepository.GetSoldProductByLotNumbersAsynca
+        var orderRefund = await _cashoutRepository.ValidateExportedOrderByOrderDetailIdsAsync(validateLotNumber, cancellationToken);
+        var serialProducts = await _cashoutRepository.GetSoldProductSerialsBySerialNumbersAsync(serials, cancellationToken);
         
-        if(order.CustomerId != request.UserId)
+        if(orderRefund.Item1.CustomerId != request.UserId)
             throw new UnauthorizedAccessException("Yêu cầu hoàn tiền không thuộc về người đặt hàng.");
-        if(order.Status == OrderStatus.Refunded)
+        if(orderRefund.Item1.Status == OrderStatus.Refunded)
             throw new InvalidDataException("Đơn hàng đã được hoàn tiền trước đó.");
-        if(order.Status != OrderStatus.Delivered || order.DeliveredAt == null)
+        if(orderRefund.Item1.Status != OrderStatus.Delivered || orderRefund.Item1.DeliveredAt == null)
             throw new InvalidDataException("Đơn hàng chưa được giao, không thể hoàn tiền.");
-        if(order.DeliveredAt.Value.AddDays(7) < request.CreatedAt)
+        if(orderRefund.Item1.DeliveredAt.Value.AddDays(7) < request.CreatedAt)
             throw new InvalidDataException("Không thể hoàn tiền cho đơn hàng đã quá 7 ngày kể từ khi giao hàng.");
-        
-        var products = _mapper.Map<List<OrderDetailsResponseDTO>>(orderDetails);
-        decimal totalAmount = 0.00m;
-        foreach(var item in products)
-        {
-            totalAmount += item.Subtotal;
-            item.Product.Images = _mapper.Map<List<ProductImageResponseDTO>>(
-                await _orderRepository.GetProductImagesByProductIdAsync(item.Product.Id, cancellationToken));
-        }
-        if(dtos.RefundAmount > totalAmount * 2)
+
+        var refundAmountEstimate = await _cashoutRepository.GetTotalRefundedAmountByOrderDetailIdsAsync(validateLotNumber, cancellationToken);
+        if(dtos.RefundAmount > refundAmountEstimate * 2)
             throw new InvalidDataException("Số tiền hoàn không được gấp đôi số tiền của các đơn hàng.");
         
         var bankAccount = await _userBankAccountRepository.GetUserBankAccountByIdAsync(dtos.BankAccountId, cancellationToken);
-
         string cashoutResponseId;
         if (dtos.GatewayPaymentId == null)
         {
@@ -118,7 +113,6 @@ public class CashoutService : ICashoutService
         }
         else
             cashoutResponseId = dtos.GatewayPaymentId;
-        
         
         var cashout = new Cashout
         {
@@ -140,11 +134,8 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, order, request, serials, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, orderRefund, request, serials, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(created.Id, cancellationToken);
-        var reponseDto = new RefundReponseDTO();
-        reponseDto.TransactionInfo = _mapper.Map<TransactionResponseDTO>(cashoutRes);
-        reponseDto.OrderDetails = products;
         
         await _notificationService.CreateAndSendNotificationAsync(
             request.UserId,
@@ -153,7 +144,7 @@ public class CashoutService : ICashoutService
             NotificationReferenceType.Refund,
             created.Id,
             cancellationToken);
-        return reponseDto;
+        return _mapper.Map<TransactionResponseDTO>(cashoutRes);
     }
     
     public async Task<(string IPv4, string IPv6)> GetIPAddressAsync(CancellationToken cancellationToken = default)
