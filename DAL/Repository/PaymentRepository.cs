@@ -11,16 +11,17 @@ public class PaymentRepository : IPaymentRepository
     private readonly IRepository<Order> _orderRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IRepository<Transaction> _transactionRepository;
+    private readonly IRepository<UserBankAccount> _userBankAccountRepository;
     
-    public PaymentRepository(IRepository<Payment> paymentRepository,
-        IRepository<Order> orderRepository,
-        VerdantTechDbContext dbContext,
-        IRepository<Transaction> transactionRepository)
+    public PaymentRepository(IRepository<Payment> paymentRepository, IRepository<Order> orderRepository,
+        VerdantTechDbContext dbContext, IRepository<Transaction> transactionRepository,
+        IRepository<UserBankAccount> userBankAccountRepository)
     {
         _paymentRepository = paymentRepository;
         _orderRepository = orderRepository;
         _dbContext = dbContext;
         _transactionRepository = transactionRepository;
+        _userBankAccountRepository = userBankAccountRepository;
     }
     
     public async Task<Payment> CreatePaymentWithTransactionAsync(Payment payment, Transaction tr, CancellationToken cancellationToken = default)
@@ -46,7 +47,7 @@ public class PaymentRepository : IPaymentRepository
         }
     }
     
-    public async Task<Payment> UpdateFullPaymentWithTransactionAsync(Payment payment, Order order, Transaction transactions, CancellationToken cancellationToken = default)
+    public async Task<Payment> UpdateFullPaymentWithTransactionAsync(Payment payment, Order order, Transaction transactions, string? customerName, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -60,6 +61,16 @@ public class PaymentRepository : IPaymentRepository
             
             payment.UpdatedAt = DateTime.UtcNow;
             var updatedPayment = await _paymentRepository.UpdateAsync(payment, cancellationToken);
+
+            if (customerName != null)
+            {
+                var bank = await _userBankAccountRepository.GetAsync(
+                    b => b.Id == transactions.BankAccountId, true, cancellationToken)
+                    ?? throw new KeyNotFoundException($"Không tìm thấy tài khoản ngân hàng với ID {transactions.BankAccountId}.");
+                bank.OwnerName = customerName;
+                bank.UpdatedAt = DateTime.UtcNow;
+                await _userBankAccountRepository.UpdateAsync(bank, cancellationToken);
+            }
             await transaction.CommitAsync(cancellationToken);
             return updatedPayment;
         }

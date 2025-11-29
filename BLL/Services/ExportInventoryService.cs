@@ -84,8 +84,8 @@ public class ExportInventoryService : IExportInventoryService
         }
         foreach (var validate in validateLotNumber)
         {
-            if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key, cancellationToken) < validate.Value)
-                throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
+            // if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key, cancellationToken) < validate.Value)
+            //     throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
         }
         var listUlongResponseExport = await _exportInventoryRepository.CreateExportForExportWithTransactionAsync(
             exportInventories, productQuantities, exportSerials, cancellationToken);

@@ -118,25 +118,26 @@ public class PayOSService : IPayOSService
         if (transaction.Order == null || transaction.Payment == null)
             throw new KeyNotFoundException("Giao dịch này không liên kết với đơn hàng nào.");
 
-        string title; string message;
+        string title; string message; string? customerName = null;
         if (webhookData.code == "00" || webhookData.desc == "Thành công")
         {
             transaction.Order.Status = OrderStatus.Paid;
-            
             transaction.Status = TransactionStatus.Completed;
             transaction.ProcessedAt = DateTime.UtcNow;
+            if(webhookData.counterAccountName != null)
+                customerName = webhookData.counterAccountName;
             
-            await _paymentRepository.UpdateFullPaymentWithTransactionAsync(transaction.Payment, transaction.Order, transaction, cancellationToken);
             title = "Thanh toán thành công";
             message = $"Đơn hàng #{transaction.Order.Id} đã được thanh toán thành công qua PayOS với số tiền {webhookData.amount:N0} VND.";
         }
         else
         {
             transaction.Status = TransactionStatus.Failed;
-            await _paymentRepository.UpdateFullPaymentWithTransactionAsync(transaction.Payment, transaction.Order, transaction, cancellationToken);
             title = "Thanh toán thất bại";
             message = $"Đơn hàng #{transaction.Order.Id} thanh toán thất bại.";
         }
+        await _paymentRepository.UpdateFullPaymentWithTransactionAsync(transaction.Payment, transaction.Order, transaction, customerName, cancellationToken);
+        
         await _notificationService.CreateAndSendNotificationAsync(
             userId: transaction.UserId,
             title: title,

@@ -10,23 +10,26 @@ public class CashoutRepository : ICashoutRepository
     private readonly IRepository<Cashout> _cashoutRepository;
     private readonly IRepository<Transaction> _transactionRepository;
     private readonly IRepository<Order> _orderRepository;
-    private readonly IRepository<Payment> _paymentRepository;
+    private readonly IRepository<UserBankAccount> _userBankAccountRepository;
     private readonly IRepository<ProductSerial> _productSerialRepository; 
     private readonly IRepository<Request> _requestRepository;
+    private readonly IRepository<ExportInventory> _exportInventoryRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IWalletRepository _walletRepository;
     
     public CashoutRepository(IRepository<Cashout> cashoutRepository, IRepository<Transaction> transactionRepository,
-        IRepository<Order> orderRepository, IRepository<Payment> paymentRepository,
+        IRepository<Order> orderRepository, IRepository<UserBankAccount> userBankAccountRepository,
         IRepository<ProductSerial> productSerialRepository, IRepository<Request> requestRepository,
-        VerdantTechDbContext dbContext, IWalletRepository walletRepository)
+        IRepository<ExportInventory> exportInventoryRepository, VerdantTechDbContext dbContext,
+        IWalletRepository walletRepository)
     {
         _cashoutRepository = cashoutRepository;
         _transactionRepository = transactionRepository;
         _orderRepository = orderRepository;
-        _paymentRepository = paymentRepository;
+        _userBankAccountRepository = userBankAccountRepository;
         _productSerialRepository = productSerialRepository;
         _requestRepository = requestRepository;
+        _exportInventoryRepository = exportInventoryRepository;
         _dbContext = dbContext;
         _walletRepository = walletRepository;
     }
@@ -69,32 +72,18 @@ public class CashoutRepository : ICashoutRepository
         return await _transactionRepository.UpdateAsync(tr, cancellationToken);
     }
 
-    public async Task<Transaction> CreateRefundCashoutWithTransactionAsync(Cashout cashout, Transaction tr, 
-        Order order, Request request, List<ProductSerial> serialIds, CancellationToken cancellationToken = default)
+    public async Task<Transaction> CreateRefundCashoutWithTransactionAsync(Transaction tr, Cashout cashout, 
+        UserBankAccount? bankAccount, Order order, Request request, List<ProductSerial> serials, 
+        List<ExportInventory> exports, CancellationToken cancellationToken = default)
     {
+        var payment = await _transactionRepository.GetAsync(u => u.OrderId == order.Id, true, cancellationToken) ?? 
+            throw new KeyNotFoundException("Không tìm thấy thanh toán liên quan đến đơn hàng.");
+        if (payment.Status != TransactionStatus.Completed)
+            throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán đã hoàn tất.");
+        
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            order.UpdatedAt = DateTime.UtcNow;
-            order.Status = OrderStatus.Refunded;
-            await _orderRepository.UpdateAsync(order, cancellationToken);
-            
-            request.UpdatedAt = DateTime.UtcNow;
-            request.Status = RequestStatus.Completed;
-            await _requestRepository.UpdateAsync(request, cancellationToken);
-            
-            var payment = await _transactionRepository.GetAsync(u => u.OrderId == order.Id, true, cancellationToken) ?? 
-                throw new KeyNotFoundException("Không tìm thấy thanh toán liên quan đến đơn hàng.");
-            if (payment.Status != TransactionStatus.Completed)
-                throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán đã hoàn tất.");
-
-            foreach (var serialId in serialIds)
-            {
-                serialId.Status = ProductSerialStatus.Refund;
-                serialId.UpdatedAt = DateTime.UtcNow;
-                await _productSerialRepository.UpdateAsync(serialId, cancellationToken);
-            }
-            
             tr.CreatedAt = DateTime.UtcNow;
             tr.UpdatedAt = DateTime.UtcNow;
             var createdTransaction =  await _transactionRepository.CreateAsync(tr, cancellationToken);
@@ -103,6 +92,29 @@ public class CashoutRepository : ICashoutRepository
             cashout.CreatedAt = DateTime.UtcNow;
             cashout.UpdatedAt = DateTime.UtcNow;
             await _cashoutRepository.CreateAsync(cashout, cancellationToken);
+
+            if (bankAccount != null)
+            {
+                bankAccount.UpdatedAt = DateTime.UtcNow;
+                await _userBankAccountRepository.UpdateAsync(bankAccount, cancellationToken);
+            }
+            
+            order.UpdatedAt = DateTime.UtcNow;
+            order.Status = OrderStatus.Refunded;
+            await _orderRepository.UpdateAsync(order, cancellationToken);
+            
+            request.UpdatedAt = DateTime.UtcNow;
+            request.Status = RequestStatus.Completed;
+            await _requestRepository.UpdateAsync(request, cancellationToken);
+            
+            foreach (var serial in serials)
+            {
+                serial.Status = ProductSerialStatus.Refund;
+                serial.UpdatedAt = DateTime.UtcNow;
+            }
+            await _productSerialRepository.BulkUpdateAsync(serials, cancellationToken);
+            
+            await _exportInventoryRepository.BulkUpdateAsync(exports, cancellationToken);
             
             await transaction.CommitAsync(cancellationToken);
             return createdTransaction;
@@ -141,7 +153,6 @@ public class CashoutRepository : ICashoutRepository
             ps => ps, 
             StringComparer.OrdinalIgnoreCase
         );
-        
         foreach (var req in serials)
         {
             var reqSerial = req.Key;
@@ -158,8 +169,7 @@ public class CashoutRepository : ICashoutRepository
             var actualLotNumber = entity.BatchInventory.LotNumber;
             if (!string.Equals(actualLotNumber, reqLotNumber, StringComparison.OrdinalIgnoreCase))
             {
-                throw new InvalidOperationException(
-                    $"Serial '{reqSerial}' thuộc lô '{actualLotNumber}', không khớp với lô yêu cầu '{reqLotNumber}'.");
+                throw new InvalidOperationException($"Serial '{reqSerial}' thuộc lô '{actualLotNumber}', không khớp với lô yêu cầu '{reqLotNumber}'.");
             }
         }
         return foundSerials;
@@ -192,7 +202,7 @@ public class CashoutRepository : ICashoutRepository
         // Lưu ý: Query này có thể lấy dư một chút (nếu trùng LotNumber ở OrderDetail khác), nhưng ta sẽ lọc kỹ lại ở Memory.
         // Đây là cách nhanh nhất để tránh query trong vòng lặp foreach.
         var candidateExportInventories = await _dbContext.Set<ExportInventory>()
-            .Where(ei => ei.OrderDetailId.HasValue 
+            .Where(ei => ei.OrderDetailId.HasValue && ei.MovementType == MovementType.Sale
                          && orderDetailIds.Contains(ei.OrderDetailId.Value) 
                          && relevantLotNumbers.Contains(ei.LotNumber))
             .AsNoTracking()
@@ -205,69 +215,24 @@ public class CashoutRepository : ICashoutRepository
         {
             var (reqOrderDetailId, reqLotNumber) = req.Key;
             var reqQuantity = req.Value;
-    
-            // Tìm các bản ghi ExportInventory khớp chính xác trong list đã fetch từ DB
-            var matchedExports = candidateExportInventories
-                .Where(ei => ei.OrderDetailId == reqOrderDetailId && ei.LotNumber == reqLotNumber).ToList();
-    
-            // Tính tổng số lượng đã xuất kho (Exported Quantity) trừ số đã hoàn cho cặp ID/Lot này
-            var totalExportedQty = matchedExports.Sum(x => x.Quantity - x.RefundQuantity);
-            if (totalExportedQty < reqQuantity)
+            
+            var matchedExport = candidateExportInventories
+                .FirstOrDefault(ei => ei.OrderDetailId == reqOrderDetailId && ei.LotNumber == reqLotNumber);
+            if (matchedExport == null)
+                throw new KeyNotFoundException($"Không tìm thấy dữ liệu xuất kho cho OrderDetail {reqOrderDetailId} với mã lô '{reqLotNumber}'.");
+            // Tính số lượng khả dụng trên record duy nhất này
+            var availableQty = matchedExport.Quantity - matchedExport.RefundQuantity;
+            if (availableQty < reqQuantity)
             {
                 throw new InvalidOperationException(
                     $"Số lượng không hợp lệ cho OrderDetail {reqOrderDetailId} (Lot: {reqLotNumber}). " +
-                    $"Số lượng trong yêu cầu ({reqQuantity}) lớn hơn số lượng thực tế đã xuất kho ({totalExportedQty}).");
+                    $"Số lượng trong yêu cầu ({reqQuantity}) lớn hơn số lượng thực tế khả dụng ({availableQty}).");
             }
-            validatedExportInventories.AddRange(matchedExports);
+            matchedExport.RefundQuantity += reqQuantity;
+            matchedExport.UpdatedAt = DateTime.UtcNow;
+            validatedExportInventories.Add(matchedExport);
         }
         return (order, validatedExportInventories);
-    }
-    
-    public async Task<List<ExportInventory>> GetSoldProductByLotNumbersAsync(Dictionary<string, int> validateLotNumber,
-        ulong orderDetailId, CancellationToken cancellationToken = default)
-    {
-        var lotNumbersToCheck = validateLotNumber.Keys.ToList();
-        var exportInventories = await _dbContext.Set<ExportInventory>()
-            .Where(x => x.OrderDetailId == orderDetailId 
-                        && lotNumbersToCheck.Contains(x.LotNumber))
-            .ToListAsync(cancellationToken);
-
-        if (exportInventories.Count != validateLotNumber.Count)
-        {
-            var foundLots = exportInventories
-                .Select(x => x.LotNumber)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var missingLots = validateLotNumber.Keys
-                .Where(k => !foundLots.Contains(k))
-                .ToList();
-            throw new KeyNotFoundException(
-                $"Không tìm thấy thông tin xuất kho cho các mã lô (LotNumber) sau: {string.Join(", ", missingLots)}");
-        }
-        
-        foreach (var item in exportInventories)
-        {
-            if (validateLotNumber.TryGetValue(item.LotNumber, out var requestedRefundQty))
-            {
-                var availableToRefund = item.Quantity - item.RefundQuantity;
-                if (requestedRefundQty > availableToRefund)
-                {
-                    throw new InvalidOperationException(
-                        $"Số lượng yêu cầu hoàn ({requestedRefundQty}) cho lô '{item.LotNumber}' " +
-                        $"vượt quá số lượng khả dụng ({availableToRefund}). " +
-                        $"(Đã mua: {item.Quantity}, Đã hoàn trước đó: {item.RefundQuantity})");
-                }
-            }
-            else
-            {
-                // [Safety Net] Trường hợp này xảy ra khi SQL và C# có cơ chế so sánh chuỗi khác nhau:
-                // 1. SQL Collation thường là CI/AI (bỏ qua dấu) hoặc tự động bỏ qua khoảng trắng cuối (Trailing Spaces).
-                //    -> Ví dụ: DB có "LOT01 " (dư space) hoặc "café", SQL vẫn match với "LOT01" hoặc "cafe".
-                // 2. C# Dictionary (OrdinalIgnoreCase) so sánh chặt chẽ hơn (khác dấu hoặc dư space được coi là khác nhau).
-                // -> Throw lỗi để phát hiện dữ liệu rác trong DB thay vì bỏ qua âm thầm gây sai lệch tồn kho.
-                throw new InvalidOperationException($"Lỗi dữ liệu: Tìm thấy lô '{item.LotNumber}' trong DB nhưng không khớp key trong danh sách yêu cầu.");
-            }
-        }
-        return exportInventories;
     }
 
     public async Task<decimal> GetTotalRefundedAmountByOrderDetailIdsAsync(Dictionary<(ulong OrderDetailId, string LotNumber), int> validateLotNumber, CancellationToken cancellationToken = default)

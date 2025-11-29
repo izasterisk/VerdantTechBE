@@ -244,7 +244,7 @@ public class OrderService : IOrderService
             if (!originalOrderMap.TryGetValue(kvp.Key, out var detail))
                 throw new InvalidOperationException($"OrderDetail ID {kvp.Key} không tồn tại trong đơn hàng này.");
             if (kvp.Value != detail.Quantity)
-                throw new InvalidOperationException($"Số lượng xuất ({kvp.Value}) vượt quá số lượng đặt ({detail.Quantity}) cho ID {detail.ProductId}.");
+                throw new InvalidOperationException($"Số lượng xuất ({kvp.Value}) khác số lượng đặt ({detail.Quantity}) cho ID {detail.ProductId}.");
         }
         foreach (var validate in validateLotNumber)
         {

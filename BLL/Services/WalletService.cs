@@ -94,6 +94,8 @@ public class WalletService : IWalletService
         var walletCashout = await _walletRepository.GetTransactionWithWalletCashoutRequestByUserIdAsync(userId, cancellationToken);
         if (walletCashout == null || walletCashout.Cashout == null)
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");
+        if(walletCashout.BankAccount == null)
+            throw new InvalidOperationException("Tài khoản ngân hàng không tồn tại.");
         if(dto.Status == TransactionStatus.Pending)
             throw new InvalidOperationException("Trạng thái không thể là 'Pending' khi xử lý yêu cầu rút tiền.");
         
@@ -112,7 +114,7 @@ public class WalletService : IWalletService
             var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
             wallet.Balance -= walletCashout.Amount;
             wallet.LastUpdatedBy = staffId;
-            await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(walletCashout, walletCashout.Cashout, wallet, cancellationToken);
+            await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(walletCashout, walletCashout.Cashout, wallet, walletCashout.BankAccount, cancellationToken);
 
             title = "Yêu cầu rút tiền đã được xử lý thành công.";
             message = $"Yêu cầu rút tiền từ ví của bạn đã được xử lý thành công. Số tiền {walletCashout.Amount:N0} VNĐ đã được chuyển vào tài khoản ngân hàng của bạn.";
@@ -146,6 +148,8 @@ public class WalletService : IWalletService
         var walletCashout = await _walletRepository.GetTransactionWithWalletCashoutRequestByUserIdAsync(userId, cancellationToken);
         if (walletCashout == null || walletCashout.Cashout == null)
             throw new KeyNotFoundException("Tài khoản này chưa có bất kì yêu cầu rút tiền nào.");
+        if(walletCashout.BankAccount == null)
+            throw new InvalidOperationException("Tài khoản ngân hàng không tồn tại.");
         if(await _payOSApiClient.GetBalanceAsync(cancellationToken) < (int)Math.Ceiling(walletCashout.Amount))
             throw new InvalidOperationException("Số dư trong tài khoản PayOS không đủ để thực hiện yêu cầu rút tiền. Vui lòng liên hệ bộ phận quản lý.");
         await Task.Delay(2000, cancellationToken);
@@ -156,6 +160,7 @@ public class WalletService : IWalletService
             (int)Math.Ceiling(walletCashout.Amount), 
             $"WalletCashout", 
             categories, cancellationToken);
+        walletCashout.BankAccount.OwnerName = cashoutResponse.ToAccountName;
 
         walletCashout.GatewayPaymentId = cashoutResponse.Id;
         walletCashout.Status = TransactionStatus.Completed;
@@ -165,7 +170,7 @@ public class WalletService : IWalletService
         wallet.Balance -= walletCashout.Amount;
         wallet.LastUpdatedBy = staffId;
         
-        var c = await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(walletCashout, walletCashout.Cashout, wallet, cancellationToken);
+        var c = await _walletRepository.ProcessWalletCashoutRequestWithTransactionAsync(walletCashout, walletCashout.Cashout, wallet, walletCashout.BankAccount, cancellationToken);
         
         var finalResponse = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(c.Id, cancellationToken);
         var mapped = _mapper.Map<TransactionResponseDTO>(finalResponse);

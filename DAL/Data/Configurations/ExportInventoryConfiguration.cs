@@ -102,6 +102,11 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasForeignKey(d => d.CreatedBy)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Unique Constraint
+        builder.HasIndex(e => new { e.OrderDetailId, e.LotNumber })
+            .IsUnique()
+            .HasDatabaseName("uk_order_detail_lot");
+
         // Indexes
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");

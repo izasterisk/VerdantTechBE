@@ -96,8 +96,8 @@ public class CashoutService : ICashoutService
             throw new InvalidDataException("Không thể hoàn tiền cho đơn hàng đã quá 7 ngày kể từ khi giao hàng.");
 
         var refundAmountEstimate = await _cashoutRepository.GetTotalRefundedAmountByOrderDetailIdsAsync(validateLotNumber, cancellationToken);
-        if(dtos.RefundAmount > refundAmountEstimate * 2)
-            throw new InvalidDataException("Số tiền hoàn không được gấp đôi số tiền của các đơn hàng.");
+        if(dtos.RefundAmount > refundAmountEstimate)
+            throw new InvalidDataException("Số tiền hoàn không được nhiều hơn số tiền của các đơn hàng.");
         
         var bankAccount = await _userBankAccountRepository.GetUserBankAccountByIdAsync(dtos.BankAccountId, cancellationToken);
         string cashoutResponseId;
@@ -110,6 +110,7 @@ public class CashoutService : ICashoutService
                 $"RefundCashout",
                 categories, cancellationToken);
             cashoutResponseId = cashoutResponse.Id;
+            bankAccount.OwnerName = cashoutResponse.ToAccountName;
         }
         else
             cashoutResponseId = dtos.GatewayPaymentId;
@@ -128,13 +129,13 @@ public class CashoutService : ICashoutService
             UserId = request.UserId,
             BankAccountId = bankAccount.Id,
             Status = TransactionStatus.Completed,
-            Note = "Yêu cầu rút tiền từ ví người bán",
+            Note = "Yêu cầu hoàn tiền",
             GatewayPaymentId = cashoutResponseId,
             CreatedBy = request.UserId,
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(cashout, transaction, orderRefund, request, serials, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(transaction, cashout, bankAccount, orderRefund.Item1, request, serialProducts, orderRefund.Item2, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(created.Id, cancellationToken);
         
         await _notificationService.CreateAndSendNotificationAsync(

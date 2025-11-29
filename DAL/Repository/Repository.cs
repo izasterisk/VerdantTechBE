@@ -99,7 +99,7 @@ namespace DAL.Repository
             return dbRecord;
         }
         
-        public async Task<List<T>> BatchUpdateAsync(List<T> dbRecords, CancellationToken cancellationToken = default)
+        public async Task<List<T>> BulkUpdateAsync(List<T> dbRecords, CancellationToken cancellationToken = default)
         {
             if (dbRecords.Count == 0)
             {

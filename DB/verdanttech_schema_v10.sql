@@ -612,6 +612,7 @@ CREATE TABLE export_inventory (
     FOREIGN KEY (product_serial_id) REFERENCES product_serials(id) ON DELETE RESTRICT,
     FOREIGN KEY (order_detail_id) REFERENCES order_details(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
+    UNIQUE KEY uk_order_detail_lot (order_detail_id, lot_number),
     INDEX idx_product (product_id),
     INDEX idx_order_detail (order_detail_id),
     INDEX idx_serial (product_serial_id),
