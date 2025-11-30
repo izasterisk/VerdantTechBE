@@ -106,62 +106,154 @@ namespace Controller.Controllers
             [FromForm] CreateForm req,
             CancellationToken ct = default)
         {
-            FillSpecsFromForm(req.Data, Request.Form);
+            // Track uploaded files để cleanup nếu có lỗi
+            string? manualPublicId = null;
+            var uploadedImagePublicIds = new List<string>();
+            var uploadedCertPublicIds = new List<string>();
 
-            // Upload manual
-            string? manualUrl = null, manualPublicUrl = null;
-            if (req.ManualFile is not null)
+            try
             {
-                var up = await _cloud.UploadAsync(req.ManualFile, "product-registrations/manuals", ct);
-                if (up is not null)
+                FillSpecsFromForm(req.Data, Request.Form);
+
+                // Upload manual
+                string? manualUrl = null, manualPublicUrl = null;
+                if (req.ManualFile is not null)
                 {
-                    manualUrl = up.Url;
-                    manualPublicUrl = up.PublicUrl;
+                    var up = await _cloud.UploadAsync(req.ManualFile, "product-registrations/manuals", ct);
+                    if (up is not null)
+                    {
+                        manualUrl = up.Url;
+                        manualPublicUrl = up.PublicUrl;
+                        manualPublicId = up.PublicId;
+                    }
                 }
-            }
 
-            // Upload product images
-            var imagesDto = new List<MediaLinkItemDTO>();
-            if (req.Images is { Count: > 0 })
-            {
-                var ups = await _cloud.UploadManyAsync(req.Images, "product-registrations/images", ct);
-                imagesDto = ups.Select((x, i) => new MediaLinkItemDTO
+                // Upload product images
+                var imagesDto = new List<MediaLinkItemDTO>();
+                if (req.Images is { Count: > 0 })
                 {
-                    ImagePublicId = x.PublicId,
-                    ImageUrl = x.Url,
-                    Purpose = "none",
-                    SortOrder = i + 1
-                }).ToList();
-            }
+                    try
+                    {
+                        var ups = await _cloud.UploadManyAsync(req.Images, "product-registrations/images", ct);
+                        imagesDto = ups.Select((x, i) => new MediaLinkItemDTO
+                        {
+                            ImagePublicId = x.PublicId,
+                            ImageUrl = x.Url,
+                            Purpose = "none",
+                            SortOrder = i + 1
+                        }).ToList();
+                        uploadedImagePublicIds.AddRange(ups.Select(x => x.PublicId));
+                    }
+                    catch (Exception uploadEx)
+                    {
+                        // Cleanup files đã upload trước đó nếu có
+                        foreach (var publicId in uploadedImagePublicIds)
+                        {
+                            try
+                            {
+                                await _cloud.DeleteAsync(publicId, ct);
+                            }
+                            catch { /* Ignore cleanup errors */ }
+                        }
+                        throw new InvalidOperationException($"Lỗi khi upload hình ảnh sản phẩm: {uploadEx.Message}", uploadEx);
+                    }
+                }
 
-            // Upload certificate files
-            var certDtos = new List<MediaLinkItemDTO>();
-            if (req.Certificate is { Count: > 0 })
-            {
-                // Chấp nhận tất cả các file (PDF và hình ảnh)
-                var validFiles = req.Certificate.ToList();
-
-                var ups = await _cloud.UploadManyAsync(validFiles, "product-registrations/certificates", ct);
-
-                certDtos = ups.Select((x, i) => new MediaLinkItemDTO
+                // Upload certificate files
+                var certDtos = new List<MediaLinkItemDTO>();
+                if (req.Certificate is { Count: > 0 })
                 {
-                    ImagePublicId = x.PublicId,
-                    ImageUrl = x.PublicUrl,
-                    Purpose = "certificatepdf",
-                    SortOrder = i + 1
-                }).ToList();
+                    try
+                    {
+                        // Chỉ chấp nhận file PDF
+                        var pdfFiles = req.Certificate.Where(f =>
+                            string.Equals(f.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) ||
+                            f.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                        ).ToList();
+
+                        if (pdfFiles.Count != req.Certificate.Count)
+                        {
+                            throw new InvalidOperationException("Chỉ chấp nhận file PDF cho chứng chỉ. Vui lòng kiểm tra lại các file đã chọn.");
+                        }
+
+                        var ups = await _cloud.UploadManyAsync(pdfFiles, "product-registrations/certificates", ct);
+
+                        certDtos = ups.Select((x, i) => new MediaLinkItemDTO
+                        {
+                            ImagePublicId = x.PublicId,
+                            ImageUrl = x.PublicUrl,
+                            Purpose = "certificatepdf",
+                            SortOrder = i + 1
+                        }).ToList();
+                        uploadedCertPublicIds.AddRange(ups.Select(x => x.PublicId));
+                    }
+                    catch (Exception uploadEx)
+                    {
+                        // Cleanup files đã upload trước đó nếu có
+                        foreach (var publicId in uploadedCertPublicIds)
+                        {
+                            try
+                            {
+                                await _cloud.DeleteAsync(publicId, ct);
+                            }
+                            catch { /* Ignore cleanup errors */ }
+                        }
+                        // Cleanup product images đã upload nếu có
+                        foreach (var publicId in uploadedImagePublicIds)
+                        {
+                            try
+                            {
+                                await _cloud.DeleteAsync(publicId, ct);
+                            }
+                            catch { /* Ignore cleanup errors */ }
+                        }
+                        throw new InvalidOperationException($"Lỗi khi upload file chứng chỉ: {uploadEx.Message}", uploadEx);
+                    }
+                }
+
+                var created = await _service.CreateAsync(
+                    req.Data,
+                    manualUrl,
+                    manualPublicUrl,
+                    imagesDto,
+                    certDtos,
+                    ct
+                );
+
+                return Ok(created);
             }
+            catch (Exception ex)
+            {
+                // Cleanup: Xóa các files đã upload trên Cloudinary nếu có lỗi
+                _logger.LogWarning(ex, "Error creating product registration. Cleaning up uploaded files.");
 
-            var created = await _service.CreateAsync(
-                req.Data,
-                manualUrl,
-                manualPublicUrl,
-                imagesDto,
-                certDtos,
-                ct
-            );
+                try
+                {
+                    // Xóa manual file
+                    if (!string.IsNullOrEmpty(manualPublicId))
+                    {
+                        await _cloud.DeleteAsync(manualPublicId, ct);
+                    }
 
-            return Ok(created);
+                    // Xóa product images
+                    foreach (var publicId in uploadedImagePublicIds)
+                    {
+                        await _cloud.DeleteAsync(publicId, ct);
+                    }
+
+                    // Xóa certificate files
+                    foreach (var publicId in uploadedCertPublicIds)
+                    {
+                        await _cloud.DeleteAsync(publicId, ct);
+                    }
+                }
+                catch (Exception cleanupEx)
+                {
+                    _logger.LogError(cleanupEx, "Error during cleanup of uploaded files");
+                }
+
+                throw; // Re-throw original exception
+            }
         }
 
 
@@ -209,10 +301,18 @@ namespace Controller.Controllers
             var addCerts = new List<MediaLinkItemDTO>();
             if (req.Certificate is { Count: > 0 })
             {
-                // Chấp nhận tất cả các file (PDF và hình ảnh)
-                var validFiles = req.Certificate.ToList();
+                // Chỉ chấp nhận file PDF
+                var pdfFiles = req.Certificate.Where(f =>
+                    string.Equals(f.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) ||
+                    f.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
 
-                var ups = await _cloud.UploadManyAsync(validFiles, "product-registrations/certificates", ct);
+                if (pdfFiles.Count != req.Certificate.Count)
+                {
+                    throw new InvalidOperationException("Chỉ chấp nhận file PDF cho chứng chỉ. Vui lòng kiểm tra lại các file đã chọn.");
+                }
+
+                var ups = await _cloud.UploadManyAsync(pdfFiles, "product-registrations/certificates", ct);
                 addCerts = ups.Select((x, i) => new MediaLinkItemDTO
                 {
                     ImagePublicId = x.PublicId,
