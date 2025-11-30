@@ -116,51 +116,76 @@ namespace BLL.Services
 
             var productImages = ToMediaLinks(addImages, MediaOwnerType.ProductRegistrations);
 
-            entity = await _repo.CreateAsync(entity, productImages, null, ct);
-
-
-            // ================= CERTIFICATE CREATE =================
-            if (dto.CertificationName != null &&dto.CertificationCode != null)
+            // Validate certificates trước khi tạo ProductRegistration
+            if (dto.CertificationName != null && dto.CertificationCode != null)
             {
                 if (addCertificates.Count != dto.CertificationName.Count)
                     throw new InvalidOperationException("Số lượng file chứng chỉ không khớp số lượng tên chứng chỉ.");
 
                 if (dto.CertificationName.Count != dto.CertificationCode.Count)
                     throw new InvalidOperationException("Tên chứng chỉ và mã chứng chỉ không khớp số lượng.");
+            }
 
-                for (int i = 0; i < dto.CertificationName.Count; i++)
+            // Tạo ProductRegistration (có transaction bên trong Repository)
+            entity = await _repo.CreateAsync(entity, productImages, null, ct);
+
+            // Tạo certificates sau khi ProductRegistration đã được tạo thành công
+            // Nếu có lỗi ở đây, sẽ cleanup ProductRegistration đã tạo
+            if (dto.CertificationName != null && dto.CertificationCode != null)
+            {
+                try
                 {
-                    var cert = new ProductCertificate
+                    for (int i = 0; i < dto.CertificationName.Count; i++)
                     {
-                        RegistrationId = entity.Id,
-                        ProductId = null,
-                        CertificationName = dto.CertificationName[i],
-                        CertificationCode = dto.CertificationCode[i],
-                        Status = ProductCertificateStatus.Pending,
-                        UploadedAt = DateTime.UtcNow,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
+                        var cert = new ProductCertificate
+                        {
+                            RegistrationId = entity.Id,
+                            ProductId = null,
+                            CertificationName = dto.CertificationName[i],
+                            CertificationCode = dto.CertificationCode[i],
+                            Status = ProductCertificateStatus.Pending,
+                            UploadedAt = DateTime.UtcNow,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
 
-                    await _db.ProductCertificates.AddAsync(cert, ct);
-                    await _db.SaveChangesAsync(ct);
+                        await _db.ProductCertificates.AddAsync(cert, ct);
+                        await _db.SaveChangesAsync(ct);
 
-                    var file = addCertificates[i];
+                        var file = addCertificates[i];
 
-                    var media = new MediaLink
+                        var media = new MediaLink
+                        {
+                            OwnerType = MediaOwnerType.ProductCertificates,
+                            OwnerId = cert.Id,
+                            ImagePublicId = file.ImagePublicId,
+                            ImageUrl = file.ImageUrl,
+                            Purpose = MediaPurpose.ProductCertificatePdf,
+                            SortOrder = i + 1,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+
+                        await _db.MediaLinks.AddAsync(media, ct);
+                        await _db.SaveChangesAsync(ct);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Nếu có lỗi khi tạo certificates, cleanup ProductRegistration đã tạo
+                    try
                     {
-                        OwnerType = MediaOwnerType.ProductCertificates,
-                        OwnerId = cert.Id,
-                        ImagePublicId = file.ImagePublicId,
-                        ImageUrl = file.ImageUrl,
-                        Purpose = MediaPurpose.ProductCertificatePdf,
-                        SortOrder = i + 1,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
-
-                    await _db.MediaLinks.AddAsync(media, ct);
-                    await _db.SaveChangesAsync(ct);
+                        await _repo.DeleteAsync(entity.Id, ct);
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        // Log cleanup error nhưng vẫn throw original exception
+                        // để Controller có thể cleanup files trên Cloudinary
+                        System.Diagnostics.Debug.WriteLine($"Failed to cleanup ProductRegistration {entity.Id}: {cleanupEx.Message}");
+                    }
+                    
+                    // Throw exception để Controller có thể cleanup files trên Cloudinary
+                    throw;
                 }
             }
 
