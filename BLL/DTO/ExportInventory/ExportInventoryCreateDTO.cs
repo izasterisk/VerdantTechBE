@@ -17,7 +17,7 @@ public class ExportInventoryCreateDTO
 
     // public ulong? ProductSerialId { get; set; }
     [StringLength(100, ErrorMessage = "Số sê-ri sản phẩm không được quá 100 ký tự")]
-    public string? ProductSerialNumber { get; set; }
+    public string? SerialNumber { get; set; }
 
     [Required(ErrorMessage = "Số lô là bắt buộc")]
     [StringLength(255, ErrorMessage = "Số lô không được vượt quá 255 ký tự")]

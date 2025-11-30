@@ -210,6 +210,8 @@ public class OrderService : IOrderService
                 }
                 else
                 {
+                    if (dto.SerialNumber != null)
+                        throw new InvalidOperationException($"Sản phẩm với ID {detail.ProductId} không yêu cầu số sê-ri để xuất.");
                     var compositeKey = (detail.ProductId, dto.LotNumber.Trim().ToUpper());
                     if (validateLotNumber.TryGetValue(compositeKey, out var count))
                         throw new InvalidOperationException($"Số lô {dto.LotNumber} cho sản phẩm ID {detail.ProductId} bị lặp lại, vui lòng gộp số lượng.");

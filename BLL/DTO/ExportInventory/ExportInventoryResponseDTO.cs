@@ -14,17 +14,22 @@ public class ExportInventoryResponseDTO
     // public ulong ProductId { get; set; }
     public ProductResponseDTO Product { get; set; } = null!;
     
+    public string? ProductSerialNumber { get; set; }
+    
+    [StringLength(255, ErrorMessage = "Số lô không được vượt quá 255 ký tự")]
+    public string? LotNumber { get; set; }
+    
+    public ulong? OrderDetailId { get; set; }
+    
     [Required(ErrorMessage = "Số lượng xuất là bắt buộc.")]
     [Range(1, int.MaxValue, ErrorMessage = "Số lượng phải ít nhất là 1.")]
     public int Quantity { get; set; }
     
+    public int RefundQuantity { get; set; } = 0;
+    
     // [Range(1, ulong.MaxValue, ErrorMessage = "Số sê-ri sản phẩm phải lớn hơn 0")]
     // public ulong? ProductSerialId { get; set; }
-    public string? ProductSerialNumber { get; set; }
-
-    [StringLength(255, ErrorMessage = "Số lô không được vượt quá 255 ký tự")]
-    public string? LotNumber { get; set; }
-
+    
     // [Range(1, ulong.MaxValue, ErrorMessage = "Mã đơn hàng phải lớn hơn 0")]
     // public ulong? OrderDetailId { get; set; }
 
