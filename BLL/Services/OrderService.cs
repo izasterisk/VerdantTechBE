@@ -183,10 +183,9 @@ public class OrderService : IOrderService
         
         Dictionary<ulong, int> productQuantities = new();
         Dictionary<(ulong ProductId, string LotNumber), int> validateLotNumber = new();
-        HashSet<ulong> serialsSeen = new();
+        Dictionary<string, (string lotNumber, ulong productId)> validateSerialNumber = new(StringComparer.OrdinalIgnoreCase);
         HashSet<ulong> orderDetailIdSeen = new();
-        List<ExportInventory> exportInventories = new();
-        List<ProductSerial> exportSerials = new();
+        var exportInventories = new List<(ExportInventory Inventory, string? SerialStr)>();
         var originalOrderMap = order.OrderDetails.ToDictionary(x => x.Id);
         foreach (var orderDetail in dtos)
         {
@@ -197,26 +196,23 @@ public class OrderService : IOrderService
             var check = await _orderDetailRepository.IsSerialRequiredByProductIdAsync(detail.ProductId, cancellationToken);
             foreach (var dto in orderDetail.IdentityNumbers)
             {
-                ulong? serial = null;
+                string? serial = null;
                 if (check)
                 {
                     if (dto.SerialNumber == null)
                         throw new InvalidOperationException($"Sản phẩm với ID {detail.ProductId} yêu cầu số sê-ri để xuất.");
                     if(dto.Quantity != 1)
                         throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
-                    var s = await _orderDetailRepository.GetProductSerialAsync(detail.ProductId, dto.SerialNumber, dto.LotNumber, cancellationToken);
-                    if(s.Status != ProductSerialStatus.Stock)
-                        throw new InvalidOperationException($"Số sê-ri {s.SerialNumber} không đủ điều kiện để xuất kho.");
-                    serial = s.Id;
-                    if(!serialsSeen.Add(s.Id))
-                        throw new InvalidOperationException($"Số sê-ri {dto.SerialNumber} bị lặp lại trong danh sách xuất kho.");
-                    exportSerials.Add(s);
+                    if (validateSerialNumber.TryGetValue(dto.SerialNumber, out var lotNumberQuantity))
+                        throw new ArgumentException($"Số sê-ri {dto.SerialNumber} bị trùng. Vui lòng kiểm tra lại.");
+                    validateSerialNumber.Add(dto.SerialNumber, (dto.LotNumber, detail.ProductId));
+                    serial = dto.SerialNumber;
                 }
                 else
                 {
                     var compositeKey = (detail.ProductId, dto.LotNumber.Trim().ToUpper());
                     if (validateLotNumber.TryGetValue(compositeKey, out var count))
-                        throw new InvalidOperationException($"Số lô {dto.LotNumber} cho sản phẩm {detail.ProductId} bị lặp lại, vui lòng gộp số lượng.");
+                        throw new InvalidOperationException($"Số lô {dto.LotNumber} cho sản phẩm ID {detail.ProductId} bị lặp lại, vui lòng gộp số lượng.");
                     validateLotNumber[compositeKey] = dto.Quantity;
                 }
                 if (productQuantities.TryGetValue(orderDetail.OrderDetailId, out var currentQuantity))
@@ -227,16 +223,16 @@ public class OrderService : IOrderService
                 {
                     productQuantities.Add(orderDetail.OrderDetailId, dto.Quantity);
                 }
-                exportInventories.Add(new ExportInventory
+                exportInventories.Add((new ExportInventory
                 {
                     ProductId = detail.ProductId,
-                    ProductSerialId = serial,
+                    // ProductSerialId = serial,
                     LotNumber = dto.LotNumber,
                     OrderDetailId = detail.Id,
                     Quantity = dto.Quantity,
                     MovementType = MovementType.Sale,
                     CreatedBy = staffId
-                });
+                }, serial));
             }
         }
         foreach (var kvp in productQuantities)
@@ -250,6 +246,33 @@ public class OrderService : IOrderService
         {
             if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key.LotNumber, validate.Key.ProductId, cancellationToken) < validate.Value)
                 throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
+        }
+        var validatedSerials = await _orderDetailRepository.GetAllProductSerialAsync(validateSerialNumber, cancellationToken);
+        if (validateSerialNumber.Count > 0)
+        {
+            foreach (var s in validatedSerials)
+            {
+                if(s.Status != ProductSerialStatus.Stock)
+                    throw new InvalidOperationException($"Số sê-ri {s.SerialNumber} không đủ điều kiện để xuất kho.");
+            }
+        }
+        var serialLookup = validatedSerials.ToDictionary(s => s.SerialNumber.ToUpper(), s => s);
+        var finalExportList = new List<ExportInventory>();
+        foreach (var exportInventory in exportInventories)
+        {
+            var inventory = exportInventory.Inventory;
+            if (exportInventory.SerialStr != null )
+            {
+                if (serialLookup.TryGetValue(exportInventory.SerialStr.ToUpper(), out var serialEntity))
+                {
+                    inventory.ProductSerialId = serialEntity.Id;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Lỗi hệ thống: Không mapping được ID cho serial {exportInventory.SerialStr}.");
+                }
+            }
+            finalExportList.Add(inventory);
         }
         
         var from = await _userService.GetUserByIdAsync(1, cancellationToken);
@@ -269,9 +292,9 @@ public class OrderService : IOrderService
             order.Width, order.Height, order.Weight, (int)Math.Ceiling((double)order.TotalAmount), payer, 
             order.CourierId, order.Notes ?? "" , cancellationToken);
         order.Status = OrderStatus.Shipped;
-        
+        order.ShippedAt = DateTime.UtcNow;
         await _orderRepository.UpdateOrderWithTransactionAsync(order, cancellationToken);
-        await _exportInventoryRepository.CreateExportForOrderWithTransactionAsync(exportInventories, exportSerials, cancellationToken);
+        await _exportInventoryRepository.CreateExportForOrderWithTransactionAsync(finalExportList, validatedSerials, cancellationToken);
         
         var finalResponse = _mapper.Map<OrderResponseDTO>(order);
         if (finalResponse.OrderDetails != null)

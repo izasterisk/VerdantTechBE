@@ -31,37 +31,30 @@ public class ExportInventoryService : IExportInventoryService
 
         var exportInventories = new List<ExportInventory>();
         Dictionary<ulong, int> productQuantities = new();
-        List<ProductSerial> exportSerials = new();
         Dictionary<string, int> validateLotNumber = new(StringComparer.OrdinalIgnoreCase);
+        var returnToVendorSerials = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, (string lotNumber, ulong productId)> validateSerialNumber = new(StringComparer.OrdinalIgnoreCase);
         foreach (var dto in dtos)
         {
             if(dto.MovementType == MovementType.Sale)
                 throw new ArgumentException("MovementType Sale chỉ được sử dụng khi xuất hàng bán.");
-            ulong? serial = null;
             if (dto.ProductSerialNumber != null)
             {
                 if(dto.Quantity != 1)
                     throw new InvalidOperationException("Với sản phẩm có số sê-ri, số lượng xuất phải là 1.");
-                var s = await _orderDetailRepository.GetProductSerialAsync(dto.ProductId, dto.ProductSerialNumber, dto.LotNumber, cancellationToken);
-                if(s.Status is ProductSerialStatus.Sold or ProductSerialStatus.Adjustment)
-                    throw new InvalidOperationException("Số sê-ri không đủ điều kiện để xuất kho.");
-                if(s.Status == ProductSerialStatus.Refund && dto.MovementType != MovementType.ReturnToVendor)
-                    throw new InvalidOperationException("Vì đây là hàng hoàn trả, chỉ có thể xuất kho với hình thức Trả lại nhà cung cấp.");
-                serial = s.Id;
-                exportSerials.Add(s);
+                if (validateSerialNumber.TryGetValue(dto.ProductSerialNumber, out var lotNumberQuantity))
+                    throw new ArgumentException($"Số sê-ri {dto.ProductSerialNumber} bị trùng. Vui lòng kiểm tra lại.");
+                validateSerialNumber.Add(dto.ProductSerialNumber, (dto.LotNumber, dto.ProductId));
+                if (dto.MovementType == MovementType.ReturnToVendor)
+                    returnToVendorSerials.Add(dto.ProductSerialNumber);
             }
             else
             {
                 if(await _orderDetailRepository.IsSerialRequiredByProductIdAsync(dto.ProductId, cancellationToken))
                     throw new InvalidOperationException("Sản phẩm này yêu cầu số sê-ri khi xuất kho.");
                 if (validateLotNumber.TryGetValue(dto.LotNumber, out var count))
-                {
-                    validateLotNumber[dto.LotNumber] = count + dto.Quantity;
-                }
-                else
-                {
-                    validateLotNumber[dto.LotNumber] = dto.Quantity;
-                }
+                    throw new InvalidOperationException($"Số lô {dto.LotNumber} cho sản phẩm ID {dto.ProductId} bị lặp lại, vui lòng gộp số lượng.");
+                validateLotNumber[dto.LotNumber] = dto.Quantity;
             }
             if (productQuantities.TryGetValue(dto.ProductId, out var currentQuantity))
             {
@@ -74,7 +67,7 @@ public class ExportInventoryService : IExportInventoryService
             exportInventories.Add(new ExportInventory
             {
                 ProductId = dto.ProductId,
-                ProductSerialId = serial,
+                // ProductSerialId = serial,
                 Quantity = dto.Quantity,
                 LotNumber = dto.LotNumber,
                 MovementType = dto.MovementType,
@@ -82,13 +75,20 @@ public class ExportInventoryService : IExportInventoryService
                 CreatedBy = staffId
             });
         }
-        foreach (var validate in validateLotNumber)
+
+        var validatedSerials = await _orderDetailRepository.GetAllProductSerialAsync(validateSerialNumber, cancellationToken);
+        if (validateSerialNumber.Count > 0)
         {
-            // if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key, cancellationToken) < validate.Value)
-            //     throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
+            foreach (var s in validatedSerials)
+            {
+                if(s.Status is ProductSerialStatus.Sold or ProductSerialStatus.Adjustment)
+                    throw new InvalidOperationException("Số sê-ri không đủ điều kiện để xuất kho.");
+                if(s.Status == ProductSerialStatus.Refund && !returnToVendorSerials.Contains(s.SerialNumber))
+                    throw new InvalidOperationException($"Đối với số sê-ri {s.SerialNumber}. Vì đây là hàng hoàn trả, chỉ có thể xuất kho với hình thức 'Trả lại nhà cung cấp'.");
+            }
         }
         var listUlongResponseExport = await _exportInventoryRepository.CreateExportForExportWithTransactionAsync(
-            exportInventories, productQuantities, exportSerials, cancellationToken);
+            exportInventories, productQuantities, validatedSerials, cancellationToken);
         var createdExportInventories = await _exportInventoryRepository.GetListedExportInventoriesByIdsAsync(
             listUlongResponseExport, cancellationToken);
         return _mapper.Map<List<ExportInventoryResponseDTO>>(createdExportInventories);
