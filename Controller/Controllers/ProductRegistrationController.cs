@@ -138,12 +138,10 @@ namespace Controller.Controllers
             var certDtos = new List<MediaLinkItemDTO>();
             if (req.Certificate is { Count: > 0 })
             {
-                var pdfs = req.Certificate.Where(f =>
-                    string.Equals(f.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) ||
-                    f.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
-                ).ToList();
+                // Chấp nhận tất cả các file (PDF và hình ảnh)
+                var validFiles = req.Certificate.ToList();
 
-                var ups = await _cloud.UploadManyAsync(pdfs, "product-registrations/certificates", ct);
+                var ups = await _cloud.UploadManyAsync(validFiles, "product-registrations/certificates", ct);
 
                 certDtos = ups.Select((x, i) => new MediaLinkItemDTO
                 {
@@ -211,12 +209,10 @@ namespace Controller.Controllers
             var addCerts = new List<MediaLinkItemDTO>();
             if (req.Certificate is { Count: > 0 })
             {
-                var pdfs = req.Certificate.Where(f =>
-                    string.Equals(f.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) ||
-                    f.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
-                ).ToList();
+                // Chấp nhận tất cả các file (PDF và hình ảnh)
+                var validFiles = req.Certificate.ToList();
 
-                var ups = await _cloud.UploadManyAsync(pdfs, "product-registrations/certificates", ct);
+                var ups = await _cloud.UploadManyAsync(validFiles, "product-registrations/certificates", ct);
                 addCerts = ups.Select((x, i) => new MediaLinkItemDTO
                 {
                     ImagePublicId = x.PublicId,
