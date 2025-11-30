@@ -160,6 +160,24 @@ CREATE TABLE crops (
     is_active BOOLEAN DEFAULT TRUE COMMENT 'Trạng thái hoạt động',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    1. Phương pháp gieo trồng (enums): Gieo hạt, ươm trong khay, cấy cây con, Sinh sản sinh dưỡng (củ, thân), giâm cành
+    2. ADD COLUMN crop_type ENUM(
+    'leafy_green',      -- Rau ăn lá: rau muống, cải, xà lách
+    'fruiting',         -- Rau ăn quả: cà chua, dưa leo, ớt
+    'root_vegetable',   -- Củ: cà rốt, củ cải
+    'herb'              -- Rau thơm: húng, ngò
+    3. Loại hình canh tác: thâm canh, luân canh, xen canh, Nhà lưới/nhà màng, Thủy canh
+    4. status ENUM('planning', 'seedling', 'growing', 'harvesting', 'completed', 'failed') DEFAULT 'planning'
+
+
+
+
+
+
+
+
+    
     
     FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
     INDEX idx_farm_profile (farm_profile_id),
@@ -612,7 +630,7 @@ CREATE TABLE export_inventory (
     FOREIGN KEY (product_serial_id) REFERENCES product_serials(id) ON DELETE RESTRICT,
     FOREIGN KEY (order_detail_id) REFERENCES order_details(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
-    UNIQUE KEY uk_order_detail_lot (order_detail_id, lot_number),
+    UNIQUE KEY uk_order_detail_lot (order_detail_id, lot_number, product_serial_id),
     INDEX idx_product (product_id),
     INDEX idx_order_detail (order_detail_id),
     INDEX idx_serial (product_serial_id),

@@ -103,7 +103,7 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .OnDelete(DeleteBehavior.Restrict);
 
         // Unique Constraint
-        builder.HasIndex(e => new { e.OrderDetailId, e.LotNumber })
+        builder.HasIndex(e => new { e.OrderDetailId, e.LotNumber, e.ProductSerialId })
             .IsUnique()
             .HasDatabaseName("uk_order_detail_lot");
 
