@@ -44,6 +44,10 @@ public class ExportInventoryRepository : IExportInventoryRepository
                 {
                     serial.Status = ProductSerialStatus.Sold;
                     serial.UpdatedAt = DateTime.UtcNow;
+                    
+                    serial.BatchInventory = null!; // [FIX] Ngắt tham chiếu navigation property để tránh lỗi tracking trùng lặp
+                    serial.Product = null!; // Ngắt luôn Product cho chắc ăn nếu có include
+                    
                     await _productSerialRepository.UpdateAsync(serial, cancellationToken);
                 }
             }
@@ -89,6 +93,10 @@ public class ExportInventoryRepository : IExportInventoryRepository
                 {
                     serial.Status = ProductSerialStatus.Adjustment;
                     serial.UpdatedAt = DateTime.UtcNow;
+                    
+                    serial.BatchInventory = null!; // [FIX] Ngắt tham chiếu navigation property để tránh lỗi tracking trùng lặp
+                    serial.Product = null!; // Ngắt luôn Product cho chắc ăn nếu có include
+                    
                     await _productSerialRepository.UpdateAsync(serial, cancellationToken);
                 }
             }
