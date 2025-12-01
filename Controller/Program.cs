@@ -21,7 +21,6 @@ using Infrastructure.Cloudinary;
 using Microsoft.AspNetCore.Http.Features;
 using DAL.Repositories;
 using BLL.Service;
-using BLL.IService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -151,8 +150,8 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IVendorCertificateRepository, VendorCertificateRepository>();
 builder.Services.AddScoped<IVendorProfileRepository, VendorProfileRepository>();
 builder.Services.AddScoped<IChatbotConversationRepository, ChatbotConversationRepository>();
-builder.Services.AddScoped<ICropRepository, CropRepository>();
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+builder.Services.AddScoped<ICropRepository, CropRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();

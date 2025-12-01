@@ -56,6 +56,43 @@ public enum FarmProfileStatus
     Deleted
 }
 
+public enum PlantingMethod
+{
+    DirectSeeding,
+    TrayNursery,
+    Transplanting,
+    VegetativePropagation,
+    Cutting
+}
+
+public enum CropType
+{
+    LeafyGreen,
+    Fruiting,
+    RootVegetable,
+    Herb
+}
+
+public enum FarmingType
+{
+    Intensive,
+    CropRotation,
+    Intercropping,
+    Greenhouse,
+    Hydroponics
+}
+
+public enum CropStatus
+{
+    Planning,
+    Seedling,
+    Growing,
+    Harvesting,
+    Completed,
+    Failed,
+    Deleted
+}
+
 // =====================================================
 // AI CHATBOT ENUMS
 // =====================================================

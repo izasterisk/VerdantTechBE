@@ -10,7 +10,13 @@ public partial class Crop
 
     public DateOnly PlantingDate { get; set; }
 
-    public bool IsActive { get; set; }
+    public PlantingMethod PlantingMethod { get; set; }
+
+    public CropType CropType { get; set; }
+
+    public FarmingType FarmingType { get; set; }
+
+    public CropStatus Status { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

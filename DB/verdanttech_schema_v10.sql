@@ -157,31 +157,16 @@ CREATE TABLE crops (
     farm_profile_id BIGINT UNSIGNED NOT NULL,
     crop_name VARCHAR(255) NOT NULL COMMENT 'Tên loại cây trồng',
     planting_date DATE NOT NULL COMMENT 'Ngày trồng',
-    is_active BOOLEAN DEFAULT TRUE COMMENT 'Trạng thái hoạt động',
+    planting_method ENUM('direct_seeding', 'tray_nursery', 'transplanting', 'vegetative_propagation', 'cutting') NULL COMMENT 'Phương pháp gieo trồng: direct_seeding (Gieo hạt trực tiếp), tray_nursery (Ươm trong khay), transplanting (Cấy cây con), vegetative_propagation (Sinh sản sinh dưỡng từ củ/thân), cutting (Giâm cành)',
+    crop_type ENUM('leafy_green', 'fruiting', 'root_vegetable', 'herb') NULL COMMENT 'Loại cây trồng: leafy_green (Rau ăn lá như rau muống, cải, xà lách), fruiting (Rau ăn quả như cà chua, dưa leo, ớt), root_vegetable (Củ như cà rốt, củ cải), herb (Rau thơm như húng, ngò)',
+    farming_type ENUM('intensive', 'crop_rotation', 'intercropping', 'greenhouse', 'hydroponics') NULL COMMENT 'Loại hình canh tác: intensive (Thâm canh), crop_rotation (Luân canh), intercropping (Xen canh), greenhouse (Nhà lưới/nhà màng), hydroponics (Thủy canh)',
+    status ENUM('planning', 'seedling', 'growing', 'harvesting', 'completed', 'failed', 'deleted') DEFAULT 'planning' COMMENT 'Trạng thái của cây trồng: planning (Đang lên kế hoạch), seedling (Giai đoạn cây con), growing (Đang sinh trưởng), harvesting (Đang thu hoạch), completed (Hoàn thành), failed (Thất bại), deleted (Đã xóa)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    1. Phương pháp gieo trồng (enums): Gieo hạt, ươm trong khay, cấy cây con, Sinh sản sinh dưỡng (củ, thân), giâm cành
-    2. ADD COLUMN crop_type ENUM(
-    'leafy_green',      -- Rau ăn lá: rau muống, cải, xà lách
-    'fruiting',         -- Rau ăn quả: cà chua, dưa leo, ớt
-    'root_vegetable',   -- Củ: cà rốt, củ cải
-    'herb'              -- Rau thơm: húng, ngò
-    3. Loại hình canh tác: thâm canh, luân canh, xen canh, Nhà lưới/nhà màng, Thủy canh
-    4. status ENUM('planning', 'seedling', 'growing', 'harvesting', 'completed', 'failed') DEFAULT 'planning'
-
-
-
-
-
-
-
-
-    
     
     FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
     INDEX idx_farm_profile (farm_profile_id),
-    INDEX idx_is_active (is_active)
+    INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý cây trồng của trang trại (một trang trại có nhiều cây trồng)';
 
 -- Dữ liệu giám sát môi trường

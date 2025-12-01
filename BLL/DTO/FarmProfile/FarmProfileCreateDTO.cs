@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BLL.DTO.Crops;
 
 namespace BLL.DTO.FarmProfile;
     public class FarmProfileCreateDto
@@ -46,6 +47,6 @@ namespace BLL.DTO.FarmProfile;
         [Required(ErrorMessage = "Kinh độ không được để trống")]
         [Range(-180, 180, ErrorMessage = "Kinh độ phải nằm trong khoảng -180 đến 180")]
         public decimal Longitude { get; set; }
-
+        
         public List<CropsCreateDTO>? Crops { get; set; }
     }

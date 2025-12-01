@@ -25,6 +25,7 @@ using BLL.Services.Payment;
 using DAL.Data.Models;
 using System.Numerics;
 using BLL.DTO.ChatbotConversations;
+using BLL.DTO.Crops;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
 using BLL.DTO.ForumPost;
 using BLL.DTO.ForumComment;
@@ -61,16 +62,16 @@ namespace BLL.Helpers
             
             // ===================== FARM PROFILE =====================
             CreateMap<FarmProfileCreateDto, FarmProfile>()
-                .ForMember(dest => dest.Crops, opt => opt.Ignore());
-            CreateMap<FarmProfile, FarmProfileResponseDTO>().ReverseMap();
+                .ForMember(d => d.Crops, o => o.Ignore());
             CreateMap<FarmProfileUpdateDTO, FarmProfile>()
-                .ForMember(dest => dest.Crops, opt => opt.Ignore())
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-
+            CreateMap<FarmProfile, FarmProfileResponseDTO>();
+            
+            // ===================== CROPS =====================
             CreateMap<CropsCreateDTO, Crop>().ReverseMap();
-            CreateMap<CropsDTO, Crop>().ReverseMap();
             CreateMap<CropsUpdateDTO, Crop>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
+            CreateMap<Crop, CropsResponseDTO>().ReverseMap();
             
             // ===================== ADDRESS =====================
             CreateMap<Address, AddressResponseDTO>().ReverseMap();

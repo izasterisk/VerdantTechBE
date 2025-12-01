@@ -21,7 +21,7 @@ public class FarmProfileRepository : IFarmProfileRepository
         _cropRepository = cropRepository;
     }
 
-    public async Task<FarmProfile?> GetFarmProfileWithRelationByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
+    public async Task<FarmProfile> GetFarmProfileWithRelationByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {
         return await _farmProfileRepository.GetWithRelationsAsync(
             f => f.Id == farmId,
@@ -29,7 +29,8 @@ public class FarmProfileRepository : IFarmProfileRepository
             query => query.Include(f => f.User)
                 .Include(f => f.Address)
                 .Include(f => f.Crops),
-            cancellationToken);
+            cancellationToken)
+            ?? throw new KeyNotFoundException($"Trang trại với ID: {farmId} không tồn tại.");
     }
     
     public async Task<FarmProfile> GetFarmProfileByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
@@ -82,22 +83,20 @@ public class FarmProfileRepository : IFarmProfileRepository
                 {
                     crop.CreatedAt = DateTime.UtcNow;
                     crop.UpdatedAt = DateTime.UtcNow;
-                    crop.IsActive = true;
                     crop.FarmProfileId = createdFarmProfile.Id;
                     await _cropRepository.CreateAsync(crop, cancellationToken);
                 }
             }
             
             var farmProfileWithRelations = await _farmProfileRepository.GetWithRelationsAsync(
-                f => f.Id == createdFarmProfile.Id,
-                useNoTracking: true,
+                f => f.Id == createdFarmProfile.Id, useNoTracking: true,
                 query => query.Include(f => f.User)
                     .Include(f => f.Address)
                     .Include(f => f.Crops),
-                cancellationToken);
+                cancellationToken)
+                ?? throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại sau khi tạo.");
             await transaction.CommitAsync(cancellationToken);
-            
-            return farmProfileWithRelations ?? createdFarmProfile;
+            return farmProfileWithRelations;
         }
         catch (Exception)
         {
@@ -106,24 +105,11 @@ public class FarmProfileRepository : IFarmProfileRepository
         }
     }
 
-    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, List<Crop> crops, CancellationToken cancellationToken = default)
+    public async Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            foreach (var crop in crops)
-            {
-                if (crop.IsActive)
-                {
-                    crop.UpdatedAt = DateTime.UtcNow;
-                    await _cropRepository.UpdateAsync(crop, cancellationToken);
-                }
-                else
-                {
-                    await _cropRepository.DeleteAsync(crop, cancellationToken);
-                }
-            }
-            
             address.UpdatedAt = DateTime.UtcNow;
             await _addressRepository.UpdateAddressAsync(address, cancellationToken);
             
@@ -145,26 +131,5 @@ public class FarmProfileRepository : IFarmProfileRepository
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
-    }
-    
-    public async Task<Crop> GetCropBelongToFarm(ulong cropId, ulong farmId, CancellationToken cancellationToken = default)
-    {
-        return await _cropRepository.GetAsync(c => c.Id == cropId && c.FarmProfileId == farmId, true, cancellationToken)
-            ?? throw new KeyNotFoundException("Cây trồng không thuộc về trang trại hoặc không tồn tại");
-    }
-    
-    public async Task CreateCropAsync(ulong farmId, Crop crop, CancellationToken cancellationToken = default)
-    {
-        crop.FarmProfileId = farmId;
-        crop.CreatedAt = DateTime.UtcNow;
-        crop.UpdatedAt = DateTime.UtcNow;
-        crop.IsActive = true;
-        await _cropRepository.CreateAsync(crop, cancellationToken);
-    }
-    
-    public async Task<bool> IsCropNameDuplicatedAsync(ulong farmId, string cropName, CancellationToken cancellationToken = default)
-    {
-        return await _cropRepository.AnyAsync(c => c.FarmProfileId == farmId 
-            && c.CropName.Equals(cropName, StringComparison.OrdinalIgnoreCase), cancellationToken);
     }
 }
