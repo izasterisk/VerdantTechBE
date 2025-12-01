@@ -2,80 +2,57 @@
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
-using System;
 
-namespace DAL.Repository
+namespace DAL.Repository;
+
+public class CropRepository : ICropRepository
 {
-    public class CropRepository : ICropRepository
+    private readonly IRepository<FarmProfile> _farmProfileRepository;
+    private readonly VerdantTechDbContext _dbContext;
+    private readonly IRepository<Crop> _cropRepository;
+    
+    public CropRepository(IRepository<FarmProfile> farmProfileRepository, VerdantTechDbContext dbContext,
+        IRepository<Crop> cropRepository)
     {
-        private readonly  VerdantTechDbContext _context;
+        _farmProfileRepository = farmProfileRepository;
+        _dbContext = dbContext;
+        _cropRepository = cropRepository;
+    }
+    
+    public async Task<Crop> GetCropBelongToFarm(ulong cropId, ulong farmId, CancellationToken cancellationToken = default)
+    {
+        return await _cropRepository.GetAsync(c => c.Id == cropId && c.FarmProfileId == farmId, true, cancellationToken)
+               ?? throw new KeyNotFoundException("Cây trồng không thuộc về trang trại hoặc không tồn tại");
+    }
+    
+    public async Task<bool> IsFarmExistsAsync(ulong farmId, CancellationToken cancellationToken = default)
+    {
+        var x = await _farmProfileRepository.AnyAsync(f => f.Id == farmId
+            && f.Status != FarmProfileStatus.Deleted, cancellationToken);
+        if (!x)
+            throw new KeyNotFoundException($"Không tìm thấy hồ sơ trang trại với ID: {farmId} hoặc nó đã bị xóa.");
+        return x;
+    }
+    
+    public async Task<List<Crop>> GetAllPlantingCropsByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
+    {
+        return await _cropRepository.GetAllByFilterAsync(c => c.FarmProfileId == farmId && c.Status != CropStatus.Completed
+            && c.Status != CropStatus.Deleted && c.Status != CropStatus.Failed, true, cancellationToken);
+    }
+    
+    public async Task<List<Crop>> GetAllCropsByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
+    {
+        return await _cropRepository.GetAllByFilterAsync(c => c.FarmProfileId == farmId, true, cancellationToken);
+    }
+    
+    public async Task CreateBulkCropsAsync(List<Crop> crops, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.Crops.AddRangeAsync(crops, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
 
-        public CropRepository(VerdantTechDbContext context)
-        {
-            _context = context;
-        }
-
-        public async Task<IEnumerable<Crop>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
-        {
-            if (page <= 0) page = 1;
-            if (pageSize <= 0) pageSize = 10;
-
-            return await _context.Crops
-                .AsNoTracking()
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(ct);
-        }
-
-        public async Task<Crop?> GetByIdAsync(ulong id, CancellationToken ct = default)
-        {
-            return await _context.Crops
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == id, ct);
-        }
-
-        public async Task AddAsync(Crop crop, CancellationToken ct = default)
-        {
-            await _context.Crops.AddAsync(crop, ct);
-            await _context.SaveChangesAsync(ct);
-        }
-
-        public async Task UpdateAsync(Crop crop, CancellationToken ct = default)
-        {
-            _context.Crops.Update(crop);
-            await _context.SaveChangesAsync(ct);
-        }
-
-        public async Task<bool> SoftDeleteAsync(ulong id, CancellationToken ct = default)
-        {
-            var entity = await _context.Crops.FirstOrDefaultAsync(x => x.Id == id, ct);
-            if (entity == null) return false;
-
-            entity.IsActive = false;
-            entity.UpdatedAt = DateTime.UtcNow;
-
-            _context.Crops.Update(entity);
-            await _context.SaveChangesAsync(ct);
-            return true;
-        }
-
-        public async Task<bool> HardDeleteAsync(ulong id, CancellationToken ct = default)
-        {
-            var entity = await _context.Crops.FirstOrDefaultAsync(x => x.Id == id, ct);
-            if (entity == null) return false;
-
-            _context.Crops.Remove(entity);
-            await _context.SaveChangesAsync(ct);
-            return true;
-        }
-
-        public async Task<IEnumerable<Crop>> GetByFarmIdAsync(ulong farmProfileId, CancellationToken ct = default)
-        {
-            return await _context.Crops
-                .AsNoTracking()
-                .Where(x => x.FarmProfileId == farmProfileId && x.IsActive)
-                .ToListAsync(ct);
-        }
-
+    public async Task UpdateBulkCropsAsync(List<Crop> crops, CancellationToken cancellationToken = default)
+    {
+        await _cropRepository.BulkUpdateAsync(crops, cancellationToken);
     }
 }

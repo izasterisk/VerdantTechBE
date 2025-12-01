@@ -1,125 +1,105 @@
-﻿using BLL.DTO.Crop;
+﻿using AutoMapper;
+using BLL.DTO.Crops;
 using BLL.DTO.FarmProfile;
-using BLL.IService;
+using BLL.Helpers.FarmProfiles;
+using BLL.Interfaces;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 
-namespace BLL.Service
+namespace BLL.Services;
+
+public class CropService : ICropService
 {
-    public class CropService : ICropService
+    private readonly IFarmProfileRepository _farmProfileRepository;
+    private readonly ICropRepository _cropRepository;
+    private readonly IMapper _mapper;
+    
+    public CropService(IFarmProfileRepository farmProfileRepository, ICropRepository cropRepository, IMapper mapper)
     {
-        private readonly ICropRepository _repo;
+        _farmProfileRepository = farmProfileRepository;
+        _cropRepository = cropRepository;
+        _mapper = mapper;
+    }
 
-        public CropService(ICropRepository repo)
+    public async Task<FarmProfileResponseDTO> AddCropsToFarmAsync(ulong farmId, List<CropsCreateDTO> dtos, CancellationToken cancellationToken = default)
+    {
+        if(dtos.Count == 0)
+            throw new ArgumentException("Danh sách cây trồng không được để trống");
+        await _cropRepository.IsFarmExistsAsync(farmId, cancellationToken);
+        
+        var uniqueNames = new Dictionary<string, List<DateOnly>>(StringComparer.OrdinalIgnoreCase);
+        var existingCrops = await _cropRepository.GetAllPlantingCropsByFarmIdAsync(farmId, cancellationToken);
+        if (existingCrops.Count > 0)
         {
-            _repo = repo;
-        }
-
-        public async Task<IEnumerable<CropResponseDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
-        {
-            var data = await _repo.GetAllAsync(page, pageSize, ct);
-
-            return data.Select(x => new CropResponseDTO
+            foreach (var crop in existingCrops)
             {
-                Id = x.Id,
-                FarmProfileId = x.FarmProfileId,
-                CropName = x.CropName,
-                PlantingDate = x.PlantingDate,
-                IsActive = x.IsActive,
-                CreatedAt = x.CreatedAt,
-                UpdatedAt = x.UpdatedAt
-            });
-        }
-
-        public async Task<CropResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default)
-        {
-            var x = await _repo.GetByIdAsync(id, ct);
-            if (x == null) return null;
-
-            return new CropResponseDTO
-            {
-                Id = x.Id,
-                FarmProfileId = x.FarmProfileId,
-                CropName = x.CropName,
-                PlantingDate = x.PlantingDate,
-                IsActive = x.IsActive,
-                CreatedAt = x.CreatedAt,
-                UpdatedAt = x.UpdatedAt
-            };
-        }
-
-        public async Task<IEnumerable<CropResponseDTO>> GetByFarmIdAsync(ulong farmProfileId, CancellationToken ct = default)
-        {
-            var data = await _repo.GetByFarmIdAsync(farmProfileId, ct);
-
-            return data.Select(x => new CropResponseDTO
-            {
-                Id = x.Id,
-                FarmProfileId = x.FarmProfileId,
-                CropName = x.CropName,
-                PlantingDate = x.PlantingDate,
-                IsActive = x.IsActive,
-                CreatedAt = x.CreatedAt,
-                UpdatedAt = x.UpdatedAt
-            });
-        }
-
-
-        public async Task<IEnumerable<CropResponseDTO>> CreateAsync(CropCreateDTO dto, CancellationToken ct = default)
-        {
-            var createdList = new List<CropResponseDTO>();
-
-            foreach (var item in dto.Crops)
-            {
-                var crop = new Crop
+                if (uniqueNames.TryGetValue(crop.CropName, out var planDates))
                 {
-                    FarmProfileId = dto.FarmProfileId,
-                    CropName = item.CropName,
-                    PlantingDate = item.PlantingDate,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                await _repo.AddAsync(crop, ct);
-
-                createdList.Add(new CropResponseDTO
+                    planDates.Add(crop.PlantingDate);
+                }
+                else
                 {
-                    Id = crop.Id,
-                    FarmProfileId = crop.FarmProfileId,
-                    CropName = crop.CropName,
-                    PlantingDate = crop.PlantingDate,
-                    IsActive = crop.IsActive,
-                    CreatedAt = crop.CreatedAt,
-                    UpdatedAt = crop.UpdatedAt
-                });
+                    uniqueNames[crop.CropName] = new List<DateOnly> { crop.PlantingDate };
+                }
             }
-
-            return createdList;
         }
-
-        public async Task<bool> UpdateAsync(ulong id, CropUpdateDTO dto, CancellationToken ct = default)
+        List<Crop> crops = new List<Crop>();
+        foreach (var crop in dtos)
         {
-            var entity = await _repo.GetByIdAsync(id, ct);
-            if (entity == null) return false;
-
-            entity.CropName = dto.CropName;
-            entity.PlantingDate = dto.PlantingDate;
-            entity.IsActive = dto.IsActive;
-            entity.UpdatedAt = DateTime.UtcNow;
-
-            await _repo.UpdateAsync(entity, ct);
-            return true;
+            if (uniqueNames.TryGetValue(crop.CropName, out var planDates))
+            {
+                if(planDates.Contains(crop.PlantingDate))
+                    throw new ArgumentException($"Cây trồng '{crop.CropName}' với ngày trồng '{crop.PlantingDate}' bị trùng lặp.");
+                planDates.Add(crop.PlantingDate);
+            }
+            else
+            {
+                uniqueNames[crop.CropName] = new List<DateOnly> { crop.PlantingDate };
+            }
+            FarmProfilesHelper.ValidateCropCombination(crop.PlantingMethod, crop.CropType, crop.FarmingType);
+            if(crop.Status is CropStatus.Completed or CropStatus.Deleted or CropStatus.Failed)
+                throw new ArgumentException("Trạng thái cây trồng không hợp lệ khi tạo mới.");
+            if(crop.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+            var cropToCreate = _mapper.Map<Crop>(crop);
+            cropToCreate.FarmProfileId = farmId;
+            crops.Add(cropToCreate);
         }
+        await _cropRepository.CreateBulkCropsAsync(crops, cancellationToken);
+        return _mapper.Map<FarmProfileResponseDTO>(
+            await _farmProfileRepository.GetFarmProfileWithRelationByFarmIdAsync(farmId, useNoTracking: true,
+                cancellationToken));
+    }
 
-        public Task<bool> SoftDeleteAsync(ulong id, CancellationToken ct = default)
+    public async Task<FarmProfileResponseDTO> UpdateCropsAsync(ulong farmId, List<CropsUpdateDTO> dtos, CancellationToken cancellationToken = default)
+    {
+        if(dtos.Count == 0)
+            throw new ArgumentException("Danh sách cây trồng không được để trống");
+        await _cropRepository.IsFarmExistsAsync(farmId, cancellationToken);
+        
+        var cropsDtos = new Dictionary<ulong, CropsUpdateDTO>(dtos.Count);
+        foreach (var dto in dtos)
         {
-            return _repo.SoftDeleteAsync(id, ct);
+            if(dto.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
+                throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
+            if (cropsDtos.TryGetValue(dto.Id, out var crop))
+                throw new ArgumentException($"Phát hiện ID bị trùng lặp trong danh sách cập nhật: {dto.Id}");
+            cropsDtos.Add(dto.Id, dto);
         }
-
-        public Task<bool> HardDeleteAsync(ulong id, CancellationToken ct = default)
+        var crops = await _cropRepository.GetAllCropsByFarmIdAsync(farmId, cancellationToken);
+        var cropsToUpdate = new List<Crop>();
+        foreach (var crop in crops)
         {
-            return _repo.HardDeleteAsync(id, ct);
+            if (!cropsDtos.TryGetValue(crop.Id, out var cropDto))
+                throw new ArgumentException($"Cây trồng với ID: {crop.Id} không tồn tại hoặc không phải của trang trại này.");
+            _mapper.Map(cropDto, crop);
+            FarmProfilesHelper.ValidateCropCombination(crop.PlantingMethod, crop.CropType, crop.FarmingType);
+            cropsToUpdate.Add(crop);
         }
+        await _cropRepository.UpdateBulkCropsAsync(cropsToUpdate, cancellationToken);
+        return _mapper.Map<FarmProfileResponseDTO>(
+            await _farmProfileRepository.GetFarmProfileWithRelationByFarmIdAsync(farmId, useNoTracking: true,
+                cancellationToken));
     }
 }

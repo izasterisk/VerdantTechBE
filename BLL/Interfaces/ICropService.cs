@@ -1,20 +1,11 @@
-﻿using BLL.DTO.Crop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BLL.DTO.Crops;
+using BLL.DTO.FarmProfile;
 
-namespace BLL.IService
+namespace BLL.Interfaces
 {
     public interface ICropService
     {
-        Task<IEnumerable<CropResponseDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default);
-        Task<CropResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default);
-        Task<IEnumerable<CropResponseDTO>> GetByFarmIdAsync(ulong farmProfileId,CancellationToken ct = default);
-        Task<IEnumerable<CropResponseDTO>> CreateAsync(CropCreateDTO dto, CancellationToken ct = default);
-        Task<bool> UpdateAsync(ulong id, CropUpdateDTO dto, CancellationToken ct = default);
-        Task<bool> SoftDeleteAsync(ulong id, CancellationToken ct = default);
-        Task<bool> HardDeleteAsync(ulong id, CancellationToken ct = default);
+        Task<FarmProfileResponseDTO> AddCropsToFarmAsync(ulong farmId, List<CropsCreateDTO> dtos, CancellationToken cancellationToken = default);
+        Task<FarmProfileResponseDTO> UpdateCropsAsync(ulong farmId, List<CropsUpdateDTO> dtos, CancellationToken cancellationToken = default);
     }
 }

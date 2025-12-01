@@ -1,118 +1,74 @@
-﻿using BLL.DTO.Crop;
-using BLL.IService;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using BLL.Interfaces;
+using BLL.DTO;
+using BLL.DTO.Crops;
+using System.Net;
+using Microsoft.AspNetCore.Authorization;
 
-namespace Controller.Controllers
+namespace Controller.Controllers;
+
+[Route("api/farm/{farmId}/[controller]")]
+public class CropController : BaseController
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class CropController : ControllerBase
+    private readonly ICropService _cropService;
+    
+    public CropController(ICropService cropService)
     {
-        private readonly ICropService _service;
+        _cropService = cropService;
+    }
 
-        public CropController(ICropService service)
+    /// <summary>
+    /// Thêm danh sách cây trồng vào trang trại
+    /// </summary>
+    /// <param name="farmId">ID của trang trại</param>
+    /// <param name="dtos">Danh sách thông tin cây trồng cần thêm</param>
+    /// <returns>Thông tin trang trại đã cập nhật với danh sách cây trồng mới</returns>
+    [HttpPost]
+    [Authorize]
+    [EndpointSummary("Add Crops to Farm")]
+    [EndpointDescription("Thêm một hoặc nhiều cây trồng vào trang trại. Hệ thống sẽ kiểm tra trùng lặp (tên + ngày trồng), " +
+                         "validate phương pháp trồng phù hợp với loại cây và kiểu canh tác, " +
+                         "và không cho phép trạng thái Completed/Deleted/Failed khi tạo mới.")]
+    public async Task<ActionResult<APIResponse>> AddCropsToFarm(ulong farmId, [FromBody] List<CropsCreateDTO> dtos)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
         {
-            _service = service;
+            var farmProfile = await _cropService.AddCropsToFarmAsync(farmId, dtos, GetCancellationToken());
+            return SuccessResponse(farmProfile, HttpStatusCode.Created);
         }
-
-
-        [HttpGet]
-        [EndpointSummary("Lấy danh sách crop (phân trang)")]
-        [EndpointDescription("Trả về danh sách crop đang active, hỗ trợ phân trang bằng page và pageSize.")]
-        //[ProducesResponseType(typeof(IEnumerable<CropResponseDTO>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetAll(
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10,
-            CancellationToken ct = default)
+        catch (Exception ex)
         {
-            var result = await _service.GetAllAsync(page, pageSize, ct);
-            return Ok(result);
+            return HandleException(ex);
         }
+    }
 
+    /// <summary>
+    /// Cập nhật danh sách cây trồng của trang trại
+    /// </summary>
+    /// <param name="farmId">ID của trang trại</param>
+    /// <param name="dtos">Danh sách thông tin cây trồng cần cập nhật</param>
+    /// <returns>Thông tin trang trại đã cập nhật với danh sách cây trồng mới</returns>
+    [HttpPatch]
+    [Authorize]
+    [EndpointSummary("Update Crops")]
+    [EndpointDescription("Cập nhật thông tin các cây trồng của trang trại. Mỗi DTO phải có Id. " +
+                         "Hệ thống sẽ validate phương pháp trồng, loại cây, kiểu canh tác, và ngày trồng không được lớn hơn ngày hiện tại.")]
+    public async Task<ActionResult<APIResponse>> UpdateCrops(ulong farmId, [FromBody] List<CropsUpdateDTO> dtos)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
 
-        [HttpGet("{id}")]
-        [EndpointSummary("Lấy chi tiết một crop")]
-        [EndpointDescription("Trả về thông tin chi tiết của một crop theo Id.")]
-        //[ProducesResponseType(typeof(CropResponseDTO), StatusCodes.Status200OK)]
-        //[ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetById(ulong id, CancellationToken ct = default)
+        try
         {
-            var result = await _service.GetByIdAsync(id, ct);
-            if (result == null) return NotFound();
-            return Ok(result);
+            var farmProfile = await _cropService.UpdateCropsAsync(farmId, dtos, GetCancellationToken());
+            return SuccessResponse(farmProfile);
         }
-
-        [HttpGet("farm/{farmProfileId}")]
-        [EndpointSummary("Lấy tất cả crop theo farm")]
-        [EndpointDescription("Trả về toàn bộ crop (đang active) thuộc về FarmProfileId, không phân trang.")]
-        [ProducesResponseType(typeof(IEnumerable<CropResponseDTO>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetByFarmId(
-            ulong farmProfileId,
-            CancellationToken ct = default)
+        catch (Exception ex)
         {
-            var result = await _service.GetByFarmIdAsync(farmProfileId, ct);
-            return Ok(result);
+            return HandleException(ex);
         }
-
-
-
-        [HttpPost]
-        [EndpointSummary("Tạo mới crop (1 hoặc nhiều)")]
-        [EndpointDescription("Tạo một hoặc nhiều crop cho cùng một FarmProfile dựa trên danh sách Crops trong CropCreateDto.")]
-        //[ProducesResponseType(typeof(IEnumerable<CropResponseDTO>), StatusCodes.Status201Created)]
-        public async Task<IActionResult> Create(
-            [FromBody] CropCreateDTO dto,
-            CancellationToken ct = default)
-        {
-            var result = await _service.CreateAsync(dto, ct);
-
-            // Nếu chỉ tạo 1, có thể trả CreatedAtAction cho bản ghi đầu tiên
-            var first = result.FirstOrDefault();
-            if (first is null)
-                return BadRequest("Không tạo được crop nào.");
-
-            return CreatedAtAction(nameof(GetById), new { id = first.Id }, result);
-        }
-
-        [HttpPut("{id}")]
-        [EndpointSummary("Cập nhật thông tin một crop")]
-        [EndpointDescription("Cập nhật tên cây trồng, ngày gieo trồng và trạng thái IsActive.")]
-        //[ProducesResponseType(StatusCodes.Status204NoContent)]
-        //[ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Update(
-            ulong id,
-            [FromBody] CropUpdateDTO dto,
-            CancellationToken ct = default)
-        {
-            var ok = await _service.UpdateAsync(id, dto, ct);
-            if (!ok) return NotFound();
-            return NoContent();
-        }
-
-        [HttpDelete("soft/{id}")]
-        [EndpointSummary("Xóa mềm một crop")]
-        [EndpointDescription("Đặt IsActive = false cho crop tương ứng, không xóa vật lý khỏi database.")]
-        //[ProducesResponseType(StatusCodes.Status204NoContent)]
-        //[ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> SoftDelete(ulong id, CancellationToken ct = default)
-        {
-            var ok = await _service.SoftDeleteAsync(id, ct);
-            if (!ok) return NotFound();
-            return NoContent();
-        }
-
-
-        [HttpDelete("hard/{id}")]
-        [EndpointSummary("Xóa cứng một crop")]
-        [EndpointDescription("Xóa vĩnh viễn crop khỏi database, không thể khôi phục.")]
-        //[ProducesResponseType(StatusCodes.Status204NoContent)]
-        //[ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> HardDelete(ulong id, CancellationToken ct = default)
-        {
-            var ok = await _service.HardDeleteAsync(id, ct);
-            if (!ok) return NotFound();
-            return NoContent();
-        }
-
     }
 }
