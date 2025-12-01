@@ -45,6 +45,12 @@ public class CropRepository : ICropRepository
         return await _cropRepository.GetAllByFilterAsync(c => c.FarmProfileId == farmId, true, cancellationToken);
     }
     
+    public async Task<List<Crop>> GetBulkCropsAsync(List<ulong> cropIds, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Crops.Where(c => cropIds.Contains(c.Id))
+            .ToListAsync(cancellationToken);
+    }
+    
     public async Task CreateBulkCropsAsync(List<Crop> crops, CancellationToken cancellationToken = default)
     {
         await _dbContext.Crops.AddRangeAsync(crops, cancellationToken);

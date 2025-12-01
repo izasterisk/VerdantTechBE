@@ -88,12 +88,13 @@ public class CropService : ICropService
             cropsDtos.Add(dto.Id, dto);
         }
         var crops = await _cropRepository.GetAllCropsByFarmIdAsync(farmId, cancellationToken);
+        var cropsMap = crops.ToDictionary(c => c.Id);
         var cropsToUpdate = new List<Crop>();
-        foreach (var crop in crops)
+        foreach (var dto in cropsDtos)
         {
-            if (!cropsDtos.TryGetValue(crop.Id, out var cropDto))
-                throw new ArgumentException($"Cây trồng với ID: {crop.Id} không tồn tại hoặc không phải của trang trại này.");
-            _mapper.Map(cropDto, crop);
+            if (!cropsMap.TryGetValue(dto.Key, out var crop))
+                throw new KeyNotFoundException($"Cây trồng với ID: {dto.Key} không tồn tại hoặc không phải của trang trại này.");
+            _mapper.Map(dto.Value, crop); 
             FarmProfilesHelper.ValidateCropCombination(crop.PlantingMethod, crop.CropType, crop.FarmingType);
             cropsToUpdate.Add(crop);
         }

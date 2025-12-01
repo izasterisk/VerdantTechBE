@@ -10,4 +10,5 @@ public interface ICropRepository
     Task CreateBulkCropsAsync(List<Crop> crops, CancellationToken cancellationToken = default);
     Task UpdateBulkCropsAsync(List<Crop> crops, CancellationToken cancellationToken = default);
     Task<List<Crop>> GetAllCropsByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default);
+    Task<List<Crop>> GetBulkCropsAsync(List<ulong> cropIds, CancellationToken cancellationToken = default);
 }
