@@ -1,820 +1,1605 @@
-## VerdantTech Solutions - Backend (.NET 8)
+# VerdantTech Solutions - Backend (.NET 8)
 
 Nền tảng cung cấp thiết bị nông nghiệp xanh tích hợp AI hỗ trợ canh tác rau củ bền vững.
 
-Lưu ý: Nhiều chức năng trong tài liệu dự án vẫn đang phát triển dần (AI chatbot, nhận diện bệnh cây trồng, mobile app, vendor portal, expert portal, monitoring engine...). README này mô tả phần backend hiện có.
+> **Lưu ý**: Nhiều chức năng trong tài liệu dự án vẫn đang phát triển dần (AI chatbot, nhận diện bệnh cây trồng, mobile app, vendor portal, expert portal, monitoring engine...). README này mô tả phần backend hiện có.
 
-### 1) Kiến trúc và thư mục
+---
+
+## 1. Kiến trúc và thư mục
+
 - **Solution**: `VerdantTechSolution.sln`
 - **Projects**:
-  - `Controller/` (ASP.NET Core Web API host, Swagger, JWT, DI)
-  - `BLL/` (Business Logic Layer: DTOs, Services, Interfaces, Helpers)
-  - `DAL/` (Data Access Layer: DbContext, Models, Configurations, Repositories)
-  - `Infrastructure/` (Email sender, client tích hợp courier/weather/soil)
-  - `DB/` (schema, seed SQL)
+  - `Controller/` - ASP.NET Core Web API host, Swagger, JWT, DI
+  - `BLL/` - Business Logic Layer: DTOs, Services, Interfaces, Helpers
+  - `DAL/` - Data Access Layer: DbContext, Models, Configurations, Repositories
+  - `Infrastructure/` - Email sender, client tích hợp courier/weather/soil/Cloudinary
+  - `DB/` - Schema, seed SQL
 
-### 2) Yêu cầu môi trường
+---
+
+## 2. Yêu cầu môi trường
+
 - .NET SDK 8.0+
 - MySQL 8.x (hoặc tương thích)
 
-### 3) Công nghệ chính đang dùng
+---
+
+## 3. Công nghệ chính
+
 - ASP.NET Core Web API (.NET 8)
 - Entity Framework Core + MySQL Provider
 - JWT Authentication (Bearer)
 - AutoMapper
 - MailKit (SMTP)
-### 4) Tài liệu API & validation
-Tất cả API nằm trong base `/api/{ControllerName}` và trả về `APIResponse` gồm `status`, `message`, `data`. Authorization mặc định là Bearer token trừ khi gắn `[AllowAnonymous]`.
+- Cloudinary (Upload files/images)
+- PayOS (Payment gateway)
+- SignalR (Real-time notifications)
 
-#### AuthController (`/api/Auth`)
-- `POST /api/Auth/login` (AllowAnonymous)
-  - Body `LoginDTO`:
+---
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | email | string | Required, email hợp lệ, tối đa 255 ký tự |
-    | password | string | Required, tối thiểu 6 ký tự |
+## 4. Response Format
 
-  - Ràng buộc nghiệp vụ:
-    - Từ chối nếu user không tồn tại hoặc `Status` là `Deleted`/`Suspended`.
-    - Yêu cầu mật khẩu đúng và user đã `IsVerified`.
-    - Cập nhật refresh token, `LastLoginAt`, `UpdatedAt`.
+Tất cả API trả về `APIResponse`:
 
-- `POST /api/Auth/google-login` (AllowAnonymous)
-  - Body `GoogleLoginDTO`:
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": { ... }
+}
+```
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | idToken | string | Required (token từ Google OAuth) |
+---
 
-  - Ràng buộc nghiệp vụ:
-    - Gọi Google API để xác minh token.
-    - Tự động tạo user mới với vai trò `Customer` nếu chưa tồn tại.
-    - Cập nhật refresh token & timestamp tương tự login thường.
+## 5. Tài liệu API chi tiết
 
-- `POST /api/Auth/send-verification` (AllowAnonymous)
-  - Body `SendEmailDTO`:
+### Base URL: `/api/{ControllerName}`
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | email | string | Required, email hợp lệ, tối đa 255 ký tự |
+Authorization mặc định là **Bearer token** trừ khi gắn `[AllowAnonymous]`.
 
-  - Ràng buộc nghiệp vụ:
-    - User phải tồn tại, trạng thái không bị khóa, chưa `IsVerified`.
-    - Phát sinh mã 8 chữ số, lưu vào user, gửi email xác minh.
+---
 
-- `POST /api/Auth/verify-email` (AllowAnonymous)
-  - Body `VerifyEmailDTO`:
+## AuthController (`/api/Auth`)
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | email | string | Required, email hợp lệ, tối đa 255 ký tự |
-    | code | string | Required, đúng 8 ký tự |
+### `POST /api/Auth/login` [AllowAnonymous]
+Đăng nhập bằng email và mật khẩu.
 
-  - Ràng buộc nghiệp vụ:
-    - Chỉ chấp nhận mã trong thời gian `AuthConstants.VERIFICATION_CODE_EXPIRE_MINUTES`.
-    - Từ chối nếu user đã verified, mã sai hoặc đã hết hạn.
+**Request Body** (`LoginDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| email | string | Required, Email format |
+| password | string | Required, min 6 ký tự |
 
-- `POST /api/Auth/refresh-token` (AllowAnonymous)
-  - Body `RefreshTokenDTO`:
+**Response** (`LoginResponseDTO`):
+```json
+{
+  "token": "string",
+  "tokenExpiresAt": "datetime",
+  "refreshToken": "string",
+  "refreshTokenExpiresAt": "datetime",
+  "user": {
+    "id": "ulong",
+    "email": "string",
+    "fullName": "string",
+    "role": "string",
+    "avatarUrl": "string?",
+    "isVerified": "bool"
+  }
+}
+```
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | refreshToken | string | Required |
+**Ràng buộc nghiệp vụ**:
+- Từ chối nếu user không tồn tại hoặc `Status` là `Deleted`/`Suspended`
+- Cập nhật refresh token, `LastLoginAt`, `UpdatedAt`
 
-  - Ràng buộc nghiệp vụ:
-    - Ánh xạ refresh token với user, từ chối nếu token hết hạn/không tồn tại.
-    - Phát sinh cặp token mới và gia hạn thời gian sống.
+---
 
-- `GET /api/Auth/profile` (Authorize)
-  - Ràng buộc nghiệp vụ:
-    - Đọc `NameIdentifier` từ JWT để lấy user id.
-    - Trả về thông tin user, 404 nếu không tồn tại.
+### `POST /api/Auth/google-login` [AllowAnonymous]
+Đăng nhập bằng Google OAuth.
 
-- `POST /api/Auth/forgot-password` (AllowAnonymous)
-  - Body `SendEmailDTO` (như trên).
-  - Ràng buộc nghiệp vụ:
-    - User phải tồn tại và trạng thái hợp lệ.
-    - Tạo mã 8 ký tự, gửi email quên mật khẩu, lưu `VerificationToken`.
+**Request Body** (`GoogleLoginDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| idToken | string | Required (token từ Google OAuth) |
 
-- `POST /api/Auth/reset-password` (AllowAnonymous)
-  - Body `ResetForgotPasswordDTO`:
+**Ràng buộc nghiệp vụ**:
+- Gọi Google API để xác minh token
+- Nếu user chưa tồn tại, tự động tạo mới với `Role = Customer`
+- Cập nhật refresh token & timestamp
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | email | string | Required, email hợp lệ, tối đa 255 ký tự |
-    | code | string | Required, đúng 8 ký tự |
-    | newPassword | string | Required, tối thiểu 6 ký tự, tối đa 100 ký tự |
+---
 
-  - Ràng buộc nghiệp vụ:
-    - Xác thực mã code giống forgot password, chưa hết hạn.
-    - Cập nhật `PasswordHash` với mật khẩu mới.
+### `POST /api/Auth/send-verification` [AllowAnonymous]
+Gửi email xác minh với mã 8 chữ số.
 
-- `POST /api/Auth/change-password` (Authorize)
-  - Body `ChangePasswordDTO`:
+**Request Body** (`SendEmailDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| email | string | Required, Email format, max 255 |
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | email | string | Required, email hợp lệ, tối đa 255 ký tự |
-    | oldPassword | string | Required |
-    | newPassword | string | Required, tối thiểu 6 ký tự, tối đa 100 ký tự |
+---
 
-  - Ràng buộc nghiệp vụ:
-    - Email phải thuộc user hiện tại và mật khẩu cũ chính xác.
-    - User phải có trạng thái hợp lệ (không `Deleted`/`Suspended`).
+### `POST /api/Auth/verify-email` [AllowAnonymous]
+Xác minh email bằng mã 8 chữ số.
 
-- `POST /api/Auth/logout` (Authorize)
-  - Ràng buộc nghiệp vụ:
-    - Lấy user id từ JWT; trả lỗi nếu thiếu claim hoặc không parse được.
-    - Xóa refresh token khỏi database nếu tồn tại.
+**Request Body** (`VerifyEmailDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| email | string | Required, Email format, max 255 |
+| code | string | Required, max 8 ký tự |
 
-#### CartController (`/api/Cart`)
-- `POST /api/Cart/add` (Authorize)
-  - Body `CartDTO`:
+---
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | productId | ulong | Required, >= 1 |
-    | quantity | int | Required, DataAnnotation `>= 0`; service yêu cầu `>= 1` |
+### `POST /api/Auth/refresh-token` [AllowAnonymous]
+Làm mới JWT token bằng refresh token.
 
-  - Ràng buộc nghiệp vụ:
-    - Tạo cart mới nếu user chưa có.
-    - Từ chối nếu sản phẩm đã có trong cart.
-    - Trả về cart sau khi thêm, kèm danh sách ảnh sản phẩm.
+**Request Body** (`RefreshTokenDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| refreshToken | string | Required |
 
-- `PUT /api/Cart/update` (Authorize)
-  - Body `CartDTO` (giống trên).
-  - Ràng buộc nghiệp vụ:
-    - Từ chối nếu cart hoặc item không tồn tại với user.
-    - Nếu `quantity == 0` sẽ xóa item (hard delete); ngược lại cập nhật số lượng.
+**Response** (`RefreshTokenResponseDTO`):
+```json
+{
+  "token": "string",
+  "tokenExpiresAt": "datetime",
+  "refreshToken": "string",
+  "refreshTokenExpiresAt": "datetime"
+}
+```
 
-- `GET /api/Cart` (Authorize)
-  - Ràng buộc nghiệp vụ:
-    - Trả về cart của user, hoặc thông báo giỏ hàng rỗng nếu chưa có item.
-#### CO2Controller (`/api/CO2`)
-- `POST /api/CO2/farm/{farmId}` (Authorize)
-  - Path `farmId`: ulong > 0.
-  - Body `CO2FootprintCreateDTO`:
+---
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | measurementStartDate | DateOnly | Required |
-    | measurementEndDate | DateOnly | Required |
-    | notes | string? | Optional, tối đa 500 ký tự |
-    | electricityKwh | decimal | Required, 0-99.999.999,99 |
-    | gasolineLiters | decimal | Required, >= 0 |
-    | dieselLiters | decimal | Required, >= 0 |
-    | organicFertilizer | decimal | Required, >= 0 |
-    | npkFertilizer | decimal | Required, >= 0 |
-    | ureaFertilizer | decimal | Required, >= 0 |
-    | phosphateFertilizer | decimal | Required, >= 0 |
+### `GET /api/Auth/profile` [Authorize]
+Lấy thông tin profile người dùng hiện tại từ JWT token.
 
-  - Ràng buộc nghiệp vụ:
-    - Không cho phép trùng khoảng ngày trên cùng farm.
-    - Farm phải có tọa độ lat/long hợp lệ; ngược lại trả lỗi.
-    - Gọi SoilGrids & Weather API, tính toán và lưu dữ liệu trong transaction.
+---
 
-- `GET /api/CO2/farm/{farmId}` (Authorize)
-  - Trả về danh sách footprint của farm.
+### `POST /api/Auth/forgot-password` [AllowAnonymous]
+Gửi email đặt lại mật khẩu với mã 8 ký tự.
 
-- `GET /api/CO2/{id}` (Authorize)
-  - Trả về footprint theo id, 404 nếu không tồn tại.
+**Request Body** (`SendEmailDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| email | string | Required, Email format |
 
-- `DELETE /api/CO2/{id}` (Authorize)
-  - Hard delete; trả về thông báo thành công/thất bại.
+---
 
-#### AddressController (`/api/Address`)
-Các endpoint đều yêu cầu Bearer token.
-- `GET /api/Address/provinces`
-  - Gọi GoShip API, trả về danh sách tỉnh/thành.
+### `POST /api/Auth/reset-password` [AllowAnonymous]
+Đặt lại mật khẩu bằng email, mã và mật khẩu mới.
 
-- `GET /api/Address/districts?provinceId={provinceId}`
-  - Query `provinceId`: chuỗi ID của tỉnh/thành.
+**Request Body** (`ResetForgotPasswordDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| email | string | Required, Email format, max 255 |
+| code | string | Required, max 8 ký tự |
+| newPassword | string | Required, min 6, max 100 ký tự |
 
-- `GET /api/Address/communes?districtId={districtId}`
-  - Query `districtId`: chuỗi ID của quận/huyện.
+---
 
-#### FarmProfileController (`/api/FarmProfile`)
-- `POST /api/FarmProfile` (Authorize)
-  - Body `FarmProfileCreateDto`:
+### `POST /api/Auth/change-password` [Authorize]
+Đổi mật khẩu người dùng.
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | farmName | string | Required, tối đa 255 ký tự |
-    | farmSizeHectares | decimal | Required, > 0 |
-    | locationAddress | string | Required, tối đa 500 ký tự |
-    | province | string | Required, tối đa 100 ký tự |
-    | district | string | Required, tối đa 100 ký tự |
-    | commune | string | Required, tối đa 100 ký tự |
-    | provinceCode | int | Required, >= 1 |
-    | districtCode | int | Required, >= 1 |
-    | communeCode | int | Required, >= 1 |
-    | latitude | decimal | Required, -90 đến 90 |
-    | longitude | decimal | Required, -180 đến 180 |
-    | primaryCrops | string? | Optional, tối đa 500 ký tự |
+**Request Body** (`ChangePasswordDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| email | string | Required, Email format, max 255 |
+| oldPassword | string | Required |
+| newPassword | string | Required, min 6, max 100 ký tự |
 
-  - Ràng buộc nghiệp vụ:
-    - Service gán `UserId` từ JWT.
-    - Tạo farm profile + address cùng transaction.
+---
 
-- `GET /api/FarmProfile/{id}` (Authorize)
-  - 404 nếu không tìm thấy.
+### `POST /api/Auth/logout` [Authorize]
+Đăng xuất - vô hiệu hóa refresh token.
 
-- `GET /api/FarmProfile/User/{userId}` (Authorize)
-  - Trả về danh sách farm profile theo user id.
+> **Lưu ý**: Gọi endpoint này trước, sau đó mới xóa token trong localStorage.
 
-- `PATCH /api/FarmProfile/{id}` (Authorize)
-  - Body `FarmProfileUpdateDTO`:
+---
 
-    | Field | Type | Validation |
-    | --- | --- | --- |
-    | farmName | string? | tối đa 255 ký tự |
-    | farmSizeHectares | decimal? | > 0 |
-    | locationAddress | string? | tối đa 500 ký tự |
-    | province/district/commune | string? | mỗi field tối đa 100 ký tự |
-    | provinceCode/districtCode/communeCode | int? | >= 1; phải đồng bộ với field tên tương ứng |
-    | latitude | decimal? | -90 đến 90 |
-    | longitude | decimal? | -180 đến 180 |
-    | status | FarmProfileStatus? | Optional enum (Active, Maintenance, Deleted) |
-    | primaryCrops | string? | tối đa 500 ký tự |
+## UserController (`/api/User`)
 
-  - Ràng buộc nghiệp vụ:
-    - Farm phải tồn tại và có địa chỉ.
-    - `AddressHelper.ValidateAddressFields` yêu cầu các cặp tên/mã cùng null hoặc cùng có giá trị.
-#### OrderController (`/api/Order`)
+### `POST /api/User` [AllowAnonymous]
+Tạo người dùng mới.
 
-**`POST /api/Order/preview`** (Authorize)  
+**Request Body** (`UserCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| email | string | Required, Email format, max 255 |
+| password | string | Required, max 255 |
+| fullName | string | Required, min 2, max 255 |
+| phoneNumber | string? | Optional, max 20, regex VN phone |
+
+> **Lưu ý**: Nếu không truyền role thì mặc định là `Customer`. Nếu `role=Admin/Staff` thì tự động `IsVerified=true` và gửi email tài khoản được cấp.
+
+---
+
+### `POST /api/User/staff` [Authorize: Admin]
+Tạo tài khoản nhân viên mới với mật khẩu tự động.
+
+**Request Body** (`StaffCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| email | string | Required, Email format |
+| fullName | string | Required |
+| phoneNumber | string? | Optional |
+
+---
+
+### `GET /api/User/{id}` [Authorize: Admin, Staff]
+Lấy thông tin người dùng theo ID.
+
+---
+
+### `GET /api/User` [Authorize: Admin, Staff]
+Lấy danh sách người dùng với phân trang và filter theo role.
+
+**Query Parameters**:
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| page | int | 1 | Số trang |
+| pageSize | int | 10 | Số bản ghi/trang (max 100) |
+| role | string? | null | Filter: Customer, Staff, Admin, Vendor |
+
+---
+
+### `PATCH /api/User/{id}` [Authorize]
+Cập nhật thông tin người dùng.
+
+**Request Body** (`UserUpdateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| fullName | string? | min 2, max 255 |
+| phoneNumber | string? | max 20, regex VN phone |
+| avatarUrl | string? | URL format, max 500 |
+| status | enum? | Active, Inactive, Suspended, Deleted |
+
+---
+
+### `POST /api/User/{userId}/address` [Authorize]
+Tạo địa chỉ mới cho người dùng.
+
+**Request Body** (`UserAddressCreateDTO`)
+
+---
+
+### `PATCH /api/User/address/{addressId}` [Authorize]
+Cập nhật địa chỉ theo ID địa chỉ.
+
+**Request Body** (`UserAddressUpdateDTO`)
+
+---
+
+## AddressController (`/api/Address`)
+
+Tất cả endpoint yêu cầu Bearer token.
+
+### `GET /api/Address/provinces` [Authorize]
+Lấy danh sách tất cả tỉnh/thành phố từ GoShip API.
+
+---
+
+### `GET /api/Address/districts` [Authorize]
+Lấy danh sách quận/huyện theo tỉnh/thành phố.
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| provinceId | string | Required, ID của tỉnh/thành |
+
+---
+
+### `GET /api/Address/communes` [Authorize]
+Lấy danh sách phường/xã theo quận/huyện.
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| districtId | string | Required, ID của quận/huyện |
+
+---
+
+## CartController (`/api/Cart`)
+
+### `POST /api/Cart/add` [Authorize]
+Thêm sản phẩm vào giỏ hàng.
+
+**Request Body** (`CartDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| productId | ulong | Required, > 0 |
+| quantity | int | Required, >= 0 |
+
+> Endpoint sử dụng token để xác định người dùng và áp dụng thay đổi lên cart của người dùng đó.
+
+---
+
+### `PUT /api/Cart/update` [Authorize]
+Cập nhật số lượng sản phẩm trong giỏ hàng.
+
+**Request Body** (`CartDTO`): Giống trên.
+
+> **Lưu ý**: Nếu `quantity = 0`, sản phẩm sẽ bị **HARD DELETE** khỏi giỏ hàng.
+
+---
+
+### `GET /api/Cart` [Authorize]
+Lấy thông tin giỏ hàng của người dùng hiện tại.
+
+---
+
+## OrderController (`/api/Order`)
+
+### `POST /api/Order/preview` [Authorize]
 Tạo order preview để xem trước tổng tiền, phí ship và các dịch vụ vận chuyển khả dụng.
 
-- Body `OrderPreviewCreateDTO`:
+**Request Body** (`OrderPreviewCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| taxAmount | decimal | >= 0, default 0 |
+| discountAmount | decimal | >= 0, default 0 |
+| addressId | ulong | Required |
+| orderPaymentMethod | enum | Required: Banking, COD |
+| notes | string? | max 500 |
+| orderDetails | List | Required, min 1 item |
 
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | addressId | ulong | Required, > 0 |
-  | orderPaymentMethod | enum | Required: `Banking`, `COD`, `Rent` |
-  | taxAmount | decimal | >= 0 |
-  | discountAmount | decimal | >= 0 |
-  | notes | string? | Optional, max 500 ký tự |
-  | orderDetails | List<OrderDetailPreviewCreateDTO> | Required, min 1 item |
+**OrderDetailsPreviewCreateDTO**:
+| Field | Type | Validation |
+|-------|------|------------|
+| productId | ulong | Required |
+| quantity | int | Required, > 0 |
+| discountAmount | decimal | >= 0 |
 
-- `OrderDetailPreviewCreateDTO`:
+**Ràng buộc nghiệp vụ**:
+- User phải tồn tại và `IsVerified == true`
+- Gọi GoShip API lấy rates, cache preview 10 phút với `OrderPreviewId` (Guid)
 
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | productId | ulong | Required, > 0 |
-  | quantity | int | Required, >= 1 |
-  | discountAmount | decimal | >= 0 |
+---
 
-- Ràng buộc nghiệp vụ:
-  - User (từ JWT) phải tồn tại, `IsVerified == true`.
-  - `addressId` phải tồn tại và thuộc user (qua `UserAddress` hoặc `FarmProfile`).
-  - Mỗi `productId` phải tồn tại, `IsActive == true`, `StockQuantity >= quantity`.
-  - Nếu `orderPaymentMethod == Rent`: sản phẩm phải `ForRent == true`.
-  - Tự động tính: subtotal, dimensions, weight từ sản phẩm.
-  - Gọi GoShip API lấy rates, cache preview 10 phút với `OrderPreviewId` (Guid).
-- Exceptions:
-  - `KeyNotFoundException`: User/address/product không tồn tại, address không thuộc user.
-  - `InvalidOperationException`: Sản phẩm hết hàng, không cho thuê khi chọn Rent.
+### `POST /api/Order/{orderPreviewId:guid}` [Authorize]
+Tạo đơn hàng thực từ preview.
 
-**`POST /api/Order/{orderPreviewId}`** (Authorize)  
-Tạo đơn hàng thực từ preview, chọn shipping service.
+**Path Parameter**: `orderPreviewId` (Guid)
 
-- Path: `orderPreviewId` (Guid)
-- Body `OrderCreateDTO`:
+**Request Body** (`OrderCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| priceTableId | int | Required (ID shipping service từ preview) |
 
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | priceTableId | string | Required (ID shipping service từ preview) |
+**Ràng buộc nghiệp vụ**:
+- Preview phải tồn tại trong cache (chưa hết 10 phút)
+- Xóa preview khỏi cache sau khi tạo thành công
 
-- Ràng buộc nghiệp vụ:
-  - Preview phải tồn tại trong cache (chưa hết 10 phút).
-  - `priceTableId` phải nằm trong `shippingDetails` của preview.
-  - User phải tồn tại, `IsVerified == true`.
-  - Sản phẩm phải còn đủ hàng (kiểm tra lại `StockQuantity`).
-  - Transaction: tạo Order + OrderDetail, trừ stock, commit.
-  - Xóa preview khỏi cache sau khi tạo thành công.
-- Exceptions:
-  - `KeyNotFoundException`: Preview hết hạn, priceTableId không hợp lệ, user/product không tồn tại.
-  - `InvalidOperationException`: Hết hàng, lỗi transaction.
+---
 
-**`PUT /api/Order/{orderId}`** (Authorize)  
-Cập nhật trạng thái đơn hàng (Pending → Paid → Processing → Shipped → Delivered) hoặc hủy.
+### `POST /api/Order/{orderId:long}/ship` [Authorize: Admin, Staff]
+Xuất kho và gán số serial/số lô cho sản phẩm trước khi ship.
 
-- Path: `orderId` (ulong)
-- Body `OrderUpdateDTO`:
+**Path Parameter**: `orderId` (ulong)
 
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | status | enum | Required: `Pending`, `Paid`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
-  | cancelledReason | string? | Optional, max 500 ký tự |
+**Request Body** (`List<OrderDetailsExportDTO>`):
+| Field | Type | Validation |
+|-------|------|------------|
+| orderDetailId | ulong | Required |
+| serialNumbers | List<string>? | Optional (bắt buộc với máy móc - category 1,2) |
+| lotNumber | string? | Optional (bắt buộc với vật tư - category 3,4) |
 
-- Ràng buộc nghiệp vụ:
-  - Order phải tồn tại.
-  - Nếu có `cancelledReason` → `status` phải là `Cancelled`.
-  - Validate chuyển trạng thái hợp lệ (`OrderHelper.ValidateOrderStatusTransition`): không lùi trạng thái, không chuyển từ Cancelled/Refunded.
-  - **Tác động theo status:**
-    - `Processing`: set `ConfirmedAt`.
-    - `Delivered`: set `DeliveredAt`.
-    - `Cancelled`: set `CancelledAt`, `CancelledReason`.
-    - `Shipped`: gọi GoShip API tạo shipment, lưu `TrackingNumber`. Nếu COD: payer=0, codAmount=totalAmount.
-  - Transaction: update order.
-- Exceptions:
-  - `KeyNotFoundException`: Order/address không tồn tại.
-  - `InvalidOperationException`: Cung cấp cancelledReason nhưng status không phải Cancelled, chuyển trạng thái không hợp lệ, lỗi GoShip API.
+---
 
-**`GET /api/Order/{orderId}`** (Authorize)  
+### `PUT /api/Order/{orderId:long}` [Authorize]
+Cập nhật trạng thái đơn hàng hoặc hủy đơn hàng.
+
+**Path Parameter**: `orderId` (ulong)
+
+**Request Body** (`OrderUpdateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| status | enum | Required: Pending, Paid, Processing, Shipped, Delivered, Cancelled, Refunded |
+| cancelledReason | string? | max 500 (required nếu status = Cancelled) |
+
+> Người dùng chỉ có quyền cancel đơn hàng ở trạng thái Pending.
+
+---
+
+### `GET /api/Order/{orderId:long}` [Authorize]
 Lấy chi tiết 1 đơn hàng.
 
-- Path: `orderId` (ulong)
-- Response: `OrderResponseDTO` (customer, address, orderDetails với images).
-- Exceptions: `KeyNotFoundException` nếu order không tồn tại.
+---
 
-**`GET /api/Order`** (Authorize)  
-Danh sách đơn hàng (phân trang, lọc theo status).
+### `GET /api/Order` [Authorize: Admin, Staff]
+Danh sách tất cả đơn hàng (phân trang, lọc theo status).
 
-- Query params:
+**Query Parameters**:
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| page | int | 1 | Số trang |
+| pageSize | int | 10 | Số bản ghi/trang |
+| status | string? | null | Filter: Pending, Paid, Confirmed, Processing, Shipped, Delivered, Cancelled, Refunded |
 
-  | Param | Type | Default | Description |
-  | --- | --- | --- | --- |
-  | page | int | 1 | Trang hiện tại |
-  | pageSize | int | 10 | Số item/trang |
-  | status | string? | null | Lọc: `Pending`, `Paid`, `Processing`, `Shipped`, `Delivered`, `Cancelled`, `Refunded` |
+---
 
-- Ràng buộc nghiệp vụ:
-  - Parse `status` thành enum, bỏ qua nếu không hợp lệ.
-  - Eager load: OrderDetails, Product, Customer, Address.
-  - Mỗi order: `customer.address[0]` = địa chỉ order, `orderDetails[].product.images` đầy đủ.
-- Response: `PagedResponse<OrderResponseDTO>` (data, currentPage, pageSize, totalPages, totalRecords, hasNextPage, hasPreviousPage).
-- Exceptions: Không có (trả rỗng nếu không tìm thấy).
+### `GET /api/Order/user/{userId:long}` [Authorize]
+Danh sách đơn hàng của một khách hàng cụ thể.
 
-**`POST /api/Order/{orderId}/ship`** (Authorize, Roles: Admin, Staff)  
-Xuất kho và gán số serial/số lô cho sản phẩm trong đơn hàng trước khi ship.
+**Query Parameters**: `page`, `pageSize`
 
-- Path: `orderId` (ulong)
-- Body: `List<OrderDetailsShippingDTO>`
+---
 
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | productId | ulong | Required, >= 1 |
-  | serialNumber | string? | Optional, max 50 ký tự (bắt buộc với máy móc - category 1,2) |
-  | lotNumber | string? | Optional, max 50 ký tự (bắt buộc với vật tư - category 3,4) |
+## ProductController (`/api/Product`)
 
-- Ràng buộc nghiệp vụ:
-  - Order phải tồn tại.
-  - Tạo Dictionary từ `order.OrderDetails` để theo dõi số lượng sản phẩm.
-  - Mỗi `productId` trong DTO phải:
-    - Tồn tại trong đơn hàng (có trong Dictionary).
-    - Chưa xuất đủ số lượng (quantity > 0).
-    - Có số serial (category 1,2) hoặc số lô (category 3,4) hợp lệ (so sánh case-insensitive với `.ToUpper()`).
-  - Sau khi duyệt hết DTO, kiểm tra Dictionary:
-    - Tất cả sản phẩm phải có quantity = 0 (đã xuất đủ).
-  - Tạo `ExportInventory` với `MovementType=Sale`, `CreatedBy=staffId` (từ JWT).
-- Response: `OrderResponseDTO` sau khi xuất kho thành công.
-- Exceptions:
-  - `ArgumentNullException`: DTO null hoặc rỗng.
-  - `KeyNotFoundException`: Order không tồn tại, số serial/lô không tồn tại hoặc không thuộc sản phẩm.
-  - `InvalidOperationException`: 
-    - Sản phẩm không nằm trong đơn hàng.
-    - Xuất nhiều hơn số lượng đã đặt.
-    - Xuất ít hơn số lượng đã đặt (kiểm tra cuối).
-    - Thiếu số serial (category 1,2) hoặc số lô (category 3,4).
-
-#### ProductCategoryController (`/api/ProductCategory`)
-
-**`POST /api/ProductCategory`** (Authorize)
-Tạo danh mục sản phẩm mới.
-- Body `ProductCategoryCreateDTO`:
-  - `Name` (string, required, max 100)
-  - `Description` (string, optional, max 500)
-  - `ParentId` (ulong, optional)
-
-**`GET /api/ProductCategory`** (Authorize)
-Lấy danh sách tất cả danh mục sản phẩm.
-
-**`GET /api/ProductCategory/{id}`** (Authorize)
-Lấy thông tin danh mục sản phẩm theo ID.
-
-**`PATCH /api/ProductCategory/{id}`** (Authorize)
-Cập nhật danh mục sản phẩm.
-- Body `ProductCategoryUpdateDTO` (các trường giống Create nhưng optional).
-- Ràng buộc: Không thể gán `ParentId` nếu category đã là cha của một category khác.
-
-**`DELETE /api/ProductCategory/{id}`** (Authorize)
-Xóa một danh mục sản phẩm.
-- Ràng buộc: Không thể xóa nếu category là cha của một category khác.
-
-#### ProductCertificateController (`/api/ProductCertificate`)
-Quản lý chứng nhận sản phẩm, bao gồm cả việc upload file.
-
-**`POST /api/ProductCertificate/upload`** (Authorize)
-Tạo hàng loạt chứng nhận kèm file PDF.
-- Content-Type: `multipart/form-data`
-- Form fields:
-  - `ProductId` (long): ID sản phẩm.
-  - `CertificationCode` (List<string>): Danh sách mã chứng nhận.
-  - `CertificationName` (List<string>): Danh sách tên chứng nhận.
-  - `Files` (List<IFormFile>): Danh sách file PDF.
-- Ràng buộc nghiệp vụ:
-  - Số lượng `CertificationCode`, `CertificationName`, và `Files` phải bằng nhau.
-  - Upload file lên Cloudinary, sau đó tạo các `ProductCertificate` và `MediaLink` tương ứng trong một transaction.
-- Response: `List<ProductCertificateResponseDTO>`.
-
-**`POST /api/ProductCertificate`** (Authorize)
-Tạo một chứng nhận kèm file.
-- Content-Type: `multipart/form-data`
-- Form fields:
-  - `[FromForm] ProductCertificateCreateDTO dto`: Dữ liệu chứng nhận.
-  - `[FromForm] List<IFormFile> files`: File PDF.
-- Ràng buộc nghiệp vụ:
-  - Upload file lên Cloudinary, tạo `ProductCertificate` và `MediaLink`.
-- Response: `ProductCertificateResponseDTO`.
-
-**`GET /api/ProductCertificate`** (Authorize)
-Lấy danh sách tất cả chứng nhận (phân trang).
-- Query: `page`, `pageSize`.
-- Response: `PagedResponse<ProductCertificateResponseDTO>`.
-
-**`GET /api/ProductCertificate/by-product/{productId}`** (Authorize)
-Lấy danh sách chứng nhận của một sản phẩm (phân trang).
-- Path: `productId` (ulong).
-- Query: `page`, `pageSize`.
-- Response: `PagedResponse<ProductCertificateResponseDTO>`.
-
-**`GET /api/ProductCertificate/{id}`** (Authorize)
-Lấy chi tiết chứng nhận theo ID.
-- Path: `id` (long).
-- Response: `ProductCertificateResponseDTO`.
-
-**`PUT /api/ProductCertificate/{id}`** (Authorize)
-Cập nhật chứng nhận, có thể thêm/xóa file.
-- Content-Type: `multipart/form-data`
-- Path: `id` (long).
-- Form fields:
-  - `[FromForm] ProductCertificateUpdateDTO form`: Dữ liệu cập nhật.
-  - `[FromForm] List<IFormFile>? addFiles`: File mới để thêm.
-  - `[FromForm] List<string>? removedFilePublicIds`: Public ID của file cần xóa.
-- Response: `ProductCertificateResponseDTO`.
-
-**`PATCH /api/ProductCertificate/status/{id}`** (Authorize)
-Duyệt hoặc từ chối chứng nhận.
-- Path: `id` (long).
-- Body `ProductCertificateChangeStatusDTO`:
-  - `Status` (ProductCertificateStatus: `Verified`, `Rejected`).
-  - `RejectionReason` (string, optional, required nếu `Status` là `Rejected`).
-- Response: `ProductCertificateResponseDTO`.
-
-**`DELETE /api/ProductCertificate/{id}`** (Authorize)
-Xóa chứng nhận.
-- Path: `id` (long).
-- Response: `true` nếu thành công.
-
-#### ProductRegistrationsController (`/api/ProductRegistrations`)
-
-**`GET /api/ProductRegistrations`** (Authorize)  
-Danh sách đăng ký sản phẩm (phân trang).
-
-- Query: `page` (default 1), `pageSize` (default 20)
-- Response: `PagedResponse<ProductRegistrationReponseDTO>` (bao gồm images, certificates, manual URLs).
-- Exceptions: Không có.
-
-**`GET /api/ProductRegistrations/{id}`** (Authorize)  
-Chi tiết đăng ký sản phẩm.
-
-- Path: `id` (ulong)
-- Response: `ProductRegistrationReponseDTO` hoặc 404.
-- Exceptions: Không có (trả null nếu không tìm thấy).
-
-**`GET /api/ProductRegistrations/vendor/{vendorId}`** (Authorize)  
-Danh sách đăng ký theo vendor (phân trang).
-
-- Path: `vendorId` (ulong)
-- Query: `page`, `pageSize`
-- Response: `PagedResponse<ProductRegistrationReponseDTO>`.
-- Exceptions: Không có.
-
-**`POST /api/ProductRegistrations`** (Authorize, Consumes: "multipart/form-data")
-Tạo đăng ký sản phẩm.
-- Form fields:
-  - `[FromForm] CreateForm req`:
-    - `Data` (`ProductRegistrationCreateDTO`): Dữ liệu chính của đơn đăng ký.
-    - `ManualFile` (IFormFile?): File hướng dẫn sử dụng (PDF).
-    - `Images` (List<IFormFile>?): Danh sách ảnh sản phẩm.
-    - `Certificate` (List<IFormFile>?): Danh sách file chứng nhận.
-- Ràng buộc nghiệp vụ:
-  - Upload các file lên Cloudinary.
-  - Tạo `ProductRegistration` và các `MediaLink` liên quan trong một transaction.
-- Response: `ProductRegistrationReponseDTO`.
-
-**`PUT /api/ProductRegistrations/{id}`** (Authorize, Consumes: "multipart/form-data")
-Cập nhật đăng ký sản phẩm.
-- Path: `id` (ulong).
-- Form fields:
-  - `[FromForm] UpdateForm req`:
-    - `Data` (`ProductRegistrationUpdateDTO`): Dữ liệu cập nhật.
-    - `ManualFile` (IFormFile?): File hướng dẫn sử dụng mới.
-    - `Images` (List<IFormFile>?): Ảnh mới để thêm.
-    - `Certificate` (List<IFormFile>?): Chứng nhận mới để thêm.
-    - `RemoveImagePublicIds` (List<string>?): Public ID của ảnh cần xóa.
-    - `RemoveCertificatePublicIds` (List<string>?): Public ID của chứng nhận cần xóa.
-- Response: `ProductRegistrationReponseDTO`.
-
-**`PATCH /api/ProductRegistrations/{id}/status`** (Authorize)  
-Duyệt/từ chối đăng ký sản phẩm.
-- Path: `id` (ulong)
-- Body `ProductRegistrationChangeStatusDTO`:
-  - `status` (enum: `Approved`, `Rejected`).
-  - `rejectionReason` (string, required nếu `status` là `Rejected`).
-- Ràng buộc nghiệp vụ:
-  - Nếu `status` là `Approved`, tự động tạo một `Product` mới từ thông tin đăng ký.
-- Response: 204 NoContent.
-
-**`DELETE /api/ProductRegistrations/{id}`** (Authorize)  
-Xóa đăng ký sản phẩm.
-- Path: `id` (ulong).
-- Response: 204 NoContent.
-
-#### ProductController (`/api/Product`)
-
-**`GET /api/Product`** (Authorize)  
+### `GET /api/Product` 
 Danh sách sản phẩm (phân trang).
-- Query: `page`, `pageSize`.
-- Response: `PagedResponse<ProductListItemDTO>`.
 
-**`GET /api/Product/{id}`** (Authorize)  
-Chi tiết sản phẩm.
+**Query Parameters**: `page` (default 1), `pageSize` (default 20)
 
-- Path: `id` (long/ulong)
-- Response: `ProductResponseDTO` (đầy đủ thông tin, toàn bộ images).
-- Exceptions: 404 nếu không tồn tại.
+---
 
-**`GET /api/Product/category/{categoryId}`** (Authorize)  
+### `GET /api/Product/{id}`
+Chi tiết sản phẩm theo ID (đầy đủ images).
+
+---
+
+### `GET /api/Product/category/{categoryId}`
 Danh sách sản phẩm theo category (phân trang).
 
-- Path: `categoryId` (long/ulong)
-- Query: `page`, `pageSize`
-- Response: `PagedResponse<ProductListItemDTO>`.
-- Exceptions: Không có (trả rỗng nếu category không có sản phẩm).
+---
 
-**`GET /api/Product/vendor/{vendorId}`** (Authorize)  
+### `GET /api/Product/vendor/{vendorId:long}`
 Danh sách sản phẩm theo vendor (phân trang).
 
-- Path: `vendorId` (long/ulong)
-- Query: `page`, `pageSize`
-- Response: `PagedResponse<ProductListItemDTO>`.
-- Exceptions: Không có.
+---
 
-**`PUT /api/Product/{id}`** (Authorize)  
+### `PUT /api/Product/{id}`
 Cập nhật sản phẩm + quản lý ảnh (add/remove).
 
-- Path: `id` (long/ulong)
-- Body `UpdateRequest`:
-  ```json
-  {
-    "data": ProductUpdateDTO,
-    "addImages": [ { "imageUrl", "imagePublicId", "purpose", "sortOrder" }, ... ],
-    "removeImagePublicIds": [ "publicId1", "publicId2" ]
-  }
-  ```
+**Request Body**:
+```json
+{
+  "data": { /* ProductUpdateDTO */ },
+  "addImages": [ { "imageUrl", "imagePublicId", "purpose", "sortOrder" } ],
+  "removeImagePublicIds": [ "publicId1", "publicId2" ]
+}
+```
 
-- `ProductUpdateDTO` (không cần `id` trong body, lấy từ route):
+**ProductUpdateDTO**:
+| Field | Type | Validation |
+|-------|------|------------|
+| id | ulong | Required |
+| categoryId | ulong | Required |
+| vendorId | ulong | Required |
+| productCode | string | Required, max 100 |
+| productName | string | Required, max 255 |
+| description | string? | max 500 |
+| unitPrice | decimal | Required, > 0 |
+| commissionRate | decimal | 0-100 |
+| discountPercentage | decimal | 0-100 |
+| energyEfficiencyRating | string? | max 10 |
+| specifications | Dictionary | Key-value |
+| manualUrls | string? | max 1000 |
+| warrantyMonths | int | > 0, default 12 |
+| stockQuantity | int | >= 0, default 0 |
+| weightKg | decimal | Required, 0.001-50000 |
+| dimensionsCm | object | { width, height, length } |
+| isActive | bool | default true |
+| viewCount | long | default 0 |
+| soldCount | long | default 0 |
+| ratingAverage | decimal | 0-5 |
 
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | categoryId | ulong | Required |
-  | vendorId | ulong | Required |
-  | productCode | string | Required, max 100 ký tự |
-  | productName | string | Required, max 255 ký tự |
-  | description | string? | max 500 ký tự |
-  | unitPrice | decimal | Required, > 0 |
-  | commissionRate | decimal | 0-100 |
-  | discountPercentage | decimal | 0-100 |
-  | energyEfficiencyRating | string? | max 10 ký tự (parse thành int 0-5) |
-  | specifications | Dictionary<string, object>? | Optional |
-  | manualUrls | string? | max 1000 ký tự |
-  | publicUrl | string? | max 1000 ký tự |
-  | warrantyMonths | int | >= 0 |
-  | stockQuantity | int | >= 0 |
-  | weightKg | decimal? | Optional |
-  | dimensionsCm | { width, height, length }? | Optional, decimal |
-  | isActive | bool | Default true |
-  | viewCount | int | >= 0 |
-  | soldCount | int | >= 0 |
-  | ratingAverage | decimal | 0-5 |
+---
 
-- Ràng buộc nghiệp vụ:
-  - Product phải tồn tại.
-  - `categoryId`, `vendorId` phải tồn tại.
-  - `energyEfficiencyRating` parse thành int nullable (0-5).
-  - Xóa ảnh: tìm `MediaLink` với `OwnerType=Products`, `OwnerId=productId`, `ImagePublicId` trong `removeImagePublicIds`.
-  - Thêm ảnh: insert `MediaLink` với `OwnerType=Products`, `OwnerId=productId`.
-  - Update `UpdatedAt = DateTime.UtcNow`.
-- Response: `ProductResponseDTO` đầy đủ (sau khi update + add/remove images).
-- Exceptions:
-  - `KeyNotFoundException`: Product không tồn tại.
-  - `InvalidOperationException`: Category/Vendor không tồn tại.
-
-**`PATCH /api/Product/{id}/emission`** (Authorize)  
+### `PATCH /api/Product/{id}/emission`
 Cập nhật `CommissionRate` của sản phẩm.
 
-- Path: `id` (long/ulong)
-- Body `ProductUpdateEmissionDTO`:
-  ```json
-  {
-    "commissionRate": 0.05
-  }
-  ```
-- Ràng buộc nghiệp vụ:
-  - Product phải tồn tại.
-  - `commissionRate` phải 0-1 (0-100%).
-- Response: 204 NoContent nếu thành công, 404 nếu không tìm thấy.
-- Exceptions: `KeyNotFoundException`.
+**Request Body** (`ProductUpdateEmissionDTO`):
+```json
+{ "commissionRate": 0.05 }
+```
 
-**`DELETE /api/Product/{id}`** (Authorize)  
-Xoá sản phẩm (và có thể dọn ảnh `MediaLink` liên quan).
+---
 
-- Path: `id` (long/ulong)
-- Response: 204 NoContent nếu thành công, 404 nếu không tồn tại.
-- Exceptions: Không có.
+### `DELETE /api/Product/{id}`
+Xoá sản phẩm.
 
-#### RequestTicketController (`/api/RequestTicket`)
-Quản lý các yêu cầu hỗ trợ (support request) hoặc yêu cầu hoàn tiền (refund request).
+---
 
-**`POST /api/RequestTicket`** (Authorize, Roles: Customer,Vendor)
-Tạo một "request ticket" mới.
-- Body `RequestCreateDTO`:
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | requestType | enum | Required: `RefundRequest`, `SupportRequest` |
-  | title | string | Required, 3-255 ký tự |
-  | description | string | Required, 10-2000 ký tự |
-  | images | List<MediaLinkItemDTO>? | Optional, danh sách ảnh đính kèm |
-- Ràng buộc nghiệp vụ:
-  - `UserId` được lấy từ JWT.
-  - Status mặc định là `Pending`.
-  - Nếu có `images`, các ảnh sẽ được lưu và liên kết với request ticket.
-- Response: `RequestResponseDTO`.
+## ProductCategoryController (`/api/ProductCategory`)
 
-**`GET /api/RequestTicket/{requestId}`** (Authorize, Roles: Admin,Staff,Customer,Vendor)
-Lấy thông tin chi tiết một request ticket.
-- Path: `requestId` (ulong).
-- Ràng buộc nghiệp vụ:
-  - User phải là chủ sở hữu ticket hoặc là Admin/Staff.
-- Response: `RequestResponseDTO` (bao gồm cả ảnh).
+### `POST /api/ProductCategory` [Authorize]
+Tạo danh mục sản phẩm mới.
 
-**`GET /api/RequestTicket/user/{userId}`** (Authorize, Roles: Admin,Staff,Customer,Vendor)
-Lấy tất cả request tickets của một user.
-- Path: `userId` (ulong).
-- Ràng buộc nghiệp vụ:
-  - User phải là chính user đó hoặc là Admin/Staff.
-- Response: `List<RequestResponseDTO>`.
+**Request Body** (`ProductCategoryCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| name | string | Required, max 100 |
+| description | string? | Optional |
+| parentId | ulong? | Optional |
 
-**`GET /api/RequestTicket`** (Authorize, Roles: Admin,Staff)
-Lấy danh sách tất cả request tickets với filter và phân trang.
-- Query params:
-  | Param | Type | Default | Description |
-  | --- | --- | --- | --- |
-  | page | int | 1 | Trang hiện tại |
-  | pageSize | int | 10 | Số item/trang (max 100) |
-  | requestType | enum? | null | Lọc theo `RefundRequest` hoặc `SupportRequest` |
-  | requestStatus | enum? | null | Lọc theo `Pending`, `InReview`, `Approved`, `Rejected`, `Completed`, `Cancelled` |
-- Response: `PagedResponse<RequestResponseDTO>`.
+---
 
-**`PUT /api/RequestTicket/{requestId}/process`** (Authorize, Roles: Admin,Staff)
-Xử lý một request ticket.
-- Path: `requestId` (ulong).
-- Body `RequestUpdateDTO`:
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | status | enum | Required: `InReview`, `Approved`, `Rejected`, `Completed`, `Cancelled` |
-  | replyNotes | string? | Required nếu status là `Approved`, `Rejected`, `Completed`, `Cancelled` |
-- Ràng buộc nghiệp vụ:
-  - Chỉ có thể xử lý các ticket có status là `Pending` hoặc `InReview`.
-  - Không thể cập nhật trạng thái ngược về `Pending`.
-  - Khi chuyển sang `InReview`, không được phép có `replyNotes`.
-  - Khi chuyển sang các trạng thái cuối (`Approved`, `Rejected`, `Completed`, `Cancelled`), `replyNotes` là bắt buộc.
-  - `ProcessedBy` và `ProcessedAt` sẽ được tự động gán.
-- Response: `RequestResponseDTO` sau khi đã cập nhật.
+### `GET /api/ProductCategory` [Authorize]
+Lấy danh sách tất cả danh mục sản phẩm.
 
-#### UserBankAccountsController (`/api/UserBankAccounts`)
-Các endpoint đều yêu cầu Bearer token.
+---
 
-**`POST /api/UserBankAccounts/user/{userId}`** (Authorize)
+### `GET /api/ProductCategory/{id}` [Authorize]
+Lấy thông tin danh mục theo ID.
+
+---
+
+### `PATCH /api/ProductCategory/{id}` [Authorize]
+Cập nhật danh mục sản phẩm.
+
+> **Ràng buộc**: Nếu category đã là cha của category khác, không thể gán `ParentId`.
+
+---
+
+## ProductRegistrationsController (`/api/ProductRegistrations`)
+
+### `GET /api/ProductRegistrations`
+Danh sách đăng ký sản phẩm (phân trang).
+
+**Query Parameters**: `page` (default 1), `pageSize` (default 20)
+
+---
+
+### `GET /api/ProductRegistrations/{id}`
+Chi tiết đăng ký sản phẩm theo ID.
+
+---
+
+### `GET /api/ProductRegistrations/vendor/{vendorId}`
+Danh sách đăng ký theo vendor (phân trang).
+
+---
+
+### `POST /api/ProductRegistrations` [multipart/form-data]
+Tạo đăng ký sản phẩm mới.
+
+**Form Fields**:
+| Field | Type | Description |
+|-------|------|-------------|
+| Data | ProductRegistrationCreateDTO | Thông tin đăng ký |
+| ManualFile | IFormFile? | File PDF hướng dẫn |
+| Images | List&lt;IFormFile&gt;? | Hình ảnh sản phẩm |
+| Certificate | List&lt;IFormFile&gt;? | File PDF chứng chỉ |
+
+---
+
+### `PUT /api/ProductRegistrations/{id}` [multipart/form-data]
+Cập nhật đăng ký sản phẩm.
+
+**Form Fields**:
+| Field | Type | Description |
+|-------|------|-------------|
+| Data | ProductRegistrationUpdateDTO | Thông tin cập nhật |
+| ManualFile | IFormFile? | File PDF hướng dẫn mới |
+| Images | List&lt;IFormFile&gt;? | Hình ảnh mới |
+| Certificate | List&lt;IFormFile&gt;? | Chứng chỉ mới |
+| RemoveImagePublicIds | List&lt;string&gt;? | Public ID ảnh cần xóa |
+| RemoveCertificatePublicIds | List&lt;string&gt;? | Public ID chứng chỉ cần xóa |
+
+---
+
+### `PATCH /api/ProductRegistrations/{id}/status`
+Duyệt hoặc từ chối đăng ký sản phẩm.
+
+**Request Body** (`ProductRegistrationChangeStatusDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| status | enum | Approved, Rejected |
+| rejectionReason | string? | Required nếu Rejected |
+| approvedBy | ulong? | Optional |
+
+> Khi được duyệt (Approved), hệ thống tự động tạo `Product` mới từ thông tin đăng ký.
+
+---
+
+### `DELETE /api/ProductRegistrations/{id}`
+Xoá đăng ký sản phẩm.
+
+---
+
+## ProductCertificateController (`/api/ProductCertificate`)
+
+### `POST /api/ProductCertificate/upload` [multipart/form-data]
+Tạo hàng loạt chứng nhận kèm file PDF.
+
+**Form Fields**:
+| Field | Type | Description |
+|-------|------|-------------|
+| ProductId | long | ID sản phẩm |
+| CertificationCode[] | List&lt;string&gt; | Danh sách mã chứng nhận |
+| CertificationName[] | List&lt;string&gt; | Danh sách tên chứng nhận |
+| Files | List&lt;IFormFile&gt; | Danh sách file PDF |
+
+> Số lượng `CertificationCode`, `CertificationName`, và `Files` phải bằng nhau.
+
+---
+
+### `POST /api/ProductCertificate` [multipart/form-data]
+Tạo một chứng nhận kèm file.
+
+---
+
+### `GET /api/ProductCertificate`
+Lấy danh sách tất cả chứng nhận (phân trang).
+
+---
+
+### `GET /api/ProductCertificate/by-product/{productId:long}`
+Lấy danh sách chứng nhận của một sản phẩm (phân trang).
+
+---
+
+### `GET /api/ProductCertificate/{id:long}`
+Chi tiết chứng nhận theo ID.
+
+---
+
+### `PUT /api/ProductCertificate/{id:long}` [multipart/form-data]
+Cập nhật chứng nhận, có thể thêm/xóa file.
+
+---
+
+### `PATCH /api/ProductCertificate/status/{id:long}`
+Duyệt hoặc từ chối chứng nhận.
+
+**Request Body** (`ProductCertificateChangeStatusDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| status | enum | Verified, Rejected |
+| rejectionReason | string? | Required nếu Rejected |
+
+---
+
+### `DELETE /api/ProductCertificate/{id}`
+Xoá chứng nhận.
+
+---
+
+## ProductReviewController (`/api/ProductReview`)
+
+### `POST /api/ProductReview` [Authorize: Customer] [multipart/form-data]
+Tạo đánh giá sản phẩm.
+
+**Form Fields**:
+| Field | Type | Description |
+|-------|------|-------------|
+| Data | ProductReviewCreateDTO | Thông tin đánh giá |
+| Images | List&lt;IFormFile&gt;? | Ảnh đính kèm |
+
+> Chỉ có thể đánh giá một lần cho mỗi sản phẩm trong mỗi đơn hàng.
+
+---
+
+### `GET /api/ProductReview/{id:long}`
+Lấy thông tin đánh giá theo ID.
+
+---
+
+### `GET /api/ProductReview/product/{productId:long}`
+Danh sách đánh giá của một sản phẩm (phân trang).
+
+---
+
+### `GET /api/ProductReview/order/{orderId:long}` [Authorize]
+Danh sách đánh giá của một đơn hàng (phân trang).
+
+---
+
+### `GET /api/ProductReview/customer/{customerId:long}` [Authorize]
+Danh sách đánh giá của một khách hàng (phân trang).
+
+---
+
+### `PUT /api/ProductReview/{id:long}` [Authorize: Customer]
+Cập nhật đánh giá (chỉ chủ sở hữu).
+
+---
+
+### `DELETE /api/ProductReview/{id:long}` [Authorize: Customer]
+Xóa đánh giá (chỉ chủ sở hữu).
+
+---
+
+## ProductSerialController (`/api/product-serials`)
+
+### `GET /api/product-serials/product/{productId}`
+Lấy tất cả serials theo product ID.
+
+---
+
+### `GET /api/product-serials/batch/{batchId}`
+Lấy tất cả serials theo batch ID.
+
+---
+
+### `PATCH /api/product-serials/{serialId}/status`
+Cập nhật trạng thái của một product serial.
+
+**Request Body** (`ProductSerialStatusUpdateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| id | ulong | Required (phải trùng với route) |
+| status | enum | New status |
+
+---
+
+## BatchInventoryController (`/api/BatchInventory`)
+
+### `GET /api/BatchInventory`
+Lấy tất cả batch inventories (phân trang).
+
+**Query Parameters**: `page` (default 1), `pageSize` (default 20)
+
+---
+
+### `GET /api/BatchInventory/product/{productId}`
+Batch inventories theo product ID (phân trang).
+
+---
+
+### `GET /api/BatchInventory/vendor/{vendorId}`
+Batch inventories theo vendor ID (phân trang).
+
+---
+
+### `GET /api/BatchInventory/{id}`
+Chi tiết batch inventory theo ID.
+
+---
+
+### `POST /api/BatchInventory`
+Tạo batch inventory mới.
+
+**Request Body** (`BatchInventoryCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| productId | ulong | Required |
+| sku | string | Required, max 100 |
+| vendorId | ulong? | Optional |
+| batchNumber | string | Required, max 100 |
+| lotNumber | string | Required, max 100 |
+| quantity | int | >= 0 |
+| unitCostPrice | decimal | >= 0 |
+| expiryDate | DateOnly? | Optional |
+| manufacturingDate | DateOnly? | Optional |
+
+---
+
+### `PUT /api/BatchInventory/{id}`
+Cập nhật batch inventory.
+
+---
+
+### `DELETE /api/BatchInventory/{id}`
+Xóa batch inventory.
+
+---
+
+### `POST /api/BatchInventory/{id}/quality-check`
+Kiểm tra chất lượng batch inventory.
+
+**Request Body** (`BatchInventoryQualityCheckDTO`)
+
+---
+
+### `GET /api/BatchInventory/{batchId}/serials`
+Lấy tất cả serials của một batch.
+
+---
+
+## ExportInventoryController (`/api/ExportInventory`)
+
+### `POST /api/ExportInventory` [Authorize: Admin, Staff]
+Tạo đơn xuất kho mới.
+
+**Request Body** (`List<ExportInventoryCreateDTO>`):
+| Field | Type | Validation |
+|-------|------|------------|
+| movementType | enum | ReturnToVendor, Damage, Loss, Adjustment (không được nhập Sale) |
+| ... | ... | ... |
+
+> **Lưu ý**: `MovementType = Sale` chỉ được sử dụng khi xuất hàng bán qua OrderService.
+
+---
+
+### `GET /api/ExportInventory/{id}` [Authorize: Admin, Staff]
+Chi tiết đơn xuất kho theo ID.
+
+---
+
+### `GET /api/ExportInventory` [Authorize: Admin, Staff]
+Danh sách đơn xuất kho với phân trang và filter.
+
+**Query Parameters**:
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| page | int | 1 | Số trang |
+| pageSize | int | 10 | Số bản ghi/trang |
+| movementType | string? | null | Filter: Sale, ReturnToVendor, Damage, Loss, Adjustment |
+
+---
+
+### `GET /api/ExportInventory/identity-numbers/{productId}` [Authorize]
+Lấy danh sách số lô hoặc số sê-ri có sẵn theo ProductId.
+
+---
+
+### `GET /api/ExportInventory/exported-identity-numbers/{orderDetailId}` [Authorize]
+Lấy danh sách số lô/sê-ri đã xuất kho theo OrderDetailId.
+
+---
+
+## FarmProfileController (`/api/FarmProfile`)
+
+### `POST /api/FarmProfile` [Authorize]
+Tạo hồ sơ trang trại cho người dùng hiện tại.
+
+**Request Body** (`FarmProfileCreateDto`)
+
+> Id chủ trang trại sẽ được lấy từ token đăng nhập.
+
+---
+
+### `GET /api/FarmProfile/{id}` [Authorize]
+Lấy thông tin hồ sơ trang trại theo ID.
+
+---
+
+### `GET /api/FarmProfile/User/{userId}` [Authorize]
+Lấy danh sách tất cả hồ sơ trang trại theo User ID.
+
+---
+
+### `PATCH /api/FarmProfile/{id}` [Authorize]
+Cập nhật thông tin hồ sơ trang trại.
+
+**Request Body** (`FarmProfileUpdateDTO`)
+
+---
+
+## CropController (`/api/farm/{farmId}/Crop`)
+
+### `POST /api/farm/{farmId}/Crop` [Authorize]
+Thêm danh sách cây trồng vào trang trại.
+
+**Request Body** (`List<CropsCreateDTO>`)
+
+**Ràng buộc nghiệp vụ**:
+- Kiểm tra trùng lặp (tên + ngày trồng)
+- Validate phương pháp trồng phù hợp với loại cây và kiểu canh tác
+- Không cho phép trạng thái Completed/Deleted/Failed khi tạo mới
+
+---
+
+### `PATCH /api/farm/{farmId}/Crop` [Authorize]
+Cập nhật danh sách cây trồng của trang trại.
+
+**Request Body** (`List<CropsUpdateDTO>`)
+
+> Mỗi DTO phải có `Id`.
+
+---
+
+## CO2Controller (`/api/CO2`)
+
+### `POST /api/CO2/farm/{farmId}` [Authorize]
+Tạo CO2 footprint cho trang trại.
+
+**Request Body** (`CO2FootprintCreateDTO`)
+
+---
+
+### `GET /api/CO2/farm/{farmId}` [Authorize]
+Lấy tất cả dữ liệu môi trường theo Farm ID.
+
+---
+
+### `GET /api/CO2/{id}` [Authorize]
+Lấy dữ liệu môi trường theo ID.
+
+---
+
+### `DELETE /api/CO2/{id}` [Authorize]
+Xóa dữ liệu môi trường (HARD DELETE).
+
+---
+
+## WeatherController (`/api/Weather`)
+
+### `GET /api/Weather/hourly/{farmId}` [Authorize]
+Lấy thông tin thời tiết theo giờ của nông trại (ngày hôm nay).
+
+---
+
+### `GET /api/Weather/daily/{farmId}` [Authorize]
+Lấy thông tin thời tiết theo ngày của nông trại (7 ngày từ hôm nay).
+
+---
+
+### `GET /api/Weather/current/{farmId}` [Authorize]
+Lấy thông tin thời tiết hiện tại của nông trại.
+
+---
+
+## ChatbotConversationController (`/api/ChatbotConversation`)
+
+Tất cả endpoint yêu cầu Authorization.
+
+### `POST /api/ChatbotConversation` [Authorize]
+Tạo cuộc hội thoại chatbot mới với tin nhắn đầu tiên.
+
+**Request Body** (`ChatbotMessageCreateDTO`)
+
+> User ID được lấy từ token.
+
+---
+
+### `POST /api/ChatbotConversation/{conversationId}/message` [Authorize]
+Gửi tin nhắn mới trong cuộc hội thoại hiện có.
+
+---
+
+### `PATCH /api/ChatbotConversation/{conversationId}` [Authorize]
+Cập nhật thông tin cuộc hội thoại (title, context, is_active).
+
+**Request Body** (`ChatbotConversationUpdateDTO`)
+
+---
+
+### `GET /api/ChatbotConversation` [Authorize]
+Lấy danh sách tất cả cuộc hội thoại của người dùng hiện tại (phân trang).
+
+---
+
+### `GET /api/ChatbotConversation/{conversationId}/messages` [Authorize]
+Lấy danh sách tin nhắn trong cuộc hội thoại (phân trang).
+
+---
+
+## NotificationController (`/api/Notification`)
+
+### `PATCH /api/Notification/{id}/revert-read-status` [Authorize]
+Đảo ngược trạng thái đã đọc/chưa đọc của thông báo.
+
+---
+
+### `GET /api/Notification/user/{userId}` [Authorize]
+Lấy danh sách thông báo của người dùng (phân trang).
+
+**Query Parameters**: `page` (default 1), `pageSize` (default 10)
+
+---
+
+### `DELETE /api/Notification/{id}` [Authorize]
+Xóa thông báo theo ID.
+
+---
+
+## RequestTicketController (`/api/RequestTicket`)
+
+### `POST /api/RequestTicket` [Authorize]
+Tạo yêu cầu mới (hỗ trợ hoặc hoàn tiền).
+
+**Request Body** (`RequestCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| requestType | enum | Required: RefundRequest, SupportRequest |
+| title | string | Required, min 3, max 255 |
+| description | string | Required, min 10, max 2000 |
+| images | List&lt;RequestImageDTO&gt;? | Optional |
+
+---
+
+### `PATCH /api/RequestTicket/{requestId}/process` [Authorize: Admin, Staff]
+Xử lý yêu cầu.
+
+**Request Body** (`RequestProcessDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| status | enum | InReview, Approved, Rejected, Cancelled (không được Pending hoặc Completed) |
+| replyNotes | string? | Required nếu Approved/Rejected/Cancelled |
+
+---
+
+### `POST /api/RequestTicket/{requestId}/message` [Authorize]
+Gửi tin nhắn mới cho yêu cầu.
+
+**Request Body** (`RequestMessageCreateDTO`)
+
+> Tối đa 3 tin nhắn. Chỉ gửi được khi tất cả tin nhắn trước đó đã được phản hồi.
+
+---
+
+### `GET /api/RequestTicket/{requestId}` [Authorize]
+Lấy thông tin yêu cầu theo ID.
+
+---
+
+### `GET /api/RequestTicket/my-requests` [Authorize]
+Danh sách yêu cầu của người dùng hiện tại (phân trang).
+
+---
+
+### `GET /api/RequestTicket` [Authorize: Admin, Staff]
+Danh sách tất cả yêu cầu (phân trang, filter).
+
+**Query Parameters**:
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| page | int | 1 | Số trang |
+| pageSize | int | 10 | Số bản ghi/trang |
+| requestType | enum? | null | RefundRequest, SupportRequest |
+| requestStatus | enum? | null | Pending, InReview, Approved, Rejected, Completed, Cancelled |
+
+---
+
+## VendorProfilesController (`/api/VendorProfiles`)
+
+### `GET /api/VendorProfiles`
+Danh sách vendor theo phân trang.
+
+**Query Parameters**: `page` (default 1), `pageSize` (default 10)
+
+---
+
+### `GET /api/VendorProfiles/{id}`
+Chi tiết VendorProfile theo Id.
+
+---
+
+### `GET /api/VendorProfiles/by-user/{userId}`
+VendorProfile theo UserId (vendorId).
+
+---
+
+### `POST /api/VendorProfiles` [multipart/form-data]
+Tạo mới VendorProfile (vendor đăng ký).
+
+**Form Fields**:
+| Field | Type | Description |
+|-------|------|-------------|
+| VendorProfileCreateDTO | FromForm | Thông tin vendor |
+| files | List&lt;IFormFile&gt; | File chứng chỉ (bắt buộc) |
+
+> Tạo User (Role = Vendor) → VendorProfile → Address → UserAddress → VendorCertificate (Pending).
+
+---
+
+### `PUT /api/VendorProfiles/{id}`
+Cập nhật VendorProfile.
+
+**Request Body** (`VendorProfileUpdateDTO`)
+
+---
+
+### `DELETE /api/VendorProfiles/{id}`
+Xóa VendorProfile (hard delete, không xóa user).
+
+---
+
+### `DELETE /api/VendorProfiles/account/{userId}`
+Soft delete tài khoản vendor (set User.Status = Inactive).
+
+---
+
+### `POST /api/VendorProfiles/{id}/approve`
+Duyệt vendor profile.
+
+**Request Body** (`VendorProfileApproveDTO`)
+
+> Duyệt → update User (IsVerified) → update VendorProfile → duyệt tất cả VendorCertificate → gửi email xác nhận.
+
+---
+
+### `POST /api/VendorProfiles/{id}/reject`
+Từ chối vendor profile.
+
+**Request Body** (`VendorProfileRejectDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| rejectionReason | string | Required |
+
+---
+
+## VendorCertificateController (`/api/VendorCertificate`)
+
+### `GET /api/VendorCertificate/vendor/{vendorId}`
+Danh sách certificates của vendor (phân trang).
+
+---
+
+### `GET /api/VendorCertificate/{id}`
+Chi tiết certificate theo ID.
+
+---
+
+### `POST /api/VendorCertificate` [multipart/form-data]
+Tạo nhiều certificates với file uploads.
+
+**Form Fields**:
+| Field | Type | Description |
+|-------|------|-------------|
+| CertificationCode[] | List&lt;string&gt; | Mã chứng nhận |
+| CertificationName[] | List&lt;string&gt; | Tên chứng nhận |
+| files | List&lt;IFormFile&gt; | File PDF (cùng số lượng) |
+
+---
+
+### `PUT /api/VendorCertificate/{id}` [multipart/form-data]
+Cập nhật certificate.
+
+---
+
+### `DELETE /api/VendorCertificate/{id}`
+Xóa certificate.
+
+---
+
+### `PATCH /api/VendorCertificate/{id}/change-status`
+Thay đổi trạng thái certificate.
+
+**Request Body** (`VendorCertificateChangeStatusDTO`)
+
+---
+
+## UserBankAccountsController (`/api/UserBankAccounts`)
+
+### `POST /api/UserBankAccounts/user/{userId}` [Authorize]
 Tạo tài khoản ngân hàng mới cho người dùng.
-- Path: `userId` (ulong).
-- Body `UserBankAccountCreateDTO`:
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | bankName | string | Required, max 255 |
-  | bankAccountName | string | Required, max 255 |
-  | bankAccountNumber | string | Required, max 50 |
-- Ràng buộc nghiệp vụ:
-  - User phải tồn tại.
-  - Service gán `UserId` từ path.
-- Response: `UserBankAccountResponseDTO`.
 
-**`PATCH /api/UserBankAccounts/{accountId}`** (Authorize)
-Cập nhật tài khoản ngân hàng.
-- Path: `accountId` (ulong).
-- Body `UserBankAccountUpdateDTO` (các trường optional, validation giống create).
-- Ràng buộc nghiệp vụ:
-  - Account phải tồn tại.
-- Response: `UserBankAccountResponseDTO`.
+**Request Body** (`UserBankAccountCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| bankName | string | Required, max 100 |
+| bankAccountHolderName | string | Required, max 100 |
+| bankAccountNumber | string | Required, max 50 |
 
-**`DELETE /api/UserBankAccounts/{accountId}`** (Authorize, Roles: Customer,Vendor,Admin)
-Xóa tài khoản ngân hàng.
-- Path: `accountId` (ulong).
-- Ràng buộc nghiệp vụ:
-  - Chỉ chủ tài khoản hoặc Admin mới có quyền xóa.
-- Response: `true` nếu thành công.
+---
 
-**`GET /api/UserBankAccounts/user/{userId}`** (Authorize, Roles: Customer,Vendor,Admin,Staff)
-Lấy danh sách tài khoản ngân hàng của user.
-- Path: `userId` (ulong).
-- Response: `List<UserBankAccountResponseDTO>`.
+### `PATCH /api/UserBankAccounts/{accountId}/deactivate` [Authorize: Staff, Vendor, Admin]
+Vô hiệu hóa tài khoản ngân hàng (soft delete).
 
-**`GET /api/UserBankAccounts/supported-banks`**
-Lấy danh sách ngân hàng được hỗ trợ từ PayOS/VietQR.
-- Ràng buộc nghiệp vụ:
-  - Gọi `IPayOSApiClient.GetAllSupportedBanksAsync`.
-  - Lọc các ngân hàng có `transferSupported=1`, `lookupSupported=1`, `isTransfer=1`, `support!=0`.
-- Response: Danh sách các ngân hàng.
+---
 
-#### WalletController (`/api/Wallet`)
-Quản lý ví điện tử và luồng rút tiền của Vendor.
+### `GET /api/UserBankAccounts/user/{userId}` [Authorize: Customer, Vendor, Admin, Staff]
+Danh sách tài khoản ngân hàng của user.
 
-**`POST /api/Wallet/{userId}/process-credits`** (Authorize, Roles: Admin,Staff,Vendor)
-Xử lý cộng tiền vào ví vendor từ các đơn hàng đã giao thành công và quá 7 ngày.
-- Path: `userId` (ulong) - ID của vendor.
-- Ràng buộc nghiệp vụ:
-  - Tìm các `OrderDetail` có `Order.Status == Delivered`, `Order.DeliveredAt` <= 7 ngày trước, và `IsCreditedToVendor == false`.
-  - Tính tổng tiền (sau khi trừ commission), cộng vào `Wallet.Balance`.
-  - Đánh dấu `IsCreditedToVendor = true` cho các `OrderDetail` đã xử lý.
-  - Ghi nhận giao dịch `Transaction` với `TransactionType = CommissionCredit`.
-- Response: `WalletResponseDTO` (thông tin ví sau khi cập nhật).
+---
 
-**`POST /api/Wallet/cashout-request`** (Authorize, Roles: Vendor)
-Vendor tạo yêu cầu rút tiền từ ví.
-- Body `WalletCashoutRequestCreateDTO`:
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | amount | decimal | Required, > 0 |
-  | userBankAccountId | ulong | Required, > 0 |
-- Ràng buộc nghiệp vụ:
-  - Vendor chỉ được có 1 yêu cầu `Pending` tại một thời điểm.
-  - `amount` phải nhỏ hơn hoặc bằng `Wallet.Balance`.
-  - `userBankAccountId` phải thuộc về vendor.
-- Response: `WalletCashoutRequestResponseDTO`.
+### `GET /api/UserBankAccounts/supported-banks`
+Danh sách ngân hàng được hỗ trợ từ VietQR/PayOS.
 
-**`GET /api/Wallet/{userId}/cashout-request`** (Authorize, Roles: Admin,Staff,Vendor)
-Lấy thông tin yêu cầu rút tiền đang `Pending` của vendor.
-- Path: `userId` (ulong) - ID của vendor.
-- Response: `WalletCashoutRequestResponseDTO` hoặc 404 nếu không có.
+> Lọc: `transferSupported=1`, `lookupSupported=1`, `isTransfer=1`, `support≠0`.
 
-**`GET /api/Wallet/cashout-requests`** (Authorize, Roles: Admin,Staff)
-Lấy danh sách tất cả yêu cầu rút tiền (phân trang).
-- Query: `page` (default 1), `pageSize` (default 10).
-- Response: `PagedResponse<WalletCashoutRequestResponseDTO>`.
+---
 
-**`GET /api/Wallet/{userId}/cashout-requests`** (Authorize, Roles: Admin,Staff,Vendor)
-Lấy danh sách yêu cầu rút tiền của một vendor cụ thể (phân trang).
-- Path: `userId` (ulong) - ID của vendor.
-- Query: `page` (default 1), `pageSize` (default 10).
-- Response: `PagedResponse<WalletCashoutRequestResponseDTO>`.
+## WalletController (`/api/Wallet`)
 
-**`DELETE /api/Wallet/cashout-request`** (Authorize, Roles: Vendor)
-Vendor xóa yêu cầu rút tiền đang `Pending` của mình.
-- Ràng buộc nghiệp vụ:
-  - Yêu cầu phải tồn tại và có status là `Pending`.
-- Response: `true` nếu thành công.
+### `POST /api/Wallet/{userId}/process-credits` [Authorize: Admin, Staff, Vendor]
+Xử lý cộng tiền vào ví vendor từ các đơn hàng đã giao quá 7 ngày.
 
-**`POST /api/Wallet/{userId}/process-cashout-manual`** (Authorize, Roles: Admin,Staff)
-Admin/Staff xử lý yêu cầu rút tiền thủ công.
-- Path: `userId` (ulong) - ID của vendor.
-- Body `WalletProcessCreateDTO`:
-  | Field | Type | Validation |
-  | --- | --- | --- |
-  | status | CashoutStatus | Required: `Completed`, `Failed`, `Cancelled` |
-  | gatewayPaymentId | string? | Required nếu status là `Completed` |
-  | cancelReason | string? | Required nếu status là `Failed` hoặc `Cancelled` |
-- Ràng buộc nghiệp vụ:
-  - Yêu cầu rút tiền `Pending` của user phải tồn tại.
-  - Nếu `Completed`: Trừ tiền trong ví, cập nhật trạng thái `Cashout`, tạo `Transaction`.
-  - Nếu `Failed`/`Cancelled`: Không trừ tiền, chỉ cập nhật trạng thái `Cashout`.
-- Response: `CashoutResponseDTO`.
+**Ràng buộc nghiệp vụ**:
+- Tìm OrderDetail có `Order.Status == Delivered`, `DeliveredAt` <= 7 ngày trước, `IsCreditedToVendor == false`
+- Ghi nhận giao dịch `Transaction` với `TransactionType = CommissionCredit`
 
-**`POST /api/Wallet/{userId}/process-cashout`** (Authorize, Roles: Admin,Staff)
-Admin/Staff xử lý yêu cầu rút tiền tự động qua PayOS.
-- Path: `userId` (ulong) - ID của vendor.
-- Ràng buộc nghiệp vụ:
-  - Yêu cầu rút tiền `Pending` của user phải tồn tại.
-  - Gọi PayOS API để tạo lệnh chuyển tiền (`createTransfer`).
-  - Nếu thành công: Trừ tiền trong ví, cập nhật trạng thái `Cashout`, tạo `Transaction`.
-  - Nếu thất bại: Cập nhật trạng thái `Cashout` thành `Failed` và ghi lại lý do.
-- Response: `CashoutResponseDTO`.
+---
 
-#### CashoutController (`/api/Cashout`)
-Các endpoint hỗ trợ cho việc xử lý cashout.
+### `POST /api/Wallet/cashout-request` [Authorize: Vendor]
+Tạo yêu cầu rút tiền từ ví.
 
-**`GET /api/Cashout/ip-address`** (Authorize)
-Lấy địa chỉ IP của server để sử dụng trong các yêu cầu API cần whitelist IP.
-- Response: `{ "ipv4": "...", "ipv6": "..." }`.
+**Request Body** (`WalletCashoutRequestCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| bankAccountId | ulong | Required, > 0 |
+| amount | int | Required, min 1000 |
+| notes | string? | max 500 |
+
+**Ràng buộc nghiệp vụ**:
+- Vendor chỉ được có 1 yêu cầu `Pending` tại một thời điểm
+- `bankAccountId` phải thuộc về vendor
+
+---
+
+### `GET /api/Wallet/{userId}/cashout-request` [Authorize: Admin, Staff, Vendor]
+Lấy yêu cầu rút tiền đang `Pending` của vendor.
+
+---
+
+### `GET /api/Wallet/cashout-requests` [Authorize: Admin, Staff]
+Danh sách tất cả yêu cầu rút tiền (phân trang).
+
+---
+
+### `GET /api/Wallet/{userId}/cashout-requests` [Authorize: Admin, Staff, Vendor]
+Danh sách yêu cầu rút tiền của một vendor cụ thể (phân trang).
+
+---
+
+### `DELETE /api/Wallet/cashout-request` [Authorize: Vendor]
+Xóa yêu cầu rút tiền đang `Pending`.
+
+---
+
+### `POST /api/Wallet/{userId}/process-cashout-manual` [Authorize: Admin, Staff]
+Xử lý yêu cầu rút tiền thủ công.
+
+**Request Body** (`WalletProcessCreateDTO`):
+| Field | Type | Validation |
+|-------|------|------------|
+| status | enum | Completed, Failed, Cancelled |
+| gatewayPaymentId | string? | Required nếu Completed |
+| cancelReason | string? | Required nếu Failed/Cancelled |
+
+---
+
+### `POST /api/Wallet/{userId}/process-cashout` [Authorize: Admin, Staff]
+Xử lý yêu cầu rút tiền tự động qua PayOS.
+
+---
+
+## CashoutController (`/api/Cashout`)
+
+### `GET /api/Cashout/ip-address` [Authorize]
+Lấy địa chỉ IP của server (chỉ sử dụng cho BE).
+
+---
+
+### `GET /api/Cashout/balance` [Authorize: Admin, Staff]
+Lấy số dư tài khoản PayOS Payout.
+
+---
+
+### `POST /api/Cashout/refund/{requestId}` [Authorize: Admin, Staff]
+Xử lý hoàn tiền cho yêu cầu refund qua PayOS.
+
+**Request Body** (`RefundCreateDTO`):
+| Field | Type | Description |
+|-------|------|-------------|
+| gatewayPaymentId | string? | Nếu có = đã thanh toán bằng tay, nếu null = tự động qua PayOS |
+
+> Đơn hàng phải đã giao và chưa quá 7 ngày.
+
+---
+
+## PayOSController (`/api/PayOS`)
+
+### `POST /api/PayOS/create/{orderId}` [Authorize]
+Tạo payment link cho đơn hàng.
+
+**Request Body** (`CreatePaymentDataDTO`)
+
+---
+
+### `POST /api/PayOS/webhook` [AllowAnonymous]
+Webhook handler cho PayOS - nhận thông báo thanh toán.
+
+> **IMPORTANT**: Luôn trả về 200 OK cho PayOS.
+
+---
+
+### `POST /api/PayOS/confirm-webhook` [Authorize]
+Xác nhận webhook URL với PayOS.
+
+**Request Body** (`ConfirmWebhookDTO`)
+
+---
+
+### `GET /api/PayOS/payment-info/{transactionId}` [Authorize]
+Lấy thông tin payment link theo transaction ID.
+
+---
+
+## DashboardController (`/api/Dashboard`)
+
+Tất cả endpoint yêu cầu `[Authorize: Admin, Staff]`.
+
+### `GET /api/Dashboard/revenue`
+Lấy doanh thu theo khoảng thời gian.
+
+**Query Parameters**:
+| Param | Type | Description |
+|-------|------|-------------|
+| from | DateOnly | Ngày bắt đầu (yyyy-MM-dd) |
+| to | DateOnly | Ngày kết thúc (yyyy-MM-dd) |
+
+---
+
+### `GET /api/Dashboard/orders`
+Thống kê đơn hàng theo khoảng thời gian.
+
+**Query Parameters**: `from`, `to` (DateOnly)
+
+---
+
+### `GET /api/Dashboard/queues`
+Số lượng items đang chờ xử lý.
+
+> Vendor chưa verify, ProductRegistration/VendorCertificate/ProductCertificate/Request đang Pending.
+
+---
+
+### `GET /api/Dashboard/revenue/last-7-days`
+Doanh thu 7 ngày gần nhất (bao gồm hôm nay).
+
+---
+
+## ForumCategoryController (`/api/ForumCategory`)
+
+### `GET /api/ForumCategory`
+Danh sách Forum Category (phân trang).
+
+---
+
+### `GET /api/ForumCategory/{id}`
+Chi tiết Forum Category theo Id.
+
+---
+
+### `POST /api/ForumCategory`
+Tạo mới Forum Category.
+
+**Request Body** (`ForumCategoryCreateDTO`)
+
+---
+
+### `PUT /api/ForumCategory/{id}`
+Cập nhật Forum Category.
+
+**Request Body** (`ForumCategoryUpdateDTO`)
+
+---
+
+### `DELETE /api/ForumCategory/{id}`
+Xóa Forum Category.
+
+---
+
+## ForumPostController (`/api/ForumPost`)
+
+### `GET /api/ForumPost`
+Danh sách bài viết forum (phân trang).
+
+---
+
+### `GET /api/ForumPost/category/{categoryId}`
+Danh sách bài viết theo danh mục (phân trang).
+
+---
+
+### `GET /api/ForumPost/{id}`
+Chi tiết bài viết (bao gồm content blocks, images, comments).
+
+---
+
+### `GET /api/ForumPost/{id}/with-comments`
+Bài viết cùng toàn bộ comments.
+
+---
+
+### `POST /api/ForumPost` [multipart/form-data]
+Tạo bài viết forum mới.
+
+**Form Fields**:
+| Field | Type | Description |
+|-------|------|-------------|
+| ForumPostCreateDTO | FromForm | Thông tin bài viết |
+| AddImages | List&lt;IFormFile&gt;? | Hình ảnh đính kèm |
+
+**Query Parameter**: `userId` (ulong)
+
+---
+
+### `PUT /api/ForumPost/{id}` [multipart/form-data]
+Cập nhật bài viết forum.
+
+---
+
+### `DELETE /api/ForumPost/{id}`
+Xóa bài viết forum.
+
+---
+
+### `PATCH /api/ForumPost/{id}/pin`
+Pin/Unpin bài viết.
+
+**Query Parameter**: `isPinned` (bool)
+
+---
+
+### `PATCH /api/ForumPost/{id}/status`
+Thay đổi trạng thái hiển thị (Visible/Hidden).
+
+**Query Parameter**: `status` (ForumPostStatus)
+
+---
+
+### `POST /api/ForumPost/{id}/view`
+Tăng view cho bài viết.
+
+---
+
+### `POST /api/ForumPost/{id}/like`
+Tăng like cho bài viết.
+
+---
+
+### `POST /api/ForumPost/{id}/dislike`
+Tăng dislike cho bài viết.
+
+---
+
+## ForumCommentController (`/api/ForumComment`)
+
+### `GET /api/ForumComment/post/{postId}`
+Danh sách comment cha của bài viết (phân trang, bao gồm nested replies).
+
+---
+
+### `GET /api/ForumComment/{id}`
+Chi tiết comment (bao gồm toàn bộ replies dạng tree).
+
+---
+
+### `POST /api/ForumComment`
+Tạo comment mới / Reply comment.
+
+**Request Body** (`ForumCommentCreateDTO`)
+
+> Tự động gửi notification đến chủ bài viết hoặc chủ comment cha.
+
+---
+
+### `PUT /api/ForumComment/{id}`
+Cập nhật nội dung comment.
+
+**Request Body** (`ForumCommentUpdateDTO`)
+
+> Người cập nhật phải trùng UserId trong comment.
+
+---
+
+### `DELETE /api/ForumComment/{id}`
+Xóa comment và toàn bộ replies (cascade).
+
+---
+
+### `PATCH /api/ForumComment/{id}/status`
+Đổi trạng thái comment.
+
+**Query Parameter**: `status` (ForumCommentStatus: Visible, Hidden, Deleted)
+
+---
+
+### `POST /api/ForumComment/{id}/like`
+Like comment.
+
+---
+
+### `POST /api/ForumComment/{id}/dislike`
+Dislike comment.
+
+---
+
+## 6. Enums Reference
+
+### UserStatus
+- `Active`
+- `Inactive`
+- `Suspended`
+- `Deleted`
+
+### OrderStatus
+- `Pending`
+- `Paid`
+- `Confirmed`
+- `Processing`
+- `Shipped`
+- `Delivered`
+- `Cancelled`
+- `Refunded`
+
+### OrderPaymentMethod
+- `Banking`
+- `COD`
+
+### RequestType
+- `RefundRequest`
+- `SupportRequest`
+
+### RequestStatus
+- `Pending`
+- `InReview`
+- `Approved`
+- `Rejected`
+- `Completed`
+- `Cancelled`
+
+### CashoutStatus
+- `Pending`
+- `Completed`
+- `Failed`
+- `Cancelled`
+
+### MovementType (ExportInventory)
+- `Sale`
+- `ReturnToVendor`
+- `Damage`
+- `Loss`
+- `Adjustment`
+
+### ProductCertificateStatus
+- `Pending`
+- `Verified`
+- `Rejected`
+
+### ForumPostStatus
+- `Visible`
+- `Hidden`
+
+### ForumCommentStatus
+- `Visible`
+- `Hidden`
+- `Deleted`
+
+---
+
+## 7. Pagination Response Format
+
+```json
+{
+  "data": [ ... ],
+  "currentPage": 1,
+  "pageSize": 10,
+  "totalPages": 5,
+  "totalRecords": 50,
+  "hasNextPage": true,
+  "hasPreviousPage": false
+}
+```
+
+---
+
+## 8. Error Response Format
+
+```json
+{
+  "status": 400,
+  "message": "Error message",
+  "data": null
+}
+```
+
+### Common HTTP Status Codes
+- `200` - OK
+- `201` - Created
+- `204` - No Content
+- `400` - Bad Request
+- `401` - Unauthorized
+- `403` - Forbidden
+- `404` - Not Found
+- `409` - Conflict
+- `500` - Internal Server Error
+- `503` - Service Unavailable
+
+---
+
+## 9. Roles
+
+| Role | Description |
+|------|-------------|
+| Customer | Khách hàng - người mua hàng |
+| Vendor | Nhà cung cấp - bán hàng |
+| Staff | Nhân viên - hỗ trợ xử lý |
+| Admin | Quản trị viên - toàn quyền |
+
+---
+
+## 10. Notes
+
+- Tất cả thời gian sử dụng **UTC**
+- File upload sử dụng **Cloudinary**
+- Payment gateway sử dụng **PayOS**
+- Shipping rates từ **GoShip API**
+- Weather data từ **Open-Meteo API**
