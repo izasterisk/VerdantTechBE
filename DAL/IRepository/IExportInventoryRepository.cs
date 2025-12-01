@@ -14,4 +14,6 @@ public interface IExportInventoryRepository
     Task<List<(string LotNumber, int RemainingQuantity)>> GetNumberOfProductsLeftInInventoryThruLotNumbersAsync(List<string> lotNumbers, CancellationToken cancellationToken = default);
     Task<List<(string LotNumber, string SerialNumber)>> GetSerialNumbersWithLotNumbersByProductIdAsync(ulong productId, CancellationToken cancellationToken = default);
     Task<List<ulong>> CreateExportForExportWithTransactionAsync(List<ExportInventory> exportInventories, Dictionary<ulong, int> productQuantities, List<ProductSerial> s, CancellationToken cancellationToken = default);
+    Task<List<ExportInventory>> GetAllExportInventoryByOrderDetailIdAsync(ulong orderDetailId, CancellationToken cancellationToken = default);
+    Task<string> GetSerialNumberByIdAsync(ulong id, CancellationToken cancellationToken = default);
 }

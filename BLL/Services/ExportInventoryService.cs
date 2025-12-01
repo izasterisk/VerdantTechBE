@@ -173,4 +173,41 @@ public class ExportInventoryService : IExportInventoryService
         }
         return response;
     }
+    
+    public async Task<IdentityNumberDTO> GetAllIdentityNumbersExportedByOrderDetailIdAsync(ulong orderDetailId, CancellationToken cancellationToken = default)
+    {
+        var exports = await _exportInventoryRepository.GetAllExportInventoryByOrderDetailIdAsync(orderDetailId, cancellationToken);
+        if(exports.Count == 0)
+            throw new KeyNotFoundException($"Không tìm thấy đơn xuất kho nào liên quan đến OrderDetailId {orderDetailId}.");
+        var response = new IdentityNumberDTO();
+        if (exports[0].ProductSerialId == null)
+        {
+            response.LotNumberInfo = exports.Select(export => new LotNumberResponseDTO
+            {
+                LotNumber = export.LotNumber,
+                Quantity = export.Quantity
+            }).ToList();
+            response.SerialNumberInfo = null;
+        }
+        else
+        {
+            response.SerialNumberInfo = new List<SerialNumberResponseDTO>();
+            foreach (var export in exports)
+            {
+                string serial = null!;
+                if (export.ProductSerialId != null)
+                {
+                    var serialNumber = await _exportInventoryRepository.GetSerialNumberByIdAsync(export.ProductSerialId.Value, cancellationToken);
+                    serial = serialNumber;
+                }
+                response.SerialNumberInfo.Add(new SerialNumberResponseDTO
+                {
+                    LotNumber = export.LotNumber,
+                    SerialNumber = serial
+                });
+            }
+            response.LotNumberInfo = null;
+        }
+        return response;
+    }
 }

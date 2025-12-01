@@ -231,4 +231,19 @@ public class ExportInventoryRepository : IExportInventoryRepository
         
         return result.Select(x => (x.LotNumber, x.SerialNumber)).ToList();
     }
+
+    public async Task<List<ExportInventory>> GetAllExportInventoryByOrderDetailIdAsync(ulong orderDetailId, CancellationToken cancellationToken = default)
+    {
+        return await _exportInventoryRepository.GetAllByFilterAsync(e => e.OrderDetailId == orderDetailId, true, cancellationToken);
+    }
+    
+    public async Task<string> GetSerialNumberByIdAsync(ulong id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.ProductSerials
+            .AsNoTracking()
+            .Where(ps => ps.Id == id)
+            .Select(ps => ps.SerialNumber)
+            .FirstOrDefaultAsync(cancellationToken)
+               ?? throw new KeyNotFoundException($"Không tìm thấy số sê-ri với ID {id}.");
+    }
 }
