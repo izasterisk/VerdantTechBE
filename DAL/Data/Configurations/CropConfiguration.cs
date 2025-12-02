@@ -37,49 +37,65 @@ public class CropConfiguration : IEntityTypeConfiguration<Crop>
             .IsRequired()
             .HasConversion(
                 v => v.ToString().ToLowerInvariant()
-                    .Replace("directseeding", "direct_seeding")
-                    .Replace("traynursery", "tray_nursery")
-                    .Replace("vegetativepropagation", "vegetative_propagation"),
+                    .Replace("gieohattructiep", "gieo_hat_truc_tiep")
+                    .Replace("uomtrongkhay", "uom_trong_khay")
+                    .Replace("caycaycon", "cay_cay_con")
+                    .Replace("sinhsansinhduong", "sinh_san_sinh_duong")
+                    .Replace("giamcanh", "giam_canh"),
                 v => Enum.Parse<PlantingMethod>(v
-                    .Replace("direct_seeding", "DirectSeeding")
-                    .Replace("tray_nursery", "TrayNursery")
-                    .Replace("vegetative_propagation", "VegetativePropagation"), true))
-            .HasColumnType("enum('direct_seeding','tray_nursery','transplanting','vegetative_propagation','cutting')")
+                    .Replace("gieo_hat_truc_tiep", "GieoHatTrucTiep")
+                    .Replace("uom_trong_khay", "UomTrongKhay")
+                    .Replace("cay_cay_con", "CayCayCon")
+                    .Replace("sinh_san_sinh_duong", "SinhSanSinhDuong")
+                    .Replace("giam_canh", "GiamCanh"), true))
+            .HasColumnType("enum('gieo_hat_truc_tiep','uom_trong_khay','cay_cay_con','sinh_san_sinh_duong','giam_canh')")
             .HasColumnName("planting_method")
-            .HasComment("Phương pháp gieo trồng: direct_seeding (Gieo hạt trực tiếp), tray_nursery (Ươm trong khay), transplanting (Cấy cây con), vegetative_propagation (Sinh sản sinh dưỡng từ củ/thân), cutting (Giâm cành)");
+            .HasComment("Phương pháp gieo trồng: gieo_hat_truc_tiep (Gieo hạt trực tiếp), uom_trong_khay (Ươm trong khay), cay_cay_con (Cấy cây con), sinh_san_sinh_duong (Sinh sản sinh dưỡng từ củ/thân), giam_canh (Giâm cành)");
 
         entity.Property(e => e.CropType)
             .IsRequired()
             .HasConversion(
                 v => v.ToString().ToLowerInvariant()
-                    .Replace("leafygreen", "leafy_green")
-                    .Replace("rootvegetable", "root_vegetable"),
+                    .Replace("rauanla", "rau_an_la")
+                    .Replace("rauanqua", "rau_an_qua")
+                    .Replace("raucu", "rau_cu")
+                    .Replace("rauthom", "rau_thom"),
                 v => Enum.Parse<CropType>(v
-                    .Replace("leafy_green", "LeafyGreen")
-                    .Replace("root_vegetable", "RootVegetable"), true))
-            .HasColumnType("enum('leafy_green','fruiting','root_vegetable','herb')")
+                    .Replace("rau_an_la", "RauAnLa")
+                    .Replace("rau_an_qua", "RauAnQua")
+                    .Replace("rau_cu", "RauCu")
+                    .Replace("rau_thom", "RauThom"), true))
+            .HasColumnType("enum('rau_an_la','rau_an_qua','rau_cu','rau_thom')")
             .HasColumnName("crop_type")
-            .HasComment("Loại cây trồng: leafy_green (Rau ăn lá như rau muống, cải, xà lách), fruiting (Rau ăn quả như cà chua, dưa leo, ớt), root_vegetable (Củ như cà rốt, củ cải), herb (Rau thơm như húng, ngò)");
+            .HasComment("Loại cây trồng: rau_an_la (Rau ăn lá như rau muống, cải, xà lách), rau_an_qua (Rau ăn quả như cà chua, dưa leo, ớt), rau_cu (Củ như cà rốt, củ cải), rau_thom (Rau thơm như húng, ngò)");
 
         entity.Property(e => e.FarmingType)
             .IsRequired()
             .HasConversion(
                 v => v.ToString().ToLowerInvariant()
-                    .Replace("croprotation", "crop_rotation"),
+                    .Replace("thamcanh", "tham_canh")
+                    .Replace("luancanh", "luan_canh")
+                    .Replace("xencanh", "xen_canh")
+                    .Replace("haluoi", "nha_luoi")
+                    .Replace("thuycanh", "thuy_canh"),
                 v => Enum.Parse<FarmingType>(v
-                    .Replace("crop_rotation", "CropRotation"), true))
-            .HasColumnType("enum('intensive','crop_rotation','intercropping','greenhouse','hydroponics')")
+                    .Replace("tham_canh", "ThamCanh")
+                    .Replace("luan_canh", "LuanCanh")
+                    .Replace("xen_canh", "XenCanh")
+                    .Replace("nha_luoi", "NhaLuoi")
+                    .Replace("thuy_canh", "ThuyCanh"), true))
+            .HasColumnType("enum('tham_canh','luan_canh','xen_canh','nha_luoi','thuy_canh')")
             .HasColumnName("farming_type")
-            .HasComment("Loại hình canh tác: intensive (Thâm canh), crop_rotation (Luân canh), intercropping (Xen canh), greenhouse (Nhà lưới/nhà màng), hydroponics (Thủy canh)");
+            .HasComment("Loại hình canh tác: tham_canh (Thâm canh), luan_canh (Luân canh), xen_canh (Xen canh), nha_luoi (Nhà lưới/nhà màng), thuy_canh (Thủy canh)");
 
         entity.Property(e => e.Status)
             .HasConversion(
                 v => v.ToString().ToLowerInvariant(),
                 v => Enum.Parse<CropStatus>(v, true))
-            .HasColumnType("enum('planning','seedling','growing','harvesting','completed','failed','deleted')")
-            .HasDefaultValue(CropStatus.Planning)
+            .HasColumnType("enum('growing','harvested','failed','deleted')")
+            .HasDefaultValue(CropStatus.Growing)
             .HasColumnName("status")
-            .HasComment("Trạng thái của cây trồng: planning (Đang lên kế hoạch), seedling (Giai đoạn cây con), growing (Đang sinh trưởng), harvesting (Đang thu hoạch), completed (Hoàn thành), failed (Thất bại), deleted (Đã xóa)");
+            .HasComment("Trạng thái của cây trồng: growing (Đang sinh trưởng), harvested (Đã thu hoạch), failed (Thất bại), deleted (Đã xóa)");
 
         entity.Property(e => e.CreatedAt)
             .HasDefaultValueSql("current_timestamp()")

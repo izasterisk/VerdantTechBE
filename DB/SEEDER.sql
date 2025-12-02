@@ -129,122 +129,122 @@ INSERT INTO `user_addresses` (`id`, `user_id`, `address_id`, `is_deleted`, `crea
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (1, 9, 'Trang trại Lúa ĐBSCL', 15.5, 9, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(1, 'Lúa', '2025-01-15', 'planning'), (1, 'Rau muống', '2025-06-01', 'planning'), (1, 'Cải thảo', '2025-06-01', 'planning');
+(1, 'Lúa', '2025-01-15', 'growing'), (1, 'Rau muống', '2025-06-01', 'growing'), (1, 'Cải thảo', '2025-06-01', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (2, 9, 'Trang trại Cao Su BRVT', 20.0, 10, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(2, 'Cao su', '2020-01-01', 'planning'), (2, 'Điều', '2021-03-01', 'planning');
+(2, 'Cao su', '2020-01-01', 'growing'), (2, 'Điều', '2021-03-01', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (3, 9, 'Trang trại Thanh Long', 8.2, 11, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(3, 'Thanh long ruột đỏ', '2022-05-15', 'planning'), (3, 'Thanh long trắng', '2022-05-15', 'planning');
+(3, 'Thanh long ruột đỏ', '2022-05-15', 'growing'), (3, 'Thanh long trắng', '2022-05-15', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (4, 9, 'Trang trại Ca Cao Biên Hòa', 12.0, 12, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(4, 'Ca cao', '2021-08-10', 'planning');
+(4, 'Ca cao', '2021-08-10', 'growing');
 
 -- ===== FARMER 2 (User ID 10) - 4 Farms =====
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (5, 10, 'Trang trại Sầu Riêng Đak Lak', 10.5, 13, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(5, 'Sầu riêng Monthong', '2019-06-20', 'planning'), (5, 'Sầu riêng Ri6', '2019-06-20', 'planning');
+(5, 'Sầu riêng Monthong', '2019-06-20', 'growing'), (5, 'Sầu riêng Ri6', '2019-06-20', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (6, 10, 'Trang trại Cà Phê Lâm Đồng', 6.8, 14, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(6, 'Cà phê Arabica', '2018-11-01', 'planning');
+(6, 'Cà phê Arabica', '2018-11-01', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (7, 10, 'Trang trại Chè Lâm Đồng', 5.5, 15, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(7, 'Chè xanh', '2020-02-15', 'planning');
+(7, 'Chè xanh', '2020-02-15', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (8, 10, 'Trang trại Nho Đà Lạt', 3.2, 16, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(8, 'Nho Cardinal', '2023-01-10', 'planning'), (8, 'Nho Kyoho', '2023-01-10', 'planning');
+(8, 'Nho Cardinal', '2023-01-10', 'growing'), (8, 'Nho Kyoho', '2023-01-10', 'growing');
 
 -- ===== FARMER 3 (User ID 13) - 4 Farms =====
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (9, 13, 'Trang trại Dâu Tây Đà Lạt', 2.5, 17, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(9, 'Dâu tây Camarosa', '2024-10-01', 'planning'), (9, 'Dâu tây Festival', '2024-10-01', 'planning');
+(9, 'Dâu tây Camarosa', '2024-10-01', 'growing'), (9, 'Dâu tây Festival', '2024-10-01', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (10, 13, 'Trang trại Rau Sạch Đà Lạt', 4.5, 18, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(10, 'Cà chua bi', '2025-02-01', 'planning'), (10, 'Xà lách', '2025-02-01', 'planning'), (10, 'Bông cải xanh', '2025-02-01', 'planning');
+(10, 'Cà chua bi', '2025-02-01', 'growing'), (10, 'Xà lách', '2025-02-01', 'growing'), (10, 'Bông cải xanh', '2025-02-01', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (11, 13, 'Trang trại Tiêu Lâm Đồng', 7.3, 19, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(11, 'Tiêu (Hồ tiêu)', '2021-05-20', 'planning');
+(11, 'Tiêu (Hồ tiêu)', '2021-05-20', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (12, 13, 'Trang trại Chuối Lâm Đồng', 4.0, 20, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(12, 'Chuối tiêu', '2023-07-15', 'planning');
+(12, 'Chuối tiêu', '2023-07-15', 'growing');
 
 -- ===== FARMER 4 (User ID 14) - 4 Farms =====
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (13, 14, 'Trang trại Chè Tây Nguyên', 9.0, 21, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(13, 'Chè shan tuyết', '2019-04-01', 'planning');
+(13, 'Chè shan tuyết', '2019-04-01', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (14, 14, 'Trang trại Lúa Vinh', 18.0, 22, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(14, 'Lúa Nàng Nhen', '2025-01-20', 'planning'), (14, 'Lúa Bắc Hương', '2025-01-20', 'planning');
+(14, 'Lúa Nàng Nhen', '2025-01-20', 'growing'), (14, 'Lúa Bắc Hương', '2025-01-20', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (15, 14, 'Trang trại Ngô Vinh', 12.5, 23, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(15, 'Ngô nếp', '2025-03-01', 'planning'), (15, 'Ngô lai', '2025-03-01', 'planning');
+(15, 'Ngô nếp', '2025-03-01', 'growing'), (15, 'Ngô lai', '2025-03-01', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (16, 14, 'Trang trại Sắn Vinh', 10.0, 24, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(16, 'Sắn KM94', '2024-12-15', 'planning');
+(16, 'Sắn KM94', '2024-12-15', 'growing');
 
 -- ===== FARMER 5 (User ID 15) - 4 Farms =====
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (17, 15, 'Trang trại Vải Bắc Giang', 7.5, 25, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(17, 'Vải thiều', '2018-02-10', 'planning');
+(17, 'Vải thiều', '2018-02-10', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (18, 15, 'Trang trại Lúa Thái Bình', 22.0, 26, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(18, 'Lúa Bắc Hương', '2025-01-25', 'planning'), (18, 'Lúa Khang Dân', '2025-01-25', 'planning');
+(18, 'Lúa Bắc Hương', '2025-01-25', 'growing'), (18, 'Lúa Khang Dân', '2025-01-25', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (19, 15, 'Trang trại Đào Sơn La', 5.8, 27, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(19, 'Đào tiên', '2020-11-05', 'planning');
+(19, 'Đào tiên', '2020-11-05', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (20, 15, 'Trang trại Mận Hòa Bình', 6.2, 28, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(20, 'Mận hậu', '2021-01-15', 'planning');
+(20, 'Mận hậu', '2021-01-15', 'growing');
 
 -- ===== FARMER 6 (User ID 16) - 3 Farms =====
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (21, 16, 'Trang trại Hồng Lạng Sơn', 4.5, 29, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(21, 'Hồng giòn', '2022-03-10', 'planning');
+(21, 'Hồng giòn', '2022-03-10', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (22, 16, 'Trang trại Chè Thái Nguyên', 8.5, 30, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(22, 'Chè Thái Nguyên', '2020-08-20', 'planning');
+(22, 'Chè Thái Nguyên', '2020-08-20', 'growing');
 
 INSERT INTO `farm_profiles` (`id`, `user_id`, `farm_name`, `farm_size_hectares`, `address_id`, `status`, `created_at`, `updated_at`) 
 VALUES (23, 16, 'Trang trại Cà Phê Sơn La', 9.5, 31, 'Active', NOW(), NOW());
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
-(23, 'Cà phê Robusta', '2019-09-05', 'planning');
+(23, 'Cà phê Robusta', '2019-09-05', 'growing');
 
 -- =====================================================
 -- 5. VENDOR PROFILES, BANK ACCOUNTS, WALLETS

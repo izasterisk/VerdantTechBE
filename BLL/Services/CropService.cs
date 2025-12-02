@@ -58,7 +58,7 @@ public class CropService : ICropService
                 uniqueNames[crop.CropName] = new List<DateOnly> { crop.PlantingDate };
             }
             FarmProfilesHelper.ValidateCropCombination(crop.PlantingMethod, crop.CropType, crop.FarmingType);
-            if(crop.Status is CropStatus.Completed or CropStatus.Deleted or CropStatus.Failed)
+            if(crop.Status is CropStatus.Harvested or CropStatus.Deleted or CropStatus.Failed)
                 throw new ArgumentException("Trạng thái cây trồng không hợp lệ khi tạo mới.");
             if(crop.PlantingDate > DateOnly.FromDateTime(DateTime.UtcNow))
                 throw new ArgumentException("Ngày trồng không được lớn hơn ngày hiện tại.");
