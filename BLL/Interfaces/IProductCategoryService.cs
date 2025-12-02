@@ -1,4 +1,5 @@
-﻿using BLL.DTO.ProductCategory;
+﻿using BLL.DTO;
+using BLL.DTO.ProductCategory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace BLL.Interfaces
     {
         Task<ProductCategoryResponseDTO> CreateProductCategoryAsync( ProductCategoryCreateDTO dto, CancellationToken cancellationToken = default);
         Task<ProductCategoryResponseDTO?> GetProductCategoryByIdAsync(ulong id, CancellationToken cancellationToken = default);
-        Task<IReadOnlyList<ProductCategoryResponseDTO>> GetAllProductCategoryAsync( CancellationToken cancellationToken = default);
+        Task<PagedResponse<ProductCategoryResponseDTO>> GetAllProductCategoryAsync(int page, int pageSize, CancellationToken cancellationToken = default);
         Task<ProductCategoryResponseDTO> UpdateProductCategoryAsync(ulong id, ProductCategoryUpdateDTO dto, CancellationToken cancellationToken = default);
     }
 }

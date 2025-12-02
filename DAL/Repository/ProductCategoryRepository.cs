@@ -1,4 +1,5 @@
-﻿using DAL.Data;
+﻿using System.Collections.Generic;
+using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
@@ -25,13 +26,31 @@ namespace DAL.Repository
             return await _productCategoryRepository.UpdateAsync(productCategory, cancellationToken);
         }
 
-        public async Task<List<ProductCategory>> GetAllProductCategoryAsync(CancellationToken cancellationToken = default)
+        public async Task<(IReadOnlyList<ProductCategory> Items, int Total)> GetAllProductCategoryAsync(
+            int page, int pageSize, CancellationToken cancellationToken = default)
         {
-            return await _productCategoryRepository.GetAllWithRelationsAsync(
-                q => q
-                    .AsNoTracking().Where(pc => pc.IsActive)
-                    .Include(pc => pc.Parent), cancellationToken
-            );
+            NormalizePaging(ref page, ref pageSize);
+
+            var query = _dbContext.ProductCategories
+                .AsNoTracking()
+                .Where(pc => pc.IsActive)
+                .Include(pc => pc.Parent);
+
+            var total = await query.CountAsync(cancellationToken);
+
+            var items = await query
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return (items, total);
+        }
+
+        private static void NormalizePaging(ref int page, ref int pageSize)
+        {
+            if (page <= 0) page = 1;
+            if (pageSize <= 0) pageSize = 20;
         }
 
         public async Task<ProductCategory?> GetProductCategoryByIdAsync(ulong categoryId, bool useNoTracking = true, CancellationToken cancellationToken = default)
