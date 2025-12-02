@@ -39,6 +39,22 @@ namespace BLL.Services
             return ToPaged(list, total, page, pageSize);
         }
 
+        public async Task<PagedResponse<ProductListItemDTO>> GetAllByCategoryAsync(ulong? categoryId, int page, int pageSize, CancellationToken ct = default)
+        {
+            if (categoryId.HasValue)
+            {
+                var (items, total) = await _repo.GetAllProductByCategoryIdAsync(categoryId.Value, page, pageSize, ct);
+                var list = _mapper.Map<List<ProductListItemDTO>>(items);
+                await HydrateImagesAsync(list.Select(x => x.Id).ToList(), list, ct);
+                return ToPaged(list, total, page, pageSize);
+            }
+            else
+            {
+                // Nếu không có categoryId thì trả về tất cả
+                return await GetAllAsync(page, pageSize, ct);
+            }
+        }
+
         public async Task<PagedResponse<ProductListItemDTO>> GetByCategoryAsync(ulong categoryId, int page, int pageSize, CancellationToken ct = default)
         {
             var (items, total) = await _repo.GetAllProductByCategoryIdAsync(categoryId, page, pageSize, ct);
