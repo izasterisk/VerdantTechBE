@@ -17,7 +17,7 @@ namespace BLL.Interfaces
        Task<List<VendorProfileResponseDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default);
        Task UpdateAsync(VendorProfileUpdateDTO dto, CancellationToken ct = default);
        Task DeleteAsync(ulong id, CancellationToken ct = default);
-       Task SoftDeleteAccountAsync(ulong userId, CancellationToken ct = default);
+        Task SoftDeleteAccountAsync(ulong vendorProfileId, CancellationToken ct = default);
        Task ApproveAsync(VendorProfileApproveDTO dto, CancellationToken ct = default);
        Task RejectAsync(VendorProfileRejectDTO dto, CancellationToken ct = default);
     }
