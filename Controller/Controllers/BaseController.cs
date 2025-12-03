@@ -91,6 +91,9 @@ public abstract class BaseController : ControllerBase
             ValidationException =>
                 BadRequest(APIResponse.Error(safeMsg, HttpStatusCode.BadRequest)),
 
+            InvalidDataException =>
+                BadRequest(APIResponse.Error(safeMsg, HttpStatusCode.BadRequest)),
+
             AutoMapperMappingException =>
                 BadRequest(APIResponse.Error("Dữ liệu không thể map sang mô hình đích.", HttpStatusCode.BadRequest)),
 

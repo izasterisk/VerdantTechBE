@@ -15,33 +15,26 @@ namespace BLL.Services;
 
 public class CashoutService : ICashoutService
 {
-    private readonly IExportInventoryRepository _exportedInventoryRepository;
     private readonly IMapper _mapper;
     private readonly IPayOSApiClient _payOSApiClient;
     private readonly ICashoutRepository _cashoutRepository;
-    private readonly IOrderDetailRepository _orderDetailRepository;
     private readonly IRequestRepository _requestRepository;
-    private readonly IOrderRepository _orderRepository;
+    private readonly ITransactionRepository _transactionRepository;
     private readonly IUserBankAccountsRepository _userBankAccountRepository;
     private readonly INotificationService _notificationService;
-    private readonly IExportInventoryService _exportInventoryService;
     
-    public CashoutService(IExportInventoryRepository exportedInventoryRepository, IMapper mapper,
-        IPayOSApiClient payOSApiClient, ICashoutRepository cashoutRepository,
-        IOrderDetailRepository orderDetailRepository, IRequestRepository requestRepository,
-        IOrderRepository orderRepository, IUserBankAccountsRepository userBankAccountRepository,
-        INotificationService notificationService, IExportInventoryService exportInventoryService)
+    public CashoutService(IMapper mapper, IPayOSApiClient payOSApiClient,
+        ICashoutRepository cashoutRepository, IRequestRepository requestRepository,
+        ITransactionRepository transactionRepository, IUserBankAccountsRepository userBankAccountRepository,
+        INotificationService notificationService)
     {
-        _exportedInventoryRepository = exportedInventoryRepository;
         _mapper = mapper;
         _payOSApiClient = payOSApiClient;
         _cashoutRepository = cashoutRepository;
-        _orderDetailRepository = orderDetailRepository;
         _requestRepository = requestRepository;
-        _orderRepository = orderRepository;
+        _transactionRepository = transactionRepository;
         _userBankAccountRepository = userBankAccountRepository;
         _notificationService = notificationService;
-        _exportInventoryService = exportInventoryService;
     }
     
     public async Task<TransactionResponseDTO> CreateCashoutRefundAsync(ulong staffId, ulong requestId, RefundCreateDTO dtos, CancellationToken cancellationToken = default)
@@ -66,6 +59,10 @@ public class CashoutService : ICashoutService
         }
         var orderTuple = await _cashoutRepository.GetOrderAndChosenOrderDetailsById(orderDetailIdSeen.ToList(), cancellationToken);
         var exportsByOrderDetailId = await _cashoutRepository.GetAllExportInventoriesByOrderDetailIdsAsync(orderDetailIdSeen, cancellationToken);
+        
+        var payment = await _transactionRepository.GetTransactionByOrderIdAsync(orderTuple.Item1.Id, cancellationToken);
+        if (orderTuple.Item1.OrderPaymentMethod == OrderPaymentMethod.Banking && payment.Status != TransactionStatus.Completed)
+            throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán banking đã hoàn tất.");
         
         // Convert thành Dictionary search cho nhanh
         var orderDetailMap = orderTuple.Item2.ToDictionary(od => od.Id);
@@ -131,8 +128,7 @@ public class CashoutService : ICashoutService
         }
         
         if(dtos.RefundAmount > refundAmountEstimate)
-            throw new InvalidDataException("Số tiền hoàn không được nhiều hơn số tiền của các đơn hàng.");
-        
+            throw new InvalidDataException("Số tiền hoàn không được nhiều hơn số tiền của các đơn hàng.");        
         var bankAccount = await _userBankAccountRepository.GetUserBankAccountByIdAsync(dtos.BankAccountId, cancellationToken);
         string cashoutResponseId;
         if (dtos.GatewayPaymentId == null)
