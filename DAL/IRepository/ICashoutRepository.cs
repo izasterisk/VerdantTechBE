@@ -15,4 +15,8 @@ public interface ICashoutRepository
         Dictionary<(ulong OrderDetailId, string LotNumber), int> validateLotNumber, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalRefundedAmountByOrderDetailIdsAsync(Dictionary<(ulong OrderDetailId, string LotNumber), int> validateLotNumber,
         CancellationToken cancellationToken = default);
+    Task<List<ExportInventory>> GetAllExportInventoriesByOrderDetailIdsAsync(HashSet<ulong> orderDetailIds,
+        CancellationToken cancellationToken = default);
+    Task<(Order, List<OrderDetail>)> GetOrderAndChosenOrderDetailsById(List<ulong> orderDetailIds,
+        CancellationToken cancellationToken = default);
 }

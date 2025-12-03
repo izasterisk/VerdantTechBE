@@ -73,6 +73,8 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} không còn đủ hàng so với yêu cầu trong đơn hàng của bạn.");
             var product = _mapper.Map<ProductResponseDTO>(productRaw);
             product.Images = _mapper.Map<List<ProductImageResponseDTO>>(await _orderRepository.GetProductImagesByProductIdAsync(orderDetail.ProductId, cancellationToken));
+            if(orderDetail.DiscountAmount > (product.UnitPrice * orderDetail.Quantity))
+                throw new InvalidOperationException($"Số tiền giảm giá cho sản phẩm với ID {orderDetail.ProductId} không thể lớn hơn tổng giá trị sản phẩm.");
             OrderDetailsPreviewResponseDTO orderDetailResponse = new()
             {
                 Product = product,
