@@ -246,3 +246,30 @@ VALUES (23, 16, 'Trang trại Cà Phê Sơn La', 9.5, 31, 'Active', NOW(), NOW()
 INSERT INTO `crops` (`farm_profile_id`, `crop_name`, `planting_date`, `status`) VALUES 
 (23, 'Cà phê Robusta', '2019-09-05', 'growing');
 
+-- =====================================================
+-- 5. USER BANK ACCOUNTS (2 customers + 20 vendors)
+-- =====================================================
+INSERT INTO `user_bank_accounts` (`id`, `user_id`, `bank_code`, `account_number`, `owner_name`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 7, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(2, 8, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(3, 17, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(4, 18, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(5, 19, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(6, 20, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(7, 21, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(8, 22, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(9, 23, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(10, 24, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(11, 25, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(12, 26, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(13, 27, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(14, 28, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(15, 29, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(16, 30, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(17, 31, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(18, 32, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(19, 33, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(20, 34, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(21, 35, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW()),
+(22, 36, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW());
+
