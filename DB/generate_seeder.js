@@ -202,12 +202,16 @@ function getWarrantyMonths(productName) {
     return 0;
 }
 
-// Categories that require serial numbers (by DB ID):
-// 25: Hệ Thống Điều Khiển Tưới, 27: Thiết Bị Giám Sát, 28: Hệ Thống IoT & Tự Động Hóa, 29: Máy Móc Nhỏ
-const SERIAL_REQUIRED_CATEGORY_IDS = [25, 27, 28, 29];
+// Categories that require serial numbers (by name):
+const SERIAL_REQUIRED_CATEGORY_NAMES = [
+    'Hệ Thống Điều Khiển Tưới',
+    'Thiết Bị Giám Sát', 
+    'Hệ Thống IoT & Tự Động Hóa',
+    'Máy Móc Nhỏ'
+];
 
-function requiresSerial(categoryDbId) {
-    return SERIAL_REQUIRED_CATEGORY_IDS.includes(categoryDbId);
+function requiresSerial(categoryName) {
+    return SERIAL_REQUIRED_CATEGORY_NAMES.includes(categoryName);
 }
 
 // Legacy function for warranty calculation (still useful)
@@ -329,15 +333,8 @@ function generateVendorData() {
     });
     sql += vendorRows.join(',\n') + ';\n\n';
     
-    // User Bank Accounts
-    sql += `-- Insert User Bank Accounts (20 vendors - all same account 970436/1045069359)\n`;
-    sql += `INSERT INTO user_bank_accounts (id, user_id, bank_code, account_number, owner_name, is_active, created_at, updated_at) VALUES\n`;
-    
-    const bankRows = [];
-    for (let i = 1; i <= 20; i++) {
-        bankRows.push(`(${i}, ${16 + i}, '970436', '1045069359', 'NGUYEN NGOC HOA', 1, NOW(), NOW())`);
-    }
-    sql += bankRows.join(',\n') + ';\n\n';
+    // NOTE: User Bank Accounts are now in SEEDER_BACKUP.sql
+    // No need to generate them here anymore
     
     // Wallets
     sql += `-- Insert Wallets (20 vendors - starting balance 10,000,000 VND)\n`;
@@ -413,7 +410,8 @@ function generateCategories(products) {
     });
     
     const totalSubs = Array.from(categoryMap.values()).reduce((sum, cat) => sum + cat.subs.size, 0);
-    let sql = `-- Insert Product Categories (11 parent + ${totalSubs} sub categories)\n`;
+    const totalParents = categoryMap.size;
+    let sql = `-- Insert Product Categories (${totalParents} parent + ${totalSubs} sub categories)\n`;
     sql += `INSERT INTO product_categories (id, parent_id, name, slug, description, is_active, serial_required, created_at, updated_at) VALUES\n`;
     
     const rows = [];
@@ -431,8 +429,8 @@ function generateCategories(products) {
     for (const [key, cat] of categoryMap) {
         for (const [subKey, sub] of cat.subs) {
             const slug = slugify(sub.name);
-            // Use SERIAL_REQUIRED_CATEGORY_IDS constant for consistency
-            const serialRequired = SERIAL_REQUIRED_CATEGORY_IDS.includes(catId) ? 1 : 0;
+            // Check if this sub-category requires serial numbers
+            const serialRequired = requiresSerial(sub.name) ? 1 : 0;
             rows.push(`(${catId}, ${cat.dbId}, '${escapeSQL(sub.name)}', '${slug}', 'Danh mục con ${escapeSQL(sub.name)}', 1, ${serialRequired}, NOW(), NOW())`);
             sub.dbId = catId;
             catId++;
@@ -466,8 +464,10 @@ function generateProducts(products, categoryMap) {
         
         // Nếu subId === categoryId → không có sub, dùng parent
         let categoryDbId;
+        let categoryName; // Store category name for serial checking
         if (p.subId === p.categoryId) {
             categoryDbId = cat.dbId;  // Gắn vào parent
+            categoryName = cat.name;
         } else {
             // Có sub-category → tìm và dùng sub
             const sub = Array.from(cat.subs.values()).find(s => s.id === p.subId);
@@ -476,6 +476,7 @@ function generateProducts(products, categoryMap) {
                 return;
             }
             categoryDbId = sub.dbId;
+            categoryName = sub.name;
         }
         const productCode = `PRD-C${p.categoryId.padStart(2, '0')}-${productId.toString().padStart(4, '0')}`;
         const slug = slugify(p.productName);
@@ -494,6 +495,8 @@ function generateProducts(products, categoryMap) {
         p.dbId = productId;
         p.vendorId = vendorId;
         p.categoryDbId = categoryDbId; // Store category DB ID for serial generation
+        p.categoryName = categoryName; // Store category name for serial checking
+        p.productId = productId; // Store product ID as well
         productId++;
     });
     
@@ -643,8 +646,11 @@ function generateBatchInventory(products) {
     sql += rows.join(',\n') + ';\n\n';
     
     // Product serials for categories that require serial numbers
-    // Categories: Máy Móc Nhỏ (29), Hệ Thống IoT & Tự Động Hóa (28), Thiết Bị Giám Sát (27), Hệ Thống Điều Khiển Tưới (25)
-    const serialRequiredProducts = products.filter(p => p.categoryDbId && requiresSerial(p.categoryDbId));
+    // Categories: Máy Móc Nhỏ, Hệ Thống IoT & Tự Động Hóa, Thiết Bị Giám Sát, Hệ Thống Điều Khiển Tưới
+    const serialRequiredProducts = products.filter(p => {
+        if (!p.dbId || !p.categoryName) return false;
+        return requiresSerial(p.categoryName);
+    });
     
     if (serialRequiredProducts.length > 0) {
         sql += `-- Insert Product Serials for Serial-Required Categories (${serialRequiredProducts.length} products x 10 units = ${serialRequiredProducts.length * 10} serials)\n`;

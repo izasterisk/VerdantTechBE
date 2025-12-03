@@ -76,11 +76,6 @@ public class CashoutRepository : ICashoutRepository
         UserBankAccount? bankAccount, Order order, Request request, List<ProductSerial> serials, 
         List<ExportInventory> exports, CancellationToken cancellationToken = default)
     {
-        var payment = await _transactionRepository.GetAsync(u => u.OrderId == order.Id, true, cancellationToken) ?? 
-            throw new KeyNotFoundException("Không tìm thấy thanh toán liên quan đến đơn hàng.");
-        if (payment.Status != TransactionStatus.Completed)
-            throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán đã hoàn tất.");
-        
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
