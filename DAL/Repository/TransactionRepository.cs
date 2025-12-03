@@ -27,10 +27,10 @@ public class TransactionRepository : ITransactionRepository
                throw new KeyNotFoundException($"Không tồn tại giao dịch với mã thanh toán {gatewayPaymentId}.");
     }
     
-    public async Task<Transaction> GetTransactionByOrderIdAsync(ulong orderId, CancellationToken cancellationToken = default)
+    public async Task<Transaction> GetPaymentTransactionByOrderIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         return await _transactionRepository.GetAsync(
-                   t => t.OrderId == orderId, true, cancellationToken) ?? 
+                   t => t.OrderId == orderId && t.Payment != null, true, cancellationToken) ?? 
                throw new KeyNotFoundException($"Không tồn tại giao dịch cho đơn hàng với Id {orderId}.");
     }
 }

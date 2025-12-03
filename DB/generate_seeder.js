@@ -446,7 +446,7 @@ function generateCategories(products) {
 function generateProducts(products, categoryMap) {
     console.log('📦 Generating products...');
     
-    let sql = `-- Insert Products (${products.length} products, price=1000, commission_rate=10%, stock=100)\n`;
+    let sql = `-- Insert Products (${products.length} products, price=5000, commission_rate=10%, stock=100)\n`;
     sql += `INSERT INTO products (id, category_id, vendor_id, product_code, product_name, slug, description, unit_price, commission_rate, discount_percentage, energy_efficiency_rating, specifications, manual_urls, public_url, warranty_months, stock_quantity, weight_kg, dimensions_cm, is_active, view_count, sold_count, rating_average, registration_id, created_at, updated_at) VALUES\n`;
     
     const rows = [];
@@ -490,7 +490,7 @@ function generateProducts(products, categoryMap) {
             vendorId++;
         }
         
-        rows.push(`(${productId}, ${categoryDbId}, ${vendorId}, '${productCode}', '${escapeSQL(p.productName)}', '${slug}', 'Sản phẩm ${escapeSQL(p.productName)} chất lượng cao', 1000.00, 10.00, 0.00, ${energyRating}, "${specs}", NULL, NULL, ${warranty}, 100, ${weight}, "${dimensions}", 1, 0, 0, 0.00, NULL, NOW(), NOW())`);
+        rows.push(`(${productId}, ${categoryDbId}, ${vendorId}, '${productCode}', '${escapeSQL(p.productName)}', '${slug}', 'Sản phẩm ${escapeSQL(p.productName)} chất lượng cao', 5000.00, 10.00, 0.00, ${energyRating}, "${specs}", NULL, NULL, ${warranty}, 100, ${weight}, "${dimensions}", 1, 0, 0, 0.00, NULL, NOW(), NOW())`);
         
         p.dbId = productId;
         p.vendorId = vendorId;

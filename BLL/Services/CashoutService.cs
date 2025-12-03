@@ -60,7 +60,7 @@ public class CashoutService : ICashoutService
         var orderTuple = await _cashoutRepository.GetOrderAndChosenOrderDetailsById(orderDetailIdSeen.ToList(), cancellationToken);
         var exportsByOrderDetailId = await _cashoutRepository.GetAllExportInventoriesByOrderDetailIdsAsync(orderDetailIdSeen, cancellationToken);
         
-        var payment = await _transactionRepository.GetTransactionByOrderIdAsync(orderTuple.Item1.Id, cancellationToken);
+        var payment = await _transactionRepository.GetPaymentTransactionByOrderIdAsync(orderTuple.Item1.Id, cancellationToken);
         if (orderTuple.Item1.OrderPaymentMethod == OrderPaymentMethod.Banking && payment.Status != TransactionStatus.Completed)
             throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán banking đã hoàn tất.");
         
