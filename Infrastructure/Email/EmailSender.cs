@@ -456,8 +456,8 @@ public class EmailSender : IEmailSender
             .Replace("{{reason}}", reason);
     }
 
-    public Task SendProductRegistrationApprovedEmailAsync(string toEmail, string fullName, string productName, CancellationToken cancellationToken = default)
+    public async Task SendProductRegistrationApprovedEmailAsync(string toEmail, string fullName, string productName, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+
     }
 }
