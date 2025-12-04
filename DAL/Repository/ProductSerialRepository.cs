@@ -44,6 +44,12 @@ namespace DAL.Repository
             await _context.SaveChangesAsync(ct);
         }
 
+        public async Task CreateRangeAsync(IEnumerable<ProductSerial> serials, CancellationToken ct = default)
+        {
+            await _context.ProductSerials.AddRangeAsync(serials, ct);
+            await _context.SaveChangesAsync(ct);
+        }
+
         public async Task UpdateAsync(ProductSerial entity, CancellationToken ct = default)
         {
             entity.UpdatedAt = DateTime.UtcNow;
@@ -55,6 +61,18 @@ namespace DAL.Repository
         {
             _context.ProductSerials.RemoveRange(list);
             await _context.SaveChangesAsync(ct);
+        }
+
+        public async Task<IEnumerable<string>> GetExistingSerialNumbersAsync(IEnumerable<string> serialNumbers, CancellationToken ct = default)
+        {
+            var serialList = serialNumbers.ToList();
+            if (!serialList.Any())
+                return Enumerable.Empty<string>();
+
+            return await _context.ProductSerials
+                .Where(ps => serialList.Contains(ps.SerialNumber))
+                .Select(ps => ps.SerialNumber)
+                .ToListAsync(ct);
         }
     }
 }

@@ -24,6 +24,8 @@ namespace BLL.DTO.Product
 
         public int WarrantyMonths { get; set; }
         
+        public int StockQuantity { get; set; } = 0;
+        
         public decimal WeightKg { get; set; }
 
         // Ảnh (MediaLink)

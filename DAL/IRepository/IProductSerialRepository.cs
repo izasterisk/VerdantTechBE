@@ -13,7 +13,9 @@ namespace DAL.IRepository
         Task<IEnumerable<ProductSerial>> GetAllByProductIdAsync(ulong productId, CancellationToken ct = default);
         Task<IEnumerable<ProductSerial>> GetAllByBatchIdAsync(ulong batchId, CancellationToken ct = default);
         Task CreateAsync(ProductSerial serial, CancellationToken ct = default);
+        Task CreateRangeAsync(IEnumerable<ProductSerial> serials, CancellationToken ct = default);
         Task UpdateAsync(ProductSerial entity, CancellationToken ct = default);
         Task DeleteRangeAsync(IEnumerable<ProductSerial> list, CancellationToken ct = default);
+        Task<IEnumerable<string>> GetExistingSerialNumbersAsync(IEnumerable<string> serialNumbers, CancellationToken ct = default);
     }
 }

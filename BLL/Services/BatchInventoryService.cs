@@ -4,8 +4,6 @@ using BLL.Interfaces;
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
-using DAL.Repository;
-using Microsoft.EntityFrameworkCore;
 
 namespace BLL.Services
 {
@@ -81,6 +79,7 @@ namespace BLL.Services
 
             var category = product.Category;
             bool serialRequired = category?.SerialRequired ?? false;
+            List<string>? validSerials = null;
 
             if (serialRequired)
             {
@@ -89,10 +88,67 @@ namespace BLL.Services
 
                 if (string.IsNullOrWhiteSpace(dto.LotNumber))
                     throw new ArgumentException("Sản phẩm yêu cầu serial: LotNumber bắt buộc.");
+
+                // Validate serial numbers
+                if (dto.SerialNumbers == null || dto.SerialNumbers.Count == 0)
+                    throw new ArgumentException("Sản phẩm yêu cầu serial: Vui lòng nhập danh sách số serial.");
+
+                // Remove empty/whitespace serials
+                validSerials = dto.SerialNumbers
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Select(s => s.Trim())
+                    .ToList();
+
+                if (validSerials.Count != dto.Quantity)
+                    throw new ArgumentException($"Số lượng serial ({validSerials.Count}) phải bằng số lượng sản phẩm ({dto.Quantity}).");
+
+                // Check for duplicates within input
+                var duplicateSerials = validSerials
+                    .GroupBy(s => s, StringComparer.OrdinalIgnoreCase)
+                    .Where(g => g.Count() > 1)
+                    .Select(g => g.Key)
+                    .ToList();
+
+                if (duplicateSerials.Any())
+                    throw new ArgumentException($"Có serial trùng lặp trong danh sách nhập: {string.Join(", ", duplicateSerials)}");
+
+                // Check for existing serials in database
+                var existingSerials = await _serialRepo.GetExistingSerialNumbersAsync(validSerials, ct);
+
+                if (existingSerials.Any())
+                    throw new ArgumentException($"Các serial sau đã tồn tại trong hệ thống: {string.Join(", ", existingSerials)}");
+            }
+            else
+            {
+                // Non-serial products should not have serial numbers
+                if (dto.SerialNumbers != null && dto.SerialNumbers.Any(s => !string.IsNullOrWhiteSpace(s)))
+                    throw new ArgumentException("Sản phẩm này không yêu cầu serial. Vui lòng không nhập số serial.");
             }
 
             var entity = _mapper.Map<BatchInventory>(dto);
             var created = await _repo.CreateAsync(entity, ct);
+
+            // Create ProductSerial records if serials are provided
+            if (serialRequired && validSerials != null && validSerials.Any())
+            {
+                var serials = new List<ProductSerial>();
+                var now = DateTime.UtcNow;
+
+                foreach (var serialNumber in validSerials)
+                {
+                    serials.Add(new ProductSerial
+                    {
+                        BatchInventoryId = created.Id,
+                        ProductId = created.ProductId,
+                        SerialNumber = serialNumber,
+                        Status = ProductSerialStatus.Stock,
+                        CreatedAt = now,
+                        UpdatedAt = now
+                    });
+                }
+
+                await _serialRepo.CreateRangeAsync(serials, ct);
+            }
 
             await UpdateProductStock(dto.ProductId, ct);
 
