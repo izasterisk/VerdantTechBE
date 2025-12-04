@@ -116,12 +116,24 @@ namespace API.Controllers
                 })
                 .ToList();
 
-            var created = await _vendorProfileService.CreateAsync(
-                dto,
-                mediaLinks,
-                ct);
+            try
+            {
+                var created = await _vendorProfileService.CreateAsync(
+                    dto,
+                    mediaLinks,
+                    ct);
 
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new { error = "Lỗi hệ thống, vui lòng thử lại sau." });
+            }
+
         }
 
         // ---------------------------

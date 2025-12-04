@@ -15,9 +15,14 @@ namespace DAL.IRepository
         Task<VendorProfile?> GetByUserIdAsync(ulong vendorId, CancellationToken ct = default);
         Task<List<VendorProfile>> GetAllAsync(int page, int pageSize, CancellationToken ct = default);
         Task UpdateAsync(VendorProfile vendorProfile, CancellationToken ct = default);
-        Task DeleteAsync(VendorProfile vendorProfile, CancellationToken ct = default); 
-        Task SoftDeleteAccountAsync(ulong userId, CancellationToken ct = default);
+        //Task DeleteAsync(VendorProfile vendorProfile, CancellationToken ct = default); 
+        Task HardDeleteVendorAsync(ulong vendorProfileId, CancellationToken ct);
+        Task SoftDeleteVendorAsync(ulong vendorProfileId, CancellationToken ct = default);
+
         Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default);
         Task<User?> GetUserByEmailAsync(string email, CancellationToken ct);
+        Task<bool> ExistsByBusinessRegistrationNumberAsync(string brn, CancellationToken ct);
+        Task<bool> ExistsByTaxCodeAsync(string taxCode, CancellationToken ct);
+
     }
 }

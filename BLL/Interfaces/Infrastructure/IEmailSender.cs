@@ -12,7 +12,7 @@ public interface IEmailSender
     Task SendVendorProfileRejectedEmailAsync(string toEmail, string fullName, string reason, CancellationToken cancellationToken = default);
     Task SendVendorProfileSubmittedEmailAsync(string email, string fullName, CancellationToken ct = default);
     Task SendProductRegistrationSubmittedEmailAsync(string toEmail, string fullName, string productName, CancellationToken cancellationToken = default);
-    Task SendProductRegistrationApprovedEmailAsync(string toEmail, string fullName, string productName, CancellationToken cancellationToken = default);
+    Task SendProductRegistrationApprovedEmailAsync(string toEmail, string fullName, string productName, string productCode, CancellationToken cancellationToken = default);
     Task SendProductRegistrationRejectedEmailAsync( string toEmail, string fullName, string productName, string rejectionReason, CancellationToken cancellationToken = default);
 }
 

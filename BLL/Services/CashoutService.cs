@@ -59,10 +59,13 @@ public class CashoutService : ICashoutService
         }
         var orderTuple = await _cashoutRepository.GetOrderAndChosenOrderDetailsById(orderDetailIdSeen.ToList(), cancellationToken);
         var exportsByOrderDetailId = await _cashoutRepository.GetAllExportInventoriesByOrderDetailIdsAsync(orderDetailIdSeen, cancellationToken);
-        
-        var payment = await _transactionRepository.GetPaymentTransactionByOrderIdAsync(orderTuple.Item1.Id, cancellationToken);
-        if (orderTuple.Item1.OrderPaymentMethod == OrderPaymentMethod.Banking && payment.Status != TransactionStatus.Completed)
-            throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán banking đã hoàn tất.");
+
+        if (orderTuple.Item1.OrderPaymentMethod == OrderPaymentMethod.Banking)
+        {
+            var payment = await _transactionRepository.GetPaymentTransactionByOrderIdAsync(orderTuple.Item1.Id, cancellationToken);
+            if(payment.Status != TransactionStatus.Completed)
+                throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán banking đã hoàn tất.");
+        }
         
         // Convert thành Dictionary search cho nhanh
         var orderDetailMap = orderTuple.Item2.ToDictionary(od => od.Id);

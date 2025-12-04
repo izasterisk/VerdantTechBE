@@ -54,7 +54,8 @@ public abstract class BaseController : ControllerBase
         {
             // 401
             UnauthorizedAccessException =>
-                Unauthorized(APIResponse.Error("Truy cập bị từ chối", HttpStatusCode.Unauthorized)),
+                Unauthorized(APIResponse.Error(string.IsNullOrWhiteSpace(ex.Message) ? "Truy cập bị từ chối" : ex.Message,HttpStatusCode.Unauthorized)),
+
 
             // 403
             SecurityException =>

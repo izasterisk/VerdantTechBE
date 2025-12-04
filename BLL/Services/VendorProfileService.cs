@@ -190,13 +190,18 @@ namespace BLL.Service
             var vp = await _vendorProfileRepository.GetByIdAsync(id, ct)
                      ?? throw new InvalidOperationException("Hồ sơ vendor không tồn tại.");
 
-            await _vendorProfileRepository.DeleteAsync(vp, ct);
+            await _vendorProfileRepository.HardDeleteVendorAsync(id, ct);
+           
         }
 
-        public async Task SoftDeleteAccountAsync(ulong userId, CancellationToken ct = default)
+        public async Task SoftDeleteAccountAsync(ulong vendorProfileId, CancellationToken ct = default)
         {
-            await _vendorProfileRepository.SoftDeleteAccountAsync(userId, ct);
+            var vp = await _vendorProfileRepository.GetByIdAsync(vendorProfileId, ct)
+                     ?? throw new InvalidOperationException("Hồ sơ vendor không tồn tại.");
+
+            await _vendorProfileRepository.SoftDeleteVendorAsync(vendorProfileId, ct);
         }
+
 
         public async Task ApproveAsync(VendorProfileApproveDTO dto, CancellationToken ct = default)
         {
@@ -204,9 +209,10 @@ namespace BLL.Service
 
             var now = DateTime.UtcNow;
 
-            // 1. User: verify = true
             user.IsVerified = true;
             user.Status = UserStatus.Active;
+            user.Role = UserRole.Vendor;
+
             user.VerificationSentAt = now;
             user.UpdatedAt = now;
             await _userRepository.UpdateUserWithTransactionAsync(user, ct);
@@ -248,6 +254,7 @@ namespace BLL.Service
             // 1. User: mark not verified
             user.IsVerified = false;
             user.Status = UserStatus.Inactive;
+            user.Role = UserRole.Vendor;
             user.VerificationSentAt = now;
             user.UpdatedAt = now;
             await _userRepository.UpdateUserWithTransactionAsync(user, ct);
@@ -337,22 +344,34 @@ namespace BLL.Service
             VendorProfileCreateDTO dto,
             CancellationToken ct)
         {
-            // 1. Kiểm tra user đã tồn tại chưa
             var existingUser = await _vendorProfileRepository.GetUserByEmailAsync(dto.Email, ct);
-
+        
+            
             if (existingUser != null)
             {
-                // Nếu user đã active → không cho phép đăng ký
-                if (existingUser.Status == UserStatus.Active || existingUser.IsVerified)
-                    throw new InvalidOperationException("Email này đã được đăng ký và đang hoạt động.");
 
+                if (existingUser != null &&
+                (existingUser.Status == UserStatus.Active || existingUser.IsVerified))
+                throw new InvalidOperationException("Email này đã được đăng ký và đang hoạt động.");
 
+                if (await _vendorProfileRepository.ExistsByBusinessRegistrationNumberAsync(
+                    dto.BusinessRegistrationNumber, ct))
+                throw new InvalidOperationException("Mã số đăng ký kinh doanh đã tồn tại.");
+
+                if (!string.IsNullOrWhiteSpace(dto.TaxCode) &&
+                await _vendorProfileRepository.ExistsByTaxCodeAsync(dto.TaxCode, ct))
+                throw new InvalidOperationException("Mã số thuế đã tồn tại.");
+
+            
                 // Nếu user chưa active → CHO PHÉP ghi đè
                 existingUser.FullName = dto.FullName ?? existingUser.FullName;
                 existingUser.PhoneNumber = dto.PhoneNumber ?? existingUser.PhoneNumber;
                 existingUser.TaxCode = dto.TaxCode ?? existingUser.TaxCode;
                 existingUser.IsVerified = false;
                 existingUser.Status = UserStatus.Inactive;
+
+                existingUser.Role = UserRole.Vendor;
+
                 existingUser.UpdatedAt = DateTime.UtcNow;
 
                 await _userRepository.UpdateUserWithTransactionAsync(existingUser, ct);
@@ -360,22 +379,33 @@ namespace BLL.Service
             }
 
             // 2. Nếu chưa tồn tại → tạo mới
-            var user = new User
+            var newUser = new User
             {
                 Email = dto.Email,
                 PasswordHash = AuthUtils.HashPassword(dto.Password),
                 FullName = dto.FullName ?? "",
                 PhoneNumber = dto.PhoneNumber,
                 TaxCode = dto.TaxCode,
+
                 Role = UserRole.Vendor,
                 Status = UserStatus.Inactive,
+
                 IsVerified = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            user = await _userRepository.CreateUserWithTransactionAsync(user, ct);
-            return user;
+            //user = await _userRepository.CreateUserWithTransactionAsync(user, ct);
+            //return user;
+            newUser = await _userRepository.CreateUserWithTransactionAsync(newUser, ct);
+            newUser.Role = UserRole.Vendor;
+            newUser.Status = UserStatus.Inactive;
+            newUser.IsVerified = false;
+            newUser.UpdatedAt = DateTime.UtcNow;
+
+            await _userRepository.UpdateUserWithTransactionAsync(newUser, ct);
+
+            return newUser;
         }
 
 

@@ -169,7 +169,6 @@ namespace DAL.Repository
             existing.Slug = vendorProfile.Slug;
             existing.BusinessRegistrationNumber = vendorProfile.BusinessRegistrationNumber;
 
-            //// Thông tin địa chỉ (CHỈ set được nếu trong entity VendorProfile có các field này)
             //existing.CompanyAddress = vendorProfile.CompanyAddress;
             //existing.Province = vendorProfile.Province;
             //existing.District = vendorProfile.District;
@@ -186,20 +185,79 @@ namespace DAL.Repository
             await _context.SaveChangesAsync(ct);
         }
 
-        public async Task DeleteAsync(VendorProfile vendorProfile, CancellationToken ct = default)
+        //public async Task DeleteAsync(VendorProfile vendorProfile, CancellationToken ct = default)
+        //{
+        //    _context.VendorProfiles.Remove(vendorProfile);
+        //    await _context.SaveChangesAsync(ct);
+        //}
+
+        public async Task HardDeleteVendorAsync(ulong vendorProfileId, CancellationToken ct)
         {
-            _context.VendorProfiles.Remove(vendorProfile);
+            var vp = await _context.VendorProfiles.FirstOrDefaultAsync(v => v.Id == vendorProfileId, ct);
+            if (vp == null)
+                return;
+
+            ulong userId = vp.UserId;
+
+            var certs = await _context.VendorCertificates
+                .Where(c => c.VendorId == userId)
+                .ToListAsync(ct);
+
+            if (certs.Any())
+            {
+                var certIds = certs.Select(c => c.Id).ToList();
+
+                var medias = await _context.MediaLinks
+                    .Where(m => m.OwnerType == MediaOwnerType.VendorCertificates &&
+                                certIds.Contains(m.OwnerId))
+                    .ToListAsync(ct);
+
+                _context.MediaLinks.RemoveRange(medias);
+                _context.VendorCertificates.RemoveRange(certs);
+            }
+
+            var userAddresses = await _context.UserAddresses
+                .Where(a => a.UserId == userId)
+                .ToListAsync(ct);
+
+            if (userAddresses.Any())
+            {
+                var addressIds = userAddresses.Select(a => a.AddressId).ToList();
+
+                _context.UserAddresses.RemoveRange(userAddresses);
+
+                var addresses = await _context.Addresses
+                    .Where(a => addressIds.Contains(a.Id))
+                    .ToListAsync(ct);
+
+                _context.Addresses.RemoveRange(addresses);
+            }
+
+
+
+            _context.VendorProfiles.Remove(vp);
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+            if (user != null)
+            {
+                _context.Users.Remove(user);
+            }
+
             await _context.SaveChangesAsync(ct);
         }
 
-        public async Task SoftDeleteAccountAsync(ulong userId, CancellationToken ct = default)
-        {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Id == userId, ct);
 
+        public async Task SoftDeleteVendorAsync(ulong vendorProfileId, CancellationToken ct = default)
+        {
+            var vp = await _context.VendorProfiles.FirstOrDefaultAsync(v => v.Id == vendorProfileId, ct);
+            if (vp == null)
+                throw new KeyNotFoundException("Hồ sơ vendor không tồn tại");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == vp.UserId, ct);
             if (user == null)
                 throw new KeyNotFoundException("User không tồn tại");
 
+            // XÓA MỀM = chỉ disable user
             user.Status = UserStatus.Inactive;
             user.DeletedAt = DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
@@ -207,6 +265,7 @@ namespace DAL.Repository
             _context.Users.Update(user);
             await _context.SaveChangesAsync(ct);
         }
+
 
         public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
         {
@@ -218,6 +277,20 @@ namespace DAL.Repository
             return await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == email, ct);
         }
+
+
+        public async Task<bool> ExistsByBusinessRegistrationNumberAsync(string brn, CancellationToken ct)
+        {
+            return await _context.VendorProfiles
+                .AnyAsync(x => x.BusinessRegistrationNumber == brn, ct);
+        }
+
+        public async Task<bool> ExistsByTaxCodeAsync(string taxCode, CancellationToken ct)
+        {
+            return await _context.Users
+                .AnyAsync(x => x.TaxCode == taxCode, ct);
+        }
+
 
     }
 }
