@@ -199,12 +199,19 @@ namespace BLL.Services
             var vendor = await _db.Users.FirstOrDefaultAsync(u => u.Id == dto.VendorId, ct);
             if (vendor != null)
             {
-                await _emailSender.SendProductRegistrationSubmittedEmailAsync(
-                    vendor.Email!,
-                    vendor.FullName ?? vendor.Email!,
-                    dto.ProposedProductName,
-                    ct
-                );
+                try
+                {
+                    await _emailSender.SendProductRegistrationSubmittedEmailAsync(
+                        vendor.Email!,
+                        vendor.FullName ?? vendor.Email!,
+                        dto.ProposedProductName,
+                        ct
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[EMAIL ERROR][PRODUCT SUBMIT] {ex.Message}");
+                }
             }
 
             return result;
@@ -393,14 +400,43 @@ namespace BLL.Services
 
                 await _db.SaveChangesAsync(ct);
 
+                //var product = _mapper.Map<Product>(reg);
+                //product.Slug = Slugify(reg.ProposedProductName);
+                //product.IsActive = true;
+                //product.CreatedAt = DateTime.UtcNow;
+                //product.UpdatedAt = DateTime.UtcNow;
+
+                //_db.Products.Add(product);
+                //await _db.SaveChangesAsync(ct);
+                
+                string productCode = reg.ProposedProductCode;
+                int i = 1;
+
+                while (await _db.Products.AnyAsync(p => p.ProductCode == productCode, ct))
+                {
+                    productCode = $"{reg.ProposedProductCode}-{i++}";
+                }
+
                 var product = _mapper.Map<Product>(reg);
-                product.Slug = Slugify(reg.ProposedProductName);
+                product.ProductCode = productCode;
+                //product.Slug = Slugify(reg.ProposedProductName);
+
+                string slug = Slugify(reg.ProposedProductName);
+                int si = 1;
+
+                while (await _db.Products.AnyAsync(p => p.Slug == slug, ct))
+                {
+                    slug = $"{Slugify(reg.ProposedProductName)}-{si++}";
+                }
+
+                product.Slug = slug;
+
                 product.IsActive = true;
                 product.CreatedAt = DateTime.UtcNow;
                 product.UpdatedAt = DateTime.UtcNow;
 
                 _db.Products.Add(product);
-                await _db.SaveChangesAsync(ct);  
+                await _db.SaveChangesAsync(ct);
 
                 var regImages = await _db.MediaLinks
                     .Where(m => m.OwnerType == MediaOwnerType.ProductRegistrations && m.OwnerId == reg.Id)
@@ -489,12 +525,20 @@ namespace BLL.Services
                 var vendor = await _db.Users.FirstOrDefaultAsync(u => u.Id == reg.VendorId, ct);
                 if (vendor != null)
                 {
-                    await _emailSender.SendProductRegistrationApprovedEmailAsync(
-                        vendor.Email!,
-                        vendor.FullName ?? vendor.Email!,
-                        reg.ProposedProductName,
-                        ct
-                    );
+                    try
+                    {
+                        await _emailSender.SendProductRegistrationApprovedEmailAsync(
+                            vendor.Email!,
+                            vendor.FullName ?? vendor.Email!,
+                            reg.ProposedProductName,
+                            reg.ProposedProductCode,
+                            ct
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[EMAIL ERROR][PRODUCT APPROVE] {ex.Message}");
+                    }
                 }
 
 
