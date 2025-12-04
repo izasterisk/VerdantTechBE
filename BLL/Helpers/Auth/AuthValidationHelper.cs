@@ -40,6 +40,9 @@ public static class AuthValidationHelper
     
         if (user.Status == UserStatus.Suspended)
             throw new UnauthorizedAccessException(AuthConstants.USER_SUSPENDED);
+        
+        if (user.Status == UserStatus.Inactive)
+            throw new UnauthorizedAccessException("Người dùng bị vô hiệu hóa.");
     }
 
     /// <summary>

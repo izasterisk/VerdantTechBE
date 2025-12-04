@@ -36,7 +36,7 @@ public class CropRepository : ICropRepository
     
     public async Task<List<Crop>> GetAllPlantingCropsByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
     {
-        return await _cropRepository.GetAllByFilterAsync(c => c.FarmProfileId == farmId && c.Status != CropStatus.Completed
+        return await _cropRepository.GetAllByFilterAsync(c => c.FarmProfileId == farmId && c.Status != CropStatus.Harvested
             && c.Status != CropStatus.Deleted && c.Status != CropStatus.Failed, true, cancellationToken);
     }
     

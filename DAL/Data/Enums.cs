@@ -58,39 +58,36 @@ public enum FarmProfileStatus
 
 public enum PlantingMethod
 {
-    DirectSeeding,
-    TrayNursery,
-    Transplanting,
-    VegetativePropagation,
-    Cutting
+    GieoHatTrucTiep,      // direct_seeding -> gieo_hat_truc_tiep
+    UomTrongKhay,         // tray_nursery -> uom_trong_khay
+    CayCayCon,            // transplanting -> cay_cay_con
+    SinhSanSinhDuong,     // vegetative_propagation -> sinh_san_sinh_duong
+    GiamCanh              // cutting -> giam_canh
 }
 
 public enum CropType
 {
-    LeafyGreen,
-    Fruiting,
-    RootVegetable,
-    Herb
+    RauAnLa,              // leafy_green -> rau_an_la
+    RauAnQua,             // fruiting -> rau_an_qua
+    RauCu,                // root_vegetable -> rau_cu
+    RauThom               // herb -> rau_thom
 }
 
 public enum FarmingType
 {
-    Intensive,
-    CropRotation,
-    Intercropping,
-    Greenhouse,
-    Hydroponics
+    ThamCanh,             // intensive -> tham_canh
+    LuanCanh,             // crop_rotation -> luan_canh
+    XenCanh,              // intercropping -> xen_canh
+    NhaLuoi,              // greenhouse -> nha_luoi
+    ThuyCanh              // hydroponics -> thuy_canh
 }
 
 public enum CropStatus
 {
-    Planning,
-    Seedling,
-    Growing,
-    Harvesting,
-    Completed,
-    Failed,
-    Deleted
+    Growing,              // growing
+    Harvested,            // harvested
+    Failed,               // failed
+    Deleted               // deleted
 }
 
 // =====================================================

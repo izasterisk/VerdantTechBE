@@ -21,6 +21,7 @@ namespace BLL.Interfaces
         //Task<IReadOnlyList<ProductResponseDTO>> GetAllProductAsync(CancellationToken cancellationToken = default);
         //Task<ProductResponseDTO> UpdateProductAsync(ulong id, ProductUpdateDTO dto, CancellationToken cancellationToken = default);
         Task<PagedResponse<ProductListItemDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default);
+        Task<PagedResponse<ProductListItemDTO>> GetAllByCategoryAsync(ulong? categoryId, int page, int pageSize, CancellationToken ct = default);
         Task<ProductResponseDTO?> GetByIdAsync(ulong id, CancellationToken ct = default);
         Task<PagedResponse<ProductListItemDTO>> GetByCategoryAsync(ulong categoryId, int page, int pageSize, CancellationToken ct = default);
         Task<PagedResponse<ProductListItemDTO>> GetByVendorAsync(ulong vendorId, int page, int pageSize, CancellationToken ct = default);

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BLL.DTO;
 using BLL.DTO.ProductCategory;
 using BLL.Helpers;
 using BLL.Interfaces;
@@ -69,11 +70,26 @@ namespace BLL.Services
             return response;
         }
 
-        public async Task<IReadOnlyList<ProductCategoryResponseDTO>> GetAllProductCategoryAsync(CancellationToken cancellationToken = default)
+        public async Task<PagedResponse<ProductCategoryResponseDTO>> GetAllProductCategoryAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
-            var list = await _productCategoryRepository.GetAllProductCategoryAsync(cancellationToken);
-            var response = _mapper.Map<IReadOnlyList<ProductCategoryResponseDTO>>(list);
-            return response;
+            var (items, total) = await _productCategoryRepository.GetAllProductCategoryAsync(page, pageSize, cancellationToken);
+            var list = _mapper.Map<List<ProductCategoryResponseDTO>>(items);
+            return ToPaged(list, total, page, pageSize);
+        }
+
+        private static PagedResponse<T> ToPaged<T>(List<T> items, int totalRecords, int page, int pageSize)
+        {
+            var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
+            return new PagedResponse<T>
+            {
+                Data = items,
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                TotalRecords = totalRecords,
+                HasNextPage = page < totalPages,
+                HasPreviousPage = page > 1
+            };
         }
 
 

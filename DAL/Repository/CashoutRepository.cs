@@ -76,11 +76,6 @@ public class CashoutRepository : ICashoutRepository
         UserBankAccount? bankAccount, Order order, Request request, List<ProductSerial> serials, 
         List<ExportInventory> exports, CancellationToken cancellationToken = default)
     {
-        var payment = await _transactionRepository.GetAsync(u => u.OrderId == order.Id, true, cancellationToken) ?? 
-            throw new KeyNotFoundException("Không tìm thấy thanh toán liên quan đến đơn hàng.");
-        if (payment.Status != TransactionStatus.Completed)
-            throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán đã hoàn tất.");
-        
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
@@ -264,5 +259,48 @@ public class CashoutRepository : ICashoutRepository
             }
         }
         return totalRefundAmount;
+    }
+
+    public async Task<(Order, List<OrderDetail>)> GetOrderAndChosenOrderDetailsById(List<ulong> orderDetailIds, CancellationToken cancellationToken = default)
+    {
+        if(orderDetailIds.Count == 0)
+            throw new ArgumentException("Danh sách OrderDetailIds không được để trống.");
+        var orderDetails = await _dbContext.Set<OrderDetail>().Where(od => orderDetailIds.Contains(od.Id))
+            .AsNoTracking().ToListAsync(cancellationToken);
+        if(orderDetails.Count == 0)
+            throw new KeyNotFoundException("Không tìm thấy OrderDetail nào khớp với danh sách ID cung cấp.");
+        var count = 0;
+        foreach (var orderDetail in orderDetails)
+        {
+            if(orderDetail.OrderId != orderDetails[0].OrderId)
+                throw new InvalidOperationException("Tất cả OrderDetailIds phải thuộc về cùng một đơn hàng.");
+            count++;
+        }
+        if(count != orderDetailIds.Count)
+            throw new KeyNotFoundException("Một số OrderDetailIds không tồn tại.");
+        var order = await _orderRepository.GetAsync(o => o.Id == orderDetails[0].OrderId, true, cancellationToken) 
+            ?? throw new KeyNotFoundException("Đơn hàng không tồn tại.");
+        return (order, orderDetails);
+    }
+    
+    public async Task<List<ExportInventory>> GetAllExportInventoriesByOrderDetailIdsAsync(HashSet<ulong> orderDetailIds, CancellationToken cancellationToken = default)
+    {
+        if(orderDetailIds.Count == 0)
+            throw new ArgumentException("Danh sách OrderDetailIds không được để trống.");
+        var response = await _dbContext.Set<ExportInventory>()
+            .Where(ei => ei.OrderDetailId.HasValue && orderDetailIds.Contains(ei.OrderDetailId.Value))
+            .Include(ei => ei.ProductSerial)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        foreach(var export in response)
+        {
+            if(export.OrderDetailId != null && orderDetailIds.Contains(export.OrderDetailId.Value))
+                orderDetailIds.Remove(export.OrderDetailId.Value);
+            if (export.ProductSerial != null && export.ProductSerial.Status != ProductSerialStatus.Sold)
+                throw new InvalidCastException($"Sản phẩm Serial '{export.ProductSerial.SerialNumber}' có trạng thái không hợp lệ: {export.ProductSerial.Status}. Yêu cầu trạng thái: 'Sold'.");
+        }
+        if(orderDetailIds.Count > 0)
+            throw new KeyNotFoundException($"OrderDetail với ID này không có bản ghi xuất hàng: {string.Join(", ", orderDetailIds)}");
+        return response;
     }
 }

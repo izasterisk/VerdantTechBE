@@ -67,17 +67,22 @@ namespace Controller.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách tất cả danh mục sản phẩm
+        /// Lấy danh sách tất cả danh mục sản phẩm (phân trang)
         /// </summary>
-        /// <returns>Danh sách danh mục sản phẩm</returns>
+        /// <param name="page">Số trang (mặc định: 1)</param>
+        /// <param name="pageSize">Số lượng item mỗi trang (mặc định: 20)</param>
+        /// <returns>Danh sách danh mục sản phẩm có phân trang</returns>
         [HttpGet]
-        [EndpointSummary("Get All Product Categories")]
-        public async Task<ActionResult<APIResponse>> GetAllProductCategories()
+        [EndpointSummary("Get All Product Categories (phân trang)")]
+        [EndpointDescription("Trả về danh sách danh mục sản phẩm kèm thông tin phân trang.")]
+        public async Task<ActionResult<APIResponse>> GetAllProductCategories(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
         {
             try
             {
-                var list = await _productCategoryService.GetAllProductCategoryAsync(GetCancellationToken());
-                return SuccessResponse(list);
+                var result = await _productCategoryService.GetAllProductCategoryAsync(page, pageSize, GetCancellationToken());
+                return SuccessResponse(result);
             }
             catch (Exception ex)
             {

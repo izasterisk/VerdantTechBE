@@ -43,6 +43,16 @@ namespace Controller.Controllers
             return item is null ? NotFound() : Ok(item);
         }
 
+        [HttpGet("by-category")]
+        [EndpointSummary("Danh sách sản phẩm theo Category (phân trang)")]
+        [EndpointDescription("Lọc sản phẩm theo CategoryId. Nếu không có categoryId thì trả về tất cả sản phẩm.")]
+        public async Task<ActionResult<PagedResponse<ProductListItemDTO>>> GetAllByCategory(
+            [FromQuery] ulong? categoryId = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
+            => Ok(await _svc.GetAllByCategoryAsync(categoryId, page, pageSize, ct));
+
         [HttpGet("category/{categoryId}")]
         [EndpointSummary("Danh sách sản phẩm theo Category (phân trang)")]
         [EndpointDescription("Lọc theo CategoryId, trả về danh sách kèm thông tin cơ bản.")]
