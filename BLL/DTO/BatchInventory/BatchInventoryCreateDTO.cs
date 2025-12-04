@@ -25,6 +25,11 @@ namespace BLL.DTO.BatchInventory
         public decimal UnitCostPrice { get; set; }
         public DateOnly? ExpiryDate { get; set; }
         public DateOnly? ManufacturingDate { get; set; }
+        
+        /// <summary>
+        /// Danh sách số serial cho sản phẩm yêu cầu serial (máy móc/thiết bị)
+        /// </summary>
+        public List<string>? SerialNumbers { get; set; }
 
     }
 }

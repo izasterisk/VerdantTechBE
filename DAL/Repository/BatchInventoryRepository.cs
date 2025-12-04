@@ -142,9 +142,6 @@ namespace DAL.Repository
             try
             {
                 var entity = await _context.BatchInventories
-                    .Include(x => x.Product)
-                    .ThenInclude(p => p.Category)
-                    .Include(x => x.ProductSerials)
                     .FirstOrDefaultAsync(x => x.Id == id, ct);
 
                 if (entity == null)
@@ -162,33 +159,6 @@ namespace DAL.Repository
                 }
 
                 await _context.SaveChangesAsync(ct);
-
-                bool serialRequired = entity.Product.Category?.SerialRequired ?? false;
-
-                if (serialRequired &&
-                    status == QualityCheckStatus.Passed &&
-                    !entity.ProductSerials.Any())
-                {
-                    var serials = new List<ProductSerial>();
-                    var now = DateTime.UtcNow;
-
-                    for (int i = 0; i < entity.Quantity; i++)
-                    {
-                        serials.Add(new ProductSerial
-                        {
-                            BatchInventoryId = entity.Id,
-                            ProductId = entity.ProductId,
-                            SerialNumber = $"{entity.Sku}-{entity.BatchNumber}-{i:D3}",
-                            Status = ProductSerialStatus.Stock,
-                            CreatedAt = now,
-                            UpdatedAt = now
-                        });
-                    }
-
-                    await _context.ProductSerials.AddRangeAsync(serials, ct);
-                    await _context.SaveChangesAsync(ct);
-                }
-
                 await tran.CommitAsync(ct);
             }
             catch
