@@ -42,7 +42,7 @@ public static class AuthValidationHelper
             throw new UnauthorizedAccessException(AuthConstants.USER_SUSPENDED);
         
         if (user.Status == UserStatus.Inactive)
-            throw new UnauthorizedAccessException("Người dùng bị vô hiệu hóa.");
+            throw new UnauthorizedAccessException("Tài khoản của bạn đã bị vô hiệu hóa");
     }
 
     /// <summary>
