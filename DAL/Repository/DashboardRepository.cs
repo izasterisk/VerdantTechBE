@@ -176,7 +176,7 @@ public class DashboardRepository : IDashboardRepository
         );
     }
 
-    public async Task<Dictionary<DateOnly, decimal>> GetRevenueLast7DaysAsync(CancellationToken cancellationToken = default)
+    public async Task<Dictionary<DateOnly, decimal>> GetRevenueLast7DaysAsync(ulong? vendorId, CancellationToken cancellationToken = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var sevenDaysAgo = today.AddDays(-6);
@@ -184,20 +184,39 @@ public class DashboardRepository : IDashboardRepository
         var fromDateTime = sevenDaysAgo.ToDateTime(TimeOnly.MinValue);
         var toDateTime = today.AddDays(1).ToDateTime(TimeOnly.MinValue);
 
-        // Thứ tự filter: TransactionType -> Status -> CreatedAt để tận dụng idx_type_status_created
-        var revenues = await _dbContext.Transactions
-            .AsNoTracking()
-            .Where(p => p.TransactionType == TransactionType.PaymentIn
-                        && p.Status == TransactionStatus.Completed
-                        && p.CreatedAt >= fromDateTime && p.CreatedAt < toDateTime)
-            .GroupBy(p => p.CreatedAt.Date) // EF Core translate thành DATE(created_at)
-            .Select(g => new { Date = g.Key, Revenue = g.Sum(p => p.Amount) })
-            .ToListAsync(cancellationToken);
+        List<dynamic> revenues;
+        
+        if (vendorId == null)
+        {
+            // Admin: Tổng doanh thu toàn hệ thống từ transactions
+            revenues = await _dbContext.Transactions
+                .AsNoTracking()
+                .Where(p => p.TransactionType == TransactionType.PaymentIn
+                            && p.Status == TransactionStatus.Completed
+                            && p.CreatedAt >= fromDateTime && p.CreatedAt < toDateTime)
+                .GroupBy(p => p.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Revenue = g.Sum(p => p.Amount) })
+                .ToListAsync<dynamic>(cancellationToken);
+        }
+        else
+        {
+            // Vendor: Doanh thu theo vendor từ order_details
+            revenues = await _dbContext.OrderDetails
+                .AsNoTracking()
+                .Where(od => od.Product.VendorId == vendorId.Value)
+                .Where(od => od.Order.Status == OrderStatus.Paid 
+                             || od.Order.Status == OrderStatus.Shipped 
+                             || od.Order.Status == OrderStatus.Delivered)
+                .Where(od => od.Order.CreatedAt >= fromDateTime && od.Order.CreatedAt < toDateTime)
+                .GroupBy(od => od.Order.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Revenue = g.Sum(od => od.Subtotal) })
+                .ToListAsync<dynamic>(cancellationToken);
+        }
 
         // Chuyển thành Dictionary để lookup O(1)
         var revenueDict = revenues.ToDictionary(
             r => DateOnly.FromDateTime(r.Date),
-            r => r.Revenue
+            r => (decimal)r.Revenue
         );
 
         // Tạo kết quả với pre-allocated capacity và lookup O(1)

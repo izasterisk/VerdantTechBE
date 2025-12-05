@@ -10,5 +10,5 @@ public interface IDashboardRepository
         GetNumberOfOrdersByTimeRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
     Task<(int VendorProfile, int ProductRegistration, int VendorCertificate, int ProductCertificate, int Request)> 
         GetNumberOfQueuesAsync(CancellationToken cancellationToken = default);
-    Task<Dictionary<DateOnly, decimal>> GetRevenueLast7DaysAsync(CancellationToken cancellationToken = default);
+    Task<Dictionary<DateOnly, decimal>> GetRevenueLast7DaysAsync(ulong? vendorId, CancellationToken cancellationToken = default);
 }

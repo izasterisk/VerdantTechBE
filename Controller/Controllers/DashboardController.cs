@@ -114,14 +114,15 @@ public class DashboardController : BaseController
     /// </summary>
     /// <returns>Doanh thu từng ngày trong 7 ngày gần nhất</returns>
     [HttpGet("revenue/last-7-days")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Vendor")]
     [EndpointSummary("Get Revenue Last 7 Days")]
-    [EndpointDescription("Lấy doanh thu chi tiết theo từng ngày trong 7 ngày gần nhất. Chỉ Admin có quyền truy cập.")]
+    [EndpointDescription("Có thể sử dụng cho cả Admin và Vendor. Admin sẽ thấy tổng doanh thu toàn hệ thống theo ngày, Vendor chỉ thấy doanh thu của mình.")]
     public async Task<ActionResult<APIResponse>> GetRevenueLast7Days()
     {
         try
         {
-            var revenue = await _dashboardService.GetRevenueLast7DaysAsync(GetCancellationToken());
+            var vendorId = GetCurrentUserId();
+            var revenue = await _dashboardService.GetRevenueLast7DaysAsync(vendorId, GetCancellationToken());
             return SuccessResponse(revenue);
         }
         catch (Exception ex)

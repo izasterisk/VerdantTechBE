@@ -108,9 +108,14 @@ public class DashboardService : IDashboardService
         };
     }
 
-    public async Task<RevenueLast7DaysResponseDTO> GetRevenueLast7DaysAsync(CancellationToken cancellationToken = default)
+    public async Task<RevenueLast7DaysResponseDTO> GetRevenueLast7DaysAsync(ulong vendorId, CancellationToken cancellationToken = default)
     {
-        var revenues = await _dashboardRepository.GetRevenueLast7DaysAsync(cancellationToken);
+        ulong? id = null;
+        var vendor = await _userRepository.GetVerifiedAndActiveUserByIdAsync(vendorId, cancellationToken);
+        if (vendor.Role == UserRole.Vendor)
+            id = vendorId;
+        
+        var revenues = await _dashboardRepository.GetRevenueLast7DaysAsync(id, cancellationToken);
         
         var dailyRevenues = revenues
             .OrderBy(r => r.Key)
