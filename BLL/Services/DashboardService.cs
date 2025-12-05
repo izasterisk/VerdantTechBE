@@ -1,26 +1,77 @@
 ﻿using BLL.DTO.Dashboard;
 using BLL.Interfaces;
+using DAL.Data;
 using DAL.IRepository;
+using BLL.DTO.Order;
 
 namespace BLL.Services;
 
 public class DashboardService : IDashboardService
 {
     private readonly IDashboardRepository _dashboardRepository;
-
-    public DashboardService(IDashboardRepository dashboardRepository)
+    private readonly IUserRepository _userRepository;
+    
+    public DashboardService(IDashboardRepository dashboardRepository, IUserRepository userRepository)
     {
         _dashboardRepository = dashboardRepository;
+        _userRepository = userRepository;
     }
 
-    public async Task<RevenueByTimeRangeResponseDTO> GetRevenueByTimeRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    public async Task<RevenueByTimeRangeResponseDTO> GetRevenueByTimeRangeAsync(ulong vendorId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
     {
-        var revenue = await _dashboardRepository.GetRevenueByTimeRangeAsync(from, to, cancellationToken);
+        ulong? id = null;
+        var vendor = await _userRepository.GetVerifiedAndActiveUserByIdAsync(vendorId, cancellationToken);
+        if (vendor.Role == UserRole.Vendor)
+            id = vendorId;
+        
+        var revenue = await _dashboardRepository.GetRevenueByTimeRangeAsync(from, to, id, cancellationToken);
         return new RevenueByTimeRangeResponseDTO
         {
             From = from,
             To = to,
             Revenue = revenue
+        };
+    }
+
+    public async Task<Top5BestSellingProductsResponseDTO> GetTop5BestSellingProductsByTimeRangeAsync(ulong vendorId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        ulong? id = null;
+        var vendor = await _userRepository.GetVerifiedAndActiveUserByIdAsync(vendorId, cancellationToken);
+        if (vendor.Role == UserRole.Vendor)
+            id = vendorId;
+        
+        var results = await _dashboardRepository.GetTop5BestSellingProductsByTimeRangeAsync(from, to, id, cancellationToken);
+        var products = results.Select(r => new Top5BestSellingProductsDTO
+        {
+            SoldQuantity = r.soldQuantity,
+            Product = new ProductResponseDTO
+            {
+                Id = r.product.Id,
+                ProductCode = r.product.ProductCode,
+                ProductName = r.product.ProductName,
+                Slug = r.product.Slug,
+                Description = r.product.Description,
+                UnitPrice = r.product.UnitPrice,
+                WarrantyMonths = r.product.WarrantyMonths,
+                Specifications = r.product.Specifications,
+                DimensionsCm = r.product.DimensionsCm,
+                Images = r.image != null 
+                    ? new List<ProductImageResponseDTO> 
+                    { 
+                        new ProductImageResponseDTO 
+                        { 
+                            ImageUrl = r.image.ImageUrl, 
+                            SortOrder = r.image.SortOrder 
+                        } 
+                    }
+                    : new List<ProductImageResponseDTO>()
+            }
+        }).ToList();
+        return new Top5BestSellingProductsResponseDTO
+        {
+            From = from,
+            To = to,
+            Products = products
         };
     }
 

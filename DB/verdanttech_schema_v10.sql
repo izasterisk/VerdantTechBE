@@ -526,7 +526,8 @@ CREATE TABLE orders (
     INDEX idx_customer (customer_id),
     INDEX idx_address (address_id),
     INDEX idx_status (status),
-    INDEX idx_created (created_at)
+    INDEX idx_created (created_at),
+    INDEX idx_status_created (status, created_at) COMMENT 'Composite index cho vendor revenue queries'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đơn hàng của khách hàng';
 
 -- Chi tiết đơn hàng

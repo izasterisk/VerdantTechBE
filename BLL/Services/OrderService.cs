@@ -24,13 +24,13 @@ public class OrderService : IOrderService
     private readonly IUserService _userService;
     private readonly IExportInventoryRepository _exportInventoryRepository;
     private readonly IUserRepository _userRepository;
-    private readonly IWalletRepository _walletRepository;
+    private readonly IPaymentRepository _paymentRepository;
     private readonly INotificationService _notificationService;
     
     public OrderService(IOrderRepository orderRepository, IMapper mapper, IOrderDetailRepository orderDetailRepository,
         IAddressRepository addressRepository, IGoshipCourierApiClient courierApiClient, IMemoryCache memoryCache,
-        IUserService userService, IExportInventoryRepository exportInventoryRepository, IUserRepository userRepository, 
-        IWalletRepository walletRepository, INotificationService notificationService)
+        IUserService userService, IExportInventoryRepository exportInventoryRepository, IUserRepository userRepository,
+        IPaymentRepository paymentRepository, INotificationService notificationService)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
@@ -41,10 +41,9 @@ public class OrderService : IOrderService
         _userService = userService;
         _exportInventoryRepository = exportInventoryRepository;
         _userRepository = userRepository;
-        _walletRepository = walletRepository;
+        _paymentRepository = paymentRepository;
         _notificationService = notificationService;
     }
-
     public async Task<OrderPreviewResponseDTO> CreateOrderPreviewAsync(ulong userId, OrderPreviewCreateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
@@ -251,7 +250,7 @@ public class OrderService : IOrderService
             if (await _exportInventoryRepository.GetNumberOfProductLeftInInventoryThruLotNumberAsync(validate.Key.LotNumber, validate.Key.ProductId, cancellationToken) < validate.Value)
                 throw new InvalidOperationException($"Lô hàng với số lô {validate.Key} không còn đủ sản phẩm để xuất. Vui lòng kiểm tra lại.");
         }
-        var validatedSerials = await _orderDetailRepository.GetAllProductSerialAsync(validateSerialNumber, cancellationToken);
+        var validatedSerials = await _orderDetailRepository.GetAllProductSerialToExportAsync(validateSerialNumber, cancellationToken);
         if (validateSerialNumber.Count > 0)
         {
             foreach (var s in validatedSerials)
@@ -326,6 +325,8 @@ public class OrderService : IOrderService
     public async Task<OrderResponseDTO> ProcessOrderAsync(ulong userId, ulong orderId, OrderUpdateDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} rỗng.");
+        if (dto.Status == OrderStatus.Paid)
+            throw new InvalidCastException("Không thể chuyển trạng thái đơn hàng thành 'Paid', đây là quá trình tự động.");
         var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (order == null)
             throw new KeyNotFoundException($"Đơn hàng với ID {orderId} không tồn tại.");
@@ -355,9 +356,31 @@ public class OrderService : IOrderService
         if (dto.Status == OrderStatus.Delivered)
         {
             order.DeliveredAt = DateTime.UtcNow;
+            if (order.OrderPaymentMethod == OrderPaymentMethod.COD)
+            {
+                var payment = new DAL.Data.Models.Payment
+                {
+                    PaymentMethod = PaymentMethod.Cod,
+                    PaymentGateway = PaymentGateway.Manual
+                };
+                var transaction = new DAL.Data.Models.Transaction
+                {
+                    TransactionType = TransactionType.PaymentIn,
+                    Amount = order.TotalAmount,
+                    Currency = "VND",
+                    UserId = order.CustomerId,
+                    OrderId = order.Id,
+                    // BankAccountId
+                    Status = TransactionStatus.Completed,
+                    Note = $"Thanh toán đơn hàng #{order.Id} (COD)",
+                    // GatewayPaymentId = orderCode.ToString(),
+                    CreatedBy = order.CustomerId,
+                    ProcessedBy = userId,
+                    ProcessedAt = DateTime.UtcNow
+                };
+                await _paymentRepository.CreatePaymentWithTransactionAsync(payment, transaction, cancellationToken);
+            }
         }
-        if (dto.Status == OrderStatus.Paid)
-            throw new InvalidCastException("Không thể chuyển trạng thái đơn hàng thành 'Paid', đây là quá trình tự động.");
         var productsToUpdate = new List<Product>();
         if (dto.Status == OrderStatus.Cancelled)
         {

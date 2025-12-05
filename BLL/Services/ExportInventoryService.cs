@@ -81,7 +81,7 @@ public class ExportInventoryService : IExportInventoryService
                 CreatedBy = staffId
             }, serial));
         }
-        var validatedSerials = await _orderDetailRepository.GetAllProductSerialAsync(validateSerialNumber, cancellationToken);
+        var validatedSerials = await _orderDetailRepository.GetAllProductSerialToExportAsync(validateSerialNumber, cancellationToken);
         if (validateSerialNumber.Count > 0)
         {
             foreach (var s in validatedSerials)

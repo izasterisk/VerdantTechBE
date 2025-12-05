@@ -36,7 +36,7 @@ public class OrderDetailRepository : IOrderDetailRepository
         return await _orderDetailRepository.CreateAsync(orderDetail, cancellationToken);
     }
     
-    public async Task<List<ProductSerial>> GetAllProductSerialAsync(
+    public async Task<List<ProductSerial>> GetAllProductSerialToExportAsync(
         Dictionary<string, (string lotNumber, ulong productId)> validateSerialNumber, CancellationToken cancellationToken = default)
     {
         if (validateSerialNumber.Count == 0)

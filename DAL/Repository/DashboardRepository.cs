@@ -33,47 +33,118 @@ public class DashboardRepository : IDashboardRepository
         _vendorCertificateRepository = vendorCertificateRepository;
         _productCertificateRepository = productCertificateRepository;
     }
-    public async Task<decimal> GetRevenueByTimeRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    public async Task<decimal> GetRevenueByTimeRangeAsync(DateOnly from, DateOnly to, ulong? vendorId, CancellationToken cancellationToken = default)
+    {
+        if (from > to)
+            throw new ArgumentException("Ngày kết thúc phải sau ngày bắt đầu ít nhất 1 ngày.", nameof(to));
+        var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+        var toDateTime = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+        if (vendorId == null)
+        {
+            return await _dbContext.Transactions
+                .AsNoTracking()
+                .Where(p => p.Status == TransactionStatus.Completed 
+                            && p.TransactionType == TransactionType.PaymentIn 
+                            && p.CreatedAt >= fromDateTime && p.CreatedAt < toDateTime)
+                .SumAsync(p => p.Amount, cancellationToken);
+        }
+        
+        return await _dbContext.Products
+            .AsNoTracking()
+            .Where(p => p.VendorId == vendorId.Value)
+            .SelectMany(p => p.OrderDetails)
+            .Where(od => od.Order.Status == OrderStatus.Paid || od.Order.Status == OrderStatus.Shipped 
+                || od.Order.Status == OrderStatus.Delivered)
+            .Where(od => od.Order.CreatedAt >= fromDateTime && od.Order.CreatedAt < toDateTime)
+            .SumAsync(od => od.Subtotal, cancellationToken);
+    }
+    
+    public async Task<List<(Product product, MediaLink? image, int soldQuantity)>> GetTop5BestSellingProductsByTimeRangeAsync
+        (DateOnly from, DateOnly to, ulong? vendorId, CancellationToken cancellationToken = default)
     {
         if (from > to)
             throw new ArgumentException("Ngày kết thúc phải lớn hơn ngày bắt đầu ít nhất 1 ngày.", nameof(to));
         var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
         var toDateTime = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
-        return await _dbContext.Transactions
-            .Where(p => p.Status == TransactionStatus.Completed 
-                        && p.TransactionType == TransactionType.PaymentIn 
-                        && p.CreatedAt >= fromDateTime && p.CreatedAt < toDateTime)
-            .SumAsync(p => p.Amount, cancellationToken);
+
+        // Query order_details với order có trạng thái hợp lệ
+        var query = _dbContext.OrderDetails
+            .AsNoTracking()
+            .Include(od => od.Product)
+            .Where(od => od.Order.Status == OrderStatus.Paid || od.Order.Status == OrderStatus.Shipped 
+                || od.Order.Status == OrderStatus.Delivered)
+            .Where(od => od.Order.CreatedAt >= fromDateTime && od.Order.CreatedAt < toDateTime);
+
+        // Filter theo vendor nếu có
+        if (vendorId != null)
+        {
+            query = query.Where(od => od.Product.VendorId == vendorId.Value);
+        }
+
+        // Group theo product và tính tổng số lượng bán
+        var topProducts = await query
+            .GroupBy(od => od.ProductId)
+            .Select(g => new
+            {
+                ProductId = g.Key,
+                Product = g.First().Product,
+                SoldQuantity = g.Sum(od => od.Quantity)
+            })
+            .OrderByDescending(x => x.SoldQuantity)
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
+        // Lấy product IDs để query images
+        var productIds = topProducts.Select(x => x.ProductId).ToList();
+
+        // Query images cho các products (lấy ảnh đầu tiên sorted by sort_order)
+        var productImages = await _dbContext.MediaLinks
+            .AsNoTracking()
+            .Where(ml => ml.OwnerType == MediaOwnerType.Products 
+                         && productIds.Contains(ml.OwnerId))
+            .GroupBy(ml => ml.OwnerId)
+            .Select(g => new
+            {
+                ProductId = g.Key,
+                FirstImage = g.OrderBy(ml => ml.SortOrder).First()
+            })
+            .ToListAsync(cancellationToken);
+
+        // Map images vào dictionary để lookup O(1)
+        var imageDict = productImages.ToDictionary(x => x.ProductId, x => x.FirstImage);
+
+        return topProducts.Select(tp => (
+            product: tp.Product,
+            image: imageDict.TryGetValue(tp.ProductId, out var img) ? img : null,
+            soldQuantity: tp.SoldQuantity
+        )).ToList();
     }
     
     public async Task<(int VendorProfile, int ProductRegistration, int VendorCertificate, int ProductCertificate, int Request)> 
         GetNumberOfQueuesAsync(CancellationToken cancellationToken = default)
     {
-        // Chạy 5 query song song để tối ưu performance
-        var vendorProfileTask = _dbContext.VendorProfiles
+        var vendorProfile = await _dbContext.VendorProfiles
+            .AsNoTracking()
             .CountAsync(p => p.VerifiedAt == null && p.VerifiedBy == null, cancellationToken);
-        
-        var productRegistrationTask = _dbContext.ProductRegistrations
+        var productRegistration = await _dbContext.ProductRegistrations
+            .AsNoTracking()
             .CountAsync(p => p.Status == ProductRegistrationStatus.Pending, cancellationToken);
-        
-        var vendorCertificateTask = _dbContext.VendorCertificates
+        var vendorCertificate = await _dbContext.VendorCertificates
+            .AsNoTracking()
             .CountAsync(p => p.Status == VendorCertificateStatus.Pending, cancellationToken);
-        
-        var productCertificateTask = _dbContext.ProductCertificates
+        var productCertificate = await _dbContext.ProductCertificates
+            .AsNoTracking()
             .CountAsync(p => p.Status == ProductCertificateStatus.Pending, cancellationToken);
-        
-        var requestTask = _dbContext.Requests
+        var request = await _dbContext.Requests
+            .AsNoTracking()
             .CountAsync(p => p.Status == RequestStatus.Pending, cancellationToken);
-
-        await Task.WhenAll(vendorProfileTask, productRegistrationTask, vendorCertificateTask, 
-            productCertificateTask, requestTask);
-
         return (
-            VendorProfile: vendorProfileTask.Result,
-            ProductRegistration: productRegistrationTask.Result,
-            VendorCertificate: vendorCertificateTask.Result,
-            ProductCertificate: productCertificateTask.Result,
-            Request: requestTask.Result
+            VendorProfile: vendorProfile,
+            ProductRegistration: productRegistration,
+            VendorCertificate: vendorCertificate,
+            ProductCertificate: productCertificate,
+            Request: request
         );
     }
     
@@ -87,10 +158,10 @@ public class DashboardRepository : IDashboardRepository
 
         // Query một lần và group theo Status để tối ưu performance
         var statusCounts = await _dbContext.Orders
+            .AsNoTracking()
             .Where(p => p.CreatedAt >= fromDateTime && p.CreatedAt < toDateTime)
             .GroupBy(p => p.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
-            .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         var countDict = statusCounts.ToDictionary(x => x.Status, x => x.Count);
@@ -115,12 +186,12 @@ public class DashboardRepository : IDashboardRepository
 
         // Thứ tự filter: TransactionType -> Status -> CreatedAt để tận dụng idx_type_status_created
         var revenues = await _dbContext.Transactions
+            .AsNoTracking()
             .Where(p => p.TransactionType == TransactionType.PaymentIn
                         && p.Status == TransactionStatus.Completed
                         && p.CreatedAt >= fromDateTime && p.CreatedAt < toDateTime)
             .GroupBy(p => p.CreatedAt.Date) // EF Core translate thành DATE(created_at)
             .Select(g => new { Date = g.Key, Revenue = g.Sum(p => p.Amount) })
-            .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         // Chuyển thành Dictionary để lookup O(1)

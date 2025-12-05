@@ -165,5 +165,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             
         builder.HasIndex(e => e.CreatedAt)
             .HasDatabaseName("idx_created");
+            
+        // Composite index for vendor revenue queries
+        builder.HasIndex(e => new { e.Status, e.CreatedAt })
+            .HasDatabaseName("idx_status_created");
     }
 }
