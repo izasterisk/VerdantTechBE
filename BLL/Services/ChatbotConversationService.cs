@@ -20,45 +20,9 @@ public class ChatbotConversationService : IChatbotConversationService
         _userRepository = userRepository;
         _chatbotConversationRepository = chatbotConversationRepository;
     }
+   
     
-    public async Task<SendNewMessageResponseDTO> CreateNewChatbotConversationAsync(ulong userId, ChatbotMessageCreateDTO dto, CancellationToken cancellationToken = default)
-    {
-        await _userRepository.GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken);
-        var newConversation = new ChatbotConversation
-        {
-            CustomerId = userId
-        };
-        var createdConversation = 
-            await _chatbotConversationRepository.CreateConversationWithTransactionAsync(newConversation, 
-            _mapper.Map<ChatbotMessage>(dto), cancellationToken);
-        
-        return new SendNewMessageResponseDTO
-        {
-            Conversation = _mapper.Map<ChatbotConversationsResponseDTO>(createdConversation.conversation),
-            Message = _mapper.Map<ChatbotMessagesResponseDTO>(createdConversation.message)
-        };
-    }
     
-    public async Task<ChatbotMessagesResponseDTO> SendNewMessageAsync(ulong userId, ulong conversationId, ChatbotMessageCreateDTO dto, CancellationToken cancellationToken = default)
-    {
-        if (!await _chatbotConversationRepository.IsConversationBelongToUserAsync(conversationId, userId, cancellationToken))
-            throw new KeyNotFoundException("Cuộc trò chuyện đã đóng hoặc người dùng đã bị xóa.");
-        
-        var newMessage = _mapper.Map<ChatbotMessage>(dto);
-        newMessage.ConversationId = conversationId;
-        var createdMessage = await _chatbotConversationRepository.CreateNewChatbotMessageAsync(newMessage, cancellationToken);
-        return _mapper.Map<ChatbotMessagesResponseDTO>(createdMessage);
-    }
-    
-    public async Task<ChatbotConversationsResponseDTO> UpdateChatbotConversationAsync(ulong conversationId, ChatbotConversationUpdateDTO dto, CancellationToken cancellationToken = default)
-    {
-        var existingConversation = await _chatbotConversationRepository.GetActiveChatbotConversationAsync(conversationId, cancellationToken);
-        var con = _mapper.Map(dto, existingConversation);
-        var conversation = await _chatbotConversationRepository.UpdateChatbotConversationAsync(
-            con, 
-            cancellationToken);
-        return _mapper.Map<ChatbotConversationsResponseDTO>(conversation);
-    }
     
     public async Task<PagedResponse<ChatbotConversationsResponseDTO>> GetAllChatbotConversationByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
@@ -93,4 +57,16 @@ public class ChatbotConversationService : IChatbotConversationService
             HasPreviousPage = page > 1
         };
     }
+
+    public async Task<bool> SoftDeleteConversationAsync(ulong conversationId, ulong userId, CancellationToken ct = default)
+    {
+        var convo = await _chatbotConversationRepository.GetActiveChatbotConversationAsync(conversationId, ct);
+
+        if (convo.CustomerId != userId)
+            throw new UnauthorizedAccessException("Không có quyền xóa cuộc hội thoại này.");
+
+        await _chatbotConversationRepository.SoftDeleteConversationAsync(conversationId, ct);
+        return true;
+    }
+
 }

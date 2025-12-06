@@ -18,85 +18,7 @@ public class ChatbotConversationController : BaseController
         _chatbotConversationService = chatbotConversationService;
     }
 
-    /// <summary>
-    /// Tạo cuộc hội thoại chatbot mới với tin nhắn đầu tiên
-    /// </summary>
-    /// <param name="dto">Thông tin tin nhắn đầu tiên</param>
-    /// <returns>Thông tin cuộc hội thoại và tin nhắn đã tạo</returns>
-    [HttpPost]
-    [EndpointSummary("Create New Chatbot Conversation")]
-    [EndpointDescription("Tạo cuộc hội thoại chatbot mới với tin nhắn đầu tiên. User ID được lấy từ token.")]
-    public async Task<ActionResult<APIResponse>> CreateNewChatbotConversation([FromBody] ChatbotMessageCreateDTO dto)
-    {
-        var validationResult = ValidateModel();
-        if (validationResult != null) return validationResult;
-
-        try
-        {
-            var userId = GetCurrentUserId();
-            var result = await _chatbotConversationService.CreateNewChatbotConversationAsync(userId, dto, GetCancellationToken());
-            return SuccessResponse(result, HttpStatusCode.Created);
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex);
-        }
-    }
-
-    /// <summary>
-    /// Gửi tin nhắn mới trong cuộc hội thoại hiện có
-    /// </summary>
-    /// <param name="conversationId">ID của cuộc hội thoại</param>
-    /// <param name="dto">Thông tin tin nhắn</param>
-    /// <returns>Thông tin tin nhắn đã gửi</returns>
-    [HttpPost("{conversationId}/message")]
-    [EndpointSummary("Send New Message")]
-    [EndpointDescription("Gửi tin nhắn mới trong cuộc hội thoại đã tồn tại. User ID được lấy từ token.")]
-    public async Task<ActionResult<APIResponse>> SendNewMessage(ulong conversationId, [FromBody] ChatbotMessageCreateDTO dto)
-    {
-        var validationResult = ValidateModel();
-        if (validationResult != null) return validationResult;
-
-        try
-        {
-            var userId = GetCurrentUserId();
-            var result = await _chatbotConversationService.SendNewMessageAsync(userId, conversationId, dto, GetCancellationToken());
-            return SuccessResponse(result, HttpStatusCode.Created);
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex);
-        }
-    }
-
-    /// <summary>
-    /// Cập nhật thông tin cuộc hội thoại chatbot
-    /// </summary>
-    /// <param name="conversationId">ID của cuộc hội thoại</param>
-    /// <param name="dto">Thông tin cập nhật cuộc hội thoại</param>
-    /// <returns>Thông tin cuộc hội thoại đã cập nhật</returns>
-    [HttpPatch("{conversationId}")]
-    [EndpointSummary("Update Chatbot Conversation")]
-    [EndpointDescription("Cập nhật thông tin cuộc hội thoại chatbot (title, context, is_active).")]
-    public async Task<ActionResult<APIResponse>> UpdateChatbotConversation(ulong conversationId, [FromBody] ChatbotConversationUpdateDTO dto)
-    {
-        try
-        {
-            var result = await _chatbotConversationService.UpdateChatbotConversationAsync(conversationId, dto, GetCancellationToken());
-            return SuccessResponse(result);
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex);
-        }
-    }
-
-    /// <summary>
-    /// Lấy danh sách tất cả cuộc hội thoại của người dùng hiện tại
-    /// </summary>
-    /// <param name="page">Số trang (mặc định: 1)</param>
-    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
-    /// <returns>Danh sách cuộc hội thoại có phân trang</returns>
+    
     [HttpGet]
     [EndpointSummary("Get All Conversations")]
     [EndpointDescription("Lấy danh sách tất cả cuộc hội thoại của người dùng hiện tại với phân trang. User ID được lấy từ token.")]
@@ -121,13 +43,7 @@ public class ChatbotConversationController : BaseController
         }
     }
 
-    /// <summary>
-    /// Lấy danh sách tin nhắn trong cuộc hội thoại
-    /// </summary>
-    /// <param name="conversationId">ID của cuộc hội thoại</param>
-    /// <param name="page">Số trang (mặc định: 1)</param>
-    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
-    /// <returns>Danh sách tin nhắn có phân trang</returns>
+    
     [HttpGet("{conversationId}/messages")]
     [EndpointSummary("Get All Messages in Conversation")]
     [EndpointDescription("Lấy danh sách tin nhắn trong cuộc hội thoại với phân trang.")]
@@ -150,4 +66,25 @@ public class ChatbotConversationController : BaseController
             return HandleException(ex);
         }
     }
+
+    [HttpDelete("{conversationId}")]
+    [EndpointSummary("Soft delete conversation")]
+    [EndpointDescription("Xóa mềm cuộc hội thoại của người dùng hiện tại. User ID được lấy từ token.")]
+    public async Task<ActionResult<APIResponse>> SoftDeleteConversation(ulong conversationId)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var result = await _chatbotConversationService.SoftDeleteConversationAsync(
+                conversationId, userId, GetCancellationToken()
+            );
+
+            return SuccessResponse("Đã xóa cuộc trò chuyện.");
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
 }
