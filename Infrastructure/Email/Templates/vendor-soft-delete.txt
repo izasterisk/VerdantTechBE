@@ -1,0 +1,14 @@
+﻿TÀI KHOẢN VENDOR ĐÃ BỊ VÔ HIỆU HÓA
+
+Kính gửi {{fullName}},
+
+Tài khoản Vendor của Quý đối tác trên hệ thống VerdantTech Marketplace đã bị tạm vô hiệu hóa.
+
+Trong thời gian này, Quý đối tác sẽ không thể truy cập hoặc quản lý bất kỳ thông tin nào liên quan đến tài khoản Vendor.
+
+Nếu đây là sự nhầm lẫn hoặc Quý đối tác cần hỗ trợ, vui lòng liên hệ đội ngũ hỗ trợ VerdantTech.
+
+Trân trọng,
+Đội ngũ VerdantTech
+
+(Email tự động – vui lòng không trả lời.)

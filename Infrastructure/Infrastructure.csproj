@@ -41,6 +41,8 @@
 	<EmbeddedResource Include="Email\Templates\product-registration-created.txt" />
 	<EmbeddedResource Include="Email\Templates\product-rejected.html" />
 	<EmbeddedResource Include="Email\Templates\product-rejected.txt" />
+	<EmbeddedResource Include="Email\Templates\vendor-soft-delete.html" />
+	<EmbeddedResource Include="Email\Templates\vendor-soft-delete.txt" />
   </ItemGroup>
 
 </Project>

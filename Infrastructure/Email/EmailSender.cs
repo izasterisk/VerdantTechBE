@@ -386,6 +386,33 @@ public class EmailSender : IEmailSender
     }
 
 
+    public async Task SendVendorSoftDeleteEmailAsync(
+    string toEmail,
+    string fullName,
+    CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(toEmail);
+
+        string htmlTemplate = GetEmbeddedResourceString("Email.Templates.vendor-soft-delete.html") ?? "";
+        string textTemplate = GetEmbeddedResourceString("Email.Templates.vendor-soft-delete.txt") ?? "";
+
+        string fullNameValue = string.IsNullOrWhiteSpace(fullName) ? toEmail : fullName;
+
+        string htmlBody = htmlTemplate.Replace("{{fullName}}", fullNameValue);
+        string textBody = textTemplate.Replace("{{fullName}}", fullNameValue);
+
+        await SendEmailAsync(
+            toEmail,
+            "Tài khoản Vendor của bạn đã bị vô hiệu hóa",
+            htmlBody,
+            textBody,
+            fullNameValue,
+            "SOFT_DELETE",
+            "vendor-soft-delete",
+            cancellationToken
+        );
+    }
+
 
 
     private static string EncodeSubject(string subject)

@@ -200,6 +200,16 @@ namespace BLL.Service
                      ?? throw new InvalidOperationException("Hồ sơ vendor không tồn tại.");
 
             await _vendorProfileRepository.SoftDeleteVendorAsync(vendorProfileId, ct);
+
+            var user = await _userRepository.GetUserWithAddressesByIdAsync(vp.UserId, ct);
+            if (user != null)
+            {
+                await _emailSender.SendVendorSoftDeleteEmailAsync(
+                    user.Email!,
+                    user.FullName ?? user.Email!,
+                    ct
+                );
+            }
         }
 
 

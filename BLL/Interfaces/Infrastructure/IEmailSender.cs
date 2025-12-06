@@ -14,6 +14,8 @@ public interface IEmailSender
     Task SendProductRegistrationSubmittedEmailAsync(string toEmail, string fullName, string productName, CancellationToken cancellationToken = default);
     Task SendProductRegistrationApprovedEmailAsync(string toEmail, string fullName, string productName, string productCode, CancellationToken cancellationToken = default);
     Task SendProductRegistrationRejectedEmailAsync( string toEmail, string fullName, string productName, string rejectionReason, CancellationToken cancellationToken = default);
+    Task SendVendorSoftDeleteEmailAsync(string toEmail, string fullName, CancellationToken ct = default);
+
 }
 
 
