@@ -146,7 +146,7 @@ public class WeatherApiClient : IWeatherApiClient
         }
     }
 
-    public async Task<(decimal?[] precipitationData, decimal?[] et0Data)> GetHistoricalWeatherDataAsync(decimal latitude, decimal longitude, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default)
+    public async Task<Dictionary<DateOnly, (decimal? precipitationSum, decimal? et0FaoEvapotranspiration)>> GetHistoricalWeatherDataAsync(decimal latitude, decimal longitude, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -171,11 +171,25 @@ public class WeatherApiClient : IWeatherApiClient
                 throw new InvalidOperationException("Failed to deserialize historical weather data");
             }
             
-            // Return simple arrays like SoilGrids approach
-            var precipitationData = rawWeatherData.Daily?.Precipitation_sum?.ToArray() ?? Array.Empty<decimal?>();
-            var et0Data = rawWeatherData.Daily?.Et0_fao_evapotranspiration?.ToArray() ?? Array.Empty<decimal?>();
+            var result = new Dictionary<DateOnly, (decimal?, decimal?)>();
+            var dates = rawWeatherData.Daily?.Time;
+            var precipitationData = rawWeatherData.Daily?.Precipitation_sum;
+            var et0Data = rawWeatherData.Daily?.Et0_fao_evapotranspiration;
             
-            return (precipitationData, et0Data);
+            if (dates != null)
+            {
+                for (int i = 0; i < dates.Count; i++)
+                {
+                    var date = DateOnly.Parse(dates[i]);
+                    var precipitation = precipitationData != null && i < precipitationData.Count ? precipitationData[i] : null;
+                    var et0 = et0Data != null && i < et0Data.Count ? et0Data[i] : null;
+                    if (precipitation.HasValue && et0.HasValue)
+                    {
+                        result[date] = (precipitation, et0);
+                    }
+                }
+            }
+            return result;
         }
         catch (TaskCanceledException)
         {

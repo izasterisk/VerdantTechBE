@@ -5,6 +5,7 @@ using BLL.Interfaces.Infrastructure;
 using BLL.Helpers.CO2;
 using DAL.Data.Models;
 using DAL.IRepository;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BLL.Services;
 
@@ -14,46 +15,80 @@ public class CO2Service : ICO2Service
     private readonly ISoilGridsApiClient _soilGridsApiClient;
     private readonly IWeatherApiClient _weatherApiClient;
     private readonly IEnvironmentalDataRepository _environmentalDataRepository;
+    private readonly IMemoryCache _cache;
     private readonly IMapper _mapper;
     public CO2Service(
         IFarmProfileRepository farmProfileRepository,
         ISoilGridsApiClient soilGridsApiClient,
         IWeatherApiClient weatherApiClient,
         IEnvironmentalDataRepository environmentalDataRepository,
+        IMemoryCache cache,
         IMapper mapper)
     {
         _farmProfileRepository = farmProfileRepository;
         _soilGridsApiClient = soilGridsApiClient;
         _weatherApiClient = weatherApiClient;
         _environmentalDataRepository = environmentalDataRepository;
+        _cache = cache;
         _mapper = mapper;
     }
 
     public async Task<CO2FootprintResponseDTO> CreateCO2FootprintAsync(ulong farmId, CO2FootprintCreateDTO dto, CancellationToken cancellationToken = default)
     {
+        if(dto.MeasurementEndDate <= dto.MeasurementStartDate || dto.MeasurementEndDate > DateOnly.FromDateTime(DateTime.UtcNow))
+            throw new InvalidOperationException("Ngày kết thúc đo đạc phải sau ngày bắt đầu đo đạc và nằm trước hôm nay!");
         var dataExists = await _environmentalDataRepository.GetEnvironmentDataByFarmIdAndDateRangeAsync(farmId, dto.MeasurementStartDate, dto.MeasurementEndDate, cancellationToken);
         if (dataExists)
-        {
             throw new InvalidOperationException("Dữ liệu CO2 footprint cho khoảng thời gian này đã tồn tại!");
-        }
-        var farmProfile = await _farmProfileRepository.GetCoordinateByFarmIdAsync(farmId, true, cancellationToken);
-        if (farmProfile?.Address?.Latitude == null || farmProfile.Address.Longitude == null)
-        {
+        var farmProfile = await _farmProfileRepository.GetFarmWithAddressByFarmIdAsync(farmId, true, cancellationToken);
+        if (farmProfile.Address?.Latitude == null || farmProfile.Address.Longitude == null)
             throw new InvalidOperationException("Nông trại chưa có tọa độ địa lý, không thể lấy dữ liệu đất!");
-        }
         try
         {
-            // Get both soil data and weather data concurrently
-            var rawSoilData = await _soilGridsApiClient.GetSoilDataAsync(
-                farmProfile.Address.Latitude.Value, 
-                farmProfile.Address.Longitude.Value, 
-                cancellationToken);
-            var (precipitationData, et0Data) = await _weatherApiClient.GetHistoricalWeatherDataAsync(
-                farmProfile.Address.Latitude.Value, 
-                farmProfile.Address.Longitude.Value, 
-                dto.MeasurementStartDate, 
-                dto.MeasurementEndDate, 
-                cancellationToken);
+            // Get soil data - check cache first
+            BLL.DTO.Soil.SoilDataResult rawSoilData;
+            var soilCacheKey = $"soil:{farmId}";
+            if (_cache.TryGetValue(soilCacheKey, out object? cachedSoilObj) &&
+                cachedSoilObj?.GetType().GetProperty("Data")?.GetValue(cachedSoilObj) is BLL.DTO.Soil.SoilDataResult cachedSoil)
+            {
+                rawSoilData = cachedSoil;
+            }
+            else
+            {
+                rawSoilData = await _soilGridsApiClient.GetSoilDataAsync(
+                    farmProfile.Address.Latitude.Value,
+                    farmProfile.Address.Longitude.Value,
+                    cancellationToken);
+            }
+
+            // Get weather data - check cache and date range
+            Dictionary<DateOnly, (decimal?, decimal?)> weatherData;
+            var weatherCacheKey = $"weather:historical:{farmId}";
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var oneYearAgo = today.AddYears(-1);
+            
+            // Check if requested range is within cached range (1 year ago to today)
+            var isWithinCachedRange = dto.MeasurementStartDate >= oneYearAgo && dto.MeasurementEndDate <= today;
+            
+            if (isWithinCachedRange &&
+                _cache.TryGetValue(weatherCacheKey, out object? cachedWeatherObj) &&
+                cachedWeatherObj?.GetType().GetProperty("Data")?.GetValue(cachedWeatherObj) is Dictionary<DateOnly, (decimal?, decimal?)> cachedWeather)
+            {
+                // Filter cached data by requested date range
+                weatherData = cachedWeather
+                    .Where(kvp => kvp.Key >= dto.MeasurementStartDate && kvp.Key <= dto.MeasurementEndDate)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            }
+            else
+            {
+                // Cache miss or out of range - get from API
+                weatherData = await _weatherApiClient.GetHistoricalWeatherDataAsync(
+                    farmProfile.Address.Latitude.Value,
+                    farmProfile.Address.Longitude.Value,
+                    dto.MeasurementStartDate,
+                    dto.MeasurementEndDate,
+                    cancellationToken);
+            }
 
             // Calculate weighted averages for soil data
             var sandAverage = CalculationHelper.CalculateWeightedAverage(
@@ -65,7 +100,7 @@ public class CO2Service : ICO2Service
             var phAverage = CalculationHelper.CalculateWeightedAverage(
                 rawSoilData.PhLayers[0], rawSoilData.PhLayers[1], rawSoilData.PhLayers[2]);
             // Calculate weather averages
-            var (precipitationAvg, et0Avg) = CalculationHelper.CalculateHistoricalWeatherAverages(precipitationData, et0Data);
+            var (precipitationAvg, et0Avg) = CalculationHelper.CalculateHistoricalWeatherAverages(weatherData);
             
             var environmentalData = _mapper.Map<EnvironmentalDatum>(dto);
             environmentalData.FarmProfileId = farmId;

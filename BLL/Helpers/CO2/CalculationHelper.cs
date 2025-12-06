@@ -29,10 +29,13 @@ namespace BLL.Helpers.CO2
         }
 
         /// <summary>
-        /// Business logic: Calculate historical weather averages from simple arrays
+        /// Business logic: Calculate historical weather averages from dictionary
         /// </summary>
-        public static (decimal precipitationAvg, decimal et0Avg) CalculateHistoricalWeatherAverages(decimal?[] precipitationData, decimal?[] et0Data)
+        public static (decimal precipitationAvg, decimal et0Avg) CalculateHistoricalWeatherAverages(Dictionary<DateOnly, (decimal?, decimal?)> weatherData)
         {
+            var precipitationData = weatherData.Values.Select(v => v.Item1).ToList();
+            var et0Data = weatherData.Values.Select(v => v.Item2).ToList();
+            
             var precipitationAvg = CalculateAverage(precipitationData);
             var et0Avg = CalculateAverage(et0Data);
 

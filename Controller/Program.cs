@@ -182,6 +182,7 @@ builder.Services.AddScoped<IChatbotConversationService, ChatbotConversationServi
 builder.Services.AddScoped<ICropService, CropService>();
 builder.Services.AddScoped<IExportInventoryService, ExportInventoryService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IEnvCacheService, EnvCacheService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

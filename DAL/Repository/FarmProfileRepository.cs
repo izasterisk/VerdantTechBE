@@ -42,13 +42,23 @@ public class FarmProfileRepository : IFarmProfileRepository
     }
 
 
-    public async Task<FarmProfile?> GetCoordinateByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
+    public async Task<FarmProfile> GetFarmWithAddressByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {
         return await _farmProfileRepository.GetWithRelationsAsync(
             f => f.Id == farmId,
             useNoTracking,
             query => query.Include(f => f.Address),
-            cancellationToken);
+            cancellationToken)
+            ?? throw new KeyNotFoundException($"Trang trại với ID: {farmId} không tồn tại.");
+    }
+    
+    public async Task<List<FarmProfile>> GetAllFarmWithAddressByUserIdAsync(ulong userId, bool useNoTracking = true, CancellationToken cancellationToken = default)
+    {
+        return await _farmProfileRepository.GetAllWithRelationsByFilterAsync(
+                   f => f.UserId == userId,
+                   useNoTracking,
+                   query => query.Include(f => f.Address),
+                   cancellationToken);
     }
     
     public async Task<List<FarmProfile>> GetAllFarmProfilesByUserIdAsync(ulong userId, bool useNoTracking = true, CancellationToken cancellationToken = default)

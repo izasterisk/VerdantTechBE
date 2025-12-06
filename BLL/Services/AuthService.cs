@@ -14,17 +14,19 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IUserRepository _userRepository;
     private readonly IEmailSender _emailSender;
+    private readonly IEnvCacheService _envCacheService;
     
     // Cache JWT expire hours to avoid repeated environment variable lookups
     private readonly int _jwtExpireHours;
     
     public AuthService(IAuthRepository authRepository, IConfiguration configuration, 
-        IUserRepository userRepository, IEmailSender emailSender)
+        IUserRepository userRepository, IEmailSender emailSender, IEnvCacheService envCacheService)
     {
         _authRepository = authRepository;
         _configuration = configuration;
         _userRepository = userRepository;
         _emailSender = emailSender;
+        _envCacheService = envCacheService;
         _jwtExpireHours = TokenHelper.GetJwtExpireHours();
     }
 
@@ -44,7 +46,7 @@ public class AuthService : IAuthService
         user.LastLoginAt = DateTime.UtcNow;
         await _userRepository.UpdateUserWithTransactionAsync(user, cancellationToken);
         
-        return new LoginResponseDTO
+        var loginResponse = new LoginResponseDTO
         {
             Token = token,
             TokenExpiresAt = DateTime.UtcNow.AddHours(_jwtExpireHours),
@@ -60,6 +62,11 @@ public class AuthService : IAuthService
                 IsVerified = user.IsVerified
             }
         };
+        
+        // Fire-and-forget: Preload weather & soil data in background
+        _ = Task.Run(() => _envCacheService.PreloadAllFarmsDataAsync(user.Id));
+        
+        return loginResponse;
     }
 
     public async Task<LoginResponseDTO> GoogleLoginAsync(GoogleLoginDTO googleLoginDto, CancellationToken cancellationToken = default)
