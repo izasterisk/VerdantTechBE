@@ -1,9 +1,11 @@
-﻿namespace BLL.Interfaces;
+﻿using DAL.Data.Models;
+
+namespace BLL.Interfaces;
 
 public interface IEnvCacheService
 {
     /// <summary>
-    /// Preload weather and soil data for all farms of a user (background task, no exceptions thrown)
+    /// Preload weather and soil data for all farms (background task, no exceptions thrown)
     /// </summary>
-    Task PreloadAllFarmsDataAsync(ulong userId);
+    Task PreloadAllFarmsDataAsync(List<FarmProfile> farms);
 }

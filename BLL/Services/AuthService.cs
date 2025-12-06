@@ -40,11 +40,16 @@ public class AuthService : IAuthService
         
         AuthValidationHelper.ValidateUserStatus(user);
         AuthValidationHelper.ValidateLoginCredentials(user, loginDto.Password);
-
+        
+        // Fire-and-forget: Preload weather & soil data in background
+        if (user.FarmProfiles.Count > 0)
+        {
+            List<FarmProfile> farmProfiles = user.FarmProfiles.ToList();
+            _ = Task.Run(() => _envCacheService.PreloadAllFarmsDataAsync(farmProfiles));
+        }
+        
+        user.FarmProfiles = null!;
         var (token, refreshToken, refreshTokenExpiry) = await GenerateTokensAndUpdateUserAsync(user!, cancellationToken);
-
-        user.LastLoginAt = DateTime.UtcNow;
-        await _userRepository.UpdateUserWithTransactionAsync(user, cancellationToken);
         
         var loginResponse = new LoginResponseDTO
         {
@@ -62,10 +67,6 @@ public class AuthService : IAuthService
                 IsVerified = user.IsVerified
             }
         };
-        
-        // Fire-and-forget: Preload weather & soil data in background
-        _ = Task.Run(() => _envCacheService.PreloadAllFarmsDataAsync(user.Id));
-        
         return loginResponse;
     }
 

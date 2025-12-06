@@ -2,6 +2,7 @@
 using BLL.DTO.Weather;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
+using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -21,25 +22,21 @@ public class EnvCacheService : IEnvCacheService
     private readonly IMemoryCache _cache;
     private readonly IWeatherApiClient _weatherApiClient;
     private readonly ISoilGridsApiClient _soilGridsApiClient;
-    private readonly IFarmProfileRepository _farmProfileRepository;
     
     private readonly TimeSpan _cacheDuration = TimeSpan.FromHours(1);
     
     public EnvCacheService(
         IMemoryCache cache,
         IWeatherApiClient weatherApiClient,
-        ISoilGridsApiClient soilGridsApiClient,
-        IFarmProfileRepository farmProfileRepository)
+        ISoilGridsApiClient soilGridsApiClient)
     {
         _cache = cache;
         _weatherApiClient = weatherApiClient;
         _soilGridsApiClient = soilGridsApiClient;
-        _farmProfileRepository = farmProfileRepository;
     }
     
-    public async Task PreloadAllFarmsDataAsync(ulong userId)
+    public async Task PreloadAllFarmsDataAsync(List<FarmProfile> farms)
     {
-        var farms = await _farmProfileRepository.GetAllFarmWithAddressByUserIdAsync(userId, false);
         if (farms.Count == 0)
             return;
         foreach (var farm in farms)
