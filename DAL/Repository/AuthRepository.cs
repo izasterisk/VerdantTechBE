@@ -18,7 +18,13 @@ public class AuthRepository : IAuthRepository
     
     public async Task<User?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        return await _userRepository.GetWithRelationsAsync(u => u.Email.ToLower() == email.ToLower(),true, 
+        return await _userRepository.GetAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase),true, 
+            cancellationToken: cancellationToken);
+    }
+    
+    public async Task<User?> GetUserWithFarmByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        return await _userRepository.GetWithRelationsAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase),true, 
             query => query.Include(u => u.FarmProfiles)
                 .ThenInclude(f => f.Address), 
             cancellationToken: cancellationToken);

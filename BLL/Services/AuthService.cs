@@ -34,7 +34,7 @@ public class AuthService : IAuthService
     {
         ArgumentNullException.ThrowIfNull(loginDto);
         
-        var user = await _authRepository.GetUserByEmailAsync(loginDto.Email, cancellationToken);
+        var user = await _authRepository.GetUserWithFarmByEmailAsync(loginDto.Email, cancellationToken);
         if(user == null)
             throw new InvalidOperationException(AuthConstants.USER_NOT_FOUND);
         
@@ -78,7 +78,7 @@ public class AuthService : IAuthService
         var googleUser = await GoogleAuthHelper.ValidateGoogleTokenAsync(googleLoginDto.IdToken);
         
         // Check if user exists by email
-        var user = await _authRepository.GetUserByEmailAsync(googleUser.Email, cancellationToken);
+        var user = await _authRepository.GetUserWithFarmByEmailAsync(googleUser.Email, cancellationToken);
         if (user == null)
         {
             // Create new user with Google information
@@ -88,8 +88,15 @@ public class AuthService : IAuthService
         else
         {
             AuthValidationHelper.ValidateUserStatus(user);
-            user.LastLoginAt = DateTime.UtcNow;
-            await _userRepository.UpdateUserWithTransactionAsync(user, cancellationToken);
+            
+            // Fire-and-forget: Preload weather & soil data in background
+            if (user.FarmProfiles.Count > 0)
+            {
+                List<FarmProfile> farmProfiles = user.FarmProfiles.ToList();
+                _ = Task.Run(() => _envCacheService.PreloadAllFarmsDataAsync(farmProfiles));
+            }
+            
+            user.FarmProfiles = null!;
         }
         
         // Generate tokens and update user

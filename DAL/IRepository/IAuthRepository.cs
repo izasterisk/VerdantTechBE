@@ -8,4 +8,5 @@ public interface IAuthRepository
     Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task UpdateUserAsync(User user, CancellationToken cancellationToken = default);
     Task LogoutUserAsync(User user, CancellationToken cancellationToken = default);
+    Task<User?> GetUserWithFarmByEmailAsync(string email, CancellationToken cancellationToken = default);
 }
