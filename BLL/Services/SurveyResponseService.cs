@@ -24,11 +24,7 @@ public class SurveyResponseService : ISurveyResponseService
         var check = await _farmProfileRepository.CheckIfFarmProfileBelongToUserAsync(userId, dto.FarmProfileId, cancellationToken);
         if (!check)
             throw new UnauthorizedAccessException($"Người dùng với ID {userId} không có quyền truy cập trang trại với ID {dto.FarmProfileId}");
-        var isSurveyResponseExist = await _surveyResponseRepository.CheckIfFarmAlreadyHasSurvey(dto.FarmProfileId, cancellationToken);
-        if (isSurveyResponseExist)
-        {
-            await _surveyResponseRepository.DeleteAllSurveyResponsesByFarmIdAsync(dto.FarmProfileId, cancellationToken);
-        }
+        var existingResponses = await _surveyResponseRepository.GetAllSurveyResponsesByFarmIdAsync(dto.FarmProfileId, cancellationToken);
         
         var surveyResponses = new List<SurveyResponse>();
         var checkId = new HashSet<ulong>();
@@ -45,7 +41,7 @@ public class SurveyResponseService : ISurveyResponseService
                 UpdatedAt = DateTime.UtcNow
             });
         }
-        await _surveyResponseRepository.CreateListSurveyResponsesAsync(surveyResponses, cancellationToken);
+        await _surveyResponseRepository.CreateListSurveyResponsesWithTransactionAsync(surveyResponses, existingResponses, cancellationToken);
         var result = await _surveyResponseRepository.GetAllSurveyResponsesByFarmIdAsync(dto.FarmProfileId, cancellationToken);
         return _mapper.Map<List<SurveyResponseDTO>>(result);
     }

@@ -18,16 +18,25 @@ public class SurveyResponseRepository : ISurveyResponseRepository
         _dbContext = dbContext;
     }
     
-    public async Task<List<SurveyResponse>> CreateListSurveyResponsesAsync(List<SurveyResponse> surveyResponses, CancellationToken cancellationToken = default)
+    public async Task<List<SurveyResponse>> CreateListSurveyResponsesWithTransactionAsync(List<SurveyResponse> surveyResponsesCreate, 
+        List<SurveyResponse> surveyResponsesDelete, CancellationToken cancellationToken = default)
     {
-        return await _surveyResponseRepository.CreateBulkAsync(surveyResponses, cancellationToken);
-    }
-    
-    public async Task DeleteAllSurveyResponsesByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
-    {
-        var survey = await _surveyResponseRepository.GetAllByFilterAsync
-            (s => s.FarmProfileId == farmId, true, cancellationToken);
-        await _surveyResponseRepository.DeleteBulkAsync(survey, cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            if (surveyResponsesDelete.Count > 0)
+            {
+                await _surveyResponseRepository.DeleteBulkAsync(surveyResponsesDelete, cancellationToken);
+            }
+            var result = await _surveyResponseRepository.CreateBulkAsync(surveyResponsesCreate, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
     
     public async Task<List<SurveyResponse>> GetAllSurveyResponsesByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
