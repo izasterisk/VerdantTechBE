@@ -30,4 +30,5 @@ public partial class FarmProfile
     public virtual Address? Address { get; set; }
     public virtual ICollection<EnvironmentalDatum> EnvironmentalData { get; set; } = new List<EnvironmentalDatum>();
     public virtual ICollection<Crop> Crops { get; set; } = new List<Crop>();
+    public virtual ICollection<SurveyResponse> SurveyResponses { get; set; } = new List<SurveyResponse>();
 }

@@ -40,7 +40,11 @@ public class FarmProfileRepository : IFarmProfileRepository
             true, cancellationToken) ?? 
                throw new KeyNotFoundException("Không tìm thấy hồ sơ trang trại");
     }
-
+    
+    public async Task<bool> CheckIfFarmProfileBelongToUserAsync(ulong userId, ulong farmId, CancellationToken cancellationToken = default)
+    {
+        return await _farmProfileRepository.AnyAsync(f => f.UserId == userId && f.Id == farmId, cancellationToken);
+    }
 
     public async Task<FarmProfile> GetFarmWithAddressByFarmIdAsync(ulong farmId, bool useNoTracking = true, CancellationToken cancellationToken = default)
     {

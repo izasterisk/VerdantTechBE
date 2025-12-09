@@ -52,6 +52,9 @@ public class VerdantTechDbContext : DbContext
     public DbSet<Fertilizer> Fertilizers { get; set; }
     public DbSet<EnergyUsage> EnergyUsage { get; set; }
     
+    // Sustainability Survey DbSets
+    public DbSet<SurveyResponse> SurveyResponses { get; set; }
+    
     // AI Chatbot DbSets
     public DbSet<ChatbotConversation> ChatbotConversations { get; set; }
     public DbSet<ChatbotMessage> ChatbotMessages { get; set; }
@@ -101,6 +104,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ForumPostConfiguration());
         modelBuilder.ApplyConfiguration(new ForumCommentConfiguration());
         modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+        modelBuilder.ApplyConfiguration(new SurveyResponseConfiguration());
         
         base.OnModelCreating(modelBuilder);
     }

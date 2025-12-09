@@ -222,6 +222,23 @@ CREATE TABLE energy_usage (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Dữ liệu sử dụng năng lượng để tính toán lượng khí thải CO2 (quan hệ 1-1 với environmental_data)';
 
 -- =====================================================
+-- CÁC BẢNG ĐÁNH GIÁ ĐỘ BỀN VỮNG TRANG TRẠI (SUSTAINABILITY SURVEY)
+-- =====================================================
+
+-- Bảng câu trả lời của người dùng
+CREATE TABLE survey_responses (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    farm_profile_id BIGINT UNSIGNED NULL COMMENT 'Trang trại được đánh giá',
+    question_id BIGINT UNSIGNED NOT NULL COMMENT 'Câu hỏi được trả lời',    
+    text_answer TEXT NULL COMMENT 'Câu trả lời dạng text - bắt buộc nếu question_type = text',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE CASCADE,
+    INDEX idx_farm (farm_profile_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu câu trả lời đánh giá độ bền vững của người dùng';
+
+-- =====================================================
 -- CÁC BẢNG CHATBOT AI
 -- =====================================================
 

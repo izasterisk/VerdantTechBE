@@ -31,6 +31,7 @@ using BLL.DTO.ForumPost;
 using BLL.DTO.ForumComment;
 using BLL.DTO.ExportInventory;
 using BLL.DTO.Payment.PayOS;
+using BLL.DTO.SurveyResponse;
 
 namespace BLL.Helpers
 {
@@ -72,6 +73,9 @@ namespace BLL.Helpers
             CreateMap<CropsUpdateDTO, Crop>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
             CreateMap<Crop, CropsResponseDTO>().ReverseMap();
+            
+            // ===================== CROPS =====================
+            CreateMap<SurveyResponse, SurveyResponseDTO>().ReverseMap();
             
             // ===================== ADDRESS =====================
             CreateMap<Address, AddressResponseDTO>().ReverseMap();

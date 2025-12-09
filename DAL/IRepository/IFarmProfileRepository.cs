@@ -10,4 +10,5 @@ public interface IFarmProfileRepository
     Task<FarmProfile> CreateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, List<Crop> crops, CancellationToken cancellationToken = default);
     Task<FarmProfile> UpdateFarmProfileWithTransactionAsync(FarmProfile farmProfile, Address address, CancellationToken cancellationToken = default);
     Task<FarmProfile> GetFarmProfileByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default);
+    Task<bool> CheckIfFarmProfileBelongToUserAsync(ulong userId, ulong farmId, CancellationToken cancellationToken = default);
 }

@@ -28,9 +28,49 @@ namespace DAL.Repository
             return dbRecord;
         }
 
+        public async Task<List<T>> CreateBulkAsync(List<T> dbRecords, CancellationToken cancellationToken = default)
+        {
+            if (dbRecords.Count == 0)
+            {
+                return dbRecords;
+            }
+            await _dbSet.AddRangeAsync(dbRecords, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return dbRecords;
+        }
+
+        public async Task<T> UpdateAsync(T dbRecord, CancellationToken cancellationToken = default)
+        {
+            _dbContext.Update(dbRecord);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return dbRecord;
+        }
+        
+        public async Task<List<T>> BulkUpdateAsync(List<T> dbRecords, CancellationToken cancellationToken = default)
+        {
+            if (dbRecords.Count == 0)
+            {
+                return dbRecords;
+            }
+            _dbContext.UpdateRange(dbRecords);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return dbRecords;
+        }
+
         public async Task<bool> DeleteAsync(T dbRecord, CancellationToken cancellationToken = default)
         {
             _dbSet.Remove(dbRecord);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+
+        public async Task<bool> DeleteBulkAsync(List<T> dbRecords, CancellationToken cancellationToken = default)
+        {
+            if (dbRecords.Count == 0)
+            {
+                return true;
+            }
+            _dbSet.RemoveRange(dbRecords);
             await _dbContext.SaveChangesAsync(cancellationToken);
             return true;
         }
@@ -85,30 +125,7 @@ namespace DAL.Repository
             {
                 return await _dbSet.Where(filter).ToListAsync(cancellationToken);
             }
-        }
-
-        //public async Task<T> GetByNameAsync(Expression<Func<T, bool>> filter)
-        //{
-        //    return await _dbSet.Where(filter).FirstOrDefaultAsync();
-        //}
-
-        public async Task<T> UpdateAsync(T dbRecord, CancellationToken cancellationToken = default)
-        {
-            _dbContext.Update(dbRecord);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return dbRecord;
-        }
-        
-        public async Task<List<T>> BulkUpdateAsync(List<T> dbRecords, CancellationToken cancellationToken = default)
-        {
-            if (dbRecords.Count == 0)
-            {
-                return dbRecords;
-            }
-            _dbContext.UpdateRange(dbRecords);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return dbRecords;
-        }
+        }  
 
         public async Task<List<T>> GetAllWithRelationsByFilterAsync(Expression<Func<T, bool>> filter, bool useNoTracking = false, Func<IQueryable<T>, IQueryable<T>>? includeFunc = null, CancellationToken cancellationToken = default)
         {
