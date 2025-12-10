@@ -18,5 +18,7 @@ namespace DAL.IRepository
         Task UpdateAsync(BatchInventory entity, CancellationToken ct = default);
         Task DeleteAsync(ulong id, CancellationToken ct = default);
         Task QualityCheckAsync(ulong id, QualityCheckStatus status, ulong? qualityCheckedByUserId, string? notes, CancellationToken ct = default);
+        Task<bool> SkuExistsAsync(string sku, ulong? excludeId = null, CancellationToken ct = default);
+        Task<bool> BatchNumberExistsAsync(string batchNumber, ulong? excludeId = null, CancellationToken ct = default);
     }
 }

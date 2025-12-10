@@ -289,6 +289,7 @@ namespace BLL.Helpers
             // ===================== BATCH INVENTORY =====================
             CreateMap<BatchInventoryCreateDTO, BatchInventory>()
                 .ForMember(d => d.Id, o => o.Ignore())
+                .ForMember(d => d.Sku, o => o.Ignore()) // SKU được tự động generate trong Service
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
                 .ForMember(d => d.UpdatedAt, o => o.Ignore())
                 .ForMember(d => d.ProductSerials, o => o.Ignore())

@@ -11,9 +11,6 @@ namespace BLL.DTO.BatchInventory
     {
         [Required]
         public ulong ProductId { get; set; }
-        [Required]
-        [StringLength(100)]
-        public string Sku { get; set; } = null!;
         public ulong? VendorId { get; set; }
         [Required]
         [StringLength(100)]

@@ -167,5 +167,31 @@ namespace DAL.Repository
                 throw;
             }
         }
+
+        public async Task<bool> SkuExistsAsync(string sku, ulong? excludeId = null, CancellationToken ct = default)
+        {
+            var query = _context.BatchInventories
+                .Where(x => x.Sku == sku);
+            
+            if (excludeId.HasValue)
+            {
+                query = query.Where(x => x.Id != excludeId.Value);
+            }
+            
+            return await query.AnyAsync(ct);
+        }
+
+        public async Task<bool> BatchNumberExistsAsync(string batchNumber, ulong? excludeId = null, CancellationToken ct = default)
+        {
+            var query = _context.BatchInventories
+                .Where(x => x.BatchNumber == batchNumber);
+            
+            if (excludeId.HasValue)
+            {
+                query = query.Where(x => x.Id != excludeId.Value);
+            }
+            
+            return await query.AnyAsync(ct);
+        }
     }
 }

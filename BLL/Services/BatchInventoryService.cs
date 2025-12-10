@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BLL.DTO.BatchInventory;
+using BLL.Helpers.BatchInventoryHelper;
 using BLL.Interfaces;
 using DAL.Data;
 using DAL.Data.Models;
@@ -77,6 +78,44 @@ namespace BLL.Services
                     throw new ArgumentException($"Người dùng với ID {dto.VendorId.Value} không phải là nhà cung cấp.");
             }
 
+            string sku;
+            do
+            {
+                sku = BatchInventoryHelper.GenerateSku(dto.ProductId);
+            } while (await _repo.SkuExistsAsync(sku, null, ct));
+
+            // Validate BatchNumber - format validation và check duplicate
+            if (string.IsNullOrWhiteSpace(dto.BatchNumber))
+                throw new ArgumentException("Số lô (BatchNumber) không được để trống.");
+
+            dto.BatchNumber = dto.BatchNumber.Trim();
+
+            // Validate BatchNumber format (chỉ chứa chữ cái, số, dấu gạch ngang, gạch dưới, khoảng trắng)
+            if (!dto.BatchNumber.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == ' '))
+                throw new ArgumentException("Số lô (BatchNumber) chỉ được chứa chữ cái, số, dấu gạch ngang (-), gạch dưới (_) và khoảng trắng.");
+
+            if (dto.BatchNumber.Length > 100)
+                throw new ArgumentException("Số lô (BatchNumber) không được vượt quá 100 ký tự.");
+
+            // Check BatchNumber duplicate - không được trùng
+            if (await _repo.BatchNumberExistsAsync(dto.BatchNumber, null, ct))
+                throw new ArgumentException($"Số lô (BatchNumber) '{dto.BatchNumber}' đã tồn tại trong hệ thống. Vui lòng sử dụng số lô khác.");
+
+            // Validate LotNumber - có thể trùng, chỉ validate format
+            if (string.IsNullOrWhiteSpace(dto.LotNumber))
+                throw new ArgumentException("Mã số lô (LotNumber) không được để trống.");
+
+            dto.LotNumber = dto.LotNumber.Trim();
+
+            // Validate LotNumber format
+            if (!dto.LotNumber.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == ' '))
+                throw new ArgumentException("Mã số lô (LotNumber) chỉ được chứa chữ cái, số, dấu gạch ngang (-), gạch dưới (_) và khoảng trắng.");
+
+            if (dto.LotNumber.Length > 100)
+                throw new ArgumentException("Mã số lô (LotNumber) không được vượt quá 100 ký tự.");
+
+            // Note: LotNumber có thể trùng, không cần check duplicate
+
             var category = product.Category;
             bool serialRequired = category?.SerialRequired ?? false;
             List<string>? validSerials = null;
@@ -126,6 +165,8 @@ namespace BLL.Services
             }
 
             var entity = _mapper.Map<BatchInventory>(dto);
+            // Set SKU (tự động tạo hoặc từ DTO)
+            entity.Sku = sku;
             var created = await _repo.CreateAsync(entity, ct);
 
             // Create ProductSerial records if serials are provided
@@ -188,8 +229,46 @@ namespace BLL.Services
                     throw new ArgumentException($"User ID {dto.VendorId.Value} is not a vendor.");
             }
 
-         
+            // Validate SKU (Mã nhập kho) - không được trùng
+            if (string.IsNullOrWhiteSpace(dto.Sku))
+                throw new ArgumentException("Mã nhập kho (SKU) không được để trống.");
 
+            dto.Sku = dto.Sku.Trim();
+
+            if (dto.Sku.Length > 100)
+                throw new ArgumentException("Mã nhập kho (SKU) không được vượt quá 100 ký tự.");
+
+            // Check SKU duplicate - không được trùng (exclude current record)
+            if (await _repo.SkuExistsAsync(dto.Sku, dto.Id, ct))
+                throw new ArgumentException($"Mã nhập kho (SKU) '{dto.Sku}' đã tồn tại trong hệ thống. Vui lòng sử dụng mã khác.");
+
+            // Validate BatchNumber - format validation và check duplicate
+            if (string.IsNullOrWhiteSpace(dto.BatchNumber))
+                throw new ArgumentException("Số lô (BatchNumber) không được để trống.");
+
+            dto.BatchNumber = dto.BatchNumber.Trim();
+
+            if (!dto.BatchNumber.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == ' '))
+                throw new ArgumentException("Số lô (BatchNumber) chỉ được chứa chữ cái, số, dấu gạch ngang (-), gạch dưới (_) và khoảng trắng.");
+
+            if (dto.BatchNumber.Length > 100)
+                throw new ArgumentException("Số lô (BatchNumber) không được vượt quá 100 ký tự.");
+
+            // Check BatchNumber duplicate - không được trùng (exclude current record)
+            if (await _repo.BatchNumberExistsAsync(dto.BatchNumber, dto.Id, ct))
+                throw new ArgumentException($"Số lô (BatchNumber) '{dto.BatchNumber}' đã tồn tại trong hệ thống. Vui lòng sử dụng số lô khác.");
+
+            // Validate LotNumber - có thể trùng, chỉ validate format
+            if (string.IsNullOrWhiteSpace(dto.LotNumber))
+                throw new ArgumentException("Mã số lô (LotNumber) không được để trống.");
+
+            dto.LotNumber = dto.LotNumber.Trim();
+
+            if (!dto.LotNumber.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == ' '))
+                throw new ArgumentException("Mã số lô (LotNumber) chỉ được chứa chữ cái, số, dấu gạch ngang (-), gạch dưới (_) và khoảng trắng.");
+
+            if (dto.LotNumber.Length > 100)
+                throw new ArgumentException("Mã số lô (LotNumber) không được vượt quá 100 ký tự.");
 
             _mapper.Map(dto, existing);
 
