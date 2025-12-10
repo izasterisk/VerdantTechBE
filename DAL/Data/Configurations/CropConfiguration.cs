@@ -76,7 +76,7 @@ public class CropConfiguration : IEntityTypeConfiguration<Crop>
                     .Replace("thamcanh", "tham_canh")
                     .Replace("luancanh", "luan_canh")
                     .Replace("xencanh", "xen_canh")
-                    .Replace("haluoi", "nha_luoi")
+                    .Replace("nhaluoi", "nha_luoi")
                     .Replace("thuycanh", "thuy_canh"),
                 v => Enum.Parse<FarmingType>(v
                     .Replace("tham_canh", "ThamCanh")

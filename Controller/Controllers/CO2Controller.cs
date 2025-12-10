@@ -43,6 +43,28 @@ public class CO2Controller : BaseController
     }
 
     /// <summary>
+    /// Lấy dữ liệu đất theo Farm ID
+    /// </summary>
+    /// <param name="farmId">ID của trang trại</param>
+    /// <returns>Dữ liệu đất của trang trại</returns>
+    [HttpGet("farm/{farmId}/soil")]
+    [Authorize]
+    [EndpointSummary("Get Soil Data by Farm ID")]
+    [EndpointDescription("Sẽ trả về 3 giá trị theo thứ tự là 0-5cm, 5-15cm, 15-30cm.")]
+    public async Task<ActionResult<APIResponse>> GetSoilDataByFarmId(ulong farmId)
+    {
+        try
+        {
+            var soilData = await _co2Service.GetSoilDataByFarmIdAsync(farmId, GetCancellationToken());
+            return SuccessResponse(soilData);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Lấy tất cả dữ liệu môi trường theo Farm ID
     /// </summary>
     /// <param name="farmId">ID của trang trại</param>

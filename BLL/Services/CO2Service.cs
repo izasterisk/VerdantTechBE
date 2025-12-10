@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BLL.DTO.CO2;
+using BLL.DTO.Soil;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
 using BLL.Helpers.CO2;
@@ -134,6 +135,29 @@ public class CO2Service : ICO2Service
         {
             throw new InvalidOperationException($"Không thể lấy dữ liệu đất và thời tiết: {ex.Message}");
         }
+    }
+    
+    public async Task<SoilDataResult> GetSoilDataByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
+    {
+        var farmProfile = await _farmProfileRepository.GetFarmWithAddressByFarmIdAsync(farmId, true, cancellationToken);
+        if (farmProfile.Address?.Latitude == null || farmProfile.Address.Longitude == null)
+            throw new InvalidOperationException("Nông trại chưa có tọa độ địa lý, không thể lấy dữ liệu đất!");
+        // Get soil data - check cache first
+        BLL.DTO.Soil.SoilDataResult rawSoilData;
+        var soilCacheKey = $"soil:{farmId}";
+        if (_cache.TryGetValue(soilCacheKey, out object? cachedSoilObj) &&
+            cachedSoilObj?.GetType().GetProperty("Data")?.GetValue(cachedSoilObj) is BLL.DTO.Soil.SoilDataResult cachedSoil)
+        {
+            rawSoilData = cachedSoil;
+        }
+        else
+        {
+            rawSoilData = await _soilGridsApiClient.GetSoilDataAsync(
+                farmProfile.Address.Latitude.Value,
+                farmProfile.Address.Longitude.Value,
+                cancellationToken);
+        }
+        return rawSoilData;
     }
 
     public async Task<List<CO2FootprintResponseDTO>> GetAllEnvironmentDataByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
