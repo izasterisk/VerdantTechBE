@@ -9,7 +9,7 @@ namespace BLL.DTO.FarmProfile;
         public string FarmName { get; set; } = null!;
 
         [Required(ErrorMessage = "Diện tích trang trại không được để trống")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Diện tích trang trại phải lớn hơn 0")]
+        [Range(0.0001, double.MaxValue, ErrorMessage = "Diện tích trang trại phải lớn hơn 0")]
         public decimal FarmSizeHectares { get; set; }
 
         [Required(ErrorMessage = "Địa chỉ cụ thể không được để trống")]
