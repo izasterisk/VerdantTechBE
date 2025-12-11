@@ -11,4 +11,6 @@ public interface IDashboardRepository
     Task<(int VendorProfile, int ProductRegistration, int VendorCertificate, int ProductCertificate, int Request)> 
         GetNumberOfQueuesAsync(CancellationToken cancellationToken = default);
     Task<Dictionary<DateOnly, decimal>> GetRevenueLast7DaysAsync(ulong? vendorId, CancellationToken cancellationToken = default);
+    Task<Dictionary<ulong, decimal>> GetAverageRatingsByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default);
+    Task<Dictionary<Product, List<MediaLink>>> GetProductsWithImagesByListAsync(List<ulong> productIds, CancellationToken cancellationToken = default);
 }

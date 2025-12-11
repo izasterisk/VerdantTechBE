@@ -228,4 +228,51 @@ public class DashboardRepository : IDashboardRepository
 
         return result;
     }
+
+    public async Task<Dictionary<ulong, decimal>> GetAverageRatingsByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Products
+            .AsNoTracking()
+            .Where(p => p.VendorId == vendorId && p.RatingAverage > 0 && p.IsActive)
+            .Select(p => new { p.Id, p.RatingAverage })
+            .ToDictionaryAsync(x => x.Id, x => x.RatingAverage, cancellationToken);
+    }
+    
+    public async Task<Dictionary<Product, List<MediaLink>>> GetProductsWithImagesByListAsync(List<ulong> productIds, CancellationToken cancellationToken = default)
+    {
+        // Query products
+        var products = await _dbContext.Products
+            .AsNoTracking()
+            .Where(p => productIds.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+        if (products.Count != productIds.Count)
+        {
+            var foundIds = products.Select(p => p.Id).ToHashSet();
+            var missingIds = productIds.Where(id => !foundIds.Contains(id)).ToList();
+            throw new KeyNotFoundException($"Không tìm thấy sản phẩm với ID: {string.Join(", ", missingIds)}");
+        }
+        
+        // Query all media links for these products in one query
+        var mediaLinks = await _dbContext.MediaLinks
+            .AsNoTracking()
+            .Where(ml => ml.OwnerType == MediaOwnerType.Products && productIds.Contains(ml.OwnerId))
+            .OrderBy(ml => ml.OwnerId)
+            .ThenBy(ml => ml.SortOrder)
+            .ToListAsync(cancellationToken);
+
+        // Group media links by product ID
+        var mediaDict = mediaLinks
+            .GroupBy(ml => ml.OwnerId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Create result dictionary
+        var result = new Dictionary<Product, List<MediaLink>>();
+        foreach (var product in products)
+        {
+            result[product] = mediaDict.TryGetValue(product.Id, out var images) 
+                ? images 
+                : new List<MediaLink>();
+        }
+        return result;
+    }
 }

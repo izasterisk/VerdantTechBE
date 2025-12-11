@@ -134,4 +134,61 @@ public class DashboardService : IDashboardService
             DailyRevenues = dailyRevenues
         };
     }
-}
+    
+    public async Task<ProductsRatingDTO> GetAverageRatingsByVendorIdAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    {
+        var vendor = await _userRepository.GetVerifiedAndActiveUserByIdAsync(vendorId, cancellationToken);
+        if (vendor.Role != UserRole.Vendor)
+            throw new UnauthorizedAccessException("Chỉ nhà cung cấp mới có thể truy cập thông tin này.");
+        
+        var response = new ProductsRatingDTO();
+        var ratings = await _dashboardRepository.GetAverageRatingsByVendorIdAsync(vendorId, cancellationToken);
+        if (ratings.Count > 0)
+        {
+            var top3HighestList = ratings.OrderByDescending(x => x.Value).Take(3).Select(x => x.Key).ToList();
+            var top3LowestList = ratings.OrderBy(x => x.Value).Take(3).Select(x => x.Key).ToList();
+            var productIds = top3HighestList.Concat(top3LowestList).Distinct().ToList();
+            
+            var productsDict = await _dashboardRepository.GetProductsWithImagesByListAsync(productIds, cancellationToken);
+            var products = new List<ProductResponseDTO>();
+            foreach (var product in productsDict)
+            {
+                products.Add(new ProductResponseDTO
+                {
+                    Id = product.Key.Id,
+                    ProductCode = product.Key.ProductCode,
+                    ProductName = product.Key.ProductName,
+                    Slug = product.Key.Slug,
+                    Description = product.Key.Description,
+                    UnitPrice = product.Key.UnitPrice,
+                    WarrantyMonths = product.Key.WarrantyMonths,
+                    Specifications = product.Key.Specifications,
+                    DimensionsCm = product.Key.DimensionsCm,
+                    RatingAverage = product.Key.RatingAverage,
+                    Images = product.Value.Select(img => new ProductImageResponseDTO
+                    {
+                        ImageUrl = img.ImageUrl,
+                        SortOrder = img.SortOrder
+                    }).ToList()
+                });
+            }
+            
+            response.Top3Highest = new TopProductsRatingResponseDTO
+            {
+                Top1 = top3HighestList.Count > 0 ? products.First(p => p.Id == top3HighestList[0]) : null!,
+                Top2 = top3HighestList.Count > 1 ? products.First(p => p.Id == top3HighestList[1]) : null!,
+                Top3 = top3HighestList.Count > 2 ? products.First(p => p.Id == top3HighestList[2]) : null!
+            };
+            
+            response.Top3Lowest = new WorstProductsRatingResponseDTO
+            {
+                Top1 = top3LowestList.Count > 0 ? products.First(p => p.Id == top3LowestList[0]) : null!,
+                Top2 = top3LowestList.Count > 1 ? products.First(p => p.Id == top3LowestList[1]) : null!,
+                Top3 = top3LowestList.Count > 2 ? products.First(p => p.Id == top3LowestList[2]) : null!
+            };
+            response.AverageRatingOfVendor = ratings.Values.Average();
+        }
+        return response;
+    }
+}  
+    

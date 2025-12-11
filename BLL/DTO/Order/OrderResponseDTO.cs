@@ -91,6 +91,7 @@ public class ProductResponseDTO
     public List<ProductImageResponseDTO> Images { get; set; } = new();
     public decimal UnitPrice { get; set; }
     public int WarrantyMonths { get; set; }
+    public decimal RatingAverage { get; set; } = 0.00m;
     public Dictionary<string, object> Specifications { get; set; } = new();
     public Dictionary<string, decimal> DimensionsCm { get; set; } = new();
 }
