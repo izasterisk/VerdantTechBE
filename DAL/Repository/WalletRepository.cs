@@ -44,6 +44,7 @@ public class WalletRepository : IWalletRepository
         {
             foreach (var orderDetail in orderDetails)
             {
+                orderDetail.Product = null!;
                 orderDetail.UpdatedAt = DateTime.UtcNow;
                 await _orderDetailRepository.UpdateAsync(orderDetail, cancellationToken);
             }

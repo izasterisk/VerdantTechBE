@@ -859,7 +859,7 @@ function generateOrders(products) {
                 unitPrice: item.unitPrice.toFixed(2),
                 discountAmount: '0.00',
                 subtotal: item.subtotal.toFixed(2),
-                isWalletCredited: 0
+                isWalletCredited: 1
             });
             
             // Create export inventory
