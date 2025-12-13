@@ -150,7 +150,8 @@ public enum OrderStatus
     Shipped,
     Delivered,
     Cancelled,
-    Refunded
+    Refunded,
+    PartialRefund
 }
 
 public enum OrderPaymentMethod
@@ -248,7 +249,8 @@ public enum MediaOwnerType
     ProductCertificates,
     ProductReviews,
     ForumPosts,
-    RequestMessage
+    RequestMessage,
+    ProductUpdateRequests
 }
 
 public enum MediaPurpose
@@ -272,7 +274,8 @@ public enum NotificationReferenceType
     Refund,
     WalletCashout,
     ProductRegistration,
-    EnvironmentalData
+    EnvironmentalData,
+    ProductUpdateRequests
 }
 
 

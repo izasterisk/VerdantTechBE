@@ -23,6 +23,8 @@ public partial class OrderDetail
 
     public bool IsWalletCredited { get; set; } = false;
 
+    public bool IsRefunded { get; set; } = false;
+
     public DateTime UpdatedAt { get; set; }
 
     // Navigation Properties
