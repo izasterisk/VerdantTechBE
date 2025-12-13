@@ -721,4 +721,3 @@ sample-data/
 *.bak
 *.orig
 /.vscode
-DB/Products_v2.csv
