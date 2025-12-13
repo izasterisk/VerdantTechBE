@@ -50,6 +50,11 @@ public class OrderDetailConfiguration : IEntityTypeConfiguration<OrderDetail>
             .HasDefaultValue(false)
             .HasColumnName("is_wallet_credited");
         
+        // IsRefunded field
+        builder.Property(e => e.IsRefunded)
+            .HasDefaultValue(false)
+            .HasColumnName("is_refunded");
+        
         // DateTime field
         builder.Property(e => e.UpdatedAt)
             .HasColumnType("timestamp")

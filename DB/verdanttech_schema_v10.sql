@@ -1,6 +1,6 @@
 -- Lược đồ Cơ sở Dữ liệu VerdantTech Solutions
 -- Nền tảng Thiết bị Nông nghiệp Xanh Tích hợp AI cho Trồng Rau Bền vững
--- Phiên bản: 10
+-- Phiên bản: 10.1
 -- Engine: InnoDB (hỗ trợ giao dịch)
 -- Bộ ký tự: utf8mb4 (hỗ trợ đa ngôn ngữ)
 
@@ -443,6 +443,54 @@ CREATE TABLE product_certificates (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do sản phẩm gắn kết để xác minh';
 
+-- Bảng yêu cầu cập nhật sản phẩm
+CREATE TABLE product_update_requests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    
+    -- 1. LIÊN KẾT SẢN PHẨM GỐC
+    product_id BIGINT UNSIGNED NOT NULL COMMENT 'ID sản phẩm cần cập nhật',
+
+    -- 2. THÔNG TIN SẢN PHẨM (Đúng thứ tự bảng Products)
+    category_id BIGINT UNSIGNED NOT NULL,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    product_code VARCHAR(100) NOT NULL COMMENT 'Mã sản phẩm (Bỏ Unique vì đây là bản nháp)',
+    product_name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL COMMENT 'Slug (Bỏ Unique vì đây là bản nháp)',
+    description TEXT,
+    unit_price DECIMAL(12,2) NOT NULL COMMENT 'Đơn giá sản phẩm',
+    commission_rate DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Tỷ lệ hoa hồng',
+    discount_percentage DECIMAL(5,2) DEFAULT 0.00,
+    energy_efficiency_rating INT CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5),
+    specifications JSON COMMENT 'Thông số kỹ thuật',
+    manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn',
+    public_url VARCHAR(500) COMMENT 'URL công khai',
+    warranty_months INT DEFAULT 12,
+    -- stock_quantity INT DEFAULT 0,
+    weight_kg DECIMAL(10,3) NOT NULL COMMENT 'Trọng lượng (kg) - Bắt buộc',
+    dimensions_cm JSON COMMENT 'Kích thước',
+    -- is_active BOOLEAN DEFAULT TRUE,
+    -- registration_id BIGINT UNSIGNED NULL,
+
+    -- 3. THÔNG TIN QUẢN LÝ YÊU CẦU (REQUEST FIELDS)
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu Staff không duyệt',    
+    processed_by BIGINT UNSIGNED NULL COMMENT 'Staff/Admin thực hiện duyệt',
+    processed_at TIMESTAMP NULL,    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    -- 4. KHÓA NGOẠI
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
+    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
+    
+    -- 5. INDEX
+    INDEX idx_product (product_id),
+    INDEX idx_vendor (vendor_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lưu trữ yêu cầu cập nhật thông tin sản phẩm (Snapshot đầy đủ) chờ Staff duyệt';
+
 -- Đánh giá và xếp hạng
 CREATE TABLE product_reviews (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -465,7 +513,7 @@ CREATE TABLE product_reviews (
 -- Bảng quản lý media tập trung
 CREATE TABLE media_links (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request_message') NOT NULL,
+    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request_message', 'product_update_requests') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
     image_public_id VARCHAR(512) NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
@@ -513,7 +561,7 @@ CREATE TABLE cart_items (
 CREATE TABLE orders (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT UNSIGNED NOT NULL,
-    status ENUM('pending', 'processing', 'paid', 'shipped', 'delivered', 'cancelled', 'refunded') DEFAULT 'pending',
+    status ENUM('pending', 'processing', 'paid', 'shipped', 'delivered', 'cancelled', 'refunded', 'partial-refund') DEFAULT 'pending',
     subtotal DECIMAL(12,2) NOT NULL,
     tax_amount DECIMAL(12,2) DEFAULT 0.00,
     shipping_fee DECIMAL(12,2) DEFAULT 0.00,
@@ -557,6 +605,7 @@ CREATE TABLE order_details (
     discount_amount DECIMAL(12,2) DEFAULT 0.00,
     subtotal DECIMAL(12,2) NOT NULL,
     is_wallet_credited BOOLEAN DEFAULT FALSE COMMENT 'Đã cộng tiền vào ví vendor chưa',
+    is_refunded BOOLEAN DEFAULT FALSE COMMENT 'Sản phẩm đã được hoàn tiền chưa',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
 
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
@@ -765,7 +814,7 @@ CREATE TABLE notifications (
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người nhận thông báo (customer, vendor, staff, admin)',
     title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề thông báo (hiển thị ngắn gọn)',
     message TEXT NOT NULL COMMENT 'Nội dung chi tiết thông báo',
-    reference_type ENUM('order', 'payment', 'request', 'forum_post', 'chatbot_conversation', 'refund', 'wallet_cashout', 'product_registration', 'environmental_data') NULL COMMENT 'Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết',
+    reference_type ENUM('order', 'payment', 'request', 'forum_post', 'chatbot_conversation', 'refund', 'wallet_cashout', 'product_registration', 'environmental_data', 'product_update_requests') NULL COMMENT 'Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID của entity tham chiếu (ví dụ: order_id, post_id)',
     is_read BOOLEAN DEFAULT FALSE COMMENT 'Thông báo đã đọc chưa (dùng để filter hiển thị)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -778,122 +827,75 @@ CREATE TABLE notifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ thông báo cho người dùng, hỗ trợ real-time qua SignalR. Hard delete khi user xóa.';
 
 -- =====================================================
--- TỔNG QUAN THAY ĐỔI v10 (từ v9.2)
+-- THAY ĐỔI PHIÊN BẢN 10.1 (từ v10)
 -- =====================================================
 
--- VIII) TÁI CẤU TRÚC PAYMENTS, TRANSACTIONS, CASHOUTS - SINGLE SOURCE OF TRUTH
--- • Mục đích: Đảm bảo transactions là nguồn sự thật duy nhất cho amount, status, timestamps
--- • Loại bỏ data redundancy và tăng tính toàn vẹn dữ liệu
--- • Quan hệ: Transaction 1:1 Payment, Transaction 1:1 Cashout (mỗi transaction chỉ có 1 payment HOẶC 1 cashout)
+-- IX) BỔ SUNG TÍNH NĂNG QUẢN LÝ YÊU CẦU CẬP NHẬT SẢN PHẨM VÀ HOÀN TIỀN TỪNG PHẦN
 
--- A) BẢNG TRANSACTIONS (Nguồn sự thật trung tâm):
---   • Thêm trường mới:
---     + order_id BIGINT UNSIGNED NULL: Liên kết trực tiếp với đơn hàng (cho payment_in)
---     + bank_account_id BIGINT UNSIGNED NULL: Tài khoản ngân hàng sử dụng (người mua thanh toán hoặc người nhận rút tiền)
---     + status thêm 'pending': Hỗ trợ trạng thái chờ xử lý
---   • Cập nhật comment:
---     + amount: 'NGUỒN SỰ THẬT DUY NHẤT' - rõ ràng đây là nơi lưu số tiền chính thống
---     + status: 'NGUỒN SỰ THẬT DUY NHẤT' - trạng thái giao dịch duy nhất
+-- A) BẢNG MỚI: product_update_requests
+--   • Mục đích: Quản lý yêu cầu cập nhật thông tin sản phẩm từ vendor, chờ Staff duyệt
+--   • Cấu trúc:
+--     + product_id: Liên kết đến sản phẩm gốc cần cập nhật
+--     + Các trường sản phẩm: Snapshot đầy đủ thông tin sản phẩm mới (category_id, product_code, product_name, slug, description, unit_price, commission_rate, discount_percentage, energy_efficiency_rating, specifications, manual_urls, public_url, warranty_months, weight_kg, dimensions_cm)
+--     + Các trường quản lý: status ('pending', 'approved', 'rejected'), rejection_reason, processed_by, processed_at, created_at, updated_at
 --   • Foreign Keys:
---     + Thêm FK order_id → orders(id)
---     + Thêm FK bank_account_id → user_bank_accounts(id)
+--     + product_id → products(id) ON DELETE CASCADE
+--     + category_id → product_categories(id) ON DELETE RESTRICT
+--     + vendor_id → users(id) ON DELETE CASCADE
+--     + processed_by → users(id) ON DELETE RESTRICT
 --   • Indexes:
---     + Thêm idx_order (order_id): Tối ưu query theo đơn hàng
---     + Thêm idx_bank_account (bank_account_id): Tối ưu query theo tài khoản
+--     + idx_product (product_id): Tối ưu query theo sản phẩm
+--     + idx_vendor (vendor_id): Tối ưu query theo vendor
+--     + idx_status (status): Tối ưu query theo trạng thái
+--   • Lưu ý: Không có UNIQUE constraint cho product_code và slug vì đây là bản nháp chờ duyệt
 
--- B) BẢNG PAYMENTS (Chỉ lưu thông tin đặc thù về payment gateway):
---   • XÓA các trường:
---     + amount: Di chuyển về transactions (single source of truth)
---     + status: Di chuyển về transactions (tránh inconsistency)
---     + order_id: Di chuyển về transactions (single source of truth, tránh duplicate)
---     + gateway_payment_id: Di chuyển về transactions (để query dễ hơn, tránh duplicate)
---   • THÊM trường:
---     + transaction_id BIGINT UNSIGNED NOT NULL: FK bắt buộc đến transactions
---   • GIỮ LẠI các trường đặc thù:
---     + payment_method, payment_gateway: Phương thức thanh toán cụ thể
---     + gateway_response: Raw response từ gateway (audit trail)
---   • Foreign Keys:
---     + Thêm FK transaction_id → transactions(id) ON DELETE RESTRICT
---     + XÓA FK order_id (đã chuyển về transactions)
---   • Indexes:
---     + Thêm idx_transaction (transaction_id): Tối ưu join với transactions
---     + XÓA idx_status (không còn field status)
---     + XÓA idx_order (order_id đã chuyển về transactions)
---     + XÓA idx_gateway_payment (gateway_payment_id đã chuyển về transactions)
---   • Comment cập nhật: 'Thông tin đặc thù về payment gateway - amount, status, order_id, gateway_payment_id nằm trong transactions'
+-- B) CẬP NHẬT BẢNG media_links
+--   • Thêm giá trị 'product_update_requests' vào ENUM owner_type
+--   • Mục đích: Cho phép upload ảnh cho yêu cầu cập nhật sản phẩm
 
--- C) BẢNG CASHOUTS (Chỉ lưu thông tin đặc thù về cashout):
---   • XÓA các trường:
---     + user_id: Đã có trong transactions (tránh duplicate)
---     + amount: Di chuyển về transactions (single source of truth)
---     + status: Di chuyển về transactions (tránh inconsistency)
---     + bank_account_id: Di chuyển về transactions (dữ liệu chung, cả payment và cashout đều cần)
---   • CẬP NHẬT trường:
---     + transaction_id: NULL → NOT NULL (bắt buộc phải có transaction)
---     + reference_type: NULL → NOT NULL (luôn phải xác định loại cashout)
---   • GIỮ LẠI các trường đặc thù:
---     + reference_type, reference_id: Tham chiếu đến entity gốc (request, wallet)
---     + notes: Ghi chú bổ sung
---     + processed_by, processed_at: Thông tin xử lý bởi admin
---   • Foreign Keys:
---     + transaction_id: Vẫn giữ FK → transactions(id)
---     + XÓA FK user_id (không còn field này)
---     + XÓA FK bank_account_id (đã chuyển về transactions)
---   • Indexes:
---     + XÓA idx_user (không còn field user_id)
---     + XÓA idx_status (không còn field status)
---     + XÓA idx_bank_account (bank_account_id đã chuyển về transactions)
---     + Thêm idx_processed (processed_by, processed_at): Tối ưu query theo admin xử lý
---   • Comment cập nhật: 'Thông tin đặc thù về rút tiền - amount, status, user_id, bank_account_id nằm trong transactions'
+-- C) CẬP NHẬT BẢNG notifications
+--   • Thêm giá trị 'product_update_requests' vào ENUM reference_type
+--   • Mục đích: Gửi thông báo khi yêu cầu cập nhật sản phẩm được tạo/duyệt/từ chối
 
--- D) LỢI ÍCH CỦA KIẾN TRÚC MỚI:
---   1. Data Integrity:
---      - Mỗi payment/cashout BẮT BUỘC phải có transaction tương ứng (quan hệ 1:1)
---      - Mỗi transaction chỉ có thể có 1 payment HOẶC 1 cashout, không thể có cả 2
---      - Không thể tạo payment/cashout mồ côi (orphan records)
---      - Amount và status luôn đồng bộ (chỉ có 1 nguồn duy nhất)
---   
---   2. Consistency:
---      - Không có tình trạng payment.amount ≠ transaction.amount
---      - Không có tình trạng payment.status ≠ transaction.status
---      - Dễ dàng rollback/update thông qua transaction record
---   
---   3. Audit Trail:
---      - Mọi chuyển động tiền đều được ghi lại trong transactions
---      - Dễ dàng theo dõi lịch sử tài chính của user
---      - Dễ dàng tạo báo cáo tổng hợp từ bảng transactions
---   
---   4. Simplified Queries:
---      - Query amount/status: Chỉ cần JOIN với transactions (1 nguồn duy nhất)
---      - Không cần UNION hoặc aggregate từ nhiều bảng
---      - Index hiệu quả hơn (không duplicate index giữa các bảng)
---   
---   5. Maintainability:
---      - Rõ ràng vai trò của từng bảng: transactions (chung), payments/cashouts (đặc thù)
---      - Dễ extend thêm payment method mới (chỉ thêm vào payments)
---      - Dễ extend thêm cashout type mới (chỉ thêm vào cashouts)
+-- D) CẬP NHẬT BẢNG orders
+--   • Thêm giá trị 'partial-refund' vào ENUM status
+--   • Mục đích: Hỗ trợ trạng thái đơn hàng bị hoàn tiền một phần (một số sản phẩm được hoàn, không phải toàn bộ đơn)
 
--- E) WORKFLOW THỰC TẾ:
---   1. Payment từ khách hàng:
---      a. Tạo transaction: (type='payment_in', amount=100000, status='pending', user_id=customer_id, order_id=123, bank_account_id=10, gateway_payment_id='ABC123')
---      b. Tạo payment: (transaction_id=1, payment_method='payos', payment_gateway='payos')
---      c. Khi gateway confirm: Update transaction.status='completed', transaction.completed_at=NOW()
---   
---   2. Cashout cho vendor:
---      a. Tạo transaction: (type='wallet_cashout', amount=50000, status='pending', user_id=vendor_id, bank_account_id=5)
---      b. Tạo cashout: (transaction_id=2, reference_type='vendor_withdrawal', reference_id=wallet_id)
---      c. Khi admin approve: Update transaction.status='completed', cashout.processed_by=admin_id
---   
---   3. Refund cho khách:
---      a. Tạo transaction: (type='refund', amount=20000, status='pending', user_id=customer_id, bank_account_id=8)
---      b. Tạo cashout: (transaction_id=3, reference_type='refund', reference_id=request_id)
---      c. Khi chuyển khoản xong: Update transaction.status='completed'
+-- E) CẬP NHẬT BẢNG order_details
+--   • Thêm cột: is_refunded BOOLEAN DEFAULT FALSE
+--   • Mục đích: Đánh dấu từng sản phẩm trong đơn hàng đã được hoàn tiền chưa (hỗ trợ partial refund)
+--   • Comment: 'Sản phẩm đã được hoàn tiền chưa'
 
--- F) MIGRATION NOTES (Nếu có dữ liệu cũ):
---   • Bước 1: Tạo transaction cho mỗi payment hiện có (amount, status từ payment)
---   • Bước 2: Update payment.transaction_id = transaction.id tương ứng
---   • Bước 3: Tạo transaction cho mỗi cashout hiện có (amount, status, user_id từ cashout)
---   • Bước 4: Update cashout.transaction_id = transaction.id tương ứng
---   • Bước 5: Verify data consistency (payment count = transaction payment_in count, etc.)
---   • Bước 6: Drop columns: payment.amount, payment.status, cashout.user_id, cashout.amount, cashout.status
---   • Bước 7: Alter table: transaction_id NULL → NOT NULL cho cả payments và cashouts
+-- F) WORKFLOW YÊU CẦU CẬP NHẬT SẢN PHẨM:
+--   1. Vendor tạo yêu cầu:
+--      a. Tạo product_update_requests với status='pending'
+--      b. Upload ảnh mới (nếu có) vào media_links với owner_type='product_update_requests'
+--      c. Gửi notification cho Staff/Admin
+--   
+--   2. Staff/Admin duyệt:
+--      a. Nếu approve:
+--         - Update products với thông tin từ product_update_requests
+--         - Copy ảnh từ media_links (owner_type='product_update_requests') sang (owner_type='products')
+--         - Update product_update_requests.status='approved', processed_by, processed_at
+--         - Gửi notification cho vendor
+--      b. Nếu reject:
+--         - Update product_update_requests.status='rejected', rejection_reason, processed_by, processed_at
+--         - Gửi notification cho vendor
+--   
+--   3. Partial Refund Workflow:
+--      a. Admin đánh dấu order_details.is_refunded=TRUE cho các sản phẩm cần hoàn
+--      b. Tính tổng số tiền hoàn = SUM(subtotal) WHERE is_refunded=TRUE
+--      c. Tạo transaction (type='refund', amount=refund_amount)
+--      d. Tạo cashout (reference_type='refund')
+--      e. Update orders.status='partial-refund' (nếu chưa phải 'refunded' toàn bộ)
+
+-- G) LỢI ÍCH CỦA KIẾN TRÚC MỚI:
+--   1. Quản lý yêu cầu cập nhật sản phẩm:
+--      - Vendor có thể tự đề xuất cập nhật thông tin sản phẩm
+--      - Staff kiểm soát chất lượng thông tin trước khi publish
+--      - Lưu lại lịch sử thay đổi (audit trail)
+--   
+--   2. Hoàn tiền linh hoạt:
+--      - Hỗ trợ hoàn tiền từng phần (partial refund) thay vì chỉ toàn bộ đơn
+--      - Dễ dàng tracking sản phẩm nào đã được hoàn
+--      - Tính toán chính xác số tiền hoàn cho từng case

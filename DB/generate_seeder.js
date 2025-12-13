@@ -859,7 +859,8 @@ function generateOrders(products) {
                 unitPrice: item.unitPrice.toFixed(2),
                 discountAmount: '0.00',
                 subtotal: item.subtotal.toFixed(2),
-                isWalletCredited: 1
+                isWalletCredited: 1,
+                isRefunded: 0
             });
             
             // Create export inventory
@@ -941,10 +942,10 @@ function generateOrders(products) {
     
     // Generate SQL for order details
     sql += `-- Insert Order Details\n`;
-    sql += `INSERT INTO order_details (id, order_id, product_id, quantity, unit_price, discount_amount, subtotal, is_wallet_credited, updated_at) VALUES\n`;
+    sql += `INSERT INTO order_details (id, order_id, product_id, quantity, unit_price, discount_amount, subtotal, is_wallet_credited, is_refunded, updated_at) VALUES\n`;
     
     const detailRows = orderDetails.map(d =>
-        `(${d.id}, ${d.orderId}, ${d.productId}, ${d.quantity}, ${d.unitPrice}, ${d.discountAmount}, ${d.subtotal}, ${d.isWalletCredited}, NOW())`
+        `(${d.id}, ${d.orderId}, ${d.productId}, ${d.quantity}, ${d.unitPrice}, ${d.discountAmount}, ${d.subtotal}, ${d.isWalletCredited}, ${d.isRefunded}, NOW())`
     );
     sql += detailRows.join(',\n') + ';\n\n';
     
