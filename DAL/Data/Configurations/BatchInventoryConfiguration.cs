@@ -26,10 +26,6 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
             .HasColumnType("bigint unsigned")
             .HasColumnName("vendor_id");
 
-        builder.Property(e => e.QualityCheckedBy)
-            .HasColumnType("bigint unsigned")
-            .HasColumnName("quality_checked_by");
-
         // Required fields
         builder.Property(e => e.Sku)
             .HasMaxLength(100)
@@ -75,20 +71,7 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
             .HasColumnType("date")
             .HasColumnName("manufacturing_date");
 
-        // Enum conversion for quality check status
-        builder.Property(e => e.QualityCheckStatus)
-            .HasConversion(
-                v => v.ToString().ToLowerInvariant().Replace("notrequired", "not_required"),
-                v => Enum.Parse<QualityCheckStatus>(v.Replace("not_required", "NotRequired"), true))
-            .HasColumnType("enum('pending','passed','failed','not_required')")
-            .HasDefaultValue(QualityCheckStatus.NotRequired)
-            .HasColumnName("quality_check_status");
-
         // DateTime fields
-        builder.Property(e => e.QualityCheckedAt)
-            .HasColumnType("timestamp")
-            .HasColumnName("quality_checked_at");
-
         builder.Property(e => e.CreatedAt)
             .HasColumnType("timestamp")
             .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -110,11 +93,6 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
             .HasForeignKey(d => d.VendorId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(d => d.QualityCheckedByNavigation)
-            .WithMany(p => p.BatchInventoriesQualityChecked)
-            .HasForeignKey(d => d.QualityCheckedBy)
-            .OnDelete(DeleteBehavior.SetNull);
-
         // Indexes
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");
@@ -125,10 +103,7 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
         builder.HasIndex(e => e.VendorId)
             .HasDatabaseName("idx_vendor");
 
-        builder.HasIndex(e => e.ExpiryDate)
-            .HasDatabaseName("idx_expiry_date");
-
-        builder.HasIndex(e => e.QualityCheckStatus)
-            .HasDatabaseName("idx_quality_status");
+        builder.HasIndex(e => e.CreatedAt)
+            .HasDatabaseName("idx_created");
     }
 }

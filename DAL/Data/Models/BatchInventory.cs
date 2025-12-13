@@ -34,12 +34,6 @@ public partial class BatchInventory
 
     public DateOnly? ManufacturingDate { get; set; }
 
-    public QualityCheckStatus QualityCheckStatus { get; set; } = QualityCheckStatus.NotRequired;
-
-    public ulong? QualityCheckedBy { get; set; }
-
-    public DateTime? QualityCheckedAt { get; set; }
-
     [StringLength(500)]
     public string? Notes { get; set; }
 
@@ -50,6 +44,6 @@ public partial class BatchInventory
     // Navigation Properties
     public virtual Product Product { get; set; } = null!;
     public virtual User? Vendor { get; set; }
-    public virtual User? QualityCheckedByNavigation { get; set; }
+
     public virtual ICollection<ProductSerial> ProductSerials { get; set; } = new List<ProductSerial>();
 }

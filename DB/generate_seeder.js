@@ -655,8 +655,8 @@ function generateProductCertificates(products, startMediaId) {
 function generateBatchInventory(products) {
     console.log('📦 Generating batch inventory...');
     
-    let sql = `-- Insert Batch Inventory (${products.length} batches with quality check, quantity=${BATCH_QUANTITY})\n`;
-    sql += `INSERT INTO batch_inventory (id, product_id, sku, vendor_id, batch_number, lot_number, quantity, unit_cost_price, expiry_date, manufacturing_date, quality_check_status, quality_checked_by, quality_checked_at, notes, created_at, updated_at) VALUES\n`;
+    let sql = `-- Insert Batch Inventory (${products.length} batches, quantity=${BATCH_QUANTITY})\n`;
+    sql += `INSERT INTO batch_inventory (id, product_id, sku, vendor_id, batch_number, lot_number, quantity, unit_cost_price, expiry_date, manufacturing_date, notes, created_at, updated_at) VALUES\n`;
     
     const rows = [];
     products.forEach((p, index) => {
@@ -677,7 +677,7 @@ function generateBatchInventory(products) {
         // Store lot number for order generation
         p.lotNumber = lotNum;
         
-        rows.push(`(${batchId}, ${p.dbId}, '${sku}', ${p.vendorId}, '${batchNum}', '${lotNum}', ${BATCH_QUANTITY}, ${unitCost}, ${expiryDate}, '2025-01-01', 'passed', 2, NOW(), 'Nhập kho đợt đầu', NOW(), NOW())`);
+        rows.push(`(${batchId}, ${p.dbId}, '${sku}', ${p.vendorId}, '${batchNum}', '${lotNum}', ${BATCH_QUANTITY}, ${unitCost}, ${expiryDate}, '2025-01-01', 'Nhập kho đợt đầu', NOW(), NOW())`);
     });
     
     sql += rows.join(',\n') + ';\n\n';
