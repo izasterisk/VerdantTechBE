@@ -1,74 +1,93 @@
 title Create Refund Request Sequence Diagram
 
-participant Customer
-participant OrderHistoryUI
+participant Client
 participant RequestTicketController
 participant RequestService
-participant RequestRepository
 participant UserRepository
+participant RequestRepository
 participant Database
 
-Customer->OrderHistoryUI: 1. Click "Hoàn hàng" or "Hoàn hàng sản phẩm" button
-OrderHistoryUI->RequestTicketController: 2. POST /api/RequestTicket (RequestCreateDTO with RequestType=RefundRequest)
+Client->RequestTicketController: 1. POST /api/RequestTicket (RequestCreateDTO)
 activate RequestTicketController
 
-note over RequestTicketController: Requires Authorization
-
-RequestTicketController->RequestTicketController: 3. ValidateModel()
+RequestTicketController->RequestTicketController: 2. ValidateModel()
 alt Validation Failed
-    RequestTicketController->OrderHistoryUI: 4.1 Return 400 Bad Request
-    OrderHistoryUI->Customer: 5.1 Show validation error
+    RequestTicketController->Client: 3. Return 400 Bad Request
     deactivate RequestTicketController
 else Validation Success
-    RequestTicketController->RequestTicketController: 4.2 GetCurrentUserId() (from JWT)
-    RequestTicketController->RequestService: 5.2 Call CreateRequestAsync(userId, dto)
+    RequestTicketController->RequestTicketController: 4. GetCurrentUserId() (from JWT)
+    RequestTicketController->RequestService: 5. CreateRequestAsync(userId, dto, ct)
     activate RequestService
     
-    RequestService->UserRepository: 6.2 GetVerifiedAndActiveUserByIdAsync(userId)
+    RequestService->UserRepository: 6. GetVerifiedAndActiveUserByIdAsync(userId)
     activate UserRepository
-    UserRepository->Database: 7.2 Check if user exists and is verified
-    Database-->UserRepository: 8.2 Return user data or null
-    UserRepository-->RequestService: 9.2 Return user or throw exception
-    deactivate UserRepository
-    
-    RequestService->RequestService: 10.2 Map DTO to Request entity
-    RequestService->RequestService: 11.2 Map DTO to RequestMessage entity
-    RequestService->RequestService: 12.2 Map DTO images to MediaLink entities
-    RequestService->RequestRepository: 13.2 CreateRequestWithTransactionAsync(request, message, images)
-    activate RequestRepository
-    RequestRepository->Database: 14.2 Begin transaction
-    RequestRepository->Database: 15.2 Insert Request
-    Database-->RequestRepository: 16.2 Return insert result
-    RequestRepository->Database: 17.2 Insert RequestMessage
-    Database-->RequestRepository: 18.2 Return insert result
-    opt Has Images
-        RequestRepository->Database: 19.2 Insert MediaLinks
-        Database-->RequestRepository: 20.2 Return insert result
+    UserRepository->Database: 7. Query user (verified + active)
+    activate Database
+    Database-->UserRepository: 8. Return user or null
+    deactivate Database
+    alt User Not Found or Invalid
+        UserRepository->UserRepository: 9a. Throw exception
+        UserRepository-->RequestService: 10a. Exception propagated
+        deactivate UserRepository
+        RequestService-->RequestTicketController: 11a. Exception propagated
+        RequestTicketController->RequestTicketController: 12a. HandleException(ex)
+        RequestTicketController->Client: 13a. Return 404 Not Found
+        deactivate RequestService
+        deactivate RequestTicketController
+    else User Valid
+        UserRepository-->RequestService: 9b. Return user
+        deactivate UserRepository
     end
-    RequestRepository->Database: 21.2 Commit transaction
-    Database-->RequestRepository: 22.2 Return commit result
-    RequestRepository-->RequestService: 23.2 Return created request
-    deactivate RequestRepository
     
-    RequestService->RequestRepository: 24.2 GetRequestByIdWithRelationsAsync(requestId)
+    RequestService->RequestService: 10b. Map DTO to Request entity
+    RequestService->RequestService: 11b. Set request.UserId = userId
+    RequestService->RequestService: 12b. Set request.Status = Pending
+    RequestService->RequestService: 13b. Create RequestMessage with description
+    RequestService->RequestService: 14b. Map images to MediaLink entities
+    RequestService->RequestRepository: 15b. CreateRequestWithTransactionAsync(request, message, images)
     activate RequestRepository
-    RequestRepository->Database: 25.2 Get request with relations
-    Database-->RequestRepository: 26.2 Return request data
-    RequestRepository-->RequestService: 27.2 Return request with relations
+    RequestRepository->Database: 16b. Begin Transaction
+    activate Database
+    RequestRepository->Database: 17b. INSERT request
+    Database-->RequestRepository: 18b. Return created request
+    RequestRepository->Database: 19b. INSERT request_message
+    Database-->RequestRepository: 20b. Return created message
+    alt Has Images
+        RequestRepository->Database: 21b1. INSERT media_links (batch)
+        Database-->RequestRepository: 22b1. Images inserted
+    end
+    RequestRepository->Database: 21b2. Commit Transaction
+    Database-->RequestRepository: 22b2. Transaction committed
+    deactivate Database
+    RequestRepository-->RequestService: 23b. Return created request
     deactivate RequestRepository
     
-    RequestService->RequestService: 28.2 Map to RequestResponseDTO
-    RequestService->RequestRepository: 29.2 GetAllImagesByRequestMessageIdAsync(messageId) for each message
+    RequestService->RequestRepository: 24b. GetRequestByIdWithRelationsAsync(requestId)
     activate RequestRepository
-    RequestRepository->Database: 30.2 Get images for each message
-    Database-->RequestRepository: 31.2 Return images list
-    RequestRepository-->RequestService: 32.2 Return images list
+    RequestRepository->Database: 25b. Query request with all relations
+    activate Database
+    Database-->RequestRepository: 26b. Return request data
+    deactivate Database
+    RequestRepository-->RequestService: 27b. Return request
     deactivate RequestRepository
     
-    RequestService-->RequestTicketController: 33.2 Return success (RequestResponseDTO)
+    RequestService->RequestService: 28b. Map to RequestResponseDTO
+    RequestService->RequestService: 29b. Loop through requestMessages
+    RequestService->RequestRepository: 30b. GetAllImagesByRequestMessageIdAsync(messageId)
+    activate RequestRepository
+    RequestRepository->Database: 31b. Query media_links by message ID
+    activate Database
+    Database-->RequestRepository: 32b. Return images list
+    deactivate Database
+    RequestRepository-->RequestService: 33b. Return images
+    deactivate RequestRepository
+    RequestService->RequestService: 34b. Populate images to response
+    
+    RequestService-->RequestTicketController: 35b. Return RequestResponseDTO
     deactivate RequestService
-    RequestTicketController->OrderHistoryUI: 34.2 Return 201 Created (RequestResponseDTO)
+    RequestTicketController->Client: 36b. Return 201 Created (RequestResponseDTO)
     deactivate RequestTicketController
-    OrderHistoryUI->Customer: 36.2 Show success message and display created request
 end
+
+note over Client,Database: Creates refund/support request with initial message and images\nTransaction includes: request + message + images\nStatus starts as Pending
 

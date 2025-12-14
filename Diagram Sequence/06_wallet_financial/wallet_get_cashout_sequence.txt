@@ -1,39 +1,69 @@
 title Get Wallet Cashout Request Sequence Diagram
 
-participant Vendor
-participant WalletUI
 participant WalletController
 participant WalletService
 participant WalletRepository
+participant TransactionRepository
 participant Database
 
-Vendor->WalletUI: 1. Request cashout details
-WalletUI->WalletController: 2. GET /api/Wallet/cashout
+note over WalletController: GET /api/Wallet/{userId}/cashout-request\nRequires Authorization (Admin, Staff, Vendor)
+
+WalletController->WalletController: 1. GetCashoutRequest(userId)
 activate WalletController
 
-note over WalletController: Requires Authorization (Vendor)
-
-WalletController->WalletService: 3. Call GetWalletCashoutRequestAsync(userId)
+WalletController->WalletService: 2. GetWalletCashoutRequestAsync(userId, cancellationToken)
 activate WalletService
 
-WalletService->WalletRepository: 4. GetWalletCashoutRequestWithRelationsByUserIdAsync(userId)
+WalletService->WalletRepository: 3. GetWalletCashoutRequestWithRelationsByUserIdAsync(userId, cancellationToken)
 activate WalletRepository
-WalletRepository->Database: 5. Get cashout request by user ID
-Database-->WalletRepository: 6. Return cashout data
-WalletRepository-->WalletService: 7. Return cashout or null
-deactivate WalletRepository
 
-alt Cashout Not Found
-    WalletService-->WalletController: 8.1 Return failure message
-    WalletController->WalletUI: 9.1 Return 404 Not Found
-    WalletUI->Vendor: 10.1 Show error message
+WalletRepository->TransactionRepository: 4. GetWithRelationsAsync(predicate, true, includeFunc, cancellationToken)
+activate TransactionRepository
+
+note over TransactionRepository: predicate: UserId == userId\nTransactionType == WalletCashout\nStatus == Pending
+
+TransactionRepository->Database: 5. SELECT Transaction with relations
+activate Database
+note over Database: Includes: BankAccount, CreatedByNavigation,\nUser, Cashout
+
+Database-->TransactionRepository: 6. Return Transaction or null
+deactivate Database
+
+alt Transaction Not Found
+    TransactionRepository-->WalletRepository: 7a. Return null
+    deactivate TransactionRepository
+    
+    WalletRepository->WalletRepository: 8a. Throw KeyNotFoundException
+    note over WalletRepository: Message: "Yêu cầu rút tiền của vendor ID {vendorId} không tồn tại."
+    
+    WalletRepository-->WalletService: 9a. Throw KeyNotFoundException
+    deactivate WalletRepository
+    
+    WalletService-->WalletController: 10a. Throw KeyNotFoundException
     deactivate WalletService
+    
+    WalletController->WalletController: 11a. HandleException(ex)
+    note over WalletController: Return 404 Not Found with error message
+    
+    WalletController-->WalletController: 12a. Return ActionResult<APIResponse>
     deactivate WalletController
-else Cashout Found
-    WalletService-->WalletController: 8.2 Return success message (WalletCashoutRequestResponseDTO)
+else Transaction Found
+    TransactionRepository-->WalletRepository: 7b. Return Transaction entity
+    deactivate TransactionRepository
+    
+    WalletRepository-->WalletService: 8b. Return Transaction entity
+    deactivate WalletRepository
+    
+    WalletService->WalletService: 9b. Map<TransactionResponseDTO>(createdCashout)
+    note over WalletService: Map Transaction to TransactionResponseDTO
+    
+    WalletService-->WalletController: 10b. Return TransactionResponseDTO
     deactivate WalletService
-    WalletController->WalletUI: 9.2 Return 200 OK (WalletCashoutRequestResponseDTO)
+    
+    WalletController->WalletController: 11b. SuccessResponse(cashoutRequest)
+    note over WalletController: Wrap in APIResponse with success status
+    
+    WalletController-->WalletController: 12b. Return 200 OK with TransactionResponseDTO
     deactivate WalletController
-    WalletUI->Vendor: 10.2 Display cashout request details
 end
 

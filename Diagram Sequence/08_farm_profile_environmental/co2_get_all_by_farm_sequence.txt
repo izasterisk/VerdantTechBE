@@ -1,31 +1,31 @@
 title Get All Environmental Data By Farm ID Sequence Diagram
 
-participant User
-participant CO2UI
+participant Client
 participant CO2Controller
 participant CO2Service
 participant EnvironmentalDataRepository
 participant Database
 
-User->CO2UI: 1. Request environmental data (farmId)
-CO2UI->CO2Controller: 2. GET /api/CO2/farm/{farmId}
+Client->CO2Controller: 1. GET /api/CO2/farm/{farmId}
 activate CO2Controller
 
-note over CO2Controller: Requires Authorization
-
-CO2Controller->CO2Service: 3. Call GetAllEnvironmentDataByFarmIdAsync(farmId)
+CO2Controller->CO2Service: 2. GetAllEnvironmentDataByFarmIdAsync(farmId, ct)
 activate CO2Service
 
-CO2Service->EnvironmentalDataRepository: 4. GetAllEnvironmentDataByFarmId(farmId)
+CO2Service->EnvironmentalDataRepository: 3. GetAllEnvironmentDataByFarmId(farmId)
 activate EnvironmentalDataRepository
-EnvironmentalDataRepository->Database: 5. Get environmental data by farm
-Database-->EnvironmentalDataRepository: 6. Return environmental data list
-EnvironmentalDataRepository-->CO2Service: 7. Return environmentalDataList
+EnvironmentalDataRepository->Database: 4. Query environmental_data by farmId with relations
+activate Database
+Database-->EnvironmentalDataRepository: 5. Return environmental data list
+deactivate Database
+EnvironmentalDataRepository-->CO2Service: 6. Return environmentalDataList
 deactivate EnvironmentalDataRepository
-CO2Service-->CO2Controller: 8. Return success message (List<CO2FootprintResponseDTO>)
+
+CO2Service->CO2Service: 7. Map to List<CO2FootprintResponseDTO>
+CO2Service-->CO2Controller: 8. Return List<CO2FootprintResponseDTO>
 deactivate CO2Service
 
-CO2Controller->CO2UI: 9. Return 200 OK (List<CO2FootprintResponseDTO>)
+CO2Controller->Client: 9. Return 200 OK (List<CO2FootprintResponseDTO>)
 deactivate CO2Controller
-CO2UI->User: 10. Display environmental data list
-end
+
+note over Client,Database: Returns all CO2 footprint records for a farm\nIncludes EnergyUsage and Fertilizer relations

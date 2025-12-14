@@ -1,65 +1,90 @@
 title Product Category Create Sequence Diagram
 
-participant Vendor
-participant ProductCategoryUI
+participant Client
 participant ProductCategoryController
 participant ProductCategoryService
+participant ProductCategoryRepository
 participant Database
 
-Vendor->ProductCategoryUI: 1. Create new category
-ProductCategoryUI->ProductCategoryController: 2. POST /api/ProductCategory (ProductCategoryCreateDTO)
+Client->ProductCategoryController: 1. POST /api/ProductCategory (ProductCategoryCreateDTO)
 activate ProductCategoryController
 
-note over ProductCategoryController: Requires Authorization
-
-ProductCategoryController->ProductCategoryController: 3. ValidateModel()
+ProductCategoryController->ProductCategoryController: 2. ValidateModel()
 alt Validation Failed
-    ProductCategoryController->ProductCategoryUI: 4.1 Return 400 Bad Request
-    ProductCategoryUI->Vendor: 5.1 Show error message
+    ProductCategoryController->Client: 3. Return 400 Bad Request
     deactivate ProductCategoryController
 else Validation Success
-    ProductCategoryController->ProductCategoryService: 4.2 Call CreateProductCategoryAsync(dto)
+    ProductCategoryController->ProductCategoryService: 4. Call CreateProductCategoryAsync(dto, cancellationToken)
     activate ProductCategoryService
     
-    ProductCategoryService->Database: 5.2 Check if category name exists
-    Database-->ProductCategoryService: 6.2 Return name existence status
+    ProductCategoryService->ProductCategoryRepository: 5. IsCategoryNameNotUniqueAsync(name)
+    activate ProductCategoryRepository
+    ProductCategoryRepository->Database: 6. Query category by name (case-insensitive)
+    activate Database
+    Database-->ProductCategoryRepository: 7. Return exists status
+    deactivate Database
+    ProductCategoryRepository-->ProductCategoryService: 8. Return nameExists (bool)
+    deactivate ProductCategoryRepository
     
     alt Name Already Exists
-        ProductCategoryService-->ProductCategoryController: 7.1 Return failure message
-        ProductCategoryController->ProductCategoryUI: 8.1 Return 400 Bad Request
-        ProductCategoryUI->Vendor: 9.1 Show error message
+        ProductCategoryService->ProductCategoryService: 9a. Throw ArgumentException("Tên danh mục đã tồn tại")
+        ProductCategoryService-->ProductCategoryController: 10a. Exception propagated
+        ProductCategoryController->ProductCategoryController: 11a. HandleException(ex)
+        ProductCategoryController->Client: 12a. Return 400 Bad Request
         deactivate ProductCategoryService
         deactivate ProductCategoryController
     else Name Available
-        opt ParentId Provided
-            ProductCategoryService->Database: 7.2.1 Check parent depth (max 2 levels)
-            Database-->ProductCategoryService: 8.2.1 Return parent depth status
-            
-            alt Parent Depth Invalid
-                ProductCategoryService-->ProductCategoryController: 9.2.1 Return failure message
-                ProductCategoryController->ProductCategoryUI: 10.2.1 Return 400 Bad Request
-                ProductCategoryUI->Vendor: 11.2.1 Show error message
+        alt ParentId Provided
+            ProductCategoryService->ProductCategoryRepository: 9b1. IsCategoryAlreadySonsAsync(parentId)
+            activate ProductCategoryRepository
+            ProductCategoryRepository->Database: 10b1. Get parent category by ID
+            activate Database
+            Database-->ProductCategoryRepository: 11b1. Return parent category
+            deactivate Database
+            alt Parent Not Found or Inactive
+                ProductCategoryRepository->ProductCategoryRepository: 12b1a. Throw KeyNotFoundException
+                ProductCategoryRepository-->ProductCategoryService: 13b1a. Exception propagated
+                deactivate ProductCategoryRepository
+                ProductCategoryService-->ProductCategoryController: 14b1a. Exception propagated
+                ProductCategoryController->ProductCategoryController: 15b1a. HandleException(ex)
+                ProductCategoryController->Client: 16b1a. Return 404 Not Found
                 deactivate ProductCategoryService
                 deactivate ProductCategoryController
-            else Parent Depth Valid
-                ProductCategoryService->ProductCategoryService: 9.2.2 Generate slug
-                ProductCategoryService->Database: 10.2.2 Insert new category
-                Database-->ProductCategoryService: 11.2.2 Return insert result
-                ProductCategoryService-->ProductCategoryController: 12.2.2 Return success message (ProductCategoryResponseDTO)
-                deactivate ProductCategoryService
-                ProductCategoryController->ProductCategoryUI: 13.2.2 Return 201 Created (ProductCategoryResponseDTO)
-                deactivate ProductCategoryController
-                ProductCategoryUI->Vendor: 14.2.2 Display created category
+            else Parent Exists
+                ProductCategoryRepository->ProductCategoryRepository: 12b1b. Check if parent.ParentId != null
+                alt Parent Already Has Parent (max 1 level exceeded)
+                    ProductCategoryRepository-->ProductCategoryService: 13b1b1. Return true (is already sons)
+                    deactivate ProductCategoryRepository
+                    ProductCategoryService->ProductCategoryService: 14b1b1. Throw KeyNotFoundException("Cha đang là con của mục khác")
+                    ProductCategoryService-->ProductCategoryController: 15b1b1. Exception propagated
+                    ProductCategoryController->ProductCategoryController: 16b1b1. HandleException(ex)
+                    ProductCategoryController->Client: 17b1b1. Return 404 Not Found
+                    deactivate ProductCategoryService
+                    deactivate ProductCategoryController
+                else Parent Is Root (valid)
+                    ProductCategoryRepository-->ProductCategoryService: 13b1b2. Return false
+                    deactivate ProductCategoryRepository
+                end
             end
-        else No ParentId
-            ProductCategoryService->ProductCategoryService: 7.2.2 Generate slug
-            ProductCategoryService->Database: 8.2.2 Insert new category (root)
-            Database-->ProductCategoryService: 9.2.2 Return insert result
-            ProductCategoryService-->ProductCategoryController: 10.2.2 Return success message (ProductCategoryResponseDTO)
-            deactivate ProductCategoryService
-            ProductCategoryController->ProductCategoryUI: 11.2.2 Return 201 Created (ProductCategoryResponseDTO)
-            deactivate ProductCategoryController
-            ProductCategoryUI->Vendor: 12.2.2 Display created category
         end
+        
+        ProductCategoryService->ProductCategoryService: 9b2. Generate slug from name
+        ProductCategoryService->ProductCategoryService: 10b2. Map DTO to ProductCategory entity
+        ProductCategoryService->ProductCategoryService: 11b2. Set entity.Slug
+        ProductCategoryService->ProductCategoryRepository: 12b2. CreateProductCategoryAsync(entity)
+        activate ProductCategoryRepository
+        ProductCategoryRepository->Database: 13b2. INSERT product category
+        activate Database
+        Database-->ProductCategoryRepository: 14b2. Return created entity
+        deactivate Database
+        ProductCategoryRepository-->ProductCategoryService: 15b2. Return ProductCategory
+        deactivate ProductCategoryRepository
+        ProductCategoryService->ProductCategoryService: 16b2. Map ProductCategory to ProductCategoryResponseDTO
+        ProductCategoryService-->ProductCategoryController: 17b2. Return ProductCategoryResponseDTO
+        deactivate ProductCategoryService
+        ProductCategoryController->Client: 18b2. Return 201 Created (ProductCategoryResponseDTO)
+        deactivate ProductCategoryController
     end
 end
+
+note over Client,Database: Max depth: 1 level (Parent -> Child only)\nCategory name must be unique (case-insensitive)

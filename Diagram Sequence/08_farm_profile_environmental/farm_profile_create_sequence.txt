@@ -1,40 +1,133 @@
 title Create Farm Profile Sequence Diagram
 
-participant User
-participant FarmProfileUI
+participant Client
 participant FarmProfileController
 participant FarmProfileService
+participant AddressRepository
 participant FarmProfileRepository
+participant CropRepository
 participant Database
 
-User->FarmProfileUI: 1. Create farm profile (dto)
-FarmProfileUI->FarmProfileController: 2. POST /api/FarmProfile (FarmProfileCreateDto)
+Client->FarmProfileController: 1. POST /api/FarmProfile (FarmProfileCreateDto)
 activate FarmProfileController
 
 note over FarmProfileController: Requires Authorization
 
-FarmProfileController->FarmProfileController: 3. ValidateModel()
+FarmProfileController->FarmProfileController: 2. ValidateModel()
 alt Validation Failed
-    FarmProfileController->FarmProfileUI: 4.1 Return 400 Bad Request
-    FarmProfileUI->User: 5.1 Show error message
+    FarmProfileController->Client: 3a. Return 400 Bad Request
     deactivate FarmProfileController
 else Validation Success
-    FarmProfileController->FarmProfileController: 4.2 GetCurrentUserId() (from JWT)
-    FarmProfileController->FarmProfileService: 5.2 Call CreateFarmProfileAsync(userId, dto)
+    FarmProfileController->FarmProfileController: 3b. GetCurrentUserId() (from JWT)
+    FarmProfileController->FarmProfileService: 4b. CreateFarmProfileAsync(userId, dto, cancellationToken)
     activate FarmProfileService
     
-    FarmProfileService->FarmProfileService: 6.2 Map DTO to Address and FarmProfile entities
-    FarmProfileService->FarmProfileRepository: 7.2 CreateFarmProfileWithTransactionAsync(farmProfile, address)
-    activate FarmProfileRepository
-    FarmProfileRepository->Database: 8.2 Insert address
-    Database-->FarmProfileRepository: 9.2 Return address created
-    FarmProfileRepository->Database: 10.2 Insert farm profile
-    Database-->FarmProfileRepository: 11.2 Return farm profile created
-    FarmProfileRepository-->FarmProfileService: 12.2 Return created farm profile
-    deactivate FarmProfileRepository
-    FarmProfileService-->FarmProfileController: 13.2 Return success message (FarmProfileResponseDTO)
-    deactivate FarmProfileService
-    FarmProfileController->FarmProfileUI: 14.2 Return 201 Created (FarmProfileResponseDTO)
-    deactivate FarmProfileController
-    FarmProfileUI->User: 15.2 Display created farm profile
+    FarmProfileService->FarmProfileService: 5b. Validate dto not null
+    alt DTO is null
+        FarmProfileService->FarmProfileService: 6b1. Throw ArgumentNullException
+        FarmProfileService-->FarmProfileController: 7b1. Exception propagated
+        FarmProfileController->FarmProfileController: 8b1. HandleException(ex)
+        FarmProfileController->Client: 9b1. Return 400 Bad Request
+        deactivate FarmProfileService
+        deactivate FarmProfileController
+    else DTO is valid
+        FarmProfileService->FarmProfileService: 6b2. Map FarmProfileCreateDto to Address entity
+        FarmProfileService->FarmProfileService: 7b2. Map FarmProfileCreateDto to FarmProfile entity
+        FarmProfileService->FarmProfileService: 8b2. Set farmProfile.UserId = currentUserId
+        
+        alt Has Crops in DTO
+            FarmProfileService->FarmProfileService: 9b2a. Validate crops (duplicates, combinations, status, dates)
+            alt Crop Validation Failed
+                FarmProfileService->FarmProfileService: 10b2a1. Throw ArgumentException
+                FarmProfileService-->FarmProfileController: 11b2a1. Exception propagated
+                FarmProfileController->FarmProfileController: 12b2a1. HandleException(ex)
+                FarmProfileController->Client: 13b2a1. Return 400 Bad Request
+                deactivate FarmProfileService
+                deactivate FarmProfileController
+            else Crop Validation Success
+                FarmProfileService->FarmProfileService: 10b2a2. Map CropCreateDto list to Crop entities
+            end
+        end
+        
+        FarmProfileService->FarmProfileRepository: 11b2. CreateFarmProfileWithTransactionAsync(farmProfile, address, crops, cancellationToken)
+        activate FarmProfileRepository
+        FarmProfileRepository->Database: 12b2. Begin Transaction
+        activate Database
+        Database-->FarmProfileRepository: 13b2. Transaction started
+        deactivate Database
+        
+        FarmProfileRepository->FarmProfileRepository: 14b2. Set address.CreatedAt, UpdatedAt = DateTime.UtcNow
+        FarmProfileRepository->AddressRepository: 15b2. CreateAddressAsync(address, cancellationToken)
+        activate AddressRepository
+        AddressRepository->AddressRepository: 16b2. Set CreatedAt, UpdatedAt = DateTime.UtcNow
+        AddressRepository->Database: 17b2. INSERT Address
+        activate Database
+        Database-->AddressRepository: 18b2. Return inserted address
+        deactivate Database
+        AddressRepository->Database: 19b2. SaveChangesAsync()
+        activate Database
+        Database-->AddressRepository: 20b2. Changes saved
+        deactivate Database
+        AddressRepository-->FarmProfileRepository: 21b2. Return created address
+        deactivate AddressRepository
+        
+        FarmProfileRepository->FarmProfileRepository: 22b2. Set farmProfile.AddressId = createdAddress.Id
+        FarmProfileRepository->FarmProfileRepository: 23b2. Set farmProfile.CreatedAt, UpdatedAt = DateTime.UtcNow
+        FarmProfileRepository->FarmProfileRepository: 24b2. Set farmProfile.Status = Active
+        FarmProfileRepository->Database: 25b2. INSERT FarmProfile
+        activate Database
+        Database-->FarmProfileRepository: 26b2. Return inserted farm profile
+        deactivate Database
+        FarmProfileRepository->Database: 27b2. SaveChangesAsync()
+        activate Database
+        Database-->FarmProfileRepository: 28b2. Changes saved
+        deactivate Database
+        
+        alt Has Crops (crops.Count > 0)
+            FarmProfileRepository->FarmProfileRepository: 29b2a. Iterate through crops list
+            FarmProfileRepository->FarmProfileRepository: 30b2a. For each crop: set CreatedAt, UpdatedAt, FarmProfileId
+            FarmProfileRepository->CropRepository: 31b2a. CreateAsync(crop, cancellationToken) for each
+            activate CropRepository
+            CropRepository->Database: 32b2a. INSERT Crop
+            activate Database
+            Database-->CropRepository: 33b2a. Crop inserted
+            deactivate Database
+            CropRepository->Database: 34b2a. SaveChangesAsync()
+            activate Database
+            Database-->CropRepository: 35b2a. Changes saved
+            deactivate Database
+            CropRepository-->FarmProfileRepository: 36b2a. Crop created
+            deactivate CropRepository
+        end
+        
+        FarmProfileRepository->Database: 37b2. Query FarmProfile by ID with User, Address, Crops relations
+        activate Database
+        Database-->FarmProfileRepository: 38b2. Return farm profile with relations
+        deactivate Database
+        
+        FarmProfileRepository->Database: 39b2. Commit Transaction
+        activate Database
+        Database-->FarmProfileRepository: 40b2. Transaction committed
+        deactivate Database
+        
+        FarmProfileRepository-->FarmProfileService: 41b2. Return created farm profile with relations
+        deactivate FarmProfileRepository
+        
+        FarmProfileService->FarmProfileRepository: 42b2. GetFarmProfileWithRelationByFarmIdAsync(createdFarmProfile.Id, useNoTracking: true, cancellationToken)
+        activate FarmProfileRepository
+        FarmProfileRepository->Database: 43b2. Query FarmProfile by ID with User, Address, Crops
+        activate Database
+        Database-->FarmProfileRepository: 44b2. Return farm profile with relations
+        deactivate Database
+        FarmProfileRepository-->FarmProfileService: 45b2. Return farm profile
+        deactivate FarmProfileRepository
+        
+        FarmProfileService->FarmProfileService: 46b2. Map FarmProfile to FarmProfileResponseDTO
+        FarmProfileService-->FarmProfileController: 47b2. Return FarmProfileResponseDTO
+        deactivate FarmProfileService
+        FarmProfileController->Client: 48b2. Return 201 Created (FarmProfileResponseDTO)
+        deactivate FarmProfileController
+    end
 end
+
+note over Client,Database: Creates address first, then farm profile, then crops.\nAll in one transaction with full rollback support.

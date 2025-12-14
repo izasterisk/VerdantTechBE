@@ -1,75 +1,111 @@
 title Add Product to Cart Sequence Diagram
 
-participant User
-participant CartUI
+participant Client
 participant CartController
 participant CartService
 participant CartRepository
 participant Database
 
-User->CartUI: 1. Add product to cart (productId, quantity)
-CartUI->CartController: 2. POST /api/Cart/add (CartDTO)
+Client->CartController: 1. POST /api/Cart/add (CartDTO)
 activate CartController
 
-note over CartController: Requires Authorization
-
-CartController->CartController: 3. ValidateModel()
+CartController->CartController: 2. ValidateModel()
 alt Validation Failed
-    CartController->CartUI: 4.1 Return 400 Bad Request
-    CartUI->User: 5.1 Show error message
+    CartController->Client: 3. Return 400 Bad Request
     deactivate CartController
 else Validation Success
-    CartController->CartController: 4.2 GetCurrentUserId() (from JWT)
-    CartController->CartService: 5.2 Call AddToCartAsync(userId, dto)
+    CartController->CartController: 4. GetCurrentUserId() (from JWT)
+    CartController->CartService: 5. AddToCartAsync(userId, dto, ct)
     activate CartService
     
-    CartService->CartRepository: 6.2 GetCartByUserIdWithRelationsAsync(userId)
-    activate CartRepository
-    CartRepository->Database: 7.2 Check if cart exists
-    Database-->CartRepository: 8.2 Return cart data
-    CartRepository-->CartService: 9.2 Return cart or null
-    deactivate CartRepository
-    
-    alt Cart Not Exists
-        CartService->CartRepository: 10.2.1 CreateCartByUserIdWithTransactionAsync(userId)
+    alt Quantity < 1
+        CartService->CartService: 6a. Throw ArgumentOutOfRangeException("Số lượng phải > 0")
+        CartService-->CartController: 7a. Exception propagated
+        CartController->CartController: 8a. HandleException(ex)
+        CartController->Client: 9a. Return 400 Bad Request
+        deactivate CartService
+        deactivate CartController
+    else Quantity Valid
+        CartService->CartRepository: 6b. GetCartByUserIdWithRelationsAsync(userId)
         activate CartRepository
-        CartRepository->Database: 11.2.1 Create new cart
-        Database-->CartRepository: 12.2.1 Return cart created
-        CartRepository-->CartService: 13.2.1 Return cart
-        deactivate CartRepository
-    else Cart Exists
-        CartService->CartRepository: 10.2.2 CheckIfProductAlreadyInCart(cartId, productId)
-        activate CartRepository
-        CartRepository->Database: 11.2.2 Check if product already in cart
-        Database-->CartRepository: 12.2.2 Return product existence status
-        CartRepository-->CartService: 13.2.2 Return exists (bool)
+        CartRepository->Database: 7b. Query cart by userId with items
+        activate Database
+        Database-->CartRepository: 8b. Return cart or null
+        deactivate Database
+        CartRepository-->CartService: 9b. Return cart or null
         deactivate CartRepository
         
-        alt Product Already in Cart
-            CartService-->CartController: 14.2.1 Return failure message
-            CartController->CartUI: 15.2.1 Return 400 Bad Request
-            CartUI->User: 16.2.1 Show error message
-            deactivate CartService
-            deactivate CartController
-        else Product Not in Cart
-            CartService->CartRepository: 14.2.2 AddItemToCartWithTransactionAsync(cartItem)
+        alt Cart Not Exists
+            CartService->CartRepository: 10b1. CreateCartByUserIdWithTransactionAsync(userId)
             activate CartRepository
-            CartRepository->Database: 15.2.2 Add item to cart
-            Database-->CartRepository: 16.2.2 Return add result
-            CartRepository-->CartService: 17.2.2 Return success
+            CartRepository->Database: 11b1. Begin Transaction
+            activate Database
+            CartRepository->Database: 12b1. INSERT cart
+            Database-->CartRepository: 13b1. Return created cart
+            CartRepository->Database: 14b1. Commit Transaction
+            Database-->CartRepository: 15b1. Transaction committed
+            deactivate Database
+            CartRepository-->CartService: 16b1. Return cart
             deactivate CartRepository
-            CartService->CartRepository: 18.2.2 GetCartByUserIdWithRelationsAsync(userId)
+        else Cart Exists
+            CartService->CartRepository: 10b2. CheckIfProductAlreadyInCart(cartId, productId)
             activate CartRepository
-            CartRepository->Database: 19.2.2 Get cart with items and images
-            Database-->CartRepository: 20.2.2 Return cart data
-            CartRepository-->CartService: 21.2.2 Return cart
+            CartRepository->Database: 11b2. Query cart_items (cartId, productId)
+            activate Database
+            Database-->CartRepository: 12b2. Return exists status
+            deactivate Database
+            CartRepository-->CartService: 13b2. Return exists (bool)
             deactivate CartRepository
-            CartService->CartService: 22.2.2 Populate cart items images
-            CartService-->CartController: 23.2.2 Return success message (CartResponseDTO)
-            deactivate CartService
-            CartController->CartUI: 24.2.2 Return 201 Created (CartResponseDTO)
-            deactivate CartController
-            CartUI->User: 25.2.2 Display updated cart
+            
+            alt Product Already in Cart
+                CartService->CartService: 14b2a. Throw InvalidOperationException("Sản phẩm đã tồn tại")
+                CartService-->CartController: 15b2a. Exception propagated
+                CartController->CartController: 16b2a. HandleException(ex)
+                CartController->Client: 17b2a. Return 400 Bad Request
+                deactivate CartService
+                deactivate CartController
+            end
         end
+        
+        CartService->CartService: 10b3. Map CartDTO to CartItem entity
+        CartService->CartService: 11b3. Set cartItem.CartId
+        CartService->CartRepository: 12b3. AddItemToCartWithTransactionAsync(cartItem)
+        activate CartRepository
+        CartRepository->Database: 13b3. Begin Transaction
+        activate Database
+        CartRepository->Database: 14b3. INSERT cart_item
+        Database-->CartRepository: 15b3. Cart item added
+        CartRepository->Database: 16b3. Commit Transaction
+        Database-->CartRepository: 17b3. Transaction committed
+        deactivate Database
+        CartRepository-->CartService: 18b3. Item added
+        deactivate CartRepository
+        
+        CartService->CartRepository: 19b3. GetCartByUserIdWithRelationsAsync(userId)
+        activate CartRepository
+        CartRepository->Database: 20b3. Query cart with items and product details
+        activate Database
+        Database-->CartRepository: 21b3. Return updated cart
+        deactivate Database
+        CartRepository-->CartService: 22b3. Return cart
+        deactivate CartRepository
+        
+        CartService->CartService: 23b3. Map to CartResponseDTO
+        CartService->CartService: 24b3. PopulateCartItemsImagesAsync() - load product images
+        CartService->CartRepository: 25b3. Query product images for each cart item
+        activate CartRepository
+        CartRepository->Database: 26b3. Query media_links for products
+        activate Database
+        Database-->CartRepository: 27b3. Return images
+        deactivate Database
+        CartRepository-->CartService: 28b3. Return images
+        deactivate CartRepository
+        CartService->CartService: 29b3. Populate images to CartResponseDTO
+        CartService-->CartController: 30b3. Return CartResponseDTO
+        deactivate CartService
+        CartController->Client: 31b3. Return 201 Created (CartResponseDTO)
+        deactivate CartController
     end
 end
+
+note over Client,Database: Creates cart if not exists\nValidates product not already in cart\nPopulates product images in response

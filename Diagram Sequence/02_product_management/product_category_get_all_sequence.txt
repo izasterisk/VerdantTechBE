@@ -1,26 +1,39 @@
 title Get All Product Categories Sequence Diagram
 
 participant Client
-participant ProductCategoryUI
 participant ProductCategoryController
 participant ProductCategoryService
+participant ProductCategoryRepository
 participant Database
 
-Client->ProductCategoryUI: 1. Request category list
-ProductCategoryUI->ProductCategoryController: 2. GET /api/ProductCategory
+Client->ProductCategoryController: 1. GET /api/ProductCategory?page={page}&pageSize={pageSize}
 activate ProductCategoryController
 
 note over ProductCategoryController: Requires Authorization
 
-ProductCategoryController->ProductCategoryService: 3. Call GetAllProductCategoryAsync()
+ProductCategoryController->ProductCategoryService: 2. Call GetAllProductCategoryAsync(page, pageSize, cancellationToken)
 activate ProductCategoryService
 
-ProductCategoryService->Database: 4. Get all categories
-Database-->ProductCategoryService: 5. Return categories list
-ProductCategoryService-->ProductCategoryController: 6. Return success message (List<ProductCategoryResponseDTO>)
+ProductCategoryService->ProductCategoryRepository: 3. GetAllProductCategoryAsync(page, pageSize, cancellationToken)
+activate ProductCategoryRepository
+
+ProductCategoryRepository->ProductCategoryRepository: 4. NormalizePaging(page, pageSize)
+ProductCategoryRepository->Database: 5. Query active categories with parent (Where IsActive=true)
+activate Database
+ProductCategoryRepository->Database: 6. COUNT total categories
+Database-->ProductCategoryRepository: 7. Return total count
+ProductCategoryRepository->Database: 8. SELECT categories (OrderBy CreatedAt DESC, Skip, Take)
+Database-->ProductCategoryRepository: 9. Return category list
+deactivate Database
+ProductCategoryRepository-->ProductCategoryService: 10. Return (Items, Total)
+deactivate ProductCategoryRepository
+
+ProductCategoryService->ProductCategoryService: 11. Map Items to List<ProductCategoryResponseDTO>
+ProductCategoryService->ProductCategoryService: 12. Create PagedResponse with pagination info
+ProductCategoryService-->ProductCategoryController: 13. Return PagedResponse<ProductCategoryResponseDTO>
 deactivate ProductCategoryService
 
-ProductCategoryController->ProductCategoryUI: 7. Return 200 OK (List<ProductCategoryResponseDTO>)
+ProductCategoryController->Client: 14. Return 200 OK (PagedResponse)
 deactivate ProductCategoryController
-ProductCategoryUI->Client: 8. Display category list
-end
+
+note over Client,Database: Returns paginated list of active categories\nwith parent information included

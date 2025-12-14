@@ -1,75 +1,89 @@
 title Create Forum Comment Sequence Diagram
 
-participant User
-participant ForumDetailUI
+participant Client
 participant ForumCommentController
 participant ForumCommentService
 participant ForumCommentRepository
 participant NotificationService
 participant Database
 
-User->ForumDetailUI: 1. Enter comment content in text area
-User->ForumDetailUI: 2. Click "Gửi bình luận" or "Reply" button
-ForumDetailUI->ForumCommentController: 3. POST /api/ForumComment (ForumCommentCreateDTO)
+Client->ForumCommentController: 1. POST /api/ForumComment (ForumCommentCreateDTO)
 activate ForumCommentController
 
-ForumCommentController->ForumCommentController: 4. ValidateModel()
+ForumCommentController->ForumCommentController: 2. ValidateModel()
 alt Validation Failed
-    ForumCommentController->ForumDetailUI: 5.1 Return 400 Bad Request
-    ForumDetailUI->User: 6.1 Show validation error
+    ForumCommentController->Client: 3. Return 400 Bad Request
     deactivate ForumCommentController
 else Validation Success
-    ForumCommentController->ForumCommentService: 5.2 CreateAsync(dto)
+    ForumCommentController->ForumCommentService: 4. CreateAsync(dto, ct)
     activate ForumCommentService
     
-    ForumCommentService->ForumCommentService: 6.2 Map DTO to ForumComment entity
-    ForumCommentService->ForumCommentRepository: 7.2 CreateAsync(comment)
+    ForumCommentService->ForumCommentService: 5. Create ForumComment entity
+    ForumCommentService->ForumCommentService: 6. Set ForumPostId, UserId, ParentId, Content
+    ForumCommentService->ForumCommentService: 7. Set CreatedAt, UpdatedAt = DateTime.UtcNow
+    ForumCommentService->ForumCommentService: 8. Set Status = Visible
+    ForumCommentService->ForumCommentRepository: 9. CreateAsync(entity)
     activate ForumCommentRepository
-    ForumCommentRepository->Database: 8.2 Insert ForumComment
-    Database-->ForumCommentRepository: 9.2 Return insert result
-    ForumCommentRepository-->ForumCommentService: 10.2 Return created comment
+    ForumCommentRepository->Database: 10. INSERT forum_comment
+    activate Database
+    Database-->ForumCommentRepository: 11. Comment created
+    deactivate Database
+    ForumCommentRepository->Database: 12. SaveChangesAsync()
+    activate Database
+    Database-->ForumCommentRepository: 13. Changes saved
+    deactivate Database
+    ForumCommentRepository-->ForumCommentService: 14. Creation completed
     deactivate ForumCommentRepository
     
-    opt ParentId is null (Comment on Post)
-        ForumCommentService->ForumCommentRepository: 11.2 GetPostOwnerIdAsync(forumPostId)
+    alt ParentId is null (Comment on Post)
+        ForumCommentService->ForumCommentRepository: 15a. GetPostOwnerIdAsync(forumPostId)
         activate ForumCommentRepository
-        ForumCommentRepository->Database: 12.2 Get post owner ID
-        Database-->ForumCommentRepository: 13.2 Return owner ID
-        ForumCommentRepository-->ForumCommentService: 14.2 Return owner ID
+        ForumCommentRepository->Database: 16a. Query post owner ID
+        activate Database
+        Database-->ForumCommentRepository: 17a. Return postOwnerId
+        deactivate Database
+        ForumCommentRepository-->ForumCommentService: 18a. Return postOwnerId
         deactivate ForumCommentRepository
         
-        ForumCommentService->ForumCommentService: 15.2 Check if commenter is not post owner
-        opt Commenter is not Post Owner
-            ForumCommentService->NotificationService: 16.2 CreateAndSendNotificationAsync(postOwnerId, "Có bình luận mới", content, ForumPost, postId)
+        alt Commenter is not Post Owner
+            ForumCommentService->NotificationService: 19a1. CreateAndSendNotificationAsync()
             activate NotificationService
-            NotificationService->NotificationService: 17.2 Create and send notification
-            NotificationService-->ForumCommentService: 18.2 Return notification
+            NotificationService->Database: 20a1. INSERT notification
+            activate Database
+            Database-->NotificationService: 21a1. Notification created
+            deactivate Database
+            NotificationService-->ForumCommentService: 22a1. Notification sent
             deactivate NotificationService
         end
     else ParentId is not null (Reply to Comment)
-        ForumCommentService->ForumCommentRepository: 11.2 GetDetailAsync(parentId)
+        ForumCommentService->ForumCommentRepository: 15b. GetDetailAsync(parentId)
         activate ForumCommentRepository
-        ForumCommentRepository->Database: 12.2 Get parent comment
-        Database-->ForumCommentRepository: 13.2 Return parent comment
-        ForumCommentRepository-->ForumCommentService: 14.2 Return parent comment
+        ForumCommentRepository->Database: 16b. Query parent comment
+        activate Database
+        Database-->ForumCommentRepository: 17b. Return parent comment
+        deactivate Database
+        ForumCommentRepository-->ForumCommentService: 18b. Return parent
         deactivate ForumCommentRepository
         
-        ForumCommentService->ForumCommentService: 15.2 Check if commenter is not parent comment owner
-        opt Commenter is not Parent Comment Owner
-            ForumCommentService->NotificationService: 16.2 CreateAndSendNotificationAsync(parentOwnerId, "Ai đó đã phản hồi", content, ForumComment, parentId)
+        alt Parent Exists and Commenter is not Parent Owner
+            ForumCommentService->NotificationService: 19b1. CreateAndSendNotificationAsync()
             activate NotificationService
-            NotificationService->NotificationService: 17.2 Create and send notification
-            NotificationService-->ForumCommentService: 18.2 Return notification
+            NotificationService->Database: 20b1. INSERT notification
+            activate Database
+            Database-->NotificationService: 21b1. Notification created
+            deactivate Database
+            NotificationService-->ForumCommentService: 22b1. Notification sent
             deactivate NotificationService
         end
     end
     
-    ForumCommentService->ForumCommentService: 19.2 Map to ForumCommentResponseDTO with replies
-    ForumCommentService-->ForumCommentController: 20.2 Return ForumCommentResponseDTO
+    ForumCommentService->ForumCommentService: 15c. MapWithReplies(entity)
+    ForumCommentService-->ForumCommentController: 16c. Return ForumCommentResponseDTO
     deactivate ForumCommentService
     
-    ForumCommentController->ForumDetailUI: 21.2 Return 200 OK (ForumCommentResponseDTO)
+    ForumCommentController->Client: 17c. Return 200 OK (ForumCommentResponseDTO)
     deactivate ForumCommentController
-    ForumDetailUI->User: 22.2 Show success message and display created comment
 end
+
+note over Client,Database: Creates comment or reply\nSends notification to post owner or parent comment owner\nExcludes self-notifications
 

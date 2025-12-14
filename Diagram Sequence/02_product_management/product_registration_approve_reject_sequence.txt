@@ -1,107 +1,107 @@
 title Product Registration Approve/Reject Sequence Diagram
 
-participant Admin
+participant Client
 participant ProductRegistrationController
 participant ProductRegistrationService
+participant EmailSender
 participant Database
-participant ProductRepository
-participant MediaLinkRepository
 
-Admin->ProductRegistrationController: PATCH /api/ProductRegistrations/{id}/status
+Client->ProductRegistrationController: 1. PATCH /api/ProductRegistrations/{id}/status (ChangeStatusDTO)
 activate ProductRegistrationController
 
-note over ProductRegistrationController: Body: { status: "Approved"|"Rejected", rejectionReason?: string, approvedBy: adminId }
-
-ProductRegistrationController->ProductRegistrationService: ChangeStatusAsync(id, status, rejectionReason, approvedBy)
-activate ProductRegistrationService
-
-ProductRegistrationService->Database: SELECT * FROM product_registrations WHERE id = ?
-Database-->ProductRegistrationService: ProductRegistration entity
-
-alt Registration Not Found
-    ProductRegistrationService-->ProductRegistrationController: false
-    ProductRegistrationController->Admin: 404 Not Found
-    deactivate ProductRegistrationService
+ProductRegistrationController->ProductRegistrationController: 2. ValidateModel()
+alt Validation Failed
+    ProductRegistrationController->Client: 3. Return 400 Bad Request
     deactivate ProductRegistrationController
-else Registration Found
-    opt Status Unchanged
-        ProductRegistrationService->ProductRegistrationService: Check if status already matches
-        alt Status Already Set
-            ProductRegistrationService-->ProductRegistrationController: true (no change needed)
-            ProductRegistrationController->Admin: 204 No Content
+else Validation Success
+    ProductRegistrationController->ProductRegistrationService: 4. ChangeStatusAsync(id, status, rejectionReason, approvedBy, ct)
+    activate ProductRegistrationService
+    
+    ProductRegistrationService->Database: 5. Query ProductRegistration by ID
+    activate Database
+    Database-->ProductRegistrationService: 6. Return registration or null
+    deactivate Database
+    
+    alt Registration Not Found
+        ProductRegistrationService->ProductRegistrationService: 7a. Throw InvalidOperationException("Đơn không tồn tại")
+        ProductRegistrationService-->ProductRegistrationController: 8a. Exception propagated
+        ProductRegistrationController->ProductRegistrationController: 9a. HandleException(ex)
+        ProductRegistrationController->Client: 10a. Return 400 Bad Request
+        deactivate ProductRegistrationService
+        deactivate ProductRegistrationController
+    else Registration Found
+        alt Status Already Approved
+            ProductRegistrationService->ProductRegistrationService: 7b1. Throw InvalidOperationException("Đã duyệt")
+            ProductRegistrationService-->ProductRegistrationController: 8b1. Exception propagated
+            ProductRegistrationController->ProductRegistrationController: 9b1. HandleException(ex)
+            ProductRegistrationController->Client: 10b1. Return 400 Bad Request
             deactivate ProductRegistrationService
             deactivate ProductRegistrationController
+        else Status Already Rejected
+            ProductRegistrationService->ProductRegistrationService: 7b2. Throw InvalidOperationException("Đã từ chối")
+            ProductRegistrationService-->ProductRegistrationController: 8b2. Exception propagated
+            ProductRegistrationController->ProductRegistrationController: 9b2. HandleException(ex)
+            ProductRegistrationController->Client: 10b2. Return 400 Bad Request
+            deactivate ProductRegistrationService
+            deactivate ProductRegistrationController
+        else Can Change Status
+            ProductRegistrationService->ProductRegistrationService: 7b3. Set UpdatedAt = DateTime.UtcNow
+            
+            alt Status = Rejected
+                ProductRegistrationService->ProductRegistrationService: 8b3a. Set Status = Rejected
+                ProductRegistrationService->ProductRegistrationService: 9b3a. Set RejectionReason
+                ProductRegistrationService->Database: 10b3a. Query ProductCertificates by RegistrationId
+                activate Database
+                Database-->ProductRegistrationService: 11b3a. Return certificate IDs
+                deactivate Database
+                ProductRegistrationService->ProductRegistrationService: 12b3a. Set all certificates Status = Rejected
+                ProductRegistrationService->Database: 13b3a. UPDATE registration and certificates
+                activate Database
+                Database-->ProductRegistrationService: 14b3a. Changes saved
+                deactivate Database
+                ProductRegistrationService->Database: 15b3a. Query vendor by ID
+                activate Database
+                Database-->ProductRegistrationService: 16b3a. Return vendor user
+                deactivate Database
+                ProductRegistrationService->EmailSender: 17b3a. SendProductRegistrationRejectedEmailAsync()
+                activate EmailSender
+                EmailSender-->ProductRegistrationService: 18b3a. Email sent
+                deactivate EmailSender
+                ProductRegistrationService-->ProductRegistrationController: 19b3a. Return true
+                deactivate ProductRegistrationService
+                ProductRegistrationController->Client: 20b3a. Return 204 No Content
+                deactivate ProductRegistrationController
+            else Status = Approved
+                ProductRegistrationService->Database: 8b3b. Begin Transaction
+                activate Database
+                ProductRegistrationService->ProductRegistrationService: 9b3b. Set Status = Approved
+                ProductRegistrationService->ProductRegistrationService: 10b3b. Set ApprovedBy, ApprovedAt
+                ProductRegistrationService->ProductRegistrationService: 11b3b. Set RejectionReason = null
+                ProductRegistrationService->Database: 12b3b. UPDATE registration
+                Database-->ProductRegistrationService: 13b3b. Registration updated
+                ProductRegistrationService->ProductRegistrationService: 14b3b. Query registration media images
+                ProductRegistrationService->ProductRegistrationService: 15b3b. Query registration certificate images
+                ProductRegistrationService->ProductRegistrationService: 16b3b. Query ProductCertificates by RegistrationId
+                ProductRegistrationService->ProductRegistrationService: 17b3b. Set all certificates Status = Verified
+                ProductRegistrationService->Database: 18b3b. UPDATE certificates
+                Database-->ProductRegistrationService: 19b3b. Certificates updated
+                ProductRegistrationService->Database: 20b3b. Query vendor by ID
+                Database-->ProductRegistrationService: 21b3b. Return vendor user
+                ProductRegistrationService->EmailSender: 22b3b. SendProductRegistrationApprovedEmailAsync()
+                activate EmailSender
+                EmailSender-->ProductRegistrationService: 23b3b. Email sent (or error logged)
+                deactivate EmailSender
+                ProductRegistrationService->Database: 24b3b. Commit Transaction
+                Database-->ProductRegistrationService: 25b3b. Transaction committed
+                deactivate Database
+                ProductRegistrationService-->ProductRegistrationController: 26b3b. Return true
+                deactivate ProductRegistrationService
+                ProductRegistrationController->Client: 27b3b. Return 204 No Content
+                deactivate ProductRegistrationController
+            end
         end
-    end
-    
-    ProductRegistrationService->ProductRegistrationService: Set registration.Status = status
-    ProductRegistrationService->ProductRegistrationService: Set registration.UpdatedAt = DateTime.UtcNow
-    
-    alt Status = Rejected
-        ProductRegistrationService->ProductRegistrationService: Set registration.RejectionReason = rejectionReason
-        ProductRegistrationService->ProductRegistrationService: Set registration.ApprovedBy = null
-        ProductRegistrationService->ProductRegistrationService: Set registration.ApprovedAt = null
-        
-        ProductRegistrationService->Database: UPDATE product_registrations SET status=?, rejection_reason=?, approved_by=null, approved_at=null, updated_at=? WHERE id=?
-        Database-->ProductRegistrationService: Registration updated
-        
-        ProductRegistrationService-->ProductRegistrationController: true
-        deactivate ProductRegistrationService
-        
-        ProductRegistrationController->Admin: 204 No Content (Rejected)
-        deactivate ProductRegistrationController
-    else Status = Approved
-        ProductRegistrationService->ProductRegistrationService: Set registration.ApprovedBy = approvedBy
-        ProductRegistrationService->ProductRegistrationService: Set registration.ApprovedAt = DateTime.UtcNow
-        ProductRegistrationService->ProductRegistrationService: Set registration.RejectionReason = null
-        
-        ProductRegistrationService->Database: BEGIN TRANSACTION
-        
-        ProductRegistrationService->Database: UPDATE product_registrations SET status=?, approved_by=?, approved_at=?, rejection_reason=null, updated_at=? WHERE id=?
-        Database-->ProductRegistrationService: Registration updated
-        
-        ProductRegistrationService->ProductRegistrationService: Map ProductRegistration to Product entity
-        ProductRegistrationService->ProductRegistrationService: Generate slug from product name
-        ProductRegistrationService->ProductRegistrationService: Set Product.IsActive = true
-        ProductRegistrationService->ProductRegistrationService: Set Product.CreatedAt, UpdatedAt
-        
-        ProductRegistrationService->ProductRepository: Add Product to DbSet
-        ProductRepository->Database: INSERT INTO products (category_id, vendor_id, product_code, product_name, unit_price, ...)
-        Database-->ProductRepository: Product created with ID
-        ProductRepository-->ProductRegistrationService: Product entity with ID
-        
-        ProductRegistrationService->MediaLinkRepository: Get product images from registration
-        MediaLinkRepository->Database: SELECT * FROM media_links WHERE owner_type = 'ProductRegistrations' AND owner_id = ? ORDER BY sort_order
-        Database-->MediaLinkRepository: Registration images
-        MediaLinkRepository-->ProductRegistrationService: List<MediaLink>
-        
-        opt Registration Has Images
-            ProductRegistrationService->ProductRegistrationService: Clone images (change OwnerType to Products, OwnerId to product.Id)
-            ProductRegistrationService->MediaLinkRepository: Add cloned images
-            MediaLinkRepository->Database: INSERT INTO media_links (owner_type='Products', owner_id=?, image_public_id=?, image_url=?, sort_order=?, ...) VALUES ...
-            Database-->MediaLinkRepository: Images copied to product
-        end
-        
-        ProductRegistrationService->MediaLinkRepository: Get certificates from registration
-        MediaLinkRepository->Database: SELECT * FROM media_links WHERE owner_type = 'ProductCertificates' AND owner_id = ? ORDER BY sort_order
-        Database-->MediaLinkRepository: Registration certificates
-        MediaLinkRepository-->ProductRegistrationService: List<MediaLink>
-        
-        opt Registration Has Certificates
-            ProductRegistrationService->ProductRegistrationService: Clone certificates (OwnerId = product.Id, keep OwnerType as ProductCertificates)
-            ProductRegistrationService->MediaLinkRepository: Add cloned certificates
-            MediaLinkRepository->Database: INSERT INTO media_links (owner_type='ProductCertificates', owner_id=?, image_public_id=?, image_url=?, sort_order=?, ...) VALUES ...
-            Database-->MediaLinkRepository: Certificates copied to product
-        end
-        
-        ProductRegistrationService->Database: COMMIT TRANSACTION
-        Database-->ProductRegistrationService: Transaction committed
-        
-        ProductRegistrationService-->ProductRegistrationController: true
-        deactivate ProductRegistrationService
-        
-        ProductRegistrationController->Admin: 204 No Content (Approved - Product created)
-        deactivate ProductRegistrationController
     end
 end
+
+note over Client,Database: On Reject: updates registration + certificates status, sends rejection email\nOn Approve: updates registration + certificates, sends approval email (no Product created in this flow)
 

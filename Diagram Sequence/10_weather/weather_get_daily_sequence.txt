@@ -1,54 +1,92 @@
 title Get Daily Weather Sequence Diagram
 
-participant User
-participant WeatherUI
+participant Client
 participant WeatherController
 participant WeatherService
+participant MemoryCache
 participant FarmProfileRepository
 participant WeatherApiClient
 participant Database
 
-User->WeatherUI: 1. Request daily weather (farmId)
-WeatherUI->WeatherController: 2. GET /api/Weather/daily/{farmId}
+Client->WeatherController: 1. GET /api/Weather/daily/{farmId}
 activate WeatherController
 
 note over WeatherController: Requires Authorization
 
-WeatherController->WeatherService: 3. Call GetDailyWeatherDetailsByFarmIdAsync(farmId)
+WeatherController->WeatherService: 2. GetDailyWeatherDetailsByFarmIdAsync(farmId, cancellationToken)
 activate WeatherService
 
-WeatherService->FarmProfileRepository: 4. GetCoordinateByFarmIdAsync(farmId, true)
-activate FarmProfileRepository
-FarmProfileRepository->Database: 5. Get farm profile with address coordinates
-Database-->FarmProfileRepository: 6. Return farm profile data
-FarmProfileRepository-->WeatherService: 7. Return farmProfile
-deactivate FarmProfileRepository
+WeatherService->MemoryCache: 3. TryGetValue(cacheKey: "weather:daily:{farmId}")
+activate MemoryCache
+MemoryCache-->WeatherService: 4. Return cached data or cache miss
+deactivate MemoryCache
 
-alt Farm Profile Not Found or No Coordinates
-    WeatherService-->WeatherController: 8.1 Return failure message
-    WeatherController->WeatherUI: 9.1 Return 400 Bad Request
-    WeatherUI->User: 10.1 Show error message
+alt Cache Hit
+    WeatherService-->WeatherController: 5a. Return cached DailyWeatherResponseDto
     deactivate WeatherService
+    WeatherController->Client: 6a. Return 200 OK (cached DailyWeatherResponseDto)
     deactivate WeatherController
-else Farm Profile Found with Coordinates
-    WeatherService->WeatherApiClient: 8.2 GetDailyWeatherAsync(latitude, longitude)
-    activate WeatherApiClient
-    WeatherApiClient->WeatherApiClient: Call external weather API
-    WeatherApiClient-->WeatherService: 9.2 Return weather data
-    deactivate WeatherApiClient
+else Cache Miss
+    WeatherService->FarmProfileRepository: 5b. GetFarmWithAddressByFarmIdAsync(farmId, useNoTracking: true, cancellationToken)
+    activate FarmProfileRepository
+    FarmProfileRepository->Database: 6b. Query FarmProfile by ID with Address relation
+    activate Database
+    Database-->FarmProfileRepository: 7b. Return farm profile or null
+    deactivate Database
+    FarmProfileRepository-->WeatherService: 8b. Return farm profile
+    deactivate FarmProfileRepository
     
-    alt API Error
-        WeatherService-->WeatherController: 10.2.1 Return failure message
-        WeatherController->WeatherUI: 11.2.1 Return 500 Internal Server Error
-        WeatherUI->User: 12.2.1 Show error message
+    alt Farm Profile Not Found
+        WeatherService->WeatherService: 9b1. Throw KeyNotFoundException
+        WeatherService-->WeatherController: 10b1. Exception propagated
+        WeatherController->WeatherController: 11b1. HandleException(ex)
+        WeatherController->Client: 12b1. Return 404 Not Found
         deactivate WeatherService
         deactivate WeatherController
-    else API Success
-        WeatherService-->WeatherController: 10.2.2 Return success message (DailyWeatherResponseDto)
-        deactivate WeatherService
-        WeatherController->WeatherUI: 11.2.2 Return 200 OK (DailyWeatherResponseDto)
-        deactivate WeatherController
-        WeatherUI->User: 12.2.2 Display daily weather
+    else Farm Profile Found
+        WeatherService->WeatherService: 9b2. Check farmProfile.Address?.Latitude and Longitude
+        alt No Coordinates (Latitude or Longitude is null)
+            WeatherService->WeatherService: 10b2a. Throw InvalidOperationException("Nông trại chưa có địa chỉ")
+            WeatherService-->WeatherController: 11b2a. Exception propagated
+            WeatherController->WeatherController: 12b2a. HandleException(ex)
+            WeatherController->Client: 13b2a. Return 400 Bad Request
+            deactivate WeatherService
+            deactivate WeatherController
+        else Has Coordinates
+            WeatherService->WeatherApiClient: 10b2b. GetDailyWeatherAsync(latitude, longitude, cancellationToken)
+            activate WeatherApiClient
+            WeatherApiClient->WeatherApiClient: 11b2b. Call external weather API
+            alt TimeoutException
+                WeatherApiClient->WeatherApiClient: 12b2b1. Throw TimeoutException
+                WeatherApiClient-->WeatherService: 13b2b1. TimeoutException propagated
+                WeatherService-->WeatherController: 14b2b1. Exception propagated
+                deactivate WeatherApiClient
+                WeatherController->WeatherController: 15b2b1. HandleException(ex)
+                WeatherController->Client: 16b2b1. Return 408 Request Timeout
+                deactivate WeatherService
+                deactivate WeatherController
+            else Other API Exception
+                WeatherApiClient->WeatherApiClient: 12b2b2. Throw Exception
+                WeatherApiClient-->WeatherService: 13b2b2. Exception propagated
+                deactivate WeatherApiClient
+                WeatherService->WeatherService: 14b2b2. Catch Exception
+                WeatherService->WeatherService: 15b2b2. Throw InvalidOperationException("Server thời tiết quá tải")
+                WeatherService-->WeatherController: 16b2b2. Exception propagated
+                WeatherController->WeatherController: 17b2b2. HandleException(ex)
+                WeatherController->Client: 18b2b2. Return 400 Bad Request
+                deactivate WeatherService
+                deactivate WeatherController
+            else API Success
+                WeatherApiClient-->WeatherService: 12b2b3. Return DailyWeatherResponseDto
+                deactivate WeatherApiClient
+                WeatherService-->WeatherController: 13b2b3. Return DailyWeatherResponseDto
+                deactivate WeatherService
+                WeatherController->Client: 14b2b3. Return 200 OK (DailyWeatherResponseDto)
+                deactivate WeatherController
+            end
+        end
     end
 end
+
+note over Client,Database: Weather data is cached with key "weather:daily:{farmId}".\nExternal API call is made only on cache miss.
 

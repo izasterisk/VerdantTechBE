@@ -1,7 +1,6 @@
 title Create Wallet Cashout Request Sequence Diagram
 
-participant Vendor
-participant WalletUI
+participant Client
 participant WalletController
 participant WalletService
 participant WalletRepository
@@ -9,86 +8,136 @@ participant UserBankAccountsRepository
 participant CashoutRepository
 participant Database
 
-Vendor->WalletUI: 1. Create cashout request (dto)
-WalletUI->WalletController: 2. POST /api/Wallet/cashout (WalletCashoutRequestCreateDTO)
+Client->WalletController: 1. POST /api/Wallet/cashout-request (WalletCashoutRequestCreateDTO)
 activate WalletController
 
 note over WalletController: Requires Authorization (Vendor)
 
-WalletController->WalletController: 3. ValidateModel()
+WalletController->WalletController: 2. ValidateModel()
 alt Validation Failed
-    WalletController->WalletUI: 4.1 Return 400 Bad Request
-    WalletUI->Vendor: 5.1 Show error message
+    WalletController->Client: 3a. Return 400 Bad Request
     deactivate WalletController
 else Validation Success
-    WalletController->WalletService: 4.2 Call CreateWalletCashoutRequestAsync(userId, dto)
+    WalletController->WalletController: 3b. GetCurrentUserId() (from JWT)
+    WalletController->WalletService: 4b. Call CreateWalletCashoutRequestAsync(userId, dto, cancellationToken)
     activate WalletService
     
-    WalletService->WalletRepository: 5.2 ValidateVendorQualified(userId)
+    WalletService->WalletRepository: 5b. ValidateVendorQualified(userId, cancellationToken)
     activate WalletRepository
-    WalletRepository->Database: 6.2 Check if user is vendor
-    Database-->WalletRepository: 7.2 Return validation result
-    WalletRepository-->WalletService: 8.2 Return isValid (bool)
+    WalletRepository->Database: 6b. Query user (Role=Vendor, IsVerified, Status=Active)
+    activate Database
+    Database-->WalletRepository: 7b. Return validation result
+    deactivate Database
+    WalletRepository-->WalletService: 8b. Return isValid (bool)
     deactivate WalletRepository
     
     alt User Not Qualified
-        WalletService-->WalletController: 9.1 Return failure message
-        WalletController->WalletUI: 10.1 Return 404 Not Found
-        WalletUI->Vendor: 11.1 Show error message
+        WalletService->WalletService: 9b1. Throw KeyNotFoundException("Người dùng không tồn tại hoặc không đủ điều kiện")
+        WalletService-->WalletController: 10b1. Exception propagated
+        WalletController->WalletController: 11b1. HandleException(ex)
+        WalletController->Client: 12b1. Return 500 Internal Server Error
         deactivate WalletService
         deactivate WalletController
     else User Qualified
-        WalletService->UserBankAccountsRepository: 9.2 GetUserBankAccountByIdAsync(bankAccountId)
+        WalletService->UserBankAccountsRepository: 9b2. GetUserBankAccountByIdAsync(dto.BankAccountId, cancellationToken)
         activate UserBankAccountsRepository
-        UserBankAccountsRepository->Database: 10.2 Get bank account by ID
-        Database-->UserBankAccountsRepository: 11.2 Return bank account data
-        UserBankAccountsRepository-->WalletService: 12.2 Return bankAccount
+        UserBankAccountsRepository->Database: 10b2. SELECT BankAccount by ID
+        activate Database
+        Database-->UserBankAccountsRepository: 11b2. Return bank account
+        deactivate Database
+        UserBankAccountsRepository-->WalletService: 12b2. Return bankAccount
         deactivate UserBankAccountsRepository
         
         alt Bank Account Not Belongs to User
-            WalletService-->WalletController: 13.1 Return failure message
-            WalletController->WalletUI: 14.1 Return 401 Unauthorized
-            WalletUI->Vendor: 15.1 Show error message
+            WalletService->WalletService: 13b2a. Check bankAccount.UserId != userId
+            WalletService->WalletService: 14b2a. Throw UnauthorizedAccessException("Tài khoản ngân hàng không thuộc về người dùng")
+            WalletService-->WalletController: 15b2a. Exception propagated
+            WalletController->WalletController: 16b2a. HandleException(ex)
+            WalletController->Client: 17b2a. Return 401 Unauthorized
             deactivate WalletService
             deactivate WalletController
         else Bank Account Valid
-            WalletService->WalletRepository: 13.2 GetWalletByUserIdAsync(userId)
+            WalletService->WalletRepository: 13b2b. GetWalletByUserIdAsync(userId, cancellationToken)
             activate WalletRepository
-            WalletRepository->Database: 14.2 Get wallet by user ID
-            Database-->WalletRepository: 15.2 Return wallet data
-            WalletRepository-->WalletService: 16.2 Return wallet
+            WalletRepository->Database: 14b2b. SELECT Wallet by UserId
+            activate Database
+            Database-->WalletRepository: 15b2b. Return wallet
+            deactivate Database
+            WalletRepository-->WalletService: 16b2b. Return wallet
             deactivate WalletRepository
             
             alt Amount Exceeds Balance
-                WalletService-->WalletController: 17.1 Return failure message
-                WalletController->WalletUI: 18.1 Return 400 Bad Request
-                WalletUI->Vendor: 19.1 Show error message
+                WalletService->WalletService: 17b2b1. Check dto.Amount > wallet.Balance
+                WalletService->WalletService: 18b2b1. Throw InvalidOperationException("Số dư không đủ")
+                WalletService-->WalletController: 19b2b1. Exception propagated
+                WalletController->WalletController: 20b2b1. HandleException(ex)
+                WalletController->Client: 21b2b1. Return 400 Bad Request
                 deactivate WalletService
                 deactivate WalletController
             else Amount Valid
-                WalletService->WalletService: 17.2 Map DTO to Cashout entity
-                WalletService->WalletService: 17.3 Set cashout status = Pending
-                WalletService->CashoutRepository: 18.2 CreateCashoutForWalletCashoutAsync(cashout)
+                WalletService->WalletService: 17b2b2. Create Cashout entity (ReferenceType=VendorWithdrawal, ReferenceId=wallet.Id)
+                WalletService->WalletService: 18b2b2. Set cashout.Notes = dto.Notes
+                WalletService->WalletService: 19b2b2. Create Transaction entity (Type=WalletCashout, Status=Pending)
+                WalletService->WalletService: 20b2b2. Set transaction properties (Amount, Currency, UserId, BankAccountId, Note, CreatedBy)
+                WalletService->CashoutRepository: 21b2b2. CreateWalletCashoutAsync(cashout, transaction, cancellationToken)
                 activate CashoutRepository
-                CashoutRepository->Database: 19.2 Insert cashout request
-                Database-->CashoutRepository: 20.2 Return cashout created
-                CashoutRepository-->WalletService: 21.2 Return success
-                deactivate CashoutRepository
+                CashoutRepository->Database: 22b2b2. BEGIN TRANSACTION
+                activate Database
                 
-                WalletService->WalletRepository: 22.2 GetWalletCashoutRequestWithRelationsByUserIdAsync(userId)
+                CashoutRepository->WalletRepository: 23b2b2. GetWalletCashoutRequestByUserIdAsync(userId, ct)
                 activate WalletRepository
-                WalletRepository->Database: 23.2 Get cashout request with relations
-                Database-->WalletRepository: 24.2 Return cashout data
-                WalletRepository-->WalletService: 25.2 Return cashout
+                WalletRepository->Database: 24b2b2. SELECT existing pending cashout request
+                activate Database
+                Database-->WalletRepository: 25b2b2. Return existing cashout or null
+                deactivate Database
+                WalletRepository-->CashoutRepository: 26b2b2. Return existing or null
                 deactivate WalletRepository
                 
-                WalletService-->WalletController: 26.2 Return success message (WalletCashoutRequestResponseDTO)
-                deactivate WalletService
-                WalletController->WalletUI: 27.2 Return 201 Created (WalletCashoutRequestResponseDTO)
-                deactivate WalletController
-                WalletUI->Vendor: 28.2 Display created cashout request
+                alt Pending Cashout Already Exists
+                    CashoutRepository->CashoutRepository: 27b2b2a. Throw InvalidOperationException("Yêu cầu rút tiền đang chờ xử lý")
+                    CashoutRepository->Database: 28b2b2a. ROLLBACK TRANSACTION
+                    CashoutRepository-->WalletService: 29b2b2a. Exception propagated
+                    deactivate Database
+                    deactivate CashoutRepository
+                    WalletService-->WalletController: 30b2b2a. Exception propagated
+                    WalletController->WalletController: 31b2b2a. HandleException(ex)
+                    WalletController->Client: 32b2b2a. Return 400 Bad Request
+                    deactivate WalletService
+                    deactivate WalletController
+                else No Pending Cashout
+                    CashoutRepository->CashoutRepository: 27b2b2b. Set transaction.CreatedAt, UpdatedAt = DateTime.UtcNow
+                    CashoutRepository->Database: 28b2b2b. INSERT Transaction
+                    Database-->CashoutRepository: 29b2b2b. Return created transaction with ID
+                    
+                    CashoutRepository->CashoutRepository: 30b2b2b. Set cashout.TransactionId = createdTransaction.Id
+                    CashoutRepository->CashoutRepository: 31b2b2b. Set cashout.CreatedAt, UpdatedAt = DateTime.UtcNow
+                    CashoutRepository->Database: 32b2b2b. INSERT Cashout
+                    Database-->CashoutRepository: 33b2b2b. Return created cashout
+                    
+                    CashoutRepository->Database: 34b2b2b. COMMIT TRANSACTION
+                    Database-->CashoutRepository: 35b2b2b. Transaction committed
+                    deactivate Database
+                    CashoutRepository-->WalletService: 36b2b2b. Return created cashout
+                    deactivate CashoutRepository
+                    
+                    WalletService->WalletRepository: 37b2b2b. GetWalletCashoutRequestWithRelationsByUserIdAsync(userId, ct)
+                    activate WalletRepository
+                    WalletRepository->Database: 38b2b2b. SELECT cashout with relations (Transaction, BankAccount, etc.)
+                    activate Database
+                    Database-->WalletRepository: 39b2b2b. Return cashout with relations
+                    deactivate Database
+                    WalletRepository-->WalletService: 40b2b2b. Return cashout
+                    deactivate WalletRepository
+                    
+                    WalletService->WalletService: 41b2b2b. Map to TransactionResponseDTO
+                    WalletService-->WalletController: 42b2b2b. Return TransactionResponseDTO
+                    deactivate WalletService
+                    WalletController->Client: 43b2b2b. Return 201 Created (TransactionResponseDTO)
+                    deactivate WalletController
+                end
             end
         end
     end
 end
 
+note over Client,Database: Only ONE pending cashout request allowed per vendor\nValidates balance before creating request\nCashout status starts as Pending

@@ -1,59 +1,82 @@
 title Send New Chatbot Message Sequence Diagram
 
-participant User
-participant ChatbotUI
+note over Client: ⚠️ ENDPOINT NOT YET IMPLEMENTED IN CODEBASE
+note over Client: This diagram represents planned functionality.
+note over Client: Current implementation only has GET endpoints for conversations and messages.
+
+participant Client
 participant ChatbotConversationController
 participant ChatbotConversationService
 participant ChatbotConversationRepository
 participant Database
 
-User->ChatbotUI: 1. Enter message in chat input
-User->ChatbotUI: 2. Click "Gửi" button
-ChatbotUI->ChatbotConversationController: 3. POST /api/ChatbotConversation/{conversationId}/message (ChatbotMessageCreateDTO)
+Client->ChatbotConversationController: 1. POST /api/ChatbotConversation/{conversationId}/message (ChatbotMessageCreateDTO)
 activate ChatbotConversationController
 
 note over ChatbotConversationController: Requires Authorization
 
-ChatbotConversationController->ChatbotConversationController: 4. ValidateModel()
+ChatbotConversationController->ChatbotConversationController: 2. ValidateModel()
 alt Validation Failed
-    ChatbotConversationController->ChatbotUI: 5.1 Return 400 Bad Request
-    ChatbotUI->User: 6.1 Show validation error
+    ChatbotConversationController->Client: 3a. Return 400 Bad Request
     deactivate ChatbotConversationController
 else Validation Success
-    ChatbotConversationController->ChatbotConversationController: 5.2 GetCurrentUserId() (from JWT)
-    ChatbotConversationController->ChatbotConversationService: 6.2 SendNewMessageAsync(userId, conversationId, dto)
+    ChatbotConversationController->ChatbotConversationController: 3b. GetCurrentUserId() (from JWT)
+    ChatbotConversationController->ChatbotConversationService: 4b. SendNewMessageAsync(userId, conversationId, dto, cancellationToken)
     activate ChatbotConversationService
     
-    ChatbotConversationService->ChatbotConversationRepository: 7.2 IsConversationBelongToUserAsync(conversationId, userId)
+    ChatbotConversationService->ChatbotConversationRepository: 5b. GetActiveChatbotConversationAsync(conversationId, cancellationToken)
     activate ChatbotConversationRepository
-    ChatbotConversationRepository->Database: 8.2 Check if conversation belongs to user and is active
-    Database-->ChatbotConversationRepository: 9.2 Return boolean result
-    ChatbotConversationRepository-->ChatbotConversationService: 10.2 Return boolean result
+    ChatbotConversationRepository->Database: 6b. Query ChatbotConversation by ID where IsDeleted = false
+    activate Database
+    Database-->ChatbotConversationRepository: 7b. Return conversation or null
+    deactivate Database
+    ChatbotConversationRepository-->ChatbotConversationService: 8b. Return conversation
     deactivate ChatbotConversationRepository
     
-    alt Conversation Not Belong to User
-        ChatbotConversationService-->ChatbotConversationController: 11.2.1 Throw KeyNotFoundException
-        ChatbotConversationController->ChatbotUI: 12.2.1 Return 404 Not Found
-        ChatbotUI->User: 13.2.1 Show error message
+    alt Conversation Not Found
+        ChatbotConversationService->ChatbotConversationService: 9b1. Throw KeyNotFoundException
+        ChatbotConversationService-->ChatbotConversationController: 10b1. Exception propagated
+        ChatbotConversationController->ChatbotConversationController: 11b1. HandleException(ex)
+        ChatbotConversationController->Client: 12b1. Return 404 Not Found
         deactivate ChatbotConversationService
         deactivate ChatbotConversationController
-    else Conversation Belongs to User
-        ChatbotConversationService->ChatbotConversationService: 11.2.2 Map DTO to ChatbotMessage entity
-        ChatbotConversationService->ChatbotConversationService: 12.2.2 Set ConversationId
-        ChatbotConversationService->ChatbotConversationRepository: 13.2.2 CreateNewChatbotMessageAsync(message)
-        activate ChatbotConversationRepository
-        ChatbotConversationRepository->Database: 14.2.2 Insert ChatbotMessage
-        Database-->ChatbotConversationRepository: 15.2.2 Return created message
-        ChatbotConversationRepository-->ChatbotConversationService: 16.2.2 Return created message
-        deactivate ChatbotConversationRepository
-        
-        ChatbotConversationService->ChatbotConversationService: 17.2.2 Map to ChatbotMessagesResponseDTO
-        ChatbotConversationService-->ChatbotConversationController: 18.2.2 Return ChatbotMessagesResponseDTO
-        deactivate ChatbotConversationService
-        
-        ChatbotConversationController->ChatbotUI: 19.2.2 Return 201 Created (ChatbotMessagesResponseDTO)
-        deactivate ChatbotConversationController
-        ChatbotUI->User: 20.2.2 Display new message
+    else Conversation Found
+        ChatbotConversationService->ChatbotConversationService: 9b2. Validate conversation.CustomerId == userId
+        alt Not Owner
+            ChatbotConversationService->ChatbotConversationService: 10b2a. Throw UnauthorizedAccessException
+            ChatbotConversationService-->ChatbotConversationController: 11b2a. Exception propagated
+            ChatbotConversationController->ChatbotConversationController: 12b2a. HandleException(ex)
+            ChatbotConversationController->Client: 13b2a. Return 401 Unauthorized
+            deactivate ChatbotConversationService
+            deactivate ChatbotConversationController
+        else Is Owner
+            ChatbotConversationService->ChatbotConversationService: 10b2b. Map ChatbotMessageCreateDTO to ChatbotMessage entity
+            ChatbotConversationService->ChatbotConversationService: 11b2b. Set message.ConversationId = conversationId
+            ChatbotConversationService->ChatbotConversationService: 12b2b. Set message.CreatedAt, UpdatedAt = DateTime.UtcNow
+            
+            ChatbotConversationService->ChatbotConversationRepository: 13b2b. CreateNewChatbotMessageAsync(message, cancellationToken)
+            activate ChatbotConversationRepository
+            ChatbotConversationRepository->ChatbotConversationRepository: 14b2b. Set CreatedAt, UpdatedAt = DateTime.UtcNow
+            ChatbotConversationRepository->Database: 15b2b. INSERT ChatbotMessage
+            activate Database
+            Database-->ChatbotConversationRepository: 16b2b. Return inserted message
+            deactivate Database
+            ChatbotConversationRepository->Database: 17b2b. SaveChangesAsync()
+            activate Database
+            Database-->ChatbotConversationRepository: 18b2b. Changes saved
+            deactivate Database
+            ChatbotConversationRepository-->ChatbotConversationService: 19b2b. Return created message
+            deactivate ChatbotConversationRepository
+            
+            ChatbotConversationService->ChatbotConversationService: 20b2b. Map ChatbotMessage to ChatbotMessagesResponseDTO
+            ChatbotConversationService-->ChatbotConversationController: 21b2b. Return ChatbotMessagesResponseDTO
+            deactivate ChatbotConversationService
+            
+            ChatbotConversationController->Client: 22b2b. Return 201 Created (ChatbotMessagesResponseDTO)
+            deactivate ChatbotConversationController
+        end
     end
 end
+
+note over Client,Database: ⚠️ This endpoint is NOT YET IMPLEMENTED in the current codebase.\nThe diagram shows the planned implementation based on existing patterns.
 

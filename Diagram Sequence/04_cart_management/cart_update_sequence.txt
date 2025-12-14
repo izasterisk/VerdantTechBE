@@ -1,61 +1,126 @@
 title Update Cart Item Quantity Sequence Diagram
 
-participant User
-participant CartUI
+participant Client
 participant CartController
 participant CartService
+participant CartRepository
 participant Database
 
-User->CartUI: 1. Update cart item (productId, quantity)
-CartUI->CartController: 2. PUT /api/Cart/update (CartDTO)
+Client->CartController: 1. PUT /api/Cart/update (CartDTO)
 activate CartController
 
 note over CartController: Requires Authorization
 
-CartController->CartController: 3. ValidateModel()
+CartController->CartController: 2. ValidateModel()
 alt Validation Failed
-    CartController->CartUI: 4.1 Return 400 Bad Request
-    CartUI->User: 5.1 Show error message
+    CartController->Client: 3a. Return 400 Bad Request
     deactivate CartController
 else Validation Success
-    CartController->CartController: 4.2 GetCurrentUserId() (from JWT)
-    CartController->CartService: 5.2 Call UpdateCartItemQuantityAsync(userId, dto)
+    CartController->CartController: 3b. GetCurrentUserId() (from JWT)
+    CartController->CartService: 4b. Call UpdateCartItemQuantityAsync(userId, dto, cancellationToken)
     activate CartService
     
-    CartService->Database: 6.2 Check if cart exists
-    Database-->CartService: 7.2 Return cart existence status
+    CartService->CartRepository: 5b. GetCartByUserIdWithRelationsAsync(userId, cancellationToken)
+    activate CartRepository
+    CartRepository->Database: 6b. Query Cart (Include CartItems, Product, Customer)
+    activate Database
+    Database-->CartRepository: 7b. Return cart or null
+    deactivate Database
+    CartRepository-->CartService: 8b. Return cart or null
+    deactivate CartRepository
     
-    alt Cart Not Exists
-        CartService-->CartController: 8.1 Return failure message
-        CartController->CartUI: 9.1 Return 400 Bad Request
-        CartUI->User: 10.1 Show error message
+    alt Cart Not Found
+        CartService->CartService: 9b1. Throw InvalidOperationException("Sản phẩm không tồn tại trong giỏ hàng")
+        CartService-->CartController: 10b1. Exception propagated
+        CartController->CartController: 11b1. HandleException(ex)
+        CartController->Client: 12b1. Return 400 Bad Request
         deactivate CartService
         deactivate CartController
-    else Cart Exists
-        CartService->Database: 8.2 Check if item exists in cart
-        Database-->CartService: 9.2 Return item existence status
+    else Cart Found
+        CartService->CartRepository: 9b2. FindItem(cart.Id, dto.ProductId, cancellationToken)
+        activate CartRepository
+        CartRepository->Database: 10b2. SELECT CartItem WHERE CartId AND ProductId
+        activate Database
+        Database-->CartRepository: 11b2. Return item or null
+        deactivate Database
+        CartRepository-->CartService: 12b2. Return item or null
+        deactivate CartRepository
         
         alt Item Not Found
-            CartService-->CartController: 10.2.1 Return failure message
-            CartController->CartUI: 11.2.1 Return 400 Bad Request
-            CartUI->User: 12.2.1 Show error message
+            CartService->CartService: 13b2a. Throw InvalidOperationException("Sản phẩm không tồn tại trong giỏ hàng")
+            CartService-->CartController: 14b2a. Exception propagated
+            CartController->CartController: 15b2a. HandleException(ex)
+            CartController->Client: 16b2a. Return 400 Bad Request
             deactivate CartService
             deactivate CartController
         else Item Found
-            alt Quantity = 0
-                CartService->Database: 10.2.2 Remove item from cart
-                Database-->CartService: 11.2.2 Return remove result
-            else Quantity > 0
-                CartService->Database: 10.2.3 Update item quantity
-                Database-->CartService: 11.2.3 Return update result
+            alt Quantity = 0 (Remove Item)
+                CartService->CartRepository: 13b2b1. DeleteItemFromCartWithTransactionAsync(item, cancellationToken)
+                activate CartRepository
+                CartRepository->Database: 14b2b1. BEGIN TRANSACTION
+                activate Database
+                CartRepository->Database: 15b2b1. DELETE CartItem (Hard Delete)
+                Database-->CartRepository: 16b2b1. Item deleted
+                CartRepository->Database: 17b2b1. COMMIT TRANSACTION
+                Database-->CartRepository: 18b2b1. Transaction committed
+                deactivate Database
+                CartRepository-->CartService: 19b2b1. Return true
+                deactivate CartRepository
+                
+                alt Delete Failed
+                    CartService->CartService: 20b2b1a. Throw InvalidOperationException("Xoá sản phẩm thất bại")
+                    CartService-->CartController: 21b2b1a. Exception propagated
+                    CartController->CartController: 22b2b1a. HandleException(ex)
+                    CartController->Client: 23b2b1a. Return 400 Bad Request
+                    deactivate CartService
+                    deactivate CartController
+                end
+            else Quantity > 0 (Update Quantity)
+                CartService->CartService: 13b2b2. Set item.Quantity = dto.Quantity
+                CartService->CartRepository: 14b2b2. UpdateCartWithTransactionAsync(item, cancellationToken)
+                activate CartRepository
+                CartRepository->Database: 15b2b2. BEGIN TRANSACTION
+                activate Database
+                CartRepository->CartRepository: 16b2b2. Set item.UpdatedAt = DateTime.UtcNow
+                CartRepository->Database: 17b2b2. UPDATE CartItem
+                Database-->CartRepository: 18b2b2. Item updated
+                CartRepository->Database: 19b2b2. COMMIT TRANSACTION
+                Database-->CartRepository: 20b2b2. Transaction committed
+                deactivate Database
+                CartRepository-->CartService: 21b2b2. Return updated item
+                deactivate CartRepository
             end
-            CartService->Database: 12.2 Get cart with items and images
-            Database-->CartService: 13.2 Return cart data
-            CartService-->CartController: 14.2 Return success message (CartResponseDTO)
+            
+            CartService->CartRepository: 22b2b. GetCartByUserIdWithRelationsAsync(userId, cancellationToken) - reload
+            activate CartRepository
+            CartRepository->Database: 23b2b. Query Cart with relations
+            activate Database
+            Database-->CartRepository: 24b2b. Return updated cart
+            deactivate Database
+            CartRepository-->CartService: 25b2b. Return cart
+            deactivate CartRepository
+            
+            CartService->CartService: 26b2b. Map Cart to CartResponseDTO
+            CartService->CartService: 27b2b. Call PopulateCartItemsImagesAsync(cartItems, repo, mapper, ct)
+            CartService->CartService: 28b2b. Extract distinct productIds from cart items
+            CartService->CartRepository: 29b2b. GetAllProductImagesForMultipleProducts(productIds, ct)
+            activate CartRepository
+            CartRepository->Database: 30b2b. SELECT MediaLinks WHERE ProductId IN (ids) AND OwnerType=Products
+            activate Database
+            Database-->CartRepository: 31b2b. Return all images for all products
+            deactivate Database
+            CartRepository-->CartService: 32b2b. Return all images
+            deactivate CartRepository
+            
+            CartService->CartService: 33b2b. Group images by ProductId
+            CartService->CartService: 34b2b. Loop through cart items and attach images
+            CartService->CartService: 35b2b. Map images to List<ImagesDTO>
+            CartService-->CartController: 36b2b. Return CartResponseDTO
             deactivate CartService
-            CartController->CartUI: 15.2 Return 200 OK (CartResponseDTO)
+            CartController->Client: 37b2b. Return 200 OK (CartResponseDTO)
             deactivate CartController
-            CartUI->User: 16.2 Display updated cart
         end
     end
 end
+
+note over Client,Database: If quantity=0, HARD DELETE (permanent removal)\nOptimized image loading: single query for all products\nTransaction ensures data consistency

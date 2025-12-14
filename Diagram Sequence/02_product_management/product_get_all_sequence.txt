@@ -1,31 +1,48 @@
 title Get All Products Sequence Diagram
 
 participant Client
-participant ProductUI
 participant ProductController
 participant ProductService
 participant ProductRepository
 participant Database
 
-Client->ProductUI: 1. Request product list (page, pageSize)
-ProductUI->ProductController: 2. GET /api/Product?page={page}&pageSize={pageSize}
+Client->ProductController: 1. GET /api/Product?page={page}&pageSize={pageSize}
 activate ProductController
 
-ProductController->ProductService: 3. Call GetAllAsync(page, pageSize)
+ProductController->ProductService: 2. Call GetAllAsync(page, pageSize, ct)
 activate ProductService
 
-ProductService->ProductRepository: 4. GetAllProductAsync(page, pageSize)
+ProductService->ProductRepository: 3. GetAllProductAsync(page, pageSize, ct)
 activate ProductRepository
-ProductRepository->Database: 5. Get products list
-Database-->ProductRepository: 6. Return products list and total count
-ProductRepository-->ProductService: 7. Return (items, total)
+
+ProductRepository->ProductRepository: 4. NormalizePaging(page, pageSize)
+ProductRepository->Database: 5. Query Products (AsNoTracking)
+activate Database
+ProductRepository->Database: 6. COUNT total products
+Database-->ProductRepository: 7. Return total count
+ProductRepository->Database: 8. SELECT products (OrderBy CreatedAt DESC, Skip, Take)
+Database-->ProductRepository: 9. Return product list
+deactivate Database
+
+ProductRepository->Database: 10. SELECT MediaLinks (OwnerType=Products, OwnerId IN productIds)
+activate Database
+Database-->ProductRepository: 11. Return media links
+deactivate Database
+ProductRepository->ProductRepository: 12. LoadMediaAsync() - attach media to products
+ProductRepository-->ProductService: 13. Return (Items, Total)
 deactivate ProductRepository
-ProductService->ProductService: 8. Load product images
-ProductService->ProductService: 9. Calculate pagination info
-ProductService-->ProductController: 10. Return success message (PagedResponse)
+
+ProductService->ProductService: 14. Map Items to List<ProductListItemDTO>
+ProductService->Database: 15. HydrateImagesAsync() - Query first image per product
+activate Database
+Database-->ProductService: 16. Return images
+deactivate Database
+ProductService->ProductService: 17. Attach first image to each DTO
+ProductService->ProductService: 18. Create PagedResponse with pagination info
+ProductService-->ProductController: 19. Return PagedResponse<ProductListItemDTO>
 deactivate ProductService
 
-ProductController->ProductUI: 11. Return 200 OK (PagedResponse)
+ProductController->Client: 20. Return 200 OK (PagedResponse)
 deactivate ProductController
-ProductUI->Client: 12. Display product list with pagination
-end
+
+note over Client,Database: Returns paginated product list with first image\nImages loaded separately for optimization

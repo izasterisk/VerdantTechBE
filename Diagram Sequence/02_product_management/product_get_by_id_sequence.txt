@@ -1,37 +1,54 @@
 title Get Product By ID Sequence Diagram
 
 participant Client
-participant ProductUI
 participant ProductController
 participant ProductService
 participant ProductRepository
 participant Database
 
-Client->ProductUI: 1. Request product details (id)
-ProductUI->ProductController: 2. GET /api/Product/{id}
+Client->ProductController: 1. GET /api/Product/{id}
 activate ProductController
 
-ProductController->ProductService: 3. Call GetByIdAsync(id)
+ProductController->ProductService: 2. Call GetByIdAsync(id, ct)
 activate ProductService
 
-ProductService->ProductRepository: 4. GetProductByIdAsync(id, useNoTracking: true)
+ProductService->ProductRepository: 3. GetProductByIdAsync(id, useNoTracking: true, ct)
 activate ProductRepository
-ProductRepository->Database: 5. Check if product exists
-Database-->ProductRepository: 6. Return product data
-ProductRepository-->ProductService: 7. Return product or null
-deactivate ProductRepository
+
+ProductRepository->Database: 4. Query Product by ID (Include Category)
+activate Database
+Database-->ProductRepository: 5. Return product data or null
+deactivate Database
 
 alt Product Not Found
-    ProductService-->ProductController: 8.1 Return null
-    ProductController->ProductUI: 9.1 Return 404 Not Found
-    ProductUI->Client: 10.1 Show error message
+    ProductRepository-->ProductService: 6a. Return null
+    deactivate ProductRepository
+    ProductService-->ProductController: 7a. Return null
     deactivate ProductService
+    ProductController->Client: 8a. Return 404 Not Found
     deactivate ProductController
 else Product Found
-    ProductService->ProductService: 8.2 Load product images
-    ProductService-->ProductController: 9.2 Return success message (ProductResponseDTO)
+    ProductRepository->Database: 6b. SELECT MediaLinks (OwnerType=Products, OwnerId=productId)
+    activate Database
+    Database-->ProductRepository: 7b. Return all media links
+    deactivate Database
+    ProductRepository->ProductRepository: 8b. LoadMediaAsync() - attach media to product
+    ProductRepository-->ProductService: 9b. Return Product entity
+    deactivate ProductRepository
+    
+    ProductService->ProductService: 10b. Map Product to ProductResponseDTO
+    ProductService->ProductService: 11b. Set EnergyEfficiencyRating to string
+    ProductService->Database: 12b. LoadImagesAsDtoAsync(productId, ct)
+    activate Database
+    ProductService->Database: 13b. SELECT MediaLinks (OwnerType=Products, OwnerId=productId, OrderBy SortOrder)
+    Database-->ProductService: 14b. Return all images
+    deactivate Database
+    ProductService->ProductService: 15b. Map MediaLinks to List<MediaLinkItemDTO>
+    ProductService->ProductService: 16b. Attach images to dto.Images
+    ProductService-->ProductController: 17b. Return ProductResponseDTO
     deactivate ProductService
-    ProductController->ProductUI: 10.2 Return 200 OK (ProductResponseDTO)
+    ProductController->Client: 18b. Return 200 OK (ProductResponseDTO)
     deactivate ProductController
-    ProductUI->Client: 11.2 Display product details
 end
+
+note over Client,Database: Returns complete product details with all images\nIncludes category information

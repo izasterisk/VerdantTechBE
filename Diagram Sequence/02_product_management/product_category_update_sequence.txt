@@ -1,77 +1,118 @@
 title Product Category Update Sequence Diagram
 
-participant Vendor
-participant ProductCategoryUI
+participant Client
 participant ProductCategoryController
 participant ProductCategoryService
+participant ProductCategoryRepository
 participant Database
 
-Vendor->ProductCategoryUI: 1. Update category (id, dto)
-ProductCategoryUI->ProductCategoryController: 2. PATCH /api/ProductCategory/{id} (ProductCategoryUpdateDTO)
+Client->ProductCategoryController: 1. PATCH /api/ProductCategory/{id} (ProductCategoryUpdateDTO)
 activate ProductCategoryController
 
-note over ProductCategoryController: Requires Authorization
-
-ProductCategoryController->ProductCategoryController: 3. ValidateModel()
+ProductCategoryController->ProductCategoryController: 2. ValidateModel()
 alt Validation Failed
-    ProductCategoryController->ProductCategoryUI: 4.1 Return 400 Bad Request
-    ProductCategoryUI->Vendor: 5.1 Show error message
+    ProductCategoryController->Client: 3. Return 400 Bad Request
     deactivate ProductCategoryController
 else Validation Success
-    ProductCategoryController->ProductCategoryService: 4.2 Call UpdateProductCategoryAsync(id, dto)
+    ProductCategoryController->ProductCategoryService: 4. Call UpdateProductCategoryAsync(id, dto, cancellationToken)
     activate ProductCategoryService
     
-    ProductCategoryService->Database: 5.2 Check if category exists
-    Database-->ProductCategoryService: 6.2 Return category existence status
+    ProductCategoryService->ProductCategoryRepository: 5. GetProductCategoryByIdAsync(id, useNoTracking: false)
+    activate ProductCategoryRepository
+    ProductCategoryRepository->Database: 6. Query category by ID (with tracking)
+    activate Database
+    Database-->ProductCategoryRepository: 7. Return category or null
+    deactivate Database
+    ProductCategoryRepository-->ProductCategoryService: 8. Return ProductCategory or null
+    deactivate ProductCategoryRepository
     
     alt Category Not Found or Inactive
-        ProductCategoryService-->ProductCategoryController: 7.1 Return failure message
-        ProductCategoryController->ProductCategoryUI: 8.1 Return 404 Not Found
-        ProductCategoryUI->Vendor: 9.1 Show error message
+        ProductCategoryService->ProductCategoryService: 9a. Throw KeyNotFoundException("Không tìm thấy danh mục")
+        ProductCategoryService-->ProductCategoryController: 10a. Exception propagated
+        ProductCategoryController->ProductCategoryController: 11a. HandleException(ex)
+        ProductCategoryController->Client: 12a. Return 404 Not Found
         deactivate ProductCategoryService
         deactivate ProductCategoryController
-    else Category Found
-        opt Name Changed
-            ProductCategoryService->Database: 7.2.1 Check if new name exists
-            Database-->ProductCategoryService: 8.2.1 Return name existence status
-            
+    else Category Found and Active
+        alt Name is Changed (dto.Name != null)
+            ProductCategoryService->ProductCategoryRepository: 9b1. IsCategoryNameNotUniqueAsync(dto.Name)
+            activate ProductCategoryRepository
+            ProductCategoryRepository->Database: 10b1. Query category by name
+            activate Database
+            Database-->ProductCategoryRepository: 11b1. Return exists status
+            deactivate Database
+            ProductCategoryRepository-->ProductCategoryService: 12b1. Return nameExists (bool)
+            deactivate ProductCategoryRepository
             alt Name Already Exists
-                ProductCategoryService-->ProductCategoryController: 9.2.1 Return failure message
-                ProductCategoryController->ProductCategoryUI: 10.2.1 Return 400 Bad Request
-                ProductCategoryUI->Vendor: 11.2.1 Show error message
+                ProductCategoryService->ProductCategoryService: 13b1a. Throw ArgumentException("Tên danh mục đã tồn tại")
+                ProductCategoryService-->ProductCategoryController: 14b1a. Exception propagated
+                ProductCategoryController->ProductCategoryController: 15b1a. HandleException(ex)
+                ProductCategoryController->Client: 16b1a. Return 400 Bad Request
                 deactivate ProductCategoryService
                 deactivate ProductCategoryController
             else Name Available
-                ProductCategoryService->ProductCategoryService: 9.2.2 Generate new slug
+                ProductCategoryService->ProductCategoryService: 13b1b. Generate new slug from name
+                ProductCategoryService->ProductCategoryService: 14b1b. Set category.Slug
             end
         end
-        opt ParentId Changed
-            ProductCategoryService->Database: 7.2.2 Check parent depth
-            Database-->ProductCategoryService: 8.2.2 Return parent depth status
-            
-            alt Parent Depth Invalid or Self Reference
-                ProductCategoryService-->ProductCategoryController: 9.2.2 Return failure message
-                ProductCategoryController->ProductCategoryUI: 10.2.2 Return 400 Bad Request
-                ProductCategoryUI->Vendor: 11.2.2 Show error message
+        
+        alt ParentId is Changed (dto.ParentId != null)
+            ProductCategoryService->ProductCategoryRepository: 9b2. IsCategoryAlreadySonsAsync(dto.ParentId)
+            activate ProductCategoryRepository
+            ProductCategoryRepository->Database: 10b2. Get parent category by ID
+            activate Database
+            Database-->ProductCategoryRepository: 11b2. Return parent category
+            deactivate Database
+            alt Parent Not Found or Inactive
+                ProductCategoryRepository->ProductCategoryRepository: 12b2a. Throw KeyNotFoundException("Danh mục cha không tồn tại")
+                ProductCategoryRepository-->ProductCategoryService: 13b2a. Exception propagated
+                deactivate ProductCategoryRepository
+                ProductCategoryService-->ProductCategoryController: 14b2a. Exception propagated
+                ProductCategoryController->ProductCategoryController: 15b2a. HandleException(ex)
+                ProductCategoryController->Client: 16b2a. Return 404 Not Found
                 deactivate ProductCategoryService
                 deactivate ProductCategoryController
-            else Parent Valid
-                ProductCategoryService->Database: 9.2.3 Update category information
-                Database-->ProductCategoryService: 10.2.3 Return update result
-                ProductCategoryService-->ProductCategoryController: 11.2.3 Return success message (ProductCategoryResponseDTO)
-                deactivate ProductCategoryService
-                ProductCategoryController->ProductCategoryUI: 12.2.3 Return 200 OK (ProductCategoryResponseDTO)
-                deactivate ProductCategoryController
-                ProductCategoryUI->Vendor: 13.2.3 Display updated category
+            else Parent Exists
+                alt Parent Already Has Parent (max depth exceeded)
+                    ProductCategoryRepository-->ProductCategoryService: 12b2b1. Return true
+                    deactivate ProductCategoryRepository
+                    ProductCategoryService->ProductCategoryService: 13b2b1. Throw KeyNotFoundException("Cha đang là con của mục khác")
+                    ProductCategoryService-->ProductCategoryController: 14b2b1. Exception propagated
+                    ProductCategoryController->ProductCategoryController: 15b2b1. HandleException(ex)
+                    ProductCategoryController->Client: 16b2b1. Return 404 Not Found
+                    deactivate ProductCategoryService
+                    deactivate ProductCategoryController
+                else Parent Is Root
+                    ProductCategoryRepository-->ProductCategoryService: 12b2b2. Return false
+                    deactivate ProductCategoryRepository
+                    ProductCategoryService->ProductCategoryService: 13b2b2. Check if ParentId == category.Id
+                    alt Self Reference Detected
+                        ProductCategoryService->ProductCategoryService: 14b2b2a. Throw ArgumentException("Parent ID giống chính ID của nó")
+                        ProductCategoryService-->ProductCategoryController: 15b2b2a. Exception propagated
+                        ProductCategoryController->ProductCategoryController: 16b2b2a. HandleException(ex)
+                        ProductCategoryController->Client: 17b2b2a. Return 400 Bad Request
+                        deactivate ProductCategoryService
+                        deactivate ProductCategoryController
+                    end
+                end
             end
-        else No ParentId Change
-            ProductCategoryService->Database: 7.2.3 Update category information
-            Database-->ProductCategoryService: 8.2.3 Return update result
-            ProductCategoryService-->ProductCategoryController: 9.2.3 Return success message (ProductCategoryResponseDTO)
-            deactivate ProductCategoryService
-            ProductCategoryController->ProductCategoryUI: 10.2.3 Return 200 OK (ProductCategoryResponseDTO)
-            deactivate ProductCategoryController
-            ProductCategoryUI->Vendor: 11.2.3 Display updated category
         end
+        
+        ProductCategoryService->ProductCategoryService: 9b3. Map DTO properties to category entity
+        ProductCategoryService->ProductCategoryRepository: 10b3. UpdateProductCategoryAsync(category)
+        activate ProductCategoryRepository
+        ProductCategoryRepository->Database: 11b3. UPDATE category
+        activate Database
+        Database-->ProductCategoryRepository: 12b3. Return updated entity
+        deactivate Database
+        ProductCategoryRepository-->ProductCategoryService: 13b3. Return ProductCategory
+        deactivate ProductCategoryRepository
+        ProductCategoryService->ProductCategoryService: 14b3. Map ProductCategory to ProductCategoryResponseDTO
+        ProductCategoryService-->ProductCategoryController: 15b3. Return ProductCategoryResponseDTO
+        deactivate ProductCategoryService
+        ProductCategoryController->Client: 16b3. Return 200 OK (ProductCategoryResponseDTO)
+        deactivate ProductCategoryController
     end
 end
+
+note over Client,Database: Partial update: only changed fields are validated\nMax depth: 1 level, no self-reference allowed

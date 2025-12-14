@@ -1,48 +1,77 @@
 title Create Payment Link Sequence Diagram
 
-participant User
-participant PaymentUI
+participant Client
 participant PayOSController
 participant PayOSService
-participant PayOSApi
+participant OrderRepository
+participant PayOSApiClient
+participant PaymentRepository
 participant Database
 
-User->PaymentUI: 1. Create payment link (orderId, dto)
-PaymentUI->PayOSController: 2. POST /api/PayOS/create/{orderId} (CreatePaymentDataDTO)
+Client->PayOSController: 1. POST /api/PayOS/create/{orderId} (CreatePaymentDataDTO)
 activate PayOSController
 
-note over PayOSController: Requires Authorization
-
-PayOSController->PayOSController: 3. ValidateModel()
+PayOSController->PayOSController: 2. ValidateModel()
 alt Validation Failed
-    PayOSController->PaymentUI: 4.1 Return 400 Bad Request
-    PaymentUI->User: 5.1 Show error message
+    PayOSController->Client: 3. Return 400 Bad Request
     deactivate PayOSController
 else Validation Success
-    PayOSController->PayOSService: 4.2 Call CreatePaymentLinkAsync(orderId, dto)
+    PayOSController->PayOSService: 4. CreatePaymentLinkAsync(orderId, dto, ct)
     activate PayOSService
     
-    PayOSService->Database: 5.2 Check if order exists
-    Database-->PayOSService: 6.2 Return order existence status
+    PayOSService->PayOSService: 5. Build cancelUrl and returnUrl from FRONTEND_URL env
+    PayOSService->OrderRepository: 6. GetOrderWithRelationsByIdAsync(orderId)
+    activate OrderRepository
+    OrderRepository->Database: 7. Query order with order details and products
+    activate Database
+    Database-->OrderRepository: 8. Return order or null
+    deactivate Database
+    OrderRepository-->PayOSService: 9. Return order
+    deactivate OrderRepository
     
-    alt Order Not Found
-        PayOSService-->PayOSController: 7.1 Return failure message
-        PayOSController->PaymentUI: 8.1 Return 404 Not Found
-        PaymentUI->User: 9.1 Show error message
+    alt Order Invalid (not found / not Pending / is COD)
+        PayOSService->PayOSService: 10a. Throw ArgumentException("Đơn hàng không khả dụng")
+        PayOSService-->PayOSController: 11a. Exception propagated
+        PayOSController->PayOSController: 12a. HandleException(ex)
+        PayOSController->Client: 13a. Return 400 Bad Request
         deactivate PayOSService
         deactivate PayOSController
-    else Order Found
-        PayOSService->PayOSApi: 7.2 Create payment link
-        activate PayOSApi
-        PayOSApi->PayOSApi: Generate payment link
-        PayOSApi-->PayOSService: 8.2 Return payment link
-        deactivate PayOSApi
-        PayOSService->Database: 9.2 Update order with payment info
-        Database-->PayOSService: 10.2 Return update result
-        PayOSService-->PayOSController: 11.2 Return success message (PaymentLinkResponseDTO)
+    else Order Valid
+        PayOSService->PayOSService: 10b. Build items list from order.OrderDetails
+        PayOSService->PayOSService: 11b. Generate unique orderCode (timestamp + random)
+        PayOSService->PayOSApiClient: 12b. Loop: GetPaymentLinkInformationAsync(orderCode) until unique
+        activate PayOSApiClient
+        PayOSApiClient-->PayOSService: 13b. Throw exception if not exists (means unique)
+        deactivate PayOSApiClient
+        
+        PayOSService->PayOSService: 14b. Build PaymentData object
+        PayOSService->PayOSApiClient: 15b. CreatePaymentLinkAsync(paymentData)
+        activate PayOSApiClient
+        PayOSApiClient-->PayOSService: 16b. Return CreatePaymentResult (checkoutUrl, etc.)
+        deactivate PayOSApiClient
+        
+        PayOSService->PayOSService: 17b. Create Payment entity with GatewayResponse
+        PayOSService->PayOSService: 18b. Create Transaction entity (PaymentIn, Pending)
+        PayOSService->PaymentRepository: 19b. CreatePaymentWithTransactionAsync(payment, transaction)
+        activate PaymentRepository
+        PaymentRepository->Database: 20b. Begin Transaction
+        activate Database
+        PaymentRepository->Database: 21b. INSERT payment
+        Database-->PaymentRepository: 22b. Payment created
+        PaymentRepository->Database: 23b. Get payment.Id
+        PaymentRepository->Database: 24b. INSERT transaction with PaymentId
+        Database-->PaymentRepository: 25b. Transaction created
+        PaymentRepository->Database: 26b. Commit Transaction
+        Database-->PaymentRepository: 27b. Transaction committed
+        deactivate Database
+        PaymentRepository-->PayOSService: 28b. Creation completed
+        deactivate PaymentRepository
+        
+        PayOSService-->PayOSController: 29b. Return CreatePaymentResult
         deactivate PayOSService
-        PayOSController->PaymentUI: 12.2 Return 201 Created (PaymentLinkResponseDTO)
+        PayOSController->Client: 30b. Return 201 Created (CreatePaymentResult with checkoutUrl)
         deactivate PayOSController
-        PaymentUI->User: 13.2 Display payment link
     end
 end
+
+note over Client,Database: Creates payment link via PayOS API\nStores payment & transaction records\ncheckoutUrl is returned for user to pay

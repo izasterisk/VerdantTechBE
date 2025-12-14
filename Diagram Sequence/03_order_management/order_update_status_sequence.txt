@@ -1,47 +1,223 @@
 title Update Order Status Sequence Diagram
 
-participant Staff
-participant OrderUI
+participant Client
 participant OrderController
 participant OrderService
+participant OrderRepository
+participant UserRepository
+participant PaymentRepository
+participant AddressRepository
+participant NotificationService
 participant Database
 
-Staff->OrderUI: 1. Update order status (orderId, dto)
-OrderUI->OrderController: 2. PUT /api/Order/{orderId} (OrderUpdateDTO)
+Client->OrderController: 1. PUT /api/Order/{orderId} (OrderUpdateDTO)
 activate OrderController
 
-note over OrderController: Requires Authorization (Admin/Staff)
+note over OrderController: Requires Authorization
 
-OrderController->OrderController: 3. ValidateModel()
+OrderController->OrderController: 2. ValidateModel()
 alt Validation Failed
-    OrderController->OrderUI: 4.1 Return 400 Bad Request
-    OrderUI->Staff: 5.1 Show error message
+    OrderController->Client: 3a. Return 400 Bad Request
     deactivate OrderController
 else Validation Success
-    OrderController->OrderController: 4.2 GetCurrentUserId() (from JWT)
-    OrderController->OrderService: 5.2 Call ProcessOrderAsync(staffId, orderId, dto)
+    OrderController->OrderController: 3b. GetCurrentUserId() (staffId from JWT)
+    OrderController->OrderService: 4b. Call ProcessOrderAsync(staffId, orderId, dto, cancellationToken)
     activate OrderService
     
-    OrderService->Database: 6.2 Check if order exists
-    Database-->OrderService: 7.2 Return order existence status
+    alt Status = Paid
+        OrderService->OrderService: 5b1. Throw InvalidCastException("Không thể chuyển thành 'Paid'")
+        OrderService-->OrderController: 6b1. Exception propagated
+        OrderController->OrderController: 7b1. HandleException(ex)
+        OrderController->Client: 8b1. Return 400 Bad Request
+        deactivate OrderService
+        deactivate OrderController
+    end
+    
+    OrderService->OrderRepository: 5b2. GetOrderWithRelationsByIdAsync(orderId, cancellationToken)
+    activate OrderRepository
+    OrderRepository->Database: 6b2. Query Order (Include OrderDetails, Product)
+    activate Database
+    Database-->OrderRepository: 7b2. Return order or null
+    deactivate Database
+    OrderRepository-->OrderService: 8b2. Return order or null
+    deactivate OrderRepository
     
     alt Order Not Found
-        OrderService-->OrderController: 8.1 Return failure message
-        OrderController->OrderUI: 9.1 Return 404 Not Found
-        OrderUI->Staff: 10.1 Show error message
+        OrderService->OrderService: 9b2a. Throw KeyNotFoundException("Đơn hàng không tồn tại")
+        OrderService-->OrderController: 10b2a. Exception propagated
+        OrderController->OrderController: 11b2a. HandleException(ex)
+        OrderController->Client: 12b2a. Return 500 Internal Server Error
         deactivate OrderService
         deactivate OrderController
     else Order Found
-        opt Status = Cancelled
-            OrderService->Database: 8.2.1 Update cancellation reason
-            Database-->OrderService: 9.2.1 Return update result
+        OrderService->UserRepository: 9b2b. GetVerifiedAndActiveUserByIdAsync(order.CustomerId, cancellationToken)
+        activate UserRepository
+        UserRepository->Database: 10b2b. Query customer user
+        activate Database
+        Database-->UserRepository: 11b2b. Return customer
+        deactivate Database
+        UserRepository-->OrderService: 12b2b. Return customer
+        deactivate UserRepository
+        
+        alt User is Customer (not Staff/Admin)
+            OrderService->OrderService: 13b2b1. Check if customerId == userId
+            alt Status not Cancelled or Delivered
+                OrderService->OrderService: 14b2b1a. Throw UnauthorizedAccessException("Khách hàng chỉ có thể hủy/đánh dấu đã giao")
+                OrderService-->OrderController: 15b2b1a. Exception propagated
+                OrderController->OrderController: 16b2b1a. HandleException(ex)
+                OrderController->Client: 17b2b1a. Return 401 Unauthorized
+                deactivate OrderService
+                deactivate OrderController
+            else Status = Cancelled and Order not Pending
+                OrderService->OrderService: 14b2b1b. Throw InvalidCastException("Chỉ Pending mới hủy được")
+                OrderService-->OrderController: 15b2b1b. Exception propagated
+                OrderController->OrderController: 16b2b1b. HandleException(ex)
+                OrderController->Client: 17b2b1b. Return 400 Bad Request
+                deactivate OrderService
+                deactivate OrderController
+            end
+        else User is Staff/Admin
+            OrderService->UserRepository: 13b2b2. GetVerifiedAndActiveUserByIdAsync(userId, cancellationToken)
+            activate UserRepository
+            UserRepository->Database: 14b2b2. Query staff/admin user
+            activate Database
+            Database-->UserRepository: 15b2b2. Return staff user
+            deactivate Database
+            UserRepository-->OrderService: 16b2b2. Return staff user
+            deactivate UserRepository
+            
+            alt User not Admin/Staff role
+                OrderService->OrderService: 17b2b2a. Throw UnauthorizedAccessException("Không có quyền cập nhật")
+                OrderService-->OrderController: 18b2b2a. Exception propagated
+                OrderController->OrderController: 19b2b2a. HandleException(ex)
+                OrderController->Client: 20b2b2a. Return 401 Unauthorized
+                deactivate OrderService
+                deactivate OrderController
+            end
         end
-        OrderService->Database: 10.2 Update order status
-        Database-->OrderService: 11.2 Return update result
-        OrderService-->OrderController: 12.2 Return success message (OrderResponseDTO)
+        
+        alt CancelledReason provided but Status not Cancelled
+            OrderService->OrderService: 18b2b. Throw InvalidOperationException
+            OrderService-->OrderController: 19b2b. Exception propagated
+            OrderController->OrderController: 20b2b. HandleException(ex)
+            OrderController->Client: 21b2b. Return 400 Bad Request
+            deactivate OrderService
+            deactivate OrderController
+        end
+        
+        OrderService->OrderService: 22b2b. ValidateOrderStatusTransition(currentStatus, newStatus)
+        alt Invalid Transition
+            OrderService->OrderService: 23b2b1. Throw InvalidOperationException("Không thể chuyển trạng thái")
+            OrderService-->OrderController: 24b2b1. Exception propagated
+            OrderController->OrderController: 25b2b1. HandleException(ex)
+            OrderController->Client: 26b2b1. Return 400 Bad Request
+            deactivate OrderService
+            deactivate OrderController
+        end
+        
+        alt Status = Processing and Current = Pending
+            alt Payment Method not COD
+                OrderService->OrderService: 23b2b2a. Throw InvalidOperationException("Không COD phải Paid trước")
+                OrderService-->OrderController: 24b2b2a. Exception propagated
+                OrderController->OrderController: 25b2b2a. HandleException(ex)
+                OrderController->Client: 26b2b2a. Return 400 Bad Request
+                deactivate OrderService
+                deactivate OrderController
+            else Payment Method is COD
+                OrderService->OrderService: 23b2b2b. Set order.ConfirmedAt = DateTime.UtcNow
+            end
+        end
+        
+        alt Status = Delivered
+            OrderService->OrderService: 24b2b3. Set order.DeliveredAt = DateTime.UtcNow
+            alt Payment Method = COD
+                OrderService->OrderService: 25b2b3a. Create Payment (Method=COD, Gateway=Manual)
+                OrderService->OrderService: 26b2b3a. Create Transaction (Type=PaymentIn, Status=Completed)
+                OrderService->PaymentRepository: 27b2b3a. CreatePaymentWithTransactionAsync(payment, transaction, ct)
+                activate PaymentRepository
+                PaymentRepository->Database: 28b2b3a. BEGIN TRANSACTION
+                activate Database
+                PaymentRepository->Database: 29b2b3a. INSERT Payment
+                PaymentRepository->Database: 30b2b3a. INSERT Transaction
+                PaymentRepository->Database: 31b2b3a. COMMIT TRANSACTION
+                Database-->PaymentRepository: 32b2b3a. Payment and Transaction created
+                deactivate Database
+                PaymentRepository-->OrderService: 33b2b3a. Complete
+                deactivate PaymentRepository
+            end
+        end
+        
+        alt Status = Cancelled
+            OrderService->OrderService: 34b2b4. Loop through OrderDetails
+            OrderService->OrderService: 35b2b4. Restore stock: product.StockQuantity += orderDetail.Quantity
+            OrderService->OrderService: 36b2b4. Add products to productsToUpdate list
+            OrderService->OrderService: 37b2b4. Set order.CancelledAt = DateTime.UtcNow
+            OrderService->OrderService: 38b2b4. Set order.CancelledReason = dto.CancelledReason
+        end
+        
+        OrderService->OrderService: 39b2b. Set order.Status = dto.Status
+        OrderService->OrderRepository: 40b2b. UpdateOrderWithProductsTransactionAsync(order, productsToUpdate, ct)
+        activate OrderRepository
+        OrderRepository->Database: 41b2b. BEGIN TRANSACTION
+        activate Database
+        OrderRepository->OrderRepository: 42b2b. Loop through productsToUpdate
+        OrderRepository->OrderRepository: 43b2b. Set product.UpdatedAt = DateTime.UtcNow
+        OrderRepository->Database: 44b2b. UPDATE products
+        OrderRepository->OrderRepository: 45b2b. Set order.UpdatedAt = DateTime.UtcNow
+        OrderRepository->Database: 46b2b. UPDATE order
+        OrderRepository->Database: 47b2b. COMMIT TRANSACTION
+        Database-->OrderRepository: 48b2b. Transaction committed
+        deactivate Database
+        OrderRepository-->OrderService: 49b2b. Return updated order
+        deactivate OrderRepository
+        
+        OrderService->OrderRepository: 50b2b. GetOrderWithRelationsByIdAsync(orderId, ct) - reload
+        activate OrderRepository
+        OrderRepository->Database: 51b2b. Query updated order
+        activate Database
+        Database-->OrderRepository: 52b2b. Return order
+        deactivate Database
+        OrderRepository-->OrderService: 53b2b. Return order
+        deactivate OrderRepository
+        
+        OrderService->OrderService: 54b2b. Map Order to OrderResponseDTO
+        OrderService->OrderService: 55b2b. Loop through OrderDetails
+        OrderService->OrderRepository: 56b2b. GetProductImagesByProductIdAsync(productId, ct)
+        activate OrderRepository
+        OrderRepository->Database: 57b2b. SELECT MediaLinks
+        activate Database
+        Database-->OrderRepository: 58b2b. Return images
+        deactivate Database
+        OrderRepository-->OrderService: 59b2b. Return images
+        deactivate OrderRepository
+        OrderService->OrderService: 60b2b. Map and attach images
+        
+        OrderService->OrderService: 61b2b. Map customer to UserResponseDTO
+        OrderService->AddressRepository: 62b2b. GetAddressByIdAsync(addressId, ct)
+        activate AddressRepository
+        AddressRepository->Database: 63b2b. SELECT Address
+        activate Database
+        Database-->AddressRepository: 64b2b. Return address
+        deactivate Database
+        AddressRepository-->OrderService: 65b2b. Return address
+        deactivate AddressRepository
+        OrderService->OrderService: 66b2b. Map address and insert to Customer.UserAddresses
+        
+        OrderService->OrderService: 67b2b. Build notification message based on status
+        OrderService->NotificationService: 68b2b. CreateAndSendNotificationAsync()
+        activate NotificationService
+        NotificationService->Database: 69b2b. Create and send notification
+        activate Database
+        Database-->NotificationService: 70b2b. Notification sent
+        deactivate Database
+        NotificationService-->OrderService: 71b2b. Complete
+        deactivate NotificationService
+        
+        OrderService-->OrderController: 72b2b. Return OrderResponseDTO
         deactivate OrderService
-        OrderController->OrderUI: 13.2 Return 200 OK (OrderResponseDTO)
+        OrderController->Client: 73b2b. Return 200 OK (OrderResponseDTO)
         deactivate OrderController
-        OrderUI->Staff: 14.2 Display updated order
     end
 end
+
+note over Client,Database: Complex validation: role-based permissions, status transitions\nAuto-creates COD payment when delivered\nRestores stock when cancelled\nSends notification to customer

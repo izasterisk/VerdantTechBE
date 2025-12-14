@@ -1,40 +1,52 @@
 title Delete Product Sequence Diagram
 
-participant Admin
-participant ProductUI
+participant Client
 participant ProductController
 participant ProductService
 participant ProductRepository
 participant Database
 
-Admin->ProductUI: 1. Delete product (id)
-ProductUI->ProductController: 2. DELETE /api/Product/{id}
+Client->ProductController: 1. DELETE /api/Product/{id}
 activate ProductController
 
-ProductController->ProductService: 3. Call DeleteAsync(id)
+ProductController->ProductService: 2. Call DeleteAsync(id, cancellationToken)
 activate ProductService
 
-ProductService->ProductRepository: 4. DeleteAsync(id)
+ProductService->ProductRepository: 3. DeleteAsync(id)
 activate ProductRepository
-ProductRepository->Database: 5. Check if product exists
-Database-->ProductRepository: 6. Return product existence status
+ProductRepository->Database: 4. Query product by ID
+activate Database
+Database-->ProductRepository: 5. Return product or null
+deactivate Database
 
 alt Product Not Found
-    ProductRepository-->ProductService: 7.1 Return false
-    ProductService-->ProductController: 8.1 Return false
-    ProductController->ProductUI: 9.1 Return 404 Not Found
-    ProductUI->Admin: 10.1 Show error message
+    ProductRepository-->ProductService: 6a. Return false
     deactivate ProductRepository
+    ProductService-->ProductController: 7a. Return false
     deactivate ProductService
+    ProductController->Client: 8a. Return 404 Not Found
     deactivate ProductController
 else Product Found
-    ProductRepository->Database: 7.2 Remove product from database
-    Database-->ProductRepository: 8.2 Return delete result
-    ProductRepository-->ProductService: 9.2 Return true
+    ProductRepository->Database: 6b. Begin Transaction
+    activate Database
+    ProductRepository->Database: 7b. Query MediaLinks (product images)
+    Database-->ProductRepository: 8b. Return media list
+    alt Has Media Images
+        ProductRepository->Database: 9b1. RemoveRange(medias)
+    end
+    ProductRepository->Database: 9b2. Remove(product)
+    Database-->ProductRepository: 10b. Changes tracked
+    ProductRepository->Database: 11b. SaveChangesAsync()
+    Database-->ProductRepository: 12b. Changes saved
+    ProductRepository->Database: 13b. Commit Transaction
+    Database-->ProductRepository: 14b. Transaction committed
+    deactivate Database
+    ProductRepository-->ProductService: 15b. Return true
     deactivate ProductRepository
-    ProductService-->ProductController: 10.2 Return true
+    ProductService-->ProductController: 16b. Return true
     deactivate ProductService
-    ProductController->ProductUI: 11.2 Return 204 No Content
+    ProductController->Client: 17b. Return 204 No Content
     deactivate ProductController
-    ProductUI->Admin: 12.2 Confirm deletion
 end
+
+note over Client,Database: Hard delete: removes product and all related media images\nUses transaction to ensure data consistency

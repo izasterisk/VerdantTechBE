@@ -1,47 +1,54 @@
 title Delete Wallet Cashout Request Sequence Diagram
 
-participant Vendor
-participant WalletUI
+participant Client
 participant WalletController
 participant WalletService
 participant WalletRepository
-participant CashoutRepository
 participant Database
 
-Vendor->WalletUI: 1. Delete cashout request
-WalletUI->WalletController: 2. DELETE /api/Wallet/cashout
+Client->WalletController: 1. DELETE /api/Wallet/cashout
 activate WalletController
 
-note over WalletController: Requires Authorization (Vendor)
-
-WalletController->WalletService: 3. Call DeleteWalletCashoutRequestAsync(userId)
+WalletController->WalletController: 2. GetCurrentUserId() (from JWT)
+WalletController->WalletService: 3. DeleteWalletCashoutRequestAsync(userId, ct)
 activate WalletService
 
-WalletService->WalletRepository: 4. GetWalletCashoutRequestByUserIdAsync(userId)
+WalletService->WalletRepository: 4. GetTransactionWithWalletCashoutRequestByUserIdAsync(userId)
 activate WalletRepository
-WalletRepository->Database: 5. Get cashout request by user ID
-Database-->WalletRepository: 6. Return cashout data
-WalletRepository-->WalletService: 7. Return cashout or null
+WalletRepository->Database: 5. Query transaction with cashout by userId
+activate Database
+Database-->WalletRepository: 6. Return transaction with cashout or null
+deactivate Database
+WalletRepository-->WalletService: 7. Return existingCashout (transaction) or null
 deactivate WalletRepository
 
 alt Cashout Not Found
-    WalletService-->WalletController: 8.1 Return failure message
-    WalletController->WalletUI: 9.1 Return 404 Not Found
-    WalletUI->Vendor: 10.1 Show error message
+    WalletService->WalletService: 8a. Throw KeyNotFoundException("Chưa có yêu cầu rút tiền")
+    WalletService-->WalletController: 9a. Exception propagated
+    WalletController->WalletController: 10a. HandleException(ex)
+    WalletController->Client: 11a. Return 404 Not Found
     deactivate WalletService
     deactivate WalletController
 else Cashout Found
-    WalletService->CashoutRepository: 8.2 DeleteCashoutAsync(cashout)
-    activate CashoutRepository
-    CashoutRepository->Database: 9.2 Remove cashout request
-    Database-->CashoutRepository: 10.2 Return delete result
-    CashoutRepository-->WalletService: 11.2 Return success (bool)
-    deactivate CashoutRepository
+    WalletService->WalletRepository: 8b. DeleteCashoutWithTransactionAsync(transaction, cashout)
+    activate WalletRepository
+    WalletRepository->Database: 9b. Begin Transaction
+    activate Database
+    WalletRepository->Database: 10b. DELETE cashout record
+    Database-->WalletRepository: 11b. Cashout deleted
+    WalletRepository->Database: 12b. DELETE transaction record
+    Database-->WalletRepository: 13b. Transaction deleted
+    WalletRepository->Database: 14b. Commit Transaction
+    Database-->WalletRepository: 15b. Transaction committed
+    deactivate Database
+    WalletRepository-->WalletService: 16b. Return true
+    deactivate WalletRepository
     
-    WalletService-->WalletController: 12.2 Return success
+    WalletService-->WalletController: 17b. Return true
     deactivate WalletService
-    WalletController->WalletUI: 13.2 Return 204 No Content
+    WalletController->Client: 18b. Return 204 No Content
     deactivate WalletController
-    WalletUI->Vendor: 14.2 Confirm deletion
 end
+
+note over Client,Database: Only pending cashout requests can be deleted\nDeletes both cashout and transaction records in transaction
 

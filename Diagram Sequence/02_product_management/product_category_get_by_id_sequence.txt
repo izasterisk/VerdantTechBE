@@ -1,35 +1,35 @@
 title Get Product Category By ID Sequence Diagram
 
 participant Client
-participant ProductCategoryUI
 participant ProductCategoryController
 participant ProductCategoryService
+participant ProductCategoryRepository
 participant Database
 
-Client->ProductCategoryUI: 1. Request category details (id)
-ProductCategoryUI->ProductCategoryController: 2. GET /api/ProductCategory/{id}
+Client->ProductCategoryController: 1. GET /api/ProductCategory/{id}
 activate ProductCategoryController
 
-note over ProductCategoryController: Requires Authorization
-
-ProductCategoryController->ProductCategoryService: 3. Call GetProductCategoryByIdAsync(id)
+ProductCategoryController->ProductCategoryService: 2. Call GetProductCategoryByIdAsync(id, cancellationToken)
 activate ProductCategoryService
 
-ProductCategoryService->Database: 4. Check if category exists
-Database-->ProductCategoryService: 5. Return category existence status
+ProductCategoryService->ProductCategoryRepository: 3. GetProductCategoryByIdAsync(id, useNoTracking: true)
+activate ProductCategoryRepository
+ProductCategoryRepository->Database: 4. Query category by ID with Parent relation
+activate Database
+Database-->ProductCategoryRepository: 5. Return category or null
+deactivate Database
+ProductCategoryRepository-->ProductCategoryService: 6. Return ProductCategory or null
+deactivate ProductCategoryRepository
 
 alt Category Not Found
-    ProductCategoryService-->ProductCategoryController: 6.1 Return null
-    ProductCategoryController->ProductCategoryUI: 7.1 Return 404 Not Found
-    ProductCategoryUI->Client: 8.1 Show error message
+    ProductCategoryService-->ProductCategoryController: 7a. Return null
     deactivate ProductCategoryService
+    ProductCategoryController->Client: 8a. Return 404 Not Found
     deactivate ProductCategoryController
 else Category Found
-    ProductCategoryService->Database: 6.2 Get category details
-    Database-->ProductCategoryService: 7.2 Return category data
-    ProductCategoryService-->ProductCategoryController: 8.2 Return success message (ProductCategoryResponseDTO)
+    ProductCategoryService->ProductCategoryService: 7b. Map ProductCategory to ProductCategoryResponseDTO
+    ProductCategoryService-->ProductCategoryController: 8b. Return ProductCategoryResponseDTO
     deactivate ProductCategoryService
-    ProductCategoryController->ProductCategoryUI: 9.2 Return 200 OK (ProductCategoryResponseDTO)
+    ProductCategoryController->Client: 9b. Return 200 OK (ProductCategoryResponseDTO)
     deactivate ProductCategoryController
-    ProductCategoryUI->Client: 10.2 Display category details
 end

@@ -1,66 +1,144 @@
 title Create Order Sequence Diagram
 
-participant User
-participant OrderUI
+participant Client
 participant OrderController
 participant OrderService
+participant MemoryCache
+participant UserRepository
 participant OrderRepository
 participant Database
 
-User->OrderUI: 1. Create order (orderPreviewId, dto)
-OrderUI->OrderController: 2. POST /api/Order/{orderPreviewId} (OrderCreateDTO)
+Client->OrderController: 1. POST /api/Order/{orderPreviewId} (OrderCreateDTO)
 activate OrderController
 
-note over OrderController: Requires Authorization
-
-OrderController->OrderController: 3. ValidateModel()
+OrderController->OrderController: 2. ValidateModel()
 alt Validation Failed
-    OrderController->OrderUI: 4.1 Return 400 Bad Request
-    OrderUI->User: 5.1 Show error message
+    OrderController->Client: 3. Return 400 Bad Request
     deactivate OrderController
 else Validation Success
-    OrderController->OrderService: 4.2 Call CreateOrderAsync(orderPreviewId, dto)
+    OrderController->OrderService: 4. CreateOrderAsync(orderPreviewId, dto, ct)
     activate OrderService
     
-    OrderService->OrderRepository: 5.2 GetOrderPreviewByIdAsync(orderPreviewId)
-    activate OrderRepository
-    OrderRepository->Database: 6.2 Check if order preview exists
-    Database-->OrderRepository: 7.2 Return preview data
-    OrderRepository-->OrderService: 8.2 Return preview or null
-    deactivate OrderRepository
+    OrderService->MemoryCache: 5. GetOrderPreviewFromCache(orderPreviewId)
+    activate MemoryCache
+    MemoryCache-->OrderService: 6. Return orderPreview or null
+    deactivate MemoryCache
     
-    alt Preview Not Found
-        OrderService-->OrderController: 7.1 Return failure message
-        OrderController->OrderUI: 8.1 Return 404 Not Found
-        OrderUI->User: 9.1 Show error message
+    alt Preview Not Found or Expired
+        OrderService->OrderService: 7a. Throw KeyNotFoundException("Đơn hàng xem trước đã hết hạn")
+        OrderService-->OrderController: 8a. Exception propagated
+        OrderController->OrderController: 9a. HandleException(ex)
+        OrderController->Client: 10a. Return 404 Not Found
         deactivate OrderService
         deactivate OrderController
     else Preview Found
-        OrderService->OrderService: 9.2 Map preview to order
-        OrderService->OrderService: 9.3 Update product stock quantities
-        OrderService->OrderRepository: 10.2 CreateOrderWithTransactionAsync(order, orderDetails, productsToUpdate)
-        activate OrderRepository
-        OrderRepository->Database: 11.2 Create order from preview
-        Database-->OrderRepository: 12.2 Return order created
-        OrderRepository->Database: 13.2 Create order details
-        Database-->OrderRepository: 14.2 Return details created
-        OrderRepository->Database: 15.2 Update product stock
-        Database-->OrderRepository: 16.2 Return update result
-        OrderRepository-->OrderService: 17.2 Return created order
-        deactivate OrderRepository
-        opt Payment Method = COD
-            OrderService->OrderService: 18.2 Set order status to Paid
+        OrderService->OrderService: 7b. Validate PriceTableId in ShippingDetails
+        alt Shipping Method Not Found
+            OrderService->OrderService: 8b1. Throw KeyNotFoundException("Dịch vụ vận chuyển không tồn tại")
+            OrderService-->OrderController: 9b1. Exception propagated
+            OrderController->OrderController: 10b1. HandleException(ex)
+            OrderController->Client: 11b1. Return 404 Not Found
+            deactivate OrderService
+            deactivate OrderController
+        else Shipping Method Valid
+            OrderService->UserRepository: 8b2. GetVerifiedAndActiveUserByIdAsync(customerId)
+            activate UserRepository
+            UserRepository->Database: 9b2. Query user by ID (verified + active)
+            activate Database
+            Database-->UserRepository: 10b2. Return user or null
+            deactivate Database
+            UserRepository-->OrderService: 11b2. Return user or null
+            deactivate UserRepository
+            
+            alt User Not Found or Invalid
+                OrderService->OrderService: 12b2a. Throw KeyNotFoundException("Người dùng không tồn tại")
+                OrderService-->OrderController: 13b2a. Exception propagated
+                OrderController->OrderController: 14b2a. HandleException(ex)
+                OrderController->Client: 15b2a. Return 404 Not Found
+                deactivate OrderService
+                deactivate OrderController
+            else User Valid
+                OrderService->OrderService: 12b2b. Loop through orderPreview.OrderDetails
+                OrderService->OrderRepository: 13b2b. GetActiveProductByIdAsync(productId) for each
+                activate OrderRepository
+                OrderRepository->Database: 14b2b. Query product by ID (IsActive)
+                activate Database
+                Database-->OrderRepository: 15b2b. Return product or null
+                deactivate Database
+                OrderRepository-->OrderService: 16b2b. Return product
+                deactivate OrderRepository
+                
+                alt Product Not Found
+                    OrderService->OrderService: 17b2b1. Throw KeyNotFoundException("Sản phẩm không tồn tại")
+                    OrderService-->OrderController: 18b2b1. Exception propagated
+                    OrderController->OrderController: 19b2b1. HandleException(ex)
+                    OrderController->Client: 20b2b1. Return 404 Not Found
+                    deactivate OrderService
+                    deactivate OrderController
+                else Product Found
+                    alt Insufficient Stock
+                        OrderService->OrderService: 17b2b2a. Throw InvalidOperationException("Không đủ hàng")
+                        OrderService-->OrderController: 18b2b2a. Exception propagated
+                        OrderController->OrderController: 19b2b2a. HandleException(ex)
+                        OrderController->Client: 20b2b2a. Return 400 Bad Request
+                        deactivate OrderService
+                        deactivate OrderController
+                    else Stock Sufficient
+                        OrderService->OrderService: 17b2b2b. Decrease product.StockQuantity
+                        OrderService->OrderService: 18b2b2b. Add to productsToUpdate list
+                        OrderService->OrderService: 19b2b2b. Build OrderDetail entity
+                    end
+                end
+                
+                OrderService->OrderService: 20b2b. Map orderPreview to Order entity
+                OrderService->OrderService: 21b2b. Set ShippingFee, ShippingMethod, TotalAmount
+                OrderService->OrderService: 22b2b. Set AddressId, CourierId, dimensions
+                OrderService->OrderRepository: 23b2b. CreateOrderWithTransactionAsync(order, orderDetails, productsToUpdate)
+                activate OrderRepository
+                OrderRepository->Database: 24b2b. Begin Transaction
+                activate Database
+                OrderRepository->Database: 25b2b. INSERT order
+                Database-->OrderRepository: 26b2b. Return created order
+                OrderRepository->Database: 27b2b. INSERT order details (batch)
+                Database-->OrderRepository: 28b2b. Details inserted
+                OrderRepository->Database: 29b2b. UPDATE products stock quantities
+                Database-->OrderRepository: 30b2b. Stock updated
+                OrderRepository->Database: 31b2b. Commit Transaction
+                Database-->OrderRepository: 32b2b. Transaction committed
+                deactivate Database
+                OrderRepository-->OrderService: 33b2b. Return created order
+                deactivate OrderRepository
+                
+                OrderService->OrderRepository: 34b2b. GetOrderWithRelationsByIdAsync(orderId)
+                activate OrderRepository
+                OrderRepository->Database: 35b2b. Query order with relations
+                activate Database
+                Database-->OrderRepository: 36b2b. Return order with details
+                deactivate Database
+                OrderRepository-->OrderService: 37b2b. Return full order
+                deactivate OrderRepository
+                
+                OrderService->OrderService: 38b2b. Map to OrderResponseDTO
+                OrderService->OrderRepository: 39b2b. GetProductImagesByProductIdAsync() for each product
+                activate OrderRepository
+                OrderRepository->Database: 40b2b. Query product images
+                activate Database
+                Database-->OrderRepository: 41b2b. Return images
+                deactivate Database
+                OrderRepository-->OrderService: 42b2b. Return images
+                deactivate OrderRepository
+                OrderService->OrderService: 43b2b. Populate images to response
+                OrderService->MemoryCache: 44b2b. RemoveOrderPreviewFromCache(orderPreviewId)
+                activate MemoryCache
+                MemoryCache-->OrderService: 45b2b. Cache cleared
+                deactivate MemoryCache
+                OrderService-->OrderController: 46b2b. Return OrderResponseDTO
+                deactivate OrderService
+                OrderController->Client: 47b2b. Return 201 Created (OrderResponseDTO)
+                deactivate OrderController
+            end
         end
-        OrderService->OrderRepository: 19.2 GetOrderByIdAsync(orderId)
-        activate OrderRepository
-        OrderRepository->Database: 20.2 Get order with details
-        Database-->OrderRepository: 21.2 Return order data
-        OrderRepository-->OrderService: 22.2 Return order
-        deactivate OrderRepository
-        OrderService-->OrderController: 23.2 Return success message (OrderResponseDTO)
-        deactivate OrderService
-        OrderController->OrderUI: 24.2 Return 201 Created (OrderResponseDTO)
-        deactivate OrderController
-        OrderUI->User: 25.2 Display created order
     end
 end
+
+note over Client,Database: Order created from cached preview\nTransaction: order + details + stock update\nCache cleared after successful creation
