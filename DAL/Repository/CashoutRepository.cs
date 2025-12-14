@@ -14,14 +14,15 @@ public class CashoutRepository : ICashoutRepository
     private readonly IRepository<ProductSerial> _productSerialRepository; 
     private readonly IRepository<Request> _requestRepository;
     private readonly IRepository<ExportInventory> _exportInventoryRepository;
+    private readonly IRepository<OrderDetail> _orderDetailRepository;
     private readonly VerdantTechDbContext _dbContext;
     private readonly IWalletRepository _walletRepository;
     
     public CashoutRepository(IRepository<Cashout> cashoutRepository, IRepository<Transaction> transactionRepository,
         IRepository<Order> orderRepository, IRepository<UserBankAccount> userBankAccountRepository,
         IRepository<ProductSerial> productSerialRepository, IRepository<Request> requestRepository,
-        IRepository<ExportInventory> exportInventoryRepository, VerdantTechDbContext dbContext,
-        IWalletRepository walletRepository)
+        IRepository<ExportInventory> exportInventoryRepository, IRepository<OrderDetail> orderDetailRepository,
+        VerdantTechDbContext dbContext, IWalletRepository walletRepository)
     {
         _cashoutRepository = cashoutRepository;
         _transactionRepository = transactionRepository;
@@ -30,6 +31,7 @@ public class CashoutRepository : ICashoutRepository
         _productSerialRepository = productSerialRepository;
         _requestRepository = requestRepository;
         _exportInventoryRepository = exportInventoryRepository;
+        _orderDetailRepository = orderDetailRepository;
         _dbContext = dbContext;
         _walletRepository = walletRepository;
     }
@@ -74,7 +76,7 @@ public class CashoutRepository : ICashoutRepository
 
     public async Task<Transaction> CreateRefundCashoutWithTransactionAsync(Transaction tr, Cashout cashout, 
         UserBankAccount? bankAccount, Order order, Request request, List<ProductSerial> serials, 
-        List<ExportInventory> exports, CancellationToken cancellationToken = default)
+        List<ExportInventory> exports, List<OrderDetail> orderDetails, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -95,7 +97,7 @@ public class CashoutRepository : ICashoutRepository
             }
             
             order.UpdatedAt = DateTime.UtcNow;
-            order.Status = OrderStatus.Refunded;
+            // order.Status = OrderStatus.Refunded;
             await _orderRepository.UpdateAsync(order, cancellationToken);
             
             request.UpdatedAt = DateTime.UtcNow;
@@ -110,6 +112,8 @@ public class CashoutRepository : ICashoutRepository
             await _productSerialRepository.BulkUpdateAsync(serials, cancellationToken);
             
             await _exportInventoryRepository.BulkUpdateAsync(exports, cancellationToken);
+
+            await _orderDetailRepository.BulkUpdateAsync(orderDetails, cancellationToken);
             
             await transaction.CommitAsync(cancellationToken);
             return createdTransaction;
@@ -278,8 +282,12 @@ public class CashoutRepository : ICashoutRepository
         }
         if(count != orderDetailIds.Count)
             throw new KeyNotFoundException("Một số OrderDetailIds không tồn tại.");
-        var order = await _orderRepository.GetAsync(o => o.Id == orderDetails[0].OrderId, true, cancellationToken) 
+        var order = await _orderRepository.GetWithRelationsAsync(o => o.Id == orderDetails[0].OrderId, 
+                        true, 
+                        query => query.Include(o => o.OrderDetails), 
+                        cancellationToken) 
             ?? throw new KeyNotFoundException("Đơn hàng không tồn tại.");
+        order.Status = count == order.OrderDetails.Count ? OrderStatus.Refunded : OrderStatus.PartialRefund;
         return (order, orderDetails);
     }
     

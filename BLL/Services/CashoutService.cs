@@ -63,7 +63,7 @@ public class CashoutService : ICashoutService
         if (orderTuple.Item1.OrderPaymentMethod == OrderPaymentMethod.Banking)
         {
             var payment = await _transactionRepository.GetPaymentTransactionByOrderIdAsync(orderTuple.Item1.Id, cancellationToken);
-            if(payment.Status != TransactionStatus.Completed)
+            if (payment.Status != TransactionStatus.Completed)
                 throw new InvalidOperationException("Chỉ có thể hoàn tiền cho các thanh toán banking đã hoàn tất.");
         }
         
@@ -74,13 +74,14 @@ public class CashoutService : ICashoutService
         
         if(orderTuple.Item1.CustomerId != request.UserId)
             throw new UnauthorizedAccessException("Yêu cầu hoàn tiền không thuộc về người đặt hàng.");
-        if(orderTuple.Item1.Status == OrderStatus.Refunded)
+        if(orderTuple.Item1.Status is OrderStatus.Refunded or OrderStatus.PartialRefund)
             throw new InvalidDataException("Đơn hàng đã được hoàn tiền trước đó.");
         if(orderTuple.Item1.Status != OrderStatus.Delivered || orderTuple.Item1.DeliveredAt == null)
             throw new InvalidDataException("Đơn hàng chưa được giao, không thể hoàn tiền.");
         if(orderTuple.Item1.DeliveredAt.Value.AddDays(7) < request.CreatedAt)
             throw new InvalidDataException("Không thể hoàn tiền cho đơn hàng đã quá 7 ngày kể từ khi giao hàng.");
         
+        var orderDetailsToUpdate = new List<OrderDetail>();
         foreach (var orderDetail in dtos.OrderDetails)
         {
             if (!exports.TryGetValue(orderDetail.OrderDetailId, out var orderDetailExports) || orderDetailExports.Count == 0)
@@ -128,6 +129,8 @@ public class CashoutService : ICashoutService
             if(refundQuantityTotal > orderDetailDb.Quantity)
                 throw new InvalidDataException($"Tổng số lượng hoàn tiền vượt quá số lượng đã mua cho OrderDetailId {orderDetail.OrderDetailId}.");
             refundAmountEstimate += (orderDetailDb.Quantity * orderDetailDb.UnitPrice - orderDetailDb.DiscountAmount) / orderDetailDb.Quantity * refundQuantityTotal;
+            orderDetailDb.IsRefunded = true;
+            orderDetailsToUpdate.Add(orderDetailDb);
         }
         
         if(dtos.RefundAmount > refundAmountEstimate)
@@ -168,7 +171,7 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(transaction, cashout, bankAccount, orderTuple.Item1, request, serialsToUpdate, exportToUpdate, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(transaction, cashout, bankAccount, orderTuple.Item1, request, serialsToUpdate, exportToUpdate, orderDetailsToUpdate, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(created.Id, cancellationToken);
         
         await _notificationService.CreateAndSendNotificationAsync(

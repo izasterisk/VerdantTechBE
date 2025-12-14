@@ -136,7 +136,9 @@ public class OrderService : IOrderService
                 Quantity = orderDetail.Quantity,
                 UnitPrice = orderDetail.Product.UnitPrice,
                 DiscountAmount = orderDetail.DiscountAmount,
-                Subtotal = orderDetail.Subtotal
+                Subtotal = orderDetail.Subtotal,
+                IsRefunded = false,
+                IsWalletCredited = false
             });
             var productRaw = await _orderRepository.GetActiveProductByIdAsync(orderDetail.Product.Id, cancellationToken);
             if (productRaw == null)

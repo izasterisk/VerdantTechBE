@@ -29,6 +29,8 @@ public class OrderDetailsResponseDTO
     public decimal Subtotal { get; set; }
 
     // public bool IsWalletCredited { get; set; } = false;
+    
+    public bool IsRefunded { get; set; }
 
     [Required(ErrorMessage = "Ngày cập nhật là bắt buộc.")]
     [DataType(DataType.DateTime)]
