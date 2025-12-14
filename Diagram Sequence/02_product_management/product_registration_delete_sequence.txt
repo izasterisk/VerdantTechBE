@@ -1,0 +1,36 @@
+title Delete Product Registration Sequence Diagram
+
+participant Client
+participant ProductRegistrationUI
+participant ProductRegistrationsController
+participant ProductRegistrationService
+participant ProductRegistrationRepository
+participant Database
+
+Client->ProductRegistrationUI: 1. Request delete product registration (id)
+ProductRegistrationUI->ProductRegistrationsController: 2. DELETE /api/ProductRegistrations/{id}
+activate ProductRegistrationsController
+
+ProductRegistrationsController->ProductRegistrationService: 3. Call DeleteAsync(id)
+activate ProductRegistrationService
+
+ProductRegistrationService->ProductRegistrationRepository: 4. DeleteAsync(id)
+activate ProductRegistrationRepository
+ProductRegistrationRepository->Database: 5. Delete product registration and related media links
+Database-->ProductRegistrationRepository: 6. Return delete result (bool)
+ProductRegistrationRepository-->ProductRegistrationService: 7. Return bool (success)
+deactivate ProductRegistrationRepository
+
+ProductRegistrationService-->ProductRegistrationsController: 8. Return bool (success)
+deactivate ProductRegistrationService
+
+alt Delete Success
+    ProductRegistrationsController->ProductRegistrationUI: 9.1 Return 204 No Content
+    deactivate ProductRegistrationsController
+    ProductRegistrationUI->Client: 10.1 Display success message
+else Delete Failed (Not Found)
+    ProductRegistrationsController->ProductRegistrationUI: 9.2 Return 404 Not Found
+    deactivate ProductRegistrationsController
+    ProductRegistrationUI->Client: 10.2 Display error message
+end
+

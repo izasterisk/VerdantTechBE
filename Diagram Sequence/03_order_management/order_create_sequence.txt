@@ -1,0 +1,66 @@
+title Create Order Sequence Diagram
+
+participant User
+participant OrderUI
+participant OrderController
+participant OrderService
+participant OrderRepository
+participant Database
+
+User->OrderUI: 1. Create order (orderPreviewId, dto)
+OrderUI->OrderController: 2. POST /api/Order/{orderPreviewId} (OrderCreateDTO)
+activate OrderController
+
+note over OrderController: Requires Authorization
+
+OrderController->OrderController: 3. ValidateModel()
+alt Validation Failed
+    OrderController->OrderUI: 4.1 Return 400 Bad Request
+    OrderUI->User: 5.1 Show error message
+    deactivate OrderController
+else Validation Success
+    OrderController->OrderService: 4.2 Call CreateOrderAsync(orderPreviewId, dto)
+    activate OrderService
+    
+    OrderService->OrderRepository: 5.2 GetOrderPreviewByIdAsync(orderPreviewId)
+    activate OrderRepository
+    OrderRepository->Database: 6.2 Check if order preview exists
+    Database-->OrderRepository: 7.2 Return preview data
+    OrderRepository-->OrderService: 8.2 Return preview or null
+    deactivate OrderRepository
+    
+    alt Preview Not Found
+        OrderService-->OrderController: 7.1 Return failure message
+        OrderController->OrderUI: 8.1 Return 404 Not Found
+        OrderUI->User: 9.1 Show error message
+        deactivate OrderService
+        deactivate OrderController
+    else Preview Found
+        OrderService->OrderService: 9.2 Map preview to order
+        OrderService->OrderService: 9.3 Update product stock quantities
+        OrderService->OrderRepository: 10.2 CreateOrderWithTransactionAsync(order, orderDetails, productsToUpdate)
+        activate OrderRepository
+        OrderRepository->Database: 11.2 Create order from preview
+        Database-->OrderRepository: 12.2 Return order created
+        OrderRepository->Database: 13.2 Create order details
+        Database-->OrderRepository: 14.2 Return details created
+        OrderRepository->Database: 15.2 Update product stock
+        Database-->OrderRepository: 16.2 Return update result
+        OrderRepository-->OrderService: 17.2 Return created order
+        deactivate OrderRepository
+        opt Payment Method = COD
+            OrderService->OrderService: 18.2 Set order status to Paid
+        end
+        OrderService->OrderRepository: 19.2 GetOrderByIdAsync(orderId)
+        activate OrderRepository
+        OrderRepository->Database: 20.2 Get order with details
+        Database-->OrderRepository: 21.2 Return order data
+        OrderRepository-->OrderService: 22.2 Return order
+        deactivate OrderRepository
+        OrderService-->OrderController: 23.2 Return success message (OrderResponseDTO)
+        deactivate OrderService
+        OrderController->OrderUI: 24.2 Return 201 Created (OrderResponseDTO)
+        deactivate OrderController
+        OrderUI->User: 25.2 Display created order
+    end
+end

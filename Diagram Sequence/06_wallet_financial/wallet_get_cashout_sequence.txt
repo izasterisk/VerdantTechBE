@@ -1,0 +1,39 @@
+title Get Wallet Cashout Request Sequence Diagram
+
+participant Vendor
+participant WalletUI
+participant WalletController
+participant WalletService
+participant WalletRepository
+participant Database
+
+Vendor->WalletUI: 1. Request cashout details
+WalletUI->WalletController: 2. GET /api/Wallet/cashout
+activate WalletController
+
+note over WalletController: Requires Authorization (Vendor)
+
+WalletController->WalletService: 3. Call GetWalletCashoutRequestAsync(userId)
+activate WalletService
+
+WalletService->WalletRepository: 4. GetWalletCashoutRequestWithRelationsByUserIdAsync(userId)
+activate WalletRepository
+WalletRepository->Database: 5. Get cashout request by user ID
+Database-->WalletRepository: 6. Return cashout data
+WalletRepository-->WalletService: 7. Return cashout or null
+deactivate WalletRepository
+
+alt Cashout Not Found
+    WalletService-->WalletController: 8.1 Return failure message
+    WalletController->WalletUI: 9.1 Return 404 Not Found
+    WalletUI->Vendor: 10.1 Show error message
+    deactivate WalletService
+    deactivate WalletController
+else Cashout Found
+    WalletService-->WalletController: 8.2 Return success message (WalletCashoutRequestResponseDTO)
+    deactivate WalletService
+    WalletController->WalletUI: 9.2 Return 200 OK (WalletCashoutRequestResponseDTO)
+    deactivate WalletController
+    WalletUI->Vendor: 10.2 Display cashout request details
+end
+

@@ -1,0 +1,37 @@
+title Get All Users Sequence Diagram
+
+participant Admin
+participant UserManagementUI
+participant UserController
+participant UserService
+participant UserRepository
+participant Database
+
+Admin->UserManagementUI: 1. Request user list (page, pageSize, role)
+UserManagementUI->UserController: 2. GET /api/User?page={page}&pageSize={pageSize}&role={role}
+activate UserController
+
+note over UserController: Requires Authorization (Admin/Staff)
+
+UserController->UserController: 3. Validate pagination parameters
+alt Invalid Parameters
+    UserController->UserManagementUI: 4.1 Return 400 Bad Request
+    UserManagementUI->Admin: 5.1 Show error message
+    deactivate UserController
+else Valid Parameters
+    UserController->UserService: 4.2 Call GetAllUsersAsync(page, pageSize, role)
+    activate UserService
+    
+    UserService->UserRepository: 5.2 GetAllUsersAsync(page, pageSize, role)
+    activate UserRepository
+    UserRepository->Database: 6.2 Get users list with filter
+    Database-->UserRepository: 7.2 Return users list and total count
+    UserRepository-->UserService: 8.2 Return (users, totalCount)
+    deactivate UserRepository
+    UserService->UserService: 9.2 Calculate pagination info
+    UserService-->UserController: 10.2 Return success message (PagedResponse)
+    deactivate UserService
+    UserController->UserManagementUI: 11.2 Return 200 OK (PagedResponse)
+    deactivate UserController
+    UserManagementUI->Admin: 12.2 Display user list with pagination
+end

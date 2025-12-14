@@ -1,0 +1,40 @@
+title Delete Product Sequence Diagram
+
+participant Admin
+participant ProductUI
+participant ProductController
+participant ProductService
+participant ProductRepository
+participant Database
+
+Admin->ProductUI: 1. Delete product (id)
+ProductUI->ProductController: 2. DELETE /api/Product/{id}
+activate ProductController
+
+ProductController->ProductService: 3. Call DeleteAsync(id)
+activate ProductService
+
+ProductService->ProductRepository: 4. DeleteAsync(id)
+activate ProductRepository
+ProductRepository->Database: 5. Check if product exists
+Database-->ProductRepository: 6. Return product existence status
+
+alt Product Not Found
+    ProductRepository-->ProductService: 7.1 Return false
+    ProductService-->ProductController: 8.1 Return false
+    ProductController->ProductUI: 9.1 Return 404 Not Found
+    ProductUI->Admin: 10.1 Show error message
+    deactivate ProductRepository
+    deactivate ProductService
+    deactivate ProductController
+else Product Found
+    ProductRepository->Database: 7.2 Remove product from database
+    Database-->ProductRepository: 8.2 Return delete result
+    ProductRepository-->ProductService: 9.2 Return true
+    deactivate ProductRepository
+    ProductService-->ProductController: 10.2 Return true
+    deactivate ProductService
+    ProductController->ProductUI: 11.2 Return 204 No Content
+    deactivate ProductController
+    ProductUI->Admin: 12.2 Confirm deletion
+end

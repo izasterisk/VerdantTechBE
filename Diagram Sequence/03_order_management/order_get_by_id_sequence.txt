@@ -1,0 +1,36 @@
+title Get Order By ID Sequence Diagram
+
+participant User
+participant OrderUI
+participant OrderController
+participant OrderService
+participant Database
+
+User->OrderUI: 1. Request order details (orderId)
+OrderUI->OrderController: 2. GET /api/Order/{orderId}
+activate OrderController
+
+note over OrderController: Requires Authorization
+
+OrderController->OrderService: 3. Call GetOrderByIdAsync(orderId)
+activate OrderService
+
+OrderService->Database: 4. Check if order exists
+Database-->OrderService: 5. Return order existence status
+
+alt Order Not Found
+    OrderService-->OrderController: 6.1 Return failure message
+    OrderController->OrderUI: 7.1 Return 404 Not Found
+    OrderUI->User: 8.1 Show error message
+    deactivate OrderService
+    deactivate OrderController
+else Order Found
+    OrderService->Database: 6.2 Get order with details
+    Database-->OrderService: 7.2 Return order data
+    OrderService-->OrderController: 8.2 Return success message (OrderResponseDTO)
+    deactivate OrderService
+    OrderController->OrderUI: 9.2 Return 200 OK (OrderResponseDTO)
+    deactivate OrderController
+    OrderUI->User: 10.2 Display order details
+end
+

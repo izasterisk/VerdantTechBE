@@ -1,0 +1,54 @@
+title Create Forum Post Sequence Diagram
+
+participant User
+participant ForumUI
+participant ForumPostController
+participant CloudinaryService
+participant ForumPostService
+participant ForumPostRepository
+participant Database
+
+User->ForumUI: 1. Click "Tạo bài viết mới" button
+User->ForumUI: 2. Fill form (Category, Title, Tags, Content, Images)
+User->ForumUI: 3. Click "Đăng bài" button
+ForumUI->ForumPostController: 4. POST /api/ForumPost?userId={userId} (multipart/form-data: ForumPostCreateDTO)
+activate ForumPostController
+
+ForumPostController->ForumPostController: 5. ValidateModel()
+opt Has Images
+    ForumPostController->CloudinaryService: 6. UploadManyAsync(images, "forum_posts")
+    activate CloudinaryService
+    CloudinaryService->CloudinaryService: 7. Upload images to Cloudinary
+    CloudinaryService-->ForumPostController: 8. Return upload results (PublicId, Url)
+    deactivate CloudinaryService
+    ForumPostController->ForumPostController: 9. Map to MediaLinkItemDTO list
+end
+
+ForumPostController->ForumPostService: 10. CreateAsync(userId, dto, addImages)
+activate ForumPostService
+
+ForumPostService->ForumPostService: 11. GenerateUniqueSlug(title)
+ForumPostService->ForumPostService: 12. Map Content to ContentBlock entities
+ForumPostService->ForumPostService: 13. Map images to MediaLink entities (if any)
+ForumPostService->ForumPostService: 14. Create ForumPost entity
+
+ForumPostService->ForumPostRepository: 15. CreateAsync(post, mediaLinks)
+activate ForumPostRepository
+ForumPostRepository->Database: 16. Insert ForumPost
+Database-->ForumPostRepository: 17. Return insert result
+opt Has MediaLinks
+    ForumPostRepository->Database: 18. Insert MediaLinks
+    Database-->ForumPostRepository: 19. Return insert result
+end
+ForumPostRepository-->ForumPostService: 20. Return created post
+deactivate ForumPostRepository
+
+ForumPostService->ForumPostService: 21. Map to ForumPostResponseDTO
+ForumPostService->ForumPostService: 22. Map MediaLinks to DTO
+ForumPostService-->ForumPostController: 23. Return ForumPostResponseDTO
+deactivate ForumPostService
+
+ForumPostController->ForumUI: 24. Return 200 OK (ForumPostResponseDTO)
+deactivate ForumPostController
+ForumUI->User: 25. Show success message and display created post
+

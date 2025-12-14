@@ -1,0 +1,53 @@
+title Get Product Certificate By ID Sequence Diagram
+
+participant Client
+participant ProductCertificateUI
+participant ProductCertificateController
+participant ProductCertificateService
+participant ProductCertificateRepository
+participant Database
+
+Client->ProductCertificateUI: 1. Request product certificate detail (id)
+ProductCertificateUI->ProductCertificateController: 2. GET /api/ProductCertificate/{id}
+activate ProductCertificateController
+
+ProductCertificateController->ProductCertificateController: 3. ValidateModel()
+alt Validation Failed
+    ProductCertificateController->ProductCertificateUI: 3.1 Return 400 Bad Request
+    deactivate ProductCertificateController
+else Validation Success
+    ProductCertificateController->ProductCertificateService: 3.2 Call GetByIdAsync(id)
+    activate ProductCertificateService
+
+    ProductCertificateService->ProductCertificateService: 4. Validate id != 0
+    alt Id Invalid
+        ProductCertificateService-->ProductCertificateController: 5.1 Throw ArgumentException
+        ProductCertificateController->ProductCertificateUI: 6.1 Return 400 Bad Request
+        deactivate ProductCertificateService
+        deactivate ProductCertificateController
+    else Id Valid
+        ProductCertificateService->ProductCertificateRepository: 5.2 GetByIdAsync(id)
+        activate ProductCertificateRepository
+        ProductCertificateRepository->Database: 6.2 Get product certificate by ID
+        Database-->ProductCertificateRepository: 7.2 Return ProductCertificate or null
+        ProductCertificateRepository-->ProductCertificateService: 8.2 Return ProductCertificate
+        deactivate ProductCertificateRepository
+
+        alt Certificate Not Found
+            ProductCertificateService-->ProductCertificateController: 9.1 Return null
+            ProductCertificateController->ProductCertificateUI: 10.1 Return 404 Not Found
+            deactivate ProductCertificateService
+            deactivate ProductCertificateController
+        else Certificate Found
+            ProductCertificateService->ProductCertificateService: 9.2 Map entity to DTO (AutoMapper)
+            ProductCertificateService->ProductCertificateService: 9.3 Load certificate files from MediaLinks
+            ProductCertificateService-->ProductCertificateController: 10.2 Return ProductCertificateResponseDTO
+            deactivate ProductCertificateService
+
+            ProductCertificateController->ProductCertificateUI: 11.2 Return 200 OK (APIResponse)
+            deactivate ProductCertificateController
+            ProductCertificateUI->Client: 12.2 Display product certificate detail
+        end
+    end
+end
+

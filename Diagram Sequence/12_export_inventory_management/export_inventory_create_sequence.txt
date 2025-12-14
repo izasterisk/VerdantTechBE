@@ -1,0 +1,90 @@
+title Create Export Inventories Sequence Diagram
+
+participant Staff
+participant InventoryUI
+participant ExportInventoryController
+participant ExportInventoryService
+participant OrderDetailRepository
+participant ExportInventoryRepository
+participant ProductRepository
+participant ProductSerialRepository
+participant Database
+
+Staff->InventoryUI: 1. Create export inventories (dtos)
+InventoryUI->ExportInventoryController: 2. POST /api/ExportInventory (List<ExportInventoryCreateDTO>)
+activate ExportInventoryController
+
+note over ExportInventoryController: Requires Authorization (Admin/Staff)
+
+ExportInventoryController->ExportInventoryController: 3. ValidateModel()
+alt Validation Failed
+    ExportInventoryController->InventoryUI: 4.1 Return 400 Bad Request
+    InventoryUI->Staff: 5.1 Show error message
+    deactivate ExportInventoryController
+else Validation Success
+    ExportInventoryController->ExportInventoryController: 4.2 GetCurrentUserId() (from JWT)
+    ExportInventoryController->ExportInventoryService: 5.2 Call CreateExportInventoriesAsync(staffId, dtos)
+    activate ExportInventoryService
+    
+    ExportInventoryService->ExportInventoryService: 6.2 Validate dtos (check MovementType, serial requirements)
+    alt Validation Failed
+        ExportInventoryService-->ExportInventoryController: 7.2.1 Throw ArgumentException
+        ExportInventoryController->InventoryUI: 8.2.1 Return 400 Bad Request
+        InventoryUI->Staff: 9.2.1 Show error message
+        deactivate ExportInventoryService
+        deactivate ExportInventoryController
+    else Validation Success
+        ExportInventoryService->OrderDetailRepository: 7.2.2 GetAllProductSerialAsync(validateSerialNumber)
+        activate OrderDetailRepository
+        OrderDetailRepository->Database: 8.2.2 Get product serials by serial numbers
+        Database-->OrderDetailRepository: 9.2.2 Return product serials list
+        OrderDetailRepository-->ExportInventoryService: 10.2.2 Return validatedSerials
+        deactivate OrderDetailRepository
+        
+        ExportInventoryService->ExportInventoryService: 11.2.2 Validate serial status
+        alt Invalid Serial Status
+            ExportInventoryService-->ExportInventoryController: 12.2.2.1 Throw InvalidOperationException
+            ExportInventoryController->InventoryUI: 13.2.2.1 Return 400 Bad Request
+            InventoryUI->Staff: 14.2.2.1 Show error message
+            deactivate ExportInventoryService
+            deactivate ExportInventoryController
+        else Valid Serial Status
+            ExportInventoryService->ExportInventoryService: 12.2.2.2 Map DTOs to ExportInventory entities
+            ExportInventoryService->ExportInventoryRepository: 13.2.2.2 CreateExportForExportWithTransactionAsync(exportInventories, productQuantities, validatedSerials)
+            activate ExportInventoryRepository
+            ExportInventoryRepository->Database: 14.2.2.2 Begin transaction
+            ExportInventoryRepository->Database: 15.2.2.2 Insert export inventories
+            Database-->ExportInventoryRepository: 16.2.2.2 Return insert result
+            ExportInventoryRepository->ProductRepository: 17.2.2.2 Update product stock quantities
+            activate ProductRepository
+            ProductRepository->Database: 18.2.2.2 Update product stock
+            Database-->ProductRepository: 19.2.2.2 Return update result
+            ProductRepository-->ExportInventoryRepository: 20.2.2.2 Return update result
+            deactivate ProductRepository
+            opt Has Product Serials
+                ExportInventoryRepository->ProductSerialRepository: 21.2.2.2 Update serial status to Adjustment
+                activate ProductSerialRepository
+                ProductSerialRepository->Database: 22.2.2.2 Update product serial status
+                Database-->ProductSerialRepository: 23.2.2.2 Return update result
+                ProductSerialRepository-->ExportInventoryRepository: 24.2.2.2 Return update result
+                deactivate ProductSerialRepository
+            end
+            ExportInventoryRepository->Database: 25.2.2.2 Commit transaction
+            Database-->ExportInventoryRepository: 26.2.2.2 Return commit result
+            ExportInventoryRepository-->ExportInventoryService: 27.2.2.2 Return exportIds
+            deactivate ExportInventoryRepository
+            ExportInventoryService->ExportInventoryRepository: 28.2.2.2 GetListedExportInventoriesByIdsAsync(exportIds)
+            activate ExportInventoryRepository
+            ExportInventoryRepository->Database: 29.2.2.2 Get export inventories by IDs
+            Database-->ExportInventoryRepository: 30.2.2.2 Return export inventories list
+            ExportInventoryRepository-->ExportInventoryService: 31.2.2.2 Return createdExportInventories
+            deactivate ExportInventoryRepository
+            ExportInventoryService-->ExportInventoryController: 32.2.2.2 Return success (List<ExportInventoryResponseDTO>)
+            deactivate ExportInventoryService
+            ExportInventoryController->InventoryUI: 33.2.2.2 Return 201 Created (List<ExportInventoryResponseDTO>)
+            deactivate ExportInventoryController
+            InventoryUI->Staff: 34.2.2.2 Display created export inventories
+        end
+    end
+end
+

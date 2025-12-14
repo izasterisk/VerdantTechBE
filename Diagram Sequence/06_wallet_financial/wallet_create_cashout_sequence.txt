@@ -1,0 +1,94 @@
+title Create Wallet Cashout Request Sequence Diagram
+
+participant Vendor
+participant WalletUI
+participant WalletController
+participant WalletService
+participant WalletRepository
+participant UserBankAccountsRepository
+participant CashoutRepository
+participant Database
+
+Vendor->WalletUI: 1. Create cashout request (dto)
+WalletUI->WalletController: 2. POST /api/Wallet/cashout (WalletCashoutRequestCreateDTO)
+activate WalletController
+
+note over WalletController: Requires Authorization (Vendor)
+
+WalletController->WalletController: 3. ValidateModel()
+alt Validation Failed
+    WalletController->WalletUI: 4.1 Return 400 Bad Request
+    WalletUI->Vendor: 5.1 Show error message
+    deactivate WalletController
+else Validation Success
+    WalletController->WalletService: 4.2 Call CreateWalletCashoutRequestAsync(userId, dto)
+    activate WalletService
+    
+    WalletService->WalletRepository: 5.2 ValidateVendorQualified(userId)
+    activate WalletRepository
+    WalletRepository->Database: 6.2 Check if user is vendor
+    Database-->WalletRepository: 7.2 Return validation result
+    WalletRepository-->WalletService: 8.2 Return isValid (bool)
+    deactivate WalletRepository
+    
+    alt User Not Qualified
+        WalletService-->WalletController: 9.1 Return failure message
+        WalletController->WalletUI: 10.1 Return 404 Not Found
+        WalletUI->Vendor: 11.1 Show error message
+        deactivate WalletService
+        deactivate WalletController
+    else User Qualified
+        WalletService->UserBankAccountsRepository: 9.2 GetUserBankAccountByIdAsync(bankAccountId)
+        activate UserBankAccountsRepository
+        UserBankAccountsRepository->Database: 10.2 Get bank account by ID
+        Database-->UserBankAccountsRepository: 11.2 Return bank account data
+        UserBankAccountsRepository-->WalletService: 12.2 Return bankAccount
+        deactivate UserBankAccountsRepository
+        
+        alt Bank Account Not Belongs to User
+            WalletService-->WalletController: 13.1 Return failure message
+            WalletController->WalletUI: 14.1 Return 401 Unauthorized
+            WalletUI->Vendor: 15.1 Show error message
+            deactivate WalletService
+            deactivate WalletController
+        else Bank Account Valid
+            WalletService->WalletRepository: 13.2 GetWalletByUserIdAsync(userId)
+            activate WalletRepository
+            WalletRepository->Database: 14.2 Get wallet by user ID
+            Database-->WalletRepository: 15.2 Return wallet data
+            WalletRepository-->WalletService: 16.2 Return wallet
+            deactivate WalletRepository
+            
+            alt Amount Exceeds Balance
+                WalletService-->WalletController: 17.1 Return failure message
+                WalletController->WalletUI: 18.1 Return 400 Bad Request
+                WalletUI->Vendor: 19.1 Show error message
+                deactivate WalletService
+                deactivate WalletController
+            else Amount Valid
+                WalletService->WalletService: 17.2 Map DTO to Cashout entity
+                WalletService->WalletService: 17.3 Set cashout status = Pending
+                WalletService->CashoutRepository: 18.2 CreateCashoutForWalletCashoutAsync(cashout)
+                activate CashoutRepository
+                CashoutRepository->Database: 19.2 Insert cashout request
+                Database-->CashoutRepository: 20.2 Return cashout created
+                CashoutRepository-->WalletService: 21.2 Return success
+                deactivate CashoutRepository
+                
+                WalletService->WalletRepository: 22.2 GetWalletCashoutRequestWithRelationsByUserIdAsync(userId)
+                activate WalletRepository
+                WalletRepository->Database: 23.2 Get cashout request with relations
+                Database-->WalletRepository: 24.2 Return cashout data
+                WalletRepository-->WalletService: 25.2 Return cashout
+                deactivate WalletRepository
+                
+                WalletService-->WalletController: 26.2 Return success message (WalletCashoutRequestResponseDTO)
+                deactivate WalletService
+                WalletController->WalletUI: 27.2 Return 201 Created (WalletCashoutRequestResponseDTO)
+                deactivate WalletController
+                WalletUI->Vendor: 28.2 Display created cashout request
+            end
+        end
+    end
+end
+

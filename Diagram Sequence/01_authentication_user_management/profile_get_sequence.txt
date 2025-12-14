@@ -1,0 +1,40 @@
+title Get User Profile Sequence Diagram
+
+participant User
+participant UserManagementUI
+participant AuthController
+participant UserService
+participant UserRepository
+participant Database
+
+User->UserManagementUI: 1. Request profile
+UserManagementUI->AuthController: 2. GET /api/Auth/profile
+activate AuthController
+
+note over AuthController: Requires Authorization (JWT Token)
+
+AuthController->AuthController: 3. GetCurrentUserId() (from JWT)
+AuthController->UserService: 4. Call GetUserByIdAsync(userId)
+activate UserService
+
+UserService->UserRepository: 5. GetUserWithAddressesByIdAsync(userId)
+activate UserRepository
+UserRepository->Database: 6. Check if user exists
+Database-->UserRepository: 7. Return user data
+UserRepository-->UserService: 8. Return user or null
+deactivate UserRepository
+
+alt User Not Found
+    UserService-->AuthController: 9.1 Return failure message
+    AuthController->UserManagementUI: 10.1 Return 404 Not Found
+    UserManagementUI->User: 11.1 Show error message
+    deactivate UserService
+    deactivate AuthController
+else User Found
+    UserService-->AuthController: 9.2 Return success message (UserResponseDTO)
+    deactivate UserService
+    AuthController->UserManagementUI: 10.2 Return 200 OK (UserResponseDTO)
+    deactivate AuthController
+    UserManagementUI->User: 11.2 Display profile
+end
+

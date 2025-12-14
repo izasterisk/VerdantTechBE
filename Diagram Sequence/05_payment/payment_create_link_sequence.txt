@@ -1,0 +1,48 @@
+title Create Payment Link Sequence Diagram
+
+participant User
+participant PaymentUI
+participant PayOSController
+participant PayOSService
+participant PayOSApi
+participant Database
+
+User->PaymentUI: 1. Create payment link (orderId, dto)
+PaymentUI->PayOSController: 2. POST /api/PayOS/create/{orderId} (CreatePaymentDataDTO)
+activate PayOSController
+
+note over PayOSController: Requires Authorization
+
+PayOSController->PayOSController: 3. ValidateModel()
+alt Validation Failed
+    PayOSController->PaymentUI: 4.1 Return 400 Bad Request
+    PaymentUI->User: 5.1 Show error message
+    deactivate PayOSController
+else Validation Success
+    PayOSController->PayOSService: 4.2 Call CreatePaymentLinkAsync(orderId, dto)
+    activate PayOSService
+    
+    PayOSService->Database: 5.2 Check if order exists
+    Database-->PayOSService: 6.2 Return order existence status
+    
+    alt Order Not Found
+        PayOSService-->PayOSController: 7.1 Return failure message
+        PayOSController->PaymentUI: 8.1 Return 404 Not Found
+        PaymentUI->User: 9.1 Show error message
+        deactivate PayOSService
+        deactivate PayOSController
+    else Order Found
+        PayOSService->PayOSApi: 7.2 Create payment link
+        activate PayOSApi
+        PayOSApi->PayOSApi: Generate payment link
+        PayOSApi-->PayOSService: 8.2 Return payment link
+        deactivate PayOSApi
+        PayOSService->Database: 9.2 Update order with payment info
+        Database-->PayOSService: 10.2 Return update result
+        PayOSService-->PayOSController: 11.2 Return success message (PaymentLinkResponseDTO)
+        deactivate PayOSService
+        PayOSController->PaymentUI: 12.2 Return 201 Created (PaymentLinkResponseDTO)
+        deactivate PayOSController
+        PaymentUI->User: 13.2 Display payment link
+    end
+end

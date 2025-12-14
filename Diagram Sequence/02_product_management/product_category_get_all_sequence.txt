@@ -1,0 +1,26 @@
+title Get All Product Categories Sequence Diagram
+
+participant Client
+participant ProductCategoryUI
+participant ProductCategoryController
+participant ProductCategoryService
+participant Database
+
+Client->ProductCategoryUI: 1. Request category list
+ProductCategoryUI->ProductCategoryController: 2. GET /api/ProductCategory
+activate ProductCategoryController
+
+note over ProductCategoryController: Requires Authorization
+
+ProductCategoryController->ProductCategoryService: 3. Call GetAllProductCategoryAsync()
+activate ProductCategoryService
+
+ProductCategoryService->Database: 4. Get all categories
+Database-->ProductCategoryService: 5. Return categories list
+ProductCategoryService-->ProductCategoryController: 6. Return success message (List<ProductCategoryResponseDTO>)
+deactivate ProductCategoryService
+
+ProductCategoryController->ProductCategoryUI: 7. Return 200 OK (List<ProductCategoryResponseDTO>)
+deactivate ProductCategoryController
+ProductCategoryUI->Client: 8. Display category list
+end

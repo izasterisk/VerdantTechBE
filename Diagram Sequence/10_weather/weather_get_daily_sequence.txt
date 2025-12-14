@@ -1,0 +1,54 @@
+title Get Daily Weather Sequence Diagram
+
+participant User
+participant WeatherUI
+participant WeatherController
+participant WeatherService
+participant FarmProfileRepository
+participant WeatherApiClient
+participant Database
+
+User->WeatherUI: 1. Request daily weather (farmId)
+WeatherUI->WeatherController: 2. GET /api/Weather/daily/{farmId}
+activate WeatherController
+
+note over WeatherController: Requires Authorization
+
+WeatherController->WeatherService: 3. Call GetDailyWeatherDetailsByFarmIdAsync(farmId)
+activate WeatherService
+
+WeatherService->FarmProfileRepository: 4. GetCoordinateByFarmIdAsync(farmId, true)
+activate FarmProfileRepository
+FarmProfileRepository->Database: 5. Get farm profile with address coordinates
+Database-->FarmProfileRepository: 6. Return farm profile data
+FarmProfileRepository-->WeatherService: 7. Return farmProfile
+deactivate FarmProfileRepository
+
+alt Farm Profile Not Found or No Coordinates
+    WeatherService-->WeatherController: 8.1 Return failure message
+    WeatherController->WeatherUI: 9.1 Return 400 Bad Request
+    WeatherUI->User: 10.1 Show error message
+    deactivate WeatherService
+    deactivate WeatherController
+else Farm Profile Found with Coordinates
+    WeatherService->WeatherApiClient: 8.2 GetDailyWeatherAsync(latitude, longitude)
+    activate WeatherApiClient
+    WeatherApiClient->WeatherApiClient: Call external weather API
+    WeatherApiClient-->WeatherService: 9.2 Return weather data
+    deactivate WeatherApiClient
+    
+    alt API Error
+        WeatherService-->WeatherController: 10.2.1 Return failure message
+        WeatherController->WeatherUI: 11.2.1 Return 500 Internal Server Error
+        WeatherUI->User: 12.2.1 Show error message
+        deactivate WeatherService
+        deactivate WeatherController
+    else API Success
+        WeatherService-->WeatherController: 10.2.2 Return success message (DailyWeatherResponseDto)
+        deactivate WeatherService
+        WeatherController->WeatherUI: 11.2.2 Return 200 OK (DailyWeatherResponseDto)
+        deactivate WeatherController
+        WeatherUI->User: 12.2.2 Display daily weather
+    end
+end
+

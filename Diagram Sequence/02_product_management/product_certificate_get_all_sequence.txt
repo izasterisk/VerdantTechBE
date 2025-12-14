@@ -1,0 +1,39 @@
+title Get All Product Certificates Sequence Diagram
+
+participant Client
+participant ProductCertificateUI
+participant ProductCertificateController
+participant ProductCertificateService
+participant ProductCertificateRepository
+participant Database
+
+Client->ProductCertificateUI: 1. Request product certificates list (page, pageSize)
+ProductCertificateUI->ProductCertificateController: 2. GET /api/ProductCertificate?page={page}&pageSize={pageSize}
+activate ProductCertificateController
+
+ProductCertificateController->ProductCertificateController: 3. ValidateModel()
+alt Validation Failed
+    ProductCertificateController->ProductCertificateUI: 3.1 Return 400 Bad Request
+    deactivate ProductCertificateController
+else Validation Success
+    ProductCertificateController->ProductCertificateService: 3.2 Call GetAllAsync(page, pageSize)
+    activate ProductCertificateService
+
+    ProductCertificateService->ProductCertificateRepository: 4. GetAllAsync(page, pageSize)
+    activate ProductCertificateRepository
+    ProductCertificateRepository->Database: 5. Get product certificates list with pagination
+    Database-->ProductCertificateRepository: 6. Return (List<ProductCertificate>, total)
+    ProductCertificateRepository-->ProductCertificateService: 7. Return (items, total)
+    deactivate ProductCertificateRepository
+
+    ProductCertificateService->ProductCertificateService: 8. Map entities to DTOs (AutoMapper)
+    ProductCertificateService->ProductCertificateService: 9. HydrateFilesAsync(dtos) - Load certificate files
+    ProductCertificateService->ProductCertificateService: 10. Calculate pagination info
+    ProductCertificateService-->ProductCertificateController: 11. Return PagedResponse<ProductCertificateResponseDTO>
+    deactivate ProductCertificateService
+
+    ProductCertificateController->ProductCertificateUI: 12. Return 200 OK (APIResponse with PagedResponse)
+    deactivate ProductCertificateController
+    ProductCertificateUI->Client: 13. Display product certificates list with pagination
+end
+

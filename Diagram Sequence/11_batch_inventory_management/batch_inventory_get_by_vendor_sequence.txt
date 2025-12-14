@@ -1,0 +1,30 @@
+title Get Batch Inventories By Vendor ID Sequence Diagram
+
+participant Staff
+participant InventoryUI
+participant BatchInventoryController
+participant BatchInventoryService
+participant BatchInventoryRepository
+participant Database
+
+Staff->InventoryUI: 1. Request batch inventories by vendor (vendorId, page, pageSize)
+InventoryUI->BatchInventoryController: 2. GET /api/BatchInventory/vendor/{vendorId}?page={page}&pageSize={pageSize}
+activate BatchInventoryController
+
+BatchInventoryController->BatchInventoryService: 3. Call GetByVendorIdAsync(vendorId, page, pageSize)
+activate BatchInventoryService
+
+BatchInventoryService->BatchInventoryRepository: 4. GetByVendorIdAsync(vendorId, page, pageSize)
+activate BatchInventoryRepository
+BatchInventoryRepository->Database: 5. Get batch inventories by vendor with pagination
+Database-->BatchInventoryRepository: 6. Return batch inventories list
+BatchInventoryRepository-->BatchInventoryService: 7. Return batchInventories
+deactivate BatchInventoryRepository
+BatchInventoryService-->BatchInventoryController: 8. Return success (IEnumerable<BatchInventoryResponeDTO>)
+deactivate BatchInventoryService
+
+BatchInventoryController->InventoryUI: 9. Return 200 OK (IEnumerable<BatchInventoryResponeDTO>)
+deactivate BatchInventoryController
+InventoryUI->Staff: 10. Display batch inventories list
+end
+

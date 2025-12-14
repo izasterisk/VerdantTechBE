@@ -1,0 +1,156 @@
+title Process Refund Request Sequence Diagram
+
+participant Staff
+participant RefundManagementUI
+participant CashoutController
+participant CashoutService
+participant RequestRepository
+participant CashoutRepository
+participant UserBankAccountRepository
+participant OrderRepository
+participant ProductSerialRepository
+participant ExportInventoryRepository
+participant PayOSApiClient
+participant Database
+
+Staff->RefundManagementUI: 1. Select refund request and click "Thực hiện hoàn tiền"
+Staff->RefundManagementUI: 2. Fill refund form (OrderDetails, RefundAmount, BankAccountId, GatewayPaymentId)
+Staff->RefundManagementUI: 3. Click "Xác nhận xử lý" button
+RefundManagementUI->CashoutController: 4. POST /api/Cashout/refund/{requestId} (RefundCreateDTO)
+activate CashoutController
+
+note over CashoutController: Requires Authorization (Admin/Staff)
+
+CashoutController->CashoutController: 5. ValidateModel()
+alt Validation Failed
+    CashoutController->RefundManagementUI: 6.1 Return 400 Bad Request
+    RefundManagementUI->Staff: 7.1 Show validation error
+    deactivate CashoutController
+else Validation Success
+    CashoutController->CashoutController: 6.2 GetCurrentUserId() (from JWT)
+    CashoutController->CashoutService: 7.2 Call CreateCashoutRefundAsync(staffId, requestId, dto)
+    activate CashoutService
+    
+    CashoutService->RequestRepository: 8.2 GetRequestByIdAsync(requestId)
+    activate RequestRepository
+    RequestRepository->Database: 9.2 Get request by ID
+    Database-->RequestRepository: 10.2 Return request data
+    RequestRepository-->CashoutService: 11.2 Return request or null
+    deactivate RequestRepository
+    
+    alt Request Not Found or Invalid Status
+        CashoutService-->CashoutController: 12.2.1 Throw InvalidDataException
+        CashoutController->RefundManagementUI: 13.2.1 Return 400 Bad Request
+        RefundManagementUI->Staff: 14.2.1 Show error message
+        deactivate CashoutService
+        deactivate CashoutController
+    else Request Valid
+        CashoutService->CashoutService: 12.2.2 Validate order details and identity numbers
+        CashoutService->CashoutRepository: 13.2.2 ValidateExportedOrderByOrderDetailIdsAsync(validateLotNumber)
+        activate CashoutRepository
+        CashoutRepository->Database: 14.2.2 Validate exported orders
+        Database-->CashoutRepository: 15.2.2 Return (Order, List<ExportInventory>)
+        CashoutRepository-->CashoutService: 16.2.2 Return (order, exports)
+        deactivate CashoutRepository
+        
+        CashoutService->CashoutRepository: 17.2.2 GetSoldProductSerialsBySerialNumbersAsync(serials)
+        activate CashoutRepository
+        CashoutRepository->Database: 18.2.2 Get product serials by serial numbers
+        Database-->CashoutRepository: 19.2.2 Return product serials list
+        CashoutRepository-->CashoutService: 20.2.2 Return serialProducts
+        deactivate CashoutRepository
+        
+        CashoutService->CashoutService: 21.2.2 Validate order conditions (customer, status, delivery date)
+        alt Order Conditions Invalid
+            CashoutService-->CashoutController: 22.2.2.1 Throw exception
+            CashoutController->RefundManagementUI: 23.2.2.1 Return 400 Bad Request
+            RefundManagementUI->Staff: 24.2.2.1 Show error message
+            deactivate CashoutService
+            deactivate CashoutController
+        else Order Conditions Valid
+            CashoutService->CashoutRepository: 22.2.2.2 GetTotalRefundedAmountByOrderDetailIdsAsync(validateLotNumber)
+            activate CashoutRepository
+            CashoutRepository->Database: 23.2.2.2 Calculate total refunded amount
+            Database-->CashoutRepository: 24.2.2.2 Return total amount
+            CashoutRepository-->CashoutService: 25.2.2.2 Return total amount
+            deactivate CashoutRepository
+            
+            alt Refund Amount Invalid
+                CashoutService-->CashoutController: 26.2.2.2.1 Throw InvalidDataException
+                CashoutController->RefundManagementUI: 27.2.2.2.1 Return 400 Bad Request
+                RefundManagementUI->Staff: 28.2.2.2.1 Show error message
+                deactivate CashoutService
+                deactivate CashoutController
+            else Refund Amount Valid
+                CashoutService->UserBankAccountRepository: 26.2.2.2.2 GetUserBankAccountByIdAsync(bankAccountId)
+                activate UserBankAccountRepository
+                UserBankAccountRepository->Database: 27.2.2.2.2 Get bank account by ID
+                Database-->UserBankAccountRepository: 28.2.2.2.2 Return bank account data
+                UserBankAccountRepository-->CashoutService: 29.2.2.2.2 Return bankAccount
+                deactivate UserBankAccountRepository
+                
+                opt GatewayPaymentId is null (Auto via PayOS)
+                    CashoutService->PayOSApiClient: 30.2.2.2.2 CreateCashoutAsync(bankAccount, refundAmount, categories)
+                    activate PayOSApiClient
+                    PayOSApiClient->PayOSApiClient: 31.2.2.2.2 Call PayOS API to create cashout
+                    PayOSApiClient-->CashoutService: 32.2.2.2.2 Return cashoutResponse (with Id)
+                    deactivate PayOSApiClient
+                    CashoutService->CashoutService: 33.2.2.2.2 Set cashoutResponseId = cashoutResponse.Id
+                    CashoutService->CashoutService: 34.2.2.2.2 Update bankAccount.OwnerName
+                else GatewayPaymentId provided (Manual)
+                    CashoutService->CashoutService: 30.2.2.2.2 Set cashoutResponseId = dto.GatewayPaymentId
+                end
+                
+                CashoutService->CashoutService: 35.2.2.2.2 Create Transaction entity
+                CashoutService->CashoutService: 36.2.2.2.2 Create Cashout entity
+                CashoutService->CashoutRepository: 37.2.2.2.2 CreateRefundCashoutWithTransactionAsync(transaction, cashout, bankAccount, order, request, serialProducts, exports)
+                activate CashoutRepository
+                CashoutRepository->Database: 38.2.2.2.2 Begin transaction
+                CashoutRepository->Database: 39.2.2.2.2 Insert Transaction
+                Database-->CashoutRepository: 40.2.2.2.2 Return insert result
+                CashoutRepository->Database: 41.2.2.2.2 Insert Cashout
+                Database-->CashoutRepository: 42.2.2.2.2 Return insert result
+                CashoutRepository->Database: 43.2.2.2.2 Update UserBankAccount
+                Database-->CashoutRepository: 44.2.2.2.2 Return update result
+                CashoutRepository->Database: 45.2.2.2.2 Update Order (Status = Refunded)
+                Database-->CashoutRepository: 46.2.2.2.2 Return update result
+                CashoutRepository->Database: 47.2.2.2.2 Update Request (Status = Completed)
+                Database-->CashoutRepository: 48.2.2.2.2 Return update result
+                opt Has Product Serials
+                    CashoutRepository->ProductSerialRepository: 49.2.2.2.2 BulkUpdateAsync(serials with Status = Refund)
+                    activate ProductSerialRepository
+                    ProductSerialRepository->Database: 50.2.2.2.2 Update product serials status
+                    Database-->ProductSerialRepository: 51.2.2.2.2 Return update result
+                    ProductSerialRepository-->CashoutRepository: 52.2.2.2.2 Return update confirmation
+                    deactivate ProductSerialRepository
+                end
+                CashoutRepository->ExportInventoryRepository: 53.2.2.2.2 BulkUpdateAsync(exports)
+                activate ExportInventoryRepository
+                ExportInventoryRepository->Database: 54.2.2.2.2 Update export inventories
+                Database-->ExportInventoryRepository: 55.2.2.2.2 Return update result
+                ExportInventoryRepository-->CashoutRepository: 56.2.2.2.2 Return update confirmation
+                deactivate ExportInventoryRepository
+                CashoutRepository->Database: 57.2.2.2.2 Commit transaction
+                Database-->CashoutRepository: 58.2.2.2.2 Return commit result
+                CashoutRepository-->CashoutService: 59.2.2.2.2 Return created transaction
+                deactivate CashoutRepository
+                
+                CashoutService->CashoutRepository: 60.2.2.2.2 GetCashoutRequestWithRelationsByTransactionIdAsync(transactionId)
+                activate CashoutRepository
+                CashoutRepository->Database: 61.2.2.2.2 Get transaction with relations
+                Database-->CashoutRepository: 62.2.2.2.2 Return transaction data
+                CashoutRepository-->CashoutService: 63.2.2.2.2 Return transaction with relations
+                deactivate CashoutRepository
+                
+                CashoutService->CashoutService: 64.2.2.2.2 Map to TransactionResponseDTO
+                CashoutService->CashoutService: 65.2.2.2.2 CreateAndSendNotificationAsync (optional)
+                CashoutService-->CashoutController: 66.2.2.2.2 Return success (TransactionResponseDTO)
+                deactivate CashoutService
+                CashoutController->RefundManagementUI: 67.2.2.2.2 Return 200 OK (TransactionResponseDTO)
+                deactivate CashoutController
+                RefundManagementUI->Staff: 68.2.2.2.2 Show success message and display processed refund
+            end
+        end
+    end
+end
+

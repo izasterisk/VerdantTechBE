@@ -1,0 +1,48 @@
+title Ship Order Sequence Diagram
+
+participant Staff
+participant OrderUI
+participant OrderController
+participant OrderService
+participant Database
+
+Staff->OrderUI: 1. Ship order (orderId, shipping data)
+OrderUI->OrderController: 2. POST /api/Order/{orderId}/ship (List<OrderDetailsShippingDTO>)
+activate OrderController
+
+note over OrderController: Requires Authorization (Admin/Staff)
+
+OrderController->OrderController: 3. ValidateModel()
+alt Validation Failed
+    OrderController->OrderUI: 4.1 Return 400 Bad Request
+    OrderUI->Staff: 5.1 Show error message
+    deactivate OrderController
+else Validation Success
+    OrderController->OrderController: 4.2 GetCurrentUserId() (from JWT)
+    OrderController->OrderService: 5.2 Call ShipOrderAsync(staffId, orderId, dtos)
+    activate OrderService
+    
+    OrderService->Database: 6.2 Check if order exists
+    Database-->OrderService: 7.2 Return order existence status
+    
+    alt Order Not Found
+        OrderService-->OrderController: 8.1 Return failure message
+        OrderController->OrderUI: 9.1 Return 404 Not Found
+        OrderUI->Staff: 10.1 Show error message
+        deactivate OrderService
+        deactivate OrderController
+    else Order Found
+        OrderService->Database: 8.2 Update order details with serial/lot numbers
+        Database-->OrderService: 9.2 Return update result
+        OrderService->Database: 10.2 Update order status to Shipped
+        Database-->OrderService: 11.2 Return update result
+        OrderService->Database: 12.2 Create export inventory records
+        Database-->OrderService: 13.2 Return create result
+        OrderService-->OrderController: 14.2 Return success message (OrderResponseDTO)
+        deactivate OrderService
+        OrderController->OrderUI: 15.2 Return 200 OK (OrderResponseDTO)
+        deactivate OrderController
+        OrderUI->Staff: 16.2 Display shipped order
+    end
+end
+

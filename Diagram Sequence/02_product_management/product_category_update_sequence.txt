@@ -1,0 +1,77 @@
+title Product Category Update Sequence Diagram
+
+participant Vendor
+participant ProductCategoryUI
+participant ProductCategoryController
+participant ProductCategoryService
+participant Database
+
+Vendor->ProductCategoryUI: 1. Update category (id, dto)
+ProductCategoryUI->ProductCategoryController: 2. PATCH /api/ProductCategory/{id} (ProductCategoryUpdateDTO)
+activate ProductCategoryController
+
+note over ProductCategoryController: Requires Authorization
+
+ProductCategoryController->ProductCategoryController: 3. ValidateModel()
+alt Validation Failed
+    ProductCategoryController->ProductCategoryUI: 4.1 Return 400 Bad Request
+    ProductCategoryUI->Vendor: 5.1 Show error message
+    deactivate ProductCategoryController
+else Validation Success
+    ProductCategoryController->ProductCategoryService: 4.2 Call UpdateProductCategoryAsync(id, dto)
+    activate ProductCategoryService
+    
+    ProductCategoryService->Database: 5.2 Check if category exists
+    Database-->ProductCategoryService: 6.2 Return category existence status
+    
+    alt Category Not Found or Inactive
+        ProductCategoryService-->ProductCategoryController: 7.1 Return failure message
+        ProductCategoryController->ProductCategoryUI: 8.1 Return 404 Not Found
+        ProductCategoryUI->Vendor: 9.1 Show error message
+        deactivate ProductCategoryService
+        deactivate ProductCategoryController
+    else Category Found
+        opt Name Changed
+            ProductCategoryService->Database: 7.2.1 Check if new name exists
+            Database-->ProductCategoryService: 8.2.1 Return name existence status
+            
+            alt Name Already Exists
+                ProductCategoryService-->ProductCategoryController: 9.2.1 Return failure message
+                ProductCategoryController->ProductCategoryUI: 10.2.1 Return 400 Bad Request
+                ProductCategoryUI->Vendor: 11.2.1 Show error message
+                deactivate ProductCategoryService
+                deactivate ProductCategoryController
+            else Name Available
+                ProductCategoryService->ProductCategoryService: 9.2.2 Generate new slug
+            end
+        end
+        opt ParentId Changed
+            ProductCategoryService->Database: 7.2.2 Check parent depth
+            Database-->ProductCategoryService: 8.2.2 Return parent depth status
+            
+            alt Parent Depth Invalid or Self Reference
+                ProductCategoryService-->ProductCategoryController: 9.2.2 Return failure message
+                ProductCategoryController->ProductCategoryUI: 10.2.2 Return 400 Bad Request
+                ProductCategoryUI->Vendor: 11.2.2 Show error message
+                deactivate ProductCategoryService
+                deactivate ProductCategoryController
+            else Parent Valid
+                ProductCategoryService->Database: 9.2.3 Update category information
+                Database-->ProductCategoryService: 10.2.3 Return update result
+                ProductCategoryService-->ProductCategoryController: 11.2.3 Return success message (ProductCategoryResponseDTO)
+                deactivate ProductCategoryService
+                ProductCategoryController->ProductCategoryUI: 12.2.3 Return 200 OK (ProductCategoryResponseDTO)
+                deactivate ProductCategoryController
+                ProductCategoryUI->Vendor: 13.2.3 Display updated category
+            end
+        else No ParentId Change
+            ProductCategoryService->Database: 7.2.3 Update category information
+            Database-->ProductCategoryService: 8.2.3 Return update result
+            ProductCategoryService-->ProductCategoryController: 9.2.3 Return success message (ProductCategoryResponseDTO)
+            deactivate ProductCategoryService
+            ProductCategoryController->ProductCategoryUI: 10.2.3 Return 200 OK (ProductCategoryResponseDTO)
+            deactivate ProductCategoryController
+            ProductCategoryUI->Vendor: 11.2.3 Display updated category
+        end
+    end
+end

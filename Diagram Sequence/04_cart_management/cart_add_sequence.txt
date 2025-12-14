@@ -1,0 +1,75 @@
+title Add Product to Cart Sequence Diagram
+
+participant User
+participant CartUI
+participant CartController
+participant CartService
+participant CartRepository
+participant Database
+
+User->CartUI: 1. Add product to cart (productId, quantity)
+CartUI->CartController: 2. POST /api/Cart/add (CartDTO)
+activate CartController
+
+note over CartController: Requires Authorization
+
+CartController->CartController: 3. ValidateModel()
+alt Validation Failed
+    CartController->CartUI: 4.1 Return 400 Bad Request
+    CartUI->User: 5.1 Show error message
+    deactivate CartController
+else Validation Success
+    CartController->CartController: 4.2 GetCurrentUserId() (from JWT)
+    CartController->CartService: 5.2 Call AddToCartAsync(userId, dto)
+    activate CartService
+    
+    CartService->CartRepository: 6.2 GetCartByUserIdWithRelationsAsync(userId)
+    activate CartRepository
+    CartRepository->Database: 7.2 Check if cart exists
+    Database-->CartRepository: 8.2 Return cart data
+    CartRepository-->CartService: 9.2 Return cart or null
+    deactivate CartRepository
+    
+    alt Cart Not Exists
+        CartService->CartRepository: 10.2.1 CreateCartByUserIdWithTransactionAsync(userId)
+        activate CartRepository
+        CartRepository->Database: 11.2.1 Create new cart
+        Database-->CartRepository: 12.2.1 Return cart created
+        CartRepository-->CartService: 13.2.1 Return cart
+        deactivate CartRepository
+    else Cart Exists
+        CartService->CartRepository: 10.2.2 CheckIfProductAlreadyInCart(cartId, productId)
+        activate CartRepository
+        CartRepository->Database: 11.2.2 Check if product already in cart
+        Database-->CartRepository: 12.2.2 Return product existence status
+        CartRepository-->CartService: 13.2.2 Return exists (bool)
+        deactivate CartRepository
+        
+        alt Product Already in Cart
+            CartService-->CartController: 14.2.1 Return failure message
+            CartController->CartUI: 15.2.1 Return 400 Bad Request
+            CartUI->User: 16.2.1 Show error message
+            deactivate CartService
+            deactivate CartController
+        else Product Not in Cart
+            CartService->CartRepository: 14.2.2 AddItemToCartWithTransactionAsync(cartItem)
+            activate CartRepository
+            CartRepository->Database: 15.2.2 Add item to cart
+            Database-->CartRepository: 16.2.2 Return add result
+            CartRepository-->CartService: 17.2.2 Return success
+            deactivate CartRepository
+            CartService->CartRepository: 18.2.2 GetCartByUserIdWithRelationsAsync(userId)
+            activate CartRepository
+            CartRepository->Database: 19.2.2 Get cart with items and images
+            Database-->CartRepository: 20.2.2 Return cart data
+            CartRepository-->CartService: 21.2.2 Return cart
+            deactivate CartRepository
+            CartService->CartService: 22.2.2 Populate cart items images
+            CartService-->CartController: 23.2.2 Return success message (CartResponseDTO)
+            deactivate CartService
+            CartController->CartUI: 24.2.2 Return 201 Created (CartResponseDTO)
+            deactivate CartController
+            CartUI->User: 25.2.2 Display updated cart
+        end
+    end
+end

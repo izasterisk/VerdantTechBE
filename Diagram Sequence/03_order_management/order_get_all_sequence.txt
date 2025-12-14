@@ -1,0 +1,28 @@
+title Get All Orders Sequence Diagram
+
+participant Admin
+participant OrderUI
+participant OrderController
+participant OrderService
+participant Database
+
+Admin->OrderUI: 1. Request orders list (page, pageSize, status)
+OrderUI->OrderController: 2. GET /api/Order?page={page}&pageSize={pageSize}&status={status}
+activate OrderController
+
+note over OrderController: Requires Authorization (Admin/Staff)
+
+OrderController->OrderService: 3. Call GetAllOrdersAsync(page, pageSize, status)
+activate OrderService
+
+OrderService->Database: 4. Get orders list with filter
+Database-->OrderService: 5. Return orders list and total count
+OrderService->OrderService: 6. Calculate pagination info
+OrderService-->OrderController: 7. Return success message (PagedResponse)
+deactivate OrderService
+
+OrderController->OrderUI: 8. Return 200 OK (PagedResponse)
+deactivate OrderController
+OrderUI->Admin: 9. Display orders list with pagination
+end
+

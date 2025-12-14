@@ -1,0 +1,48 @@
+title User Create Sequence Diagram
+
+participant Client
+participant UserController
+participant UserService
+participant UserRepository
+participant Database
+
+Client->UserController: 1. POST /api/User (UserCreateDTO)
+activate UserController
+
+UserController->UserController: 2. ValidateModel()
+alt Validation Failed
+    UserController->Client: 3.1 Return 400 Bad Request
+    deactivate UserController
+else Validation Success
+    UserController->UserService: 3.2 Call CreateUserAsync(dto)
+    activate UserService
+    
+    UserService->UserRepository: 4. CheckEmailExistsAsync(email)
+    activate UserRepository
+    UserRepository->Database: 5. Check if email exists
+    Database-->UserRepository: 6. Return email existence status
+    UserRepository-->UserService: 7. Return emailExists (bool)
+    deactivate UserRepository
+    
+    alt Email Already Exists
+        UserService-->UserController: 8.1 Return failure message
+        UserController->Client: 9.1 Return 400 Bad Request
+        deactivate UserService
+        deactivate UserController
+    else Email Available
+        UserService->UserService: 8.2 Hash password
+        UserService->UserService: 8.3 Set IsVerified = false
+        UserService->UserService: 8.4 Set Role = Customer (default)
+        UserService->UserRepository: 9.2 CreateUserWithTransactionAsync(user)
+        activate UserRepository
+        UserRepository->Database: 10.2 Insert new user
+        Database-->UserRepository: 11.2 Return insert result
+        UserRepository-->UserService: 12.2 Return created user
+        deactivate UserRepository
+        UserService-->UserController: 13.2 Return success message
+        deactivate UserService
+        UserController->Client: 14.2 Return 201 Created (UserResponseDTO)
+        deactivate UserController
+    end
+end
+

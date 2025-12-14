@@ -1,0 +1,65 @@
+title Product Category Create Sequence Diagram
+
+participant Vendor
+participant ProductCategoryUI
+participant ProductCategoryController
+participant ProductCategoryService
+participant Database
+
+Vendor->ProductCategoryUI: 1. Create new category
+ProductCategoryUI->ProductCategoryController: 2. POST /api/ProductCategory (ProductCategoryCreateDTO)
+activate ProductCategoryController
+
+note over ProductCategoryController: Requires Authorization
+
+ProductCategoryController->ProductCategoryController: 3. ValidateModel()
+alt Validation Failed
+    ProductCategoryController->ProductCategoryUI: 4.1 Return 400 Bad Request
+    ProductCategoryUI->Vendor: 5.1 Show error message
+    deactivate ProductCategoryController
+else Validation Success
+    ProductCategoryController->ProductCategoryService: 4.2 Call CreateProductCategoryAsync(dto)
+    activate ProductCategoryService
+    
+    ProductCategoryService->Database: 5.2 Check if category name exists
+    Database-->ProductCategoryService: 6.2 Return name existence status
+    
+    alt Name Already Exists
+        ProductCategoryService-->ProductCategoryController: 7.1 Return failure message
+        ProductCategoryController->ProductCategoryUI: 8.1 Return 400 Bad Request
+        ProductCategoryUI->Vendor: 9.1 Show error message
+        deactivate ProductCategoryService
+        deactivate ProductCategoryController
+    else Name Available
+        opt ParentId Provided
+            ProductCategoryService->Database: 7.2.1 Check parent depth (max 2 levels)
+            Database-->ProductCategoryService: 8.2.1 Return parent depth status
+            
+            alt Parent Depth Invalid
+                ProductCategoryService-->ProductCategoryController: 9.2.1 Return failure message
+                ProductCategoryController->ProductCategoryUI: 10.2.1 Return 400 Bad Request
+                ProductCategoryUI->Vendor: 11.2.1 Show error message
+                deactivate ProductCategoryService
+                deactivate ProductCategoryController
+            else Parent Depth Valid
+                ProductCategoryService->ProductCategoryService: 9.2.2 Generate slug
+                ProductCategoryService->Database: 10.2.2 Insert new category
+                Database-->ProductCategoryService: 11.2.2 Return insert result
+                ProductCategoryService-->ProductCategoryController: 12.2.2 Return success message (ProductCategoryResponseDTO)
+                deactivate ProductCategoryService
+                ProductCategoryController->ProductCategoryUI: 13.2.2 Return 201 Created (ProductCategoryResponseDTO)
+                deactivate ProductCategoryController
+                ProductCategoryUI->Vendor: 14.2.2 Display created category
+            end
+        else No ParentId
+            ProductCategoryService->ProductCategoryService: 7.2.2 Generate slug
+            ProductCategoryService->Database: 8.2.2 Insert new category (root)
+            Database-->ProductCategoryService: 9.2.2 Return insert result
+            ProductCategoryService-->ProductCategoryController: 10.2.2 Return success message (ProductCategoryResponseDTO)
+            deactivate ProductCategoryService
+            ProductCategoryController->ProductCategoryUI: 11.2.2 Return 201 Created (ProductCategoryResponseDTO)
+            deactivate ProductCategoryController
+            ProductCategoryUI->Vendor: 12.2.2 Display created category
+        end
+    end
+end

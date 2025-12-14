@@ -1,0 +1,66 @@
+title Update Product Registration Sequence Diagram
+
+participant Client
+participant ProductRegistrationUI
+participant ProductRegistrationsController
+participant CloudinaryService
+participant ProductRegistrationService
+participant ProductRegistrationRepository
+participant Database
+
+Client->ProductRegistrationUI: 1. Request update product registration (id, UpdateForm with files)
+ProductRegistrationUI->ProductRegistrationsController: 2. PUT /api/ProductRegistrations/{id} (multipart/form-data)
+activate ProductRegistrationsController
+
+ProductRegistrationsController->ProductRegistrationsController: 3. FillSpecsFromForm(req.Data, Request.Form)
+ProductRegistrationsController->CloudinaryService: 4. Upload manual file (if provided)
+activate CloudinaryService
+CloudinaryService-->ProductRegistrationsController: 5. Return manualUrl, manualPublicUrl
+deactivate CloudinaryService
+
+ProductRegistrationsController->CloudinaryService: 6. UploadManyAsync(images) (if provided)
+activate CloudinaryService
+CloudinaryService-->ProductRegistrationsController: 7. Return List<MediaLinkItemDTO> (images)
+deactivate CloudinaryService
+
+ProductRegistrationsController->CloudinaryService: 8. UploadManyAsync(certificates) (if provided)
+activate CloudinaryService
+CloudinaryService-->ProductRegistrationsController: 9. Return List<MediaLinkItemDTO> (certificates)
+deactivate CloudinaryService
+
+ProductRegistrationsController->ProductRegistrationService: 10. Call UpdateAsync(dto, manualUrl, manualPublicUrl, addImages, addCertificates, removedImages, removedCertificates)
+activate ProductRegistrationService
+
+ProductRegistrationService->ProductRegistrationRepository: 11. GetByIdAsync(dto.Id)
+activate ProductRegistrationRepository
+ProductRegistrationRepository->Database: 12. Get product registration by ID
+Database-->ProductRegistrationRepository: 13. Return ProductRegistration or null
+ProductRegistrationRepository-->ProductRegistrationService: 14. Return ProductRegistration
+deactivate ProductRegistrationRepository
+
+alt Registration Not Found
+    ProductRegistrationService-->ProductRegistrationsController: 15.1 Throw KeyNotFoundException
+    ProductRegistrationsController->ProductRegistrationUI: 16.1 Return 404 Not Found
+    deactivate ProductRegistrationService
+    deactivate ProductRegistrationsController
+else Registration Found
+    ProductRegistrationService->ProductRegistrationService: 15.2 Validate EnergyEfficiencyRating and DimensionsCm
+    ProductRegistrationService->ProductRegistrationService: 15.3 Update entity fields from DTO
+    ProductRegistrationService->ProductRegistrationService: 15.4 Update manual URLs if provided
+    ProductRegistrationService->ProductRegistrationRepository: 16.2 UpdateAsync(registration, addImages, addCertificates, removedImages, removedCertificates)
+    activate ProductRegistrationRepository
+    ProductRegistrationRepository->Database: 17.2 Update registration and media links (transaction)
+    Database-->ProductRegistrationRepository: 18.2 Return updated ProductRegistration
+    ProductRegistrationRepository-->ProductRegistrationService: 19.2 Return ProductRegistration
+    deactivate ProductRegistrationRepository
+
+    ProductRegistrationService->ProductRegistrationService: 20.2 Map entity to DTO (AutoMapper)
+    ProductRegistrationService->ProductRegistrationService: 21.2 HydrateMediaAsync(dto) - Load images and certificates
+    ProductRegistrationService-->ProductRegistrationsController: 22.2 Return ProductRegistrationReponseDTO
+    deactivate ProductRegistrationService
+
+    ProductRegistrationsController->ProductRegistrationUI: 23.2 Return 200 OK (ProductRegistrationReponseDTO)
+    deactivate ProductRegistrationsController
+    ProductRegistrationUI->Client: 24.2 Display success message
+end
+

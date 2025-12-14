@@ -1,0 +1,31 @@
+title Get All Products Sequence Diagram
+
+participant Client
+participant ProductUI
+participant ProductController
+participant ProductService
+participant ProductRepository
+participant Database
+
+Client->ProductUI: 1. Request product list (page, pageSize)
+ProductUI->ProductController: 2. GET /api/Product?page={page}&pageSize={pageSize}
+activate ProductController
+
+ProductController->ProductService: 3. Call GetAllAsync(page, pageSize)
+activate ProductService
+
+ProductService->ProductRepository: 4. GetAllProductAsync(page, pageSize)
+activate ProductRepository
+ProductRepository->Database: 5. Get products list
+Database-->ProductRepository: 6. Return products list and total count
+ProductRepository-->ProductService: 7. Return (items, total)
+deactivate ProductRepository
+ProductService->ProductService: 8. Load product images
+ProductService->ProductService: 9. Calculate pagination info
+ProductService-->ProductController: 10. Return success message (PagedResponse)
+deactivate ProductService
+
+ProductController->ProductUI: 11. Return 200 OK (PagedResponse)
+deactivate ProductController
+ProductUI->Client: 12. Display product list with pagination
+end

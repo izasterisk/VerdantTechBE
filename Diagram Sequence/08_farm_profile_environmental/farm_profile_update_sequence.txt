@@ -1,0 +1,55 @@
+title Update Farm Profile Sequence Diagram
+
+participant User
+participant FarmProfileUI
+participant FarmProfileController
+participant FarmProfileService
+participant FarmProfileRepository
+participant Database
+
+User->FarmProfileUI: 1. Update farm profile (id, dto)
+FarmProfileUI->FarmProfileController: 2. PATCH /api/FarmProfile/{id} (FarmProfileUpdateDTO)
+activate FarmProfileController
+
+note over FarmProfileController: Requires Authorization
+
+FarmProfileController->FarmProfileController: 3. ValidateModel()
+alt Validation Failed
+    FarmProfileController->FarmProfileUI: 4.1 Return 400 Bad Request
+    FarmProfileUI->User: 5.1 Show error message
+    deactivate FarmProfileController
+else Validation Success
+    FarmProfileController->FarmProfileService: 4.2 Call UpdateFarmProfileAsync(id, dto)
+    activate FarmProfileService
+    
+    FarmProfileService->FarmProfileRepository: 5.2 GetFarmProfileByFarmIdAsync(id, useNoTracking: false)
+    activate FarmProfileRepository
+    FarmProfileRepository->Database: 6.2 Check if farm profile exists
+    Database-->FarmProfileRepository: 7.2 Return farm profile data
+    FarmProfileRepository-->FarmProfileService: 8.2 Return farmProfile or null
+    deactivate FarmProfileRepository
+    
+    alt Farm Not Found
+        FarmProfileService-->FarmProfileController: 7.1 Return failure message
+        FarmProfileController->FarmProfileUI: 8.1 Return 404 Not Found
+        FarmProfileUI->User: 9.1 Show error message
+        deactivate FarmProfileService
+        deactivate FarmProfileController
+    else Farm Found
+        FarmProfileService->FarmProfileService: 9.2 Validate address fields
+        FarmProfileService->FarmProfileService: 9.3 Map DTO to farmProfile and address
+        FarmProfileService->FarmProfileRepository: 10.2 UpdateFarmProfileWithTransactionAsync(farmProfile, address)
+        activate FarmProfileRepository
+        FarmProfileRepository->Database: 11.2 Update address information
+        Database-->FarmProfileRepository: 12.2 Return update result
+        FarmProfileRepository->Database: 13.2 Update farm profile information
+        Database-->FarmProfileRepository: 14.2 Return update result
+        FarmProfileRepository-->FarmProfileService: 15.2 Return updated farm profile
+        deactivate FarmProfileRepository
+        FarmProfileService-->FarmProfileController: 16.2 Return success message (FarmProfileResponseDTO)
+        deactivate FarmProfileService
+        FarmProfileController->FarmProfileUI: 17.2 Return 200 OK (FarmProfileResponseDTO)
+        deactivate FarmProfileController
+        FarmProfileUI->User: 18.2 Display updated farm profile
+    end
+end

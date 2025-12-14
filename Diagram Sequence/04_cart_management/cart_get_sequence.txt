@@ -1,0 +1,36 @@
+title Get User Cart Sequence Diagram
+
+participant User
+participant CartUI
+participant CartController
+participant CartService
+participant Database
+
+User->CartUI: 1. Request cart
+CartUI->CartController: 2. GET /api/Cart
+activate CartController
+
+note over CartController: Requires Authorization
+
+CartController->CartController: 3. GetCurrentUserId() (from JWT)
+CartController->CartService: 4. Call GetCartByUserIdAsync(userId)
+activate CartService
+
+CartService->Database: 5. Check if cart exists
+Database-->CartService: 6. Return cart existence status
+
+alt Cart Not Exists
+    CartService-->CartController: 7.1 Return null
+    CartController->CartUI: 8.1 Return 200 OK (empty cart message)
+    CartUI->User: 9.1 Display empty cart
+    deactivate CartService
+    deactivate CartController
+else Cart Exists
+    CartService->Database: 7.2 Get cart with items and images
+    Database-->CartService: 8.2 Return cart data
+    CartService-->CartController: 9.2 Return success message (CartResponseDTO)
+    deactivate CartService
+    CartController->CartUI: 10.2 Return 200 OK (CartResponseDTO)
+    deactivate CartController
+    CartUI->User: 11.2 Display cart
+end

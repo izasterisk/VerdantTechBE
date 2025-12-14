@@ -1,0 +1,38 @@
+title Get Farm Profile By ID Sequence Diagram
+
+participant User
+participant FarmProfileUI
+participant FarmProfileController
+participant FarmProfileService
+participant FarmProfileRepository
+participant Database
+
+User->FarmProfileUI: 1. Request farm profile (id)
+FarmProfileUI->FarmProfileController: 2. GET /api/FarmProfile/{id}
+activate FarmProfileController
+
+note over FarmProfileController: Requires Authorization
+
+FarmProfileController->FarmProfileService: 3. Call GetFarmProfileByFarmIdAsync(id)
+activate FarmProfileService
+
+FarmProfileService->FarmProfileRepository: 4. GetFarmProfileByFarmIdAsync(id, useNoTracking: true)
+activate FarmProfileRepository
+FarmProfileRepository->Database: 5. Check if farm profile exists
+Database-->FarmProfileRepository: 6. Return farm profile data
+FarmProfileRepository-->FarmProfileService: 7. Return farmProfile or null
+deactivate FarmProfileRepository
+
+alt Farm Not Found
+    FarmProfileService-->FarmProfileController: 8.1 Return null
+    FarmProfileController->FarmProfileUI: 9.1 Return 404 Not Found
+    FarmProfileUI->User: 10.1 Show error message
+    deactivate FarmProfileService
+    deactivate FarmProfileController
+else Farm Found
+    FarmProfileService-->FarmProfileController: 8.2 Return success message (FarmProfileResponseDTO)
+    deactivate FarmProfileService
+    FarmProfileController->FarmProfileUI: 9.2 Return 200 OK (FarmProfileResponseDTO)
+    deactivate FarmProfileController
+    FarmProfileUI->User: 10.2 Display farm profile
+end

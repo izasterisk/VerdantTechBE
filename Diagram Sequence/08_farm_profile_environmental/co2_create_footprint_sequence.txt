@@ -1,0 +1,91 @@
+title Create CO2 Footprint Sequence Diagram
+
+participant User
+participant CO2UI
+participant CO2Controller
+participant CO2Service
+participant FarmProfileRepository
+participant EnvironmentalDataRepository
+participant SoilGridsApiClient
+participant WeatherApiClient
+participant Database
+
+User->CO2UI: 1. Create CO2 footprint (farmId, dto)
+CO2UI->CO2Controller: 2. POST /api/CO2/farm/{farmId} (CO2FootprintCreateDTO)
+activate CO2Controller
+
+note over CO2Controller: Requires Authorization
+
+CO2Controller->CO2Controller: 3. ValidateModel()
+alt Validation Failed
+    CO2Controller->CO2UI: 4.1 Return 400 Bad Request
+    CO2UI->User: 5.1 Show error message
+    deactivate CO2Controller
+else Validation Success
+    CO2Controller->CO2Service: 4.2 Call CreateCO2FootprintAsync(farmId, dto)
+    activate CO2Service
+    
+    CO2Service->EnvironmentalDataRepository: 5.2 GetEnvironmentDataByFarmIdAndDateRangeAsync(farmId, startDate, endDate)
+    activate EnvironmentalDataRepository
+    EnvironmentalDataRepository->Database: 6.2 Check if data exists for date range
+    Database-->EnvironmentalDataRepository: 7.2 Return data existence status
+    EnvironmentalDataRepository-->CO2Service: 8.2 Return dataExists (bool)
+    deactivate EnvironmentalDataRepository
+    
+    alt Data Already Exists
+        CO2Service-->CO2Controller: 9.1 Return failure message
+        CO2Controller->CO2UI: 10.1 Return 400 Bad Request
+        CO2UI->User: 11.1 Show error message
+        deactivate CO2Service
+        deactivate CO2Controller
+    else Data Not Exists
+        CO2Service->FarmProfileRepository: 9.2 GetCoordinateByFarmIdAsync(farmId, true)
+        activate FarmProfileRepository
+        FarmProfileRepository->Database: 10.2 Check if farm exists with coordinates
+        Database-->FarmProfileRepository: 11.2 Return farm profile data
+        FarmProfileRepository-->CO2Service: 12.2 Return farmProfile or null
+        deactivate FarmProfileRepository
+    
+        alt Farm Not Found or No Coordinates
+            CO2Service-->CO2Controller: 13.1 Return failure message
+            CO2Controller->CO2UI: 14.1 Return 400 Bad Request
+            CO2UI->User: 15.1 Show error message
+            deactivate CO2Service
+            deactivate CO2Controller
+        else Farm Found with Coordinates
+            CO2Service->SoilGridsApiClient: 13.2 GetSoilDataAsync(latitude, longitude)
+            activate SoilGridsApiClient
+            SoilGridsApiClient->SoilGridsApiClient: Call external soil API
+            SoilGridsApiClient-->CO2Service: 14.2 Return soil data
+            deactivate SoilGridsApiClient
+            
+            CO2Service->WeatherApiClient: 15.2 GetHistoricalWeatherDataAsync(latitude, longitude, startDate, endDate)
+            activate WeatherApiClient
+            WeatherApiClient->WeatherApiClient: Call external weather API
+            WeatherApiClient-->CO2Service: 16.2 Return weather data
+            deactivate WeatherApiClient
+            
+            CO2Service->CO2Service: 17.2 Calculate weighted averages for soil data
+            CO2Service->CO2Service: 17.3 Calculate weather averages
+            CO2Service->CO2Service: 17.4 Map DTO to EnvironmentalDatum, EnergyUsage, Fertilizer
+            CO2Service->CO2Service: 17.5 Compute CO2 footprint
+            
+            CO2Service->EnvironmentalDataRepository: 18.2 CreateEnvironmentalDataWithTransactionAsync(environmentalData, fertilizer, energyUsage)
+            activate EnvironmentalDataRepository
+            EnvironmentalDataRepository->Database: 19.2 Insert environmental data
+            Database-->EnvironmentalDataRepository: 20.2 Return insert result
+            EnvironmentalDataRepository->Database: 21.2 Insert energy usage data
+            Database-->EnvironmentalDataRepository: 22.2 Return insert result
+            EnvironmentalDataRepository->Database: 23.2 Insert fertilizer data
+            Database-->EnvironmentalDataRepository: 24.2 Return insert result
+            EnvironmentalDataRepository-->CO2Service: 25.2 Return created environmental data
+            deactivate EnvironmentalDataRepository
+            
+            CO2Service-->CO2Controller: 26.2 Return success message (CO2FootprintResponseDTO)
+            deactivate CO2Service
+            CO2Controller->CO2UI: 27.2 Return 201 Created (CO2FootprintResponseDTO)
+            deactivate CO2Controller
+            CO2UI->User: 28.2 Display created footprint
+        end
+    end
+end

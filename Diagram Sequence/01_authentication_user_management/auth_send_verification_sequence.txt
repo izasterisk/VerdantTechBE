@@ -1,0 +1,66 @@
+title Send Verification Email Sequence Diagram
+
+participant User
+participant VerificationUI
+participant AuthController
+participant AuthService
+participant AuthRepository
+participant EmailSender
+participant Database
+
+User->VerificationUI: 1. Request verification email
+VerificationUI->AuthController: 2. POST /api/Auth/send-verification (SendEmailDTO)
+activate AuthController
+
+AuthController->AuthController: 3. ValidateModel()
+alt Validation Failed
+    AuthController->VerificationUI: 4.1 Return 400 Bad Request
+    VerificationUI->User: 5.1 Show error message
+    deactivate AuthController
+else Validation Success
+    AuthController->AuthService: 4.2 Call SendVerificationEmailAsync(email)
+    activate AuthService
+    
+    AuthService->AuthRepository: 5.2 GetUserByEmailAsync(email)
+    activate AuthRepository
+    AuthRepository->Database: 6.2 Check if email exists
+    Database-->AuthRepository: 7.2 Return user data
+    AuthRepository-->AuthService: 8.2 Return user or null
+    deactivate AuthRepository
+    
+    alt User Not Found
+        AuthService-->AuthController: 7.1 Return failure message
+        AuthController->VerificationUI: 8.1 Return 400 Bad Request
+        VerificationUI->User: 9.1 Show error message
+        deactivate AuthService
+        deactivate AuthController
+    else User Found
+        AuthService->AuthService: 7.2 Validate user status
+        alt User Already Verified
+            AuthService-->AuthController: 8.2.1 Return failure message
+            AuthController->VerificationUI: 9.2.1 Return 400 Bad Request
+            VerificationUI->User: 10.2.1 Show error message
+            deactivate AuthService
+            deactivate AuthController
+        else User Not Verified
+            AuthService->AuthService: 8.2.2 Generate verification code
+            AuthService->EmailSender: 9.2.2 Send verification email
+            activate EmailSender
+            EmailSender->EmailSender: Send email with code
+            EmailSender-->AuthService: 10.2.2 Email sent
+            deactivate EmailSender
+            AuthService->AuthRepository: 11.2.2 UpdateUserAsync(user)
+            activate AuthRepository
+            AuthRepository->Database: 12.2.2 Update user verification token
+            Database-->AuthRepository: 13.2.2 Return update result
+            AuthRepository-->AuthService: 14.2.2 Return updated user
+            deactivate AuthRepository
+            AuthService-->AuthController: 15.2.2 Return success message
+            deactivate AuthService
+            AuthController->VerificationUI: 16.2.2 Return 200 OK
+            deactivate AuthController
+            VerificationUI->User: 17.2.2 Display success message
+        end
+    end
+end
+

@@ -1,0 +1,61 @@
+title Update Cart Item Quantity Sequence Diagram
+
+participant User
+participant CartUI
+participant CartController
+participant CartService
+participant Database
+
+User->CartUI: 1. Update cart item (productId, quantity)
+CartUI->CartController: 2. PUT /api/Cart/update (CartDTO)
+activate CartController
+
+note over CartController: Requires Authorization
+
+CartController->CartController: 3. ValidateModel()
+alt Validation Failed
+    CartController->CartUI: 4.1 Return 400 Bad Request
+    CartUI->User: 5.1 Show error message
+    deactivate CartController
+else Validation Success
+    CartController->CartController: 4.2 GetCurrentUserId() (from JWT)
+    CartController->CartService: 5.2 Call UpdateCartItemQuantityAsync(userId, dto)
+    activate CartService
+    
+    CartService->Database: 6.2 Check if cart exists
+    Database-->CartService: 7.2 Return cart existence status
+    
+    alt Cart Not Exists
+        CartService-->CartController: 8.1 Return failure message
+        CartController->CartUI: 9.1 Return 400 Bad Request
+        CartUI->User: 10.1 Show error message
+        deactivate CartService
+        deactivate CartController
+    else Cart Exists
+        CartService->Database: 8.2 Check if item exists in cart
+        Database-->CartService: 9.2 Return item existence status
+        
+        alt Item Not Found
+            CartService-->CartController: 10.2.1 Return failure message
+            CartController->CartUI: 11.2.1 Return 400 Bad Request
+            CartUI->User: 12.2.1 Show error message
+            deactivate CartService
+            deactivate CartController
+        else Item Found
+            alt Quantity = 0
+                CartService->Database: 10.2.2 Remove item from cart
+                Database-->CartService: 11.2.2 Return remove result
+            else Quantity > 0
+                CartService->Database: 10.2.3 Update item quantity
+                Database-->CartService: 11.2.3 Return update result
+            end
+            CartService->Database: 12.2 Get cart with items and images
+            Database-->CartService: 13.2 Return cart data
+            CartService-->CartController: 14.2 Return success message (CartResponseDTO)
+            deactivate CartService
+            CartController->CartUI: 15.2 Return 200 OK (CartResponseDTO)
+            deactivate CartController
+            CartUI->User: 16.2 Display updated cart
+        end
+    end
+end

@@ -1,0 +1,107 @@
+title Product Registration Approve/Reject Sequence Diagram
+
+participant Admin
+participant ProductRegistrationController
+participant ProductRegistrationService
+participant Database
+participant ProductRepository
+participant MediaLinkRepository
+
+Admin->ProductRegistrationController: PATCH /api/ProductRegistrations/{id}/status
+activate ProductRegistrationController
+
+note over ProductRegistrationController: Body: { status: "Approved"|"Rejected", rejectionReason?: string, approvedBy: adminId }
+
+ProductRegistrationController->ProductRegistrationService: ChangeStatusAsync(id, status, rejectionReason, approvedBy)
+activate ProductRegistrationService
+
+ProductRegistrationService->Database: SELECT * FROM product_registrations WHERE id = ?
+Database-->ProductRegistrationService: ProductRegistration entity
+
+alt Registration Not Found
+    ProductRegistrationService-->ProductRegistrationController: false
+    ProductRegistrationController->Admin: 404 Not Found
+    deactivate ProductRegistrationService
+    deactivate ProductRegistrationController
+else Registration Found
+    opt Status Unchanged
+        ProductRegistrationService->ProductRegistrationService: Check if status already matches
+        alt Status Already Set
+            ProductRegistrationService-->ProductRegistrationController: true (no change needed)
+            ProductRegistrationController->Admin: 204 No Content
+            deactivate ProductRegistrationService
+            deactivate ProductRegistrationController
+        end
+    end
+    
+    ProductRegistrationService->ProductRegistrationService: Set registration.Status = status
+    ProductRegistrationService->ProductRegistrationService: Set registration.UpdatedAt = DateTime.UtcNow
+    
+    alt Status = Rejected
+        ProductRegistrationService->ProductRegistrationService: Set registration.RejectionReason = rejectionReason
+        ProductRegistrationService->ProductRegistrationService: Set registration.ApprovedBy = null
+        ProductRegistrationService->ProductRegistrationService: Set registration.ApprovedAt = null
+        
+        ProductRegistrationService->Database: UPDATE product_registrations SET status=?, rejection_reason=?, approved_by=null, approved_at=null, updated_at=? WHERE id=?
+        Database-->ProductRegistrationService: Registration updated
+        
+        ProductRegistrationService-->ProductRegistrationController: true
+        deactivate ProductRegistrationService
+        
+        ProductRegistrationController->Admin: 204 No Content (Rejected)
+        deactivate ProductRegistrationController
+    else Status = Approved
+        ProductRegistrationService->ProductRegistrationService: Set registration.ApprovedBy = approvedBy
+        ProductRegistrationService->ProductRegistrationService: Set registration.ApprovedAt = DateTime.UtcNow
+        ProductRegistrationService->ProductRegistrationService: Set registration.RejectionReason = null
+        
+        ProductRegistrationService->Database: BEGIN TRANSACTION
+        
+        ProductRegistrationService->Database: UPDATE product_registrations SET status=?, approved_by=?, approved_at=?, rejection_reason=null, updated_at=? WHERE id=?
+        Database-->ProductRegistrationService: Registration updated
+        
+        ProductRegistrationService->ProductRegistrationService: Map ProductRegistration to Product entity
+        ProductRegistrationService->ProductRegistrationService: Generate slug from product name
+        ProductRegistrationService->ProductRegistrationService: Set Product.IsActive = true
+        ProductRegistrationService->ProductRegistrationService: Set Product.CreatedAt, UpdatedAt
+        
+        ProductRegistrationService->ProductRepository: Add Product to DbSet
+        ProductRepository->Database: INSERT INTO products (category_id, vendor_id, product_code, product_name, unit_price, ...)
+        Database-->ProductRepository: Product created with ID
+        ProductRepository-->ProductRegistrationService: Product entity with ID
+        
+        ProductRegistrationService->MediaLinkRepository: Get product images from registration
+        MediaLinkRepository->Database: SELECT * FROM media_links WHERE owner_type = 'ProductRegistrations' AND owner_id = ? ORDER BY sort_order
+        Database-->MediaLinkRepository: Registration images
+        MediaLinkRepository-->ProductRegistrationService: List<MediaLink>
+        
+        opt Registration Has Images
+            ProductRegistrationService->ProductRegistrationService: Clone images (change OwnerType to Products, OwnerId to product.Id)
+            ProductRegistrationService->MediaLinkRepository: Add cloned images
+            MediaLinkRepository->Database: INSERT INTO media_links (owner_type='Products', owner_id=?, image_public_id=?, image_url=?, sort_order=?, ...) VALUES ...
+            Database-->MediaLinkRepository: Images copied to product
+        end
+        
+        ProductRegistrationService->MediaLinkRepository: Get certificates from registration
+        MediaLinkRepository->Database: SELECT * FROM media_links WHERE owner_type = 'ProductCertificates' AND owner_id = ? ORDER BY sort_order
+        Database-->MediaLinkRepository: Registration certificates
+        MediaLinkRepository-->ProductRegistrationService: List<MediaLink>
+        
+        opt Registration Has Certificates
+            ProductRegistrationService->ProductRegistrationService: Clone certificates (OwnerId = product.Id, keep OwnerType as ProductCertificates)
+            ProductRegistrationService->MediaLinkRepository: Add cloned certificates
+            MediaLinkRepository->Database: INSERT INTO media_links (owner_type='ProductCertificates', owner_id=?, image_public_id=?, image_url=?, sort_order=?, ...) VALUES ...
+            Database-->MediaLinkRepository: Certificates copied to product
+        end
+        
+        ProductRegistrationService->Database: COMMIT TRANSACTION
+        Database-->ProductRegistrationService: Transaction committed
+        
+        ProductRegistrationService-->ProductRegistrationController: true
+        deactivate ProductRegistrationService
+        
+        ProductRegistrationController->Admin: 204 No Content (Approved - Product created)
+        deactivate ProductRegistrationController
+    end
+end
+

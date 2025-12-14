@@ -1,0 +1,59 @@
+title Send New Chatbot Message Sequence Diagram
+
+participant User
+participant ChatbotUI
+participant ChatbotConversationController
+participant ChatbotConversationService
+participant ChatbotConversationRepository
+participant Database
+
+User->ChatbotUI: 1. Enter message in chat input
+User->ChatbotUI: 2. Click "Gửi" button
+ChatbotUI->ChatbotConversationController: 3. POST /api/ChatbotConversation/{conversationId}/message (ChatbotMessageCreateDTO)
+activate ChatbotConversationController
+
+note over ChatbotConversationController: Requires Authorization
+
+ChatbotConversationController->ChatbotConversationController: 4. ValidateModel()
+alt Validation Failed
+    ChatbotConversationController->ChatbotUI: 5.1 Return 400 Bad Request
+    ChatbotUI->User: 6.1 Show validation error
+    deactivate ChatbotConversationController
+else Validation Success
+    ChatbotConversationController->ChatbotConversationController: 5.2 GetCurrentUserId() (from JWT)
+    ChatbotConversationController->ChatbotConversationService: 6.2 SendNewMessageAsync(userId, conversationId, dto)
+    activate ChatbotConversationService
+    
+    ChatbotConversationService->ChatbotConversationRepository: 7.2 IsConversationBelongToUserAsync(conversationId, userId)
+    activate ChatbotConversationRepository
+    ChatbotConversationRepository->Database: 8.2 Check if conversation belongs to user and is active
+    Database-->ChatbotConversationRepository: 9.2 Return boolean result
+    ChatbotConversationRepository-->ChatbotConversationService: 10.2 Return boolean result
+    deactivate ChatbotConversationRepository
+    
+    alt Conversation Not Belong to User
+        ChatbotConversationService-->ChatbotConversationController: 11.2.1 Throw KeyNotFoundException
+        ChatbotConversationController->ChatbotUI: 12.2.1 Return 404 Not Found
+        ChatbotUI->User: 13.2.1 Show error message
+        deactivate ChatbotConversationService
+        deactivate ChatbotConversationController
+    else Conversation Belongs to User
+        ChatbotConversationService->ChatbotConversationService: 11.2.2 Map DTO to ChatbotMessage entity
+        ChatbotConversationService->ChatbotConversationService: 12.2.2 Set ConversationId
+        ChatbotConversationService->ChatbotConversationRepository: 13.2.2 CreateNewChatbotMessageAsync(message)
+        activate ChatbotConversationRepository
+        ChatbotConversationRepository->Database: 14.2.2 Insert ChatbotMessage
+        Database-->ChatbotConversationRepository: 15.2.2 Return created message
+        ChatbotConversationRepository-->ChatbotConversationService: 16.2.2 Return created message
+        deactivate ChatbotConversationRepository
+        
+        ChatbotConversationService->ChatbotConversationService: 17.2.2 Map to ChatbotMessagesResponseDTO
+        ChatbotConversationService-->ChatbotConversationController: 18.2.2 Return ChatbotMessagesResponseDTO
+        deactivate ChatbotConversationService
+        
+        ChatbotConversationController->ChatbotUI: 19.2.2 Return 201 Created (ChatbotMessagesResponseDTO)
+        deactivate ChatbotConversationController
+        ChatbotUI->User: 20.2.2 Display new message
+    end
+end
+

@@ -1,0 +1,40 @@
+title Create Farm Profile Sequence Diagram
+
+participant User
+participant FarmProfileUI
+participant FarmProfileController
+participant FarmProfileService
+participant FarmProfileRepository
+participant Database
+
+User->FarmProfileUI: 1. Create farm profile (dto)
+FarmProfileUI->FarmProfileController: 2. POST /api/FarmProfile (FarmProfileCreateDto)
+activate FarmProfileController
+
+note over FarmProfileController: Requires Authorization
+
+FarmProfileController->FarmProfileController: 3. ValidateModel()
+alt Validation Failed
+    FarmProfileController->FarmProfileUI: 4.1 Return 400 Bad Request
+    FarmProfileUI->User: 5.1 Show error message
+    deactivate FarmProfileController
+else Validation Success
+    FarmProfileController->FarmProfileController: 4.2 GetCurrentUserId() (from JWT)
+    FarmProfileController->FarmProfileService: 5.2 Call CreateFarmProfileAsync(userId, dto)
+    activate FarmProfileService
+    
+    FarmProfileService->FarmProfileService: 6.2 Map DTO to Address and FarmProfile entities
+    FarmProfileService->FarmProfileRepository: 7.2 CreateFarmProfileWithTransactionAsync(farmProfile, address)
+    activate FarmProfileRepository
+    FarmProfileRepository->Database: 8.2 Insert address
+    Database-->FarmProfileRepository: 9.2 Return address created
+    FarmProfileRepository->Database: 10.2 Insert farm profile
+    Database-->FarmProfileRepository: 11.2 Return farm profile created
+    FarmProfileRepository-->FarmProfileService: 12.2 Return created farm profile
+    deactivate FarmProfileRepository
+    FarmProfileService-->FarmProfileController: 13.2 Return success message (FarmProfileResponseDTO)
+    deactivate FarmProfileService
+    FarmProfileController->FarmProfileUI: 14.2 Return 201 Created (FarmProfileResponseDTO)
+    deactivate FarmProfileController
+    FarmProfileUI->User: 15.2 Display created farm profile
+end

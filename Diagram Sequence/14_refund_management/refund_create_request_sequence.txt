@@ -1,0 +1,74 @@
+title Create Refund Request Sequence Diagram
+
+participant Customer
+participant OrderHistoryUI
+participant RequestTicketController
+participant RequestService
+participant RequestRepository
+participant UserRepository
+participant Database
+
+Customer->OrderHistoryUI: 1. Click "Hoàn hàng" or "Hoàn hàng sản phẩm" button
+OrderHistoryUI->RequestTicketController: 2. POST /api/RequestTicket (RequestCreateDTO with RequestType=RefundRequest)
+activate RequestTicketController
+
+note over RequestTicketController: Requires Authorization
+
+RequestTicketController->RequestTicketController: 3. ValidateModel()
+alt Validation Failed
+    RequestTicketController->OrderHistoryUI: 4.1 Return 400 Bad Request
+    OrderHistoryUI->Customer: 5.1 Show validation error
+    deactivate RequestTicketController
+else Validation Success
+    RequestTicketController->RequestTicketController: 4.2 GetCurrentUserId() (from JWT)
+    RequestTicketController->RequestService: 5.2 Call CreateRequestAsync(userId, dto)
+    activate RequestService
+    
+    RequestService->UserRepository: 6.2 GetVerifiedAndActiveUserByIdAsync(userId)
+    activate UserRepository
+    UserRepository->Database: 7.2 Check if user exists and is verified
+    Database-->UserRepository: 8.2 Return user data or null
+    UserRepository-->RequestService: 9.2 Return user or throw exception
+    deactivate UserRepository
+    
+    RequestService->RequestService: 10.2 Map DTO to Request entity
+    RequestService->RequestService: 11.2 Map DTO to RequestMessage entity
+    RequestService->RequestService: 12.2 Map DTO images to MediaLink entities
+    RequestService->RequestRepository: 13.2 CreateRequestWithTransactionAsync(request, message, images)
+    activate RequestRepository
+    RequestRepository->Database: 14.2 Begin transaction
+    RequestRepository->Database: 15.2 Insert Request
+    Database-->RequestRepository: 16.2 Return insert result
+    RequestRepository->Database: 17.2 Insert RequestMessage
+    Database-->RequestRepository: 18.2 Return insert result
+    opt Has Images
+        RequestRepository->Database: 19.2 Insert MediaLinks
+        Database-->RequestRepository: 20.2 Return insert result
+    end
+    RequestRepository->Database: 21.2 Commit transaction
+    Database-->RequestRepository: 22.2 Return commit result
+    RequestRepository-->RequestService: 23.2 Return created request
+    deactivate RequestRepository
+    
+    RequestService->RequestRepository: 24.2 GetRequestByIdWithRelationsAsync(requestId)
+    activate RequestRepository
+    RequestRepository->Database: 25.2 Get request with relations
+    Database-->RequestRepository: 26.2 Return request data
+    RequestRepository-->RequestService: 27.2 Return request with relations
+    deactivate RequestRepository
+    
+    RequestService->RequestService: 28.2 Map to RequestResponseDTO
+    RequestService->RequestRepository: 29.2 GetAllImagesByRequestMessageIdAsync(messageId) for each message
+    activate RequestRepository
+    RequestRepository->Database: 30.2 Get images for each message
+    Database-->RequestRepository: 31.2 Return images list
+    RequestRepository-->RequestService: 32.2 Return images list
+    deactivate RequestRepository
+    
+    RequestService-->RequestTicketController: 33.2 Return success (RequestResponseDTO)
+    deactivate RequestService
+    RequestTicketController->OrderHistoryUI: 34.2 Return 201 Created (RequestResponseDTO)
+    deactivate RequestTicketController
+    OrderHistoryUI->Customer: 36.2 Show success message and display created request
+end
+

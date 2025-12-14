@@ -1,0 +1,60 @@
+title Get Identity Numbers By Product ID Sequence Diagram
+
+participant Staff
+participant InventoryUI
+participant ExportInventoryController
+participant ExportInventoryService
+participant OrderDetailRepository
+participant ExportInventoryRepository
+participant Database
+
+Staff->InventoryUI: 1. Request identity numbers (productId)
+InventoryUI->ExportInventoryController: 2. GET /api/ExportInventory/identity-numbers/{productId}
+activate ExportInventoryController
+
+note over ExportInventoryController: Requires Authorization
+
+ExportInventoryController->ExportInventoryService: 3. Call GetIdentityNumbersAsync(productId)
+activate ExportInventoryService
+
+ExportInventoryService->OrderDetailRepository: 4. IsSerialRequiredByProductIdAsync(productId)
+activate OrderDetailRepository
+OrderDetailRepository->Database: 5. Check if product requires serial
+Database-->OrderDetailRepository: 6. Return serial requirement status
+OrderDetailRepository-->ExportInventoryService: 7. Return requiresSerial (bool)
+deactivate OrderDetailRepository
+
+alt Serial Not Required
+    ExportInventoryService->ExportInventoryRepository: 8.1 GetAllLotNumbersByProductIdAsync(productId)
+    activate ExportInventoryRepository
+    ExportInventoryRepository->Database: 9.1 Get all lot numbers by product
+    Database-->ExportInventoryRepository: 10.1 Return lot numbers list
+    ExportInventoryRepository-->ExportInventoryService: 11.1 Return lotNumbers
+    deactivate ExportInventoryRepository
+    ExportInventoryService->ExportInventoryRepository: 12.1 GetNumberOfProductsLeftInInventoryThruLotNumbersAsync(lotNumbers)
+    activate ExportInventoryRepository
+    ExportInventoryRepository->Database: 13.1 Calculate remaining quantities by lot numbers
+    Database-->ExportInventoryRepository: 14.1 Return lotQuantities
+    ExportInventoryRepository-->ExportInventoryService: 15.1 Return lotQuantities
+    deactivate ExportInventoryRepository
+    ExportInventoryService->ExportInventoryService: 16.1 Map to LotNumberResponseDTO
+    ExportInventoryService-->ExportInventoryController: 17.1 Return success (IdentityNumberDTO with LotNumberInfo)
+    deactivate ExportInventoryService
+    ExportInventoryController->InventoryUI: 18.1 Return 200 OK (IdentityNumberDTO)
+    deactivate ExportInventoryController
+    InventoryUI->Staff: 19.1 Display lot numbers with quantities
+else Serial Required
+    ExportInventoryService->ExportInventoryRepository: 8.2 GetSerialNumbersWithLotNumbersByProductIdAsync(productId)
+    activate ExportInventoryRepository
+    ExportInventoryRepository->Database: 9.2 Get serial numbers with lot numbers by product
+    Database-->ExportInventoryRepository: 10.2 Return serial numbers list
+    ExportInventoryRepository-->ExportInventoryService: 11.2 Return serialNumbers
+    deactivate ExportInventoryRepository
+    ExportInventoryService->ExportInventoryService: 12.2 Map to SerialNumberResponseDTO
+    ExportInventoryService-->ExportInventoryController: 13.2 Return success (IdentityNumberDTO with SerialNumberInfo)
+    deactivate ExportInventoryService
+    ExportInventoryController->InventoryUI: 14.2 Return 200 OK (IdentityNumberDTO)
+    deactivate ExportInventoryController
+    InventoryUI->Staff: 15.2 Display serial numbers with lot numbers
+end
+

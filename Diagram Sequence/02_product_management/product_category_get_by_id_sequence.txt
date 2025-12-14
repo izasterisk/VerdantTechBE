@@ -1,0 +1,35 @@
+title Get Product Category By ID Sequence Diagram
+
+participant Client
+participant ProductCategoryUI
+participant ProductCategoryController
+participant ProductCategoryService
+participant Database
+
+Client->ProductCategoryUI: 1. Request category details (id)
+ProductCategoryUI->ProductCategoryController: 2. GET /api/ProductCategory/{id}
+activate ProductCategoryController
+
+note over ProductCategoryController: Requires Authorization
+
+ProductCategoryController->ProductCategoryService: 3. Call GetProductCategoryByIdAsync(id)
+activate ProductCategoryService
+
+ProductCategoryService->Database: 4. Check if category exists
+Database-->ProductCategoryService: 5. Return category existence status
+
+alt Category Not Found
+    ProductCategoryService-->ProductCategoryController: 6.1 Return null
+    ProductCategoryController->ProductCategoryUI: 7.1 Return 404 Not Found
+    ProductCategoryUI->Client: 8.1 Show error message
+    deactivate ProductCategoryService
+    deactivate ProductCategoryController
+else Category Found
+    ProductCategoryService->Database: 6.2 Get category details
+    Database-->ProductCategoryService: 7.2 Return category data
+    ProductCategoryService-->ProductCategoryController: 8.2 Return success message (ProductCategoryResponseDTO)
+    deactivate ProductCategoryService
+    ProductCategoryController->ProductCategoryUI: 9.2 Return 200 OK (ProductCategoryResponseDTO)
+    deactivate ProductCategoryController
+    ProductCategoryUI->Client: 10.2 Display category details
+end

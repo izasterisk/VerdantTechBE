@@ -1,0 +1,66 @@
+title Update User Sequence Diagram
+
+participant User
+participant UserManagementUI
+participant UserController
+participant UserService
+participant UserRepository
+participant Database
+
+User->UserManagementUI: 1. Update user details (id, dto)
+UserManagementUI->UserController: 2. PATCH /api/User/{id} (UserUpdateDTO)
+activate UserController
+
+note over UserController: Requires Authorization
+
+UserController->UserController: 3. ValidateModel()
+alt Validation Failed
+    UserController->UserManagementUI: 4.1 Return 400 Bad Request
+    UserManagementUI->User: 5.1 Show error message
+    deactivate UserController
+else Validation Success
+    UserController->UserService: 4.2 Call UpdateUserAsync(id, dto)
+    activate UserService
+    
+    UserService->UserRepository: 5.2 GetUserWithAddressesByIdAsync(id)
+    activate UserRepository
+    UserRepository->Database: 6.2 Check if user exists
+    Database-->UserRepository: 7.2 Return user data
+    UserRepository-->UserService: 8.2 Return user or null
+    deactivate UserRepository
+    
+    alt User Not Found
+        UserService-->UserController: 7.1 Return failure message
+        UserController->UserManagementUI: 8.1 Return 404 Not Found
+        UserManagementUI->User: 9.1 Show error message
+        deactivate UserService
+        deactivate UserController
+    else User Found
+        opt Status Update Requested
+            alt User Already Deleted
+                UserService-->UserController: 7.2.1 Return failure message
+                UserController->UserManagementUI: 8.2.1 Return 400 Bad Request
+                UserManagementUI->User: 9.2.1 Show error message
+                deactivate UserService
+                deactivate UserController
+            else Status Change Valid
+                opt Status = Deleted
+                    UserService->UserService: 7.2.2 Set DeletedAt = DateTime.UtcNow
+                end
+                UserService->UserService: 7.2.3 Update user.Status
+            end
+        end
+        UserService->UserRepository: 9.2 UpdateUserWithTransactionAsync(user)
+        activate UserRepository
+        UserRepository->Database: 10.2 Update user information
+        Database-->UserRepository: 11.2 Return update result
+        UserRepository-->UserService: 12.2 Return updated user
+        deactivate UserRepository
+        UserService-->UserController: 13.2 Return success message (UserResponseDTO)
+        deactivate UserService
+        UserController->UserManagementUI: 11.2 Return 200 OK (UserResponseDTO)
+        deactivate UserController
+        UserManagementUI->User: 12.2 Display updated user
+    end
+end
+

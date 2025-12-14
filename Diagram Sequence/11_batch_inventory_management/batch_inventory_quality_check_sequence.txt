@@ -1,0 +1,58 @@
+title Quality Check Batch Inventory Sequence Diagram
+
+participant Staff
+participant InventoryUI
+participant BatchInventoryController
+participant BatchInventoryService
+participant BatchInventoryRepository
+participant ProductSerialRepository
+participant Database
+
+Staff->InventoryUI: 1. Quality check batch inventory (id, dto)
+InventoryUI->BatchInventoryController: 2. POST /api/BatchInventory/{id}/quality-check (BatchInventoryQualityCheckDTO)
+activate BatchInventoryController
+
+BatchInventoryController->BatchInventoryService: 3. Call QualityCheckAsync(id, dto)
+activate BatchInventoryService
+
+BatchInventoryService->BatchInventoryRepository: 4. GetByIdAsync(id)
+activate BatchInventoryRepository
+BatchInventoryRepository->Database: 5. Check if batch inventory exists
+Database-->BatchInventoryRepository: 6. Return batch inventory data
+BatchInventoryRepository-->BatchInventoryService: 7. Return batchInventory or null
+deactivate BatchInventoryRepository
+
+alt Batch Inventory Not Found
+    BatchInventoryService-->BatchInventoryController: 8.1 Throw KeyNotFoundException
+    BatchInventoryController->InventoryUI: 9.1 Return 404 Not Found
+    InventoryUI->Staff: 10.1 Show error message
+    deactivate BatchInventoryService
+    deactivate BatchInventoryController
+else Batch Inventory Found
+    BatchInventoryService->BatchInventoryRepository: 8.2 QualityCheckAsync(id, status, qualityCheckedByUserId, notes)
+    activate BatchInventoryRepository
+    BatchInventoryRepository->Database: 9.2 Begin transaction
+    BatchInventoryRepository->Database: 10.2 Update quality check status and notes
+    Database-->BatchInventoryRepository: 11.2 Return update result
+    
+    opt Status = Passed and Serial Required and No Serials Exist
+        BatchInventoryRepository->BatchInventoryRepository: 12.2 Generate product serials
+        BatchInventoryRepository->ProductSerialRepository: 13.2 Create product serials
+        activate ProductSerialRepository
+        ProductSerialRepository->Database: 14.2 Insert product serials
+        Database-->ProductSerialRepository: 15.2 Return insert result
+        ProductSerialRepository-->BatchInventoryRepository: 16.2 Return create result
+        deactivate ProductSerialRepository
+    end
+    
+    BatchInventoryRepository->Database: 17.2 Commit transaction
+    Database-->BatchInventoryRepository: 18.2 Return commit result
+    BatchInventoryRepository-->BatchInventoryService: 19.2 Return success
+    deactivate BatchInventoryRepository
+    BatchInventoryService-->BatchInventoryController: 20.2 Return success message
+    deactivate BatchInventoryService
+    BatchInventoryController->InventoryUI: 21.2 Return 200 OK
+    deactivate BatchInventoryController
+    InventoryUI->Staff: 22.2 Display quality check result
+end
+

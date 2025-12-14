@@ -1,0 +1,38 @@
+title Get User By ID Sequence Diagram
+
+participant Admin
+participant UserManagementUI
+participant UserController
+participant UserService
+participant UserRepository
+participant Database
+
+Admin->UserManagementUI: 1. Request user details (id)
+UserManagementUI->UserController: 2. GET /api/User/{id}
+activate UserController
+
+note over UserController: Requires Authorization (Admin/Staff)
+
+UserController->UserService: 3. Call GetUserByIdAsync(id)
+activate UserService
+
+UserService->UserRepository: 4. GetUserWithAddressesByIdAsync(id)
+activate UserRepository
+UserRepository->Database: 5. Check if user exists
+Database-->UserRepository: 6. Return user data
+UserRepository-->UserService: 7. Return user or null
+deactivate UserRepository
+
+alt User Not Found
+    UserService-->UserController: 8.1 Return failure message
+    UserController->UserManagementUI: 9.1 Return 404 Not Found
+    UserManagementUI->Admin: 10.1 Show error message
+    deactivate UserService
+    deactivate UserController
+else User Found
+    UserService-->UserController: 8.2 Return success message (UserResponseDTO)
+    deactivate UserService
+    UserController->UserManagementUI: 9.2 Return 200 OK (UserResponseDTO)
+    deactivate UserController
+    UserManagementUI->Admin: 10.2 Display user details
+end

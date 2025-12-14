@@ -1,0 +1,35 @@
+title Get Districts By Province Sequence Diagram
+
+participant Client
+participant AddressUI
+participant AddressController
+participant AddressService
+participant GoshipAddressApiClient
+participant GoShipAPI
+
+Client->AddressUI: 1. Request districts list (provinceId)
+AddressUI->AddressController: 2. GET /api/Address/districts?provinceId={provinceId}
+activate AddressController
+
+AddressController->AddressController: 3. Validate provinceId
+alt ProvinceId is empty
+    AddressController->AddressUI: 3.1 Return 400 Bad Request
+    deactivate AddressController
+else ProvinceId is valid
+    AddressController->AddressService: 3.2 Call GetDistrictsAsync(provinceId)
+    activate AddressService
+
+    AddressService->GoshipAddressApiClient: 4. GoshipGetDistrictsAsync(provinceId)
+    activate GoshipAddressApiClient
+    GoshipAddressApiClient->GoShipAPI: 5. HTTP GET /districts?provinceId={provinceId}
+    GoShipAPI-->GoshipAddressApiClient: 6. Return districts list
+    GoshipAddressApiClient-->AddressService: 7. Return List<CourierDistrictResponseDTO>
+    deactivate GoshipAddressApiClient
+
+    AddressService-->AddressController: 8. Return districts list
+    deactivate AddressService
+
+    AddressController->AddressUI: 9. Return 200 OK (APIResponse with districts)
+    deactivate AddressController
+    AddressUI->Client: 10. Display districts list
+end

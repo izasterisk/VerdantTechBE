@@ -1,0 +1,89 @@
+title Create Product Review Sequence Diagram
+
+participant Customer
+participant OrderHistoryUI
+participant ProductReviewController
+participant CloudinaryService
+participant ProductReviewService
+participant OrderRepository
+participant ProductReviewRepository
+participant ProductRepository
+participant Database
+
+Customer->OrderHistoryUI: 1. Click "Đánh giá sản phẩm" button
+OrderHistoryUI->ProductReviewController: 2. POST /api/ProductReview (CreateReviewForm)
+activate ProductReviewController
+
+note over ProductReviewController: Requires Authorization (Customer)
+
+ProductReviewController->ProductReviewController: 3. ValidateModel()
+ProductReviewController->ProductReviewController: 4. GetCurrentUserId()
+
+opt Has Images
+    ProductReviewController->CloudinaryService: 5. UploadManyAsync(images)
+    activate CloudinaryService
+    CloudinaryService-->ProductReviewController: 6. Return upload results
+    deactivate CloudinaryService
+end
+
+ProductReviewController->ProductReviewService: 7. CreateProductReviewAsync(customerId, dto, imagesDto)
+activate ProductReviewService
+
+ProductReviewService->OrderRepository: 8. GetOrderWithRelationsByIdAsync(orderId)
+activate OrderRepository
+OrderRepository->Database: 9. Get order with details
+Database-->OrderRepository: 10. Return order
+OrderRepository-->ProductReviewService: 11. Return order
+deactivate OrderRepository
+
+ProductReviewService->ProductReviewService: 12. Validate order (belongs to customer, status valid, product in order)
+
+ProductReviewService->ProductReviewRepository: 13. GetProductReviewByProductOrderCustomerAsync(productId, orderId, customerId)
+activate ProductReviewRepository
+ProductReviewRepository->Database: 14. Check if review exists
+Database-->ProductReviewRepository: 15. Return review or null
+ProductReviewRepository-->ProductReviewService: 16. Return review or null
+deactivate ProductReviewRepository
+
+ProductReviewService->ProductReviewService: 17. Map DTO to ProductReview entity
+ProductReviewService->ProductReviewService: 17.1 Map images to MediaLink entities (if any)
+
+ProductReviewService->ProductReviewRepository: 18. CreateProductReviewWithTransactionAsync(review, mediaLinks)
+activate ProductReviewRepository
+ProductReviewRepository->Database: 19. Begin transaction
+ProductReviewRepository->Database: 20. Insert ProductReview
+opt Has MediaLinks
+    ProductReviewRepository->Database: 21. Insert MediaLinks
+end
+ProductReviewRepository->Database: 22. Commit transaction
+ProductReviewRepository-->ProductReviewService: 23. Return created review
+deactivate ProductReviewRepository
+
+ProductReviewService->ProductReviewRepository: 24. CalculateProductRatingAverageAsync(productId)
+activate ProductReviewRepository
+ProductReviewRepository->Database: 25. Calculate average rating
+Database-->ProductReviewRepository: 26. Return average
+ProductReviewRepository-->ProductReviewService: 27. Return average
+deactivate ProductReviewRepository
+
+ProductReviewService->ProductRepository: 28. UpdateProductAsync(product with RatingAverage)
+activate ProductRepository
+ProductRepository->Database: 29. Update product
+Database-->ProductRepository: 30. Return result
+ProductRepository-->ProductReviewService: 31. Return confirmation
+deactivate ProductRepository
+
+ProductReviewService->ProductReviewRepository: 32. GetAllImagesByReviewIdAsync(reviewId)
+activate ProductReviewRepository
+ProductReviewRepository->Database: 33. Get images
+Database-->ProductReviewRepository: 34. Return images
+ProductReviewRepository-->ProductReviewService: 35. Return images
+deactivate ProductReviewRepository
+
+ProductReviewService->ProductReviewService: 36. Map to ProductReviewResponseDTO
+ProductReviewService-->ProductReviewController: 37. Return ProductReviewResponseDTO
+deactivate ProductReviewService
+
+ProductReviewController->OrderHistoryUI: 38. Return 201 Created
+deactivate ProductReviewController
+OrderHistoryUI->Customer: 39. Show success message

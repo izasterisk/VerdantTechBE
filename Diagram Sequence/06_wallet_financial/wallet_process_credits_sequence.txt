@@ -1,0 +1,73 @@
+title Process Wallet Credits Sequence Diagram
+
+participant Vendor
+participant WalletUI
+participant WalletController
+participant WalletService
+participant WalletRepository
+participant Database
+
+Vendor->WalletUI: 1. Request process wallet credits
+WalletUI->WalletController: 2. POST /api/Wallet/process-credits
+activate WalletController
+
+note over WalletController: Requires Authorization (Vendor)
+
+WalletController->WalletService: 3. Call ProcessWalletCreditsAsync(userId)
+activate WalletService
+
+WalletService->WalletRepository: 4. ValidateVendorQualified(userId)
+activate WalletRepository
+WalletRepository->Database: 5. Check if user is vendor
+Database-->WalletRepository: 6. Return validation result
+WalletRepository-->WalletService: 7. Return isValid (bool)
+deactivate WalletRepository
+
+alt User Not Qualified
+    WalletService-->WalletController: 8.1 Return failure message
+    WalletController->WalletUI: 9.1 Return 404 Not Found
+    WalletUI->Vendor: 10.1 Show error message
+    deactivate WalletService
+    deactivate WalletController
+else User Qualified
+    WalletService->WalletRepository: 8.2 GetWalletByUserIdAsync(userId)
+    activate WalletRepository
+    WalletRepository->Database: 9.2 Get wallet by user ID
+    Database-->WalletRepository: 10.2 Return wallet data
+    WalletRepository-->WalletService: 11.2 Return wallet
+    deactivate WalletRepository
+    
+    WalletService->WalletRepository: 12.2 GetAllOrderDetailsAvailableForCreditAsync(userId)
+    activate WalletRepository
+    WalletRepository->Database: 13.2 Get order details available for credit
+    Database-->WalletRepository: 14.2 Return order details list
+    WalletRepository-->WalletService: 15.2 Return orderDetails
+    deactivate WalletRepository
+    
+    WalletService->WalletService: 16.2 Calculate balance from order details
+    WalletService->WalletService: 17.2 Mark order details as credited
+    WalletService->WalletService: 18.2 Update wallet balance
+    
+    WalletService->WalletRepository: 19.2 UpdateWalletAndOrderDetailsWithTransactionAsync(update, wallet)
+    activate WalletRepository
+    WalletRepository->Database: 20.2 Update wallet balance
+    Database-->WalletRepository: 21.2 Return update result
+    WalletRepository->Database: 22.2 Update order details IsWalletCredited
+    Database-->WalletRepository: 23.2 Return update result
+    WalletRepository-->WalletService: 24.2 Return success
+    deactivate WalletRepository
+    
+    WalletService->WalletRepository: 25.2 GetWalletByUserIdWithRelationsAsync(userId)
+    activate WalletRepository
+    WalletRepository->Database: 26.2 Get wallet with relations
+    Database-->WalletRepository: 27.2 Return wallet data
+    WalletRepository-->WalletService: 28.2 Return wallet
+    deactivate WalletRepository
+    
+    WalletService-->WalletController: 29.2 Return success message (WalletResponseDTO)
+    deactivate WalletService
+    WalletController->WalletUI: 30.2 Return 200 OK (WalletResponseDTO)
+    deactivate WalletController
+    WalletUI->Vendor: 31.2 Display updated wallet balance
+end
+

@@ -1,0 +1,63 @@
+title User Login Sequence Diagram
+
+participant User
+participant LoginUI
+participant AuthController
+participant AuthService
+participant AuthRepository
+participant UserRepository
+participant Database
+
+User->LoginUI: 1. Enter email and password
+LoginUI->AuthController: 2. POST /api/Auth/login (LoginDTO)
+activate AuthController
+
+AuthController->AuthController: 3. ValidateModel()
+alt Validation Failed
+    AuthController->LoginUI: 4.1 Return 400 Bad Request
+    LoginUI->User: 5.1 Show error message
+    deactivate AuthController
+else Validation Success
+    AuthController->AuthService: 4.2 Call LoginAsync(loginDto)
+    activate AuthService
+    
+    AuthService->AuthRepository: 5.2 GetUserByEmailAsync(email)
+    activate AuthRepository
+    AuthRepository->Database: 6.2 Check if email exists
+    Database-->AuthRepository: 7.2 Return user data
+    AuthRepository-->AuthService: 8.2 Return user or null
+    deactivate AuthRepository
+    
+    alt User Not Found
+        AuthService-->AuthController: 7.1 Return failure message
+        AuthController->LoginUI: 8.1 Return 400 Bad Request
+        LoginUI->User: 9.1 Show error message
+        deactivate AuthService
+        deactivate AuthController
+    else User Found
+        AuthService->AuthService: 7.2 Validate user status
+        AuthService->AuthService: 7.3 Validate password
+        alt Invalid Credentials or Status
+            AuthService-->AuthController: 8.2.1 Return failure message
+            AuthController->LoginUI: 9.2.1 Return 400 Bad Request
+            LoginUI->User: 10.2.1 Show error message
+            deactivate AuthService
+            deactivate AuthController
+        else Valid Credentials
+            AuthService->AuthService: 9.2.2 Generate JWT token
+            AuthService->AuthService: 9.2.3 Generate refresh token
+            AuthService->UserRepository: 10.2.2 UpdateUserWithTransactionAsync(user)
+            activate UserRepository
+            UserRepository->Database: 11.2.2 Update user tokens and last login
+            Database-->UserRepository: 12.2.2 Return update result
+            UserRepository-->AuthService: 13.2.2 Return updated user
+            deactivate UserRepository
+            AuthService-->AuthController: 14.2.2 Return success message (LoginResponseDTO)
+            deactivate AuthService
+            AuthController->LoginUI: 15.2.2 Return 200 OK (LoginResponseDTO)
+            deactivate AuthController
+            LoginUI->User: 16.2.2 Display success and store tokens
+        end
+    end
+end
+

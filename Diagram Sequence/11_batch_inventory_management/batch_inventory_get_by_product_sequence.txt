@@ -1,0 +1,44 @@
+title Get Batch Inventories By Product ID Sequence Diagram
+
+participant Staff
+participant InventoryUI
+participant BatchInventoryController
+participant BatchInventoryService
+participant ProductRepository
+participant BatchInventoryRepository
+participant Database
+
+Staff->InventoryUI: 1. Request batch inventories by product (productId, page, pageSize)
+InventoryUI->BatchInventoryController: 2. GET /api/BatchInventory/product/{productId}?page={page}&pageSize={pageSize}
+activate BatchInventoryController
+
+BatchInventoryController->BatchInventoryService: 3. Call GetByProductIdAsync(productId, page, pageSize)
+activate BatchInventoryService
+
+BatchInventoryService->ProductRepository: 4. GetProductByIdAsync(productId, useNoTracking: true)
+activate ProductRepository
+ProductRepository->Database: 5. Check if product exists
+Database-->ProductRepository: 6. Return product data
+ProductRepository-->BatchInventoryService: 7. Return product or null
+deactivate ProductRepository
+
+alt Product Not Found
+    BatchInventoryService-->BatchInventoryController: 8.1 Throw KeyNotFoundException
+    BatchInventoryController->InventoryUI: 9.1 Return 404 Not Found
+    InventoryUI->Staff: 10.1 Show error message
+    deactivate BatchInventoryService
+    deactivate BatchInventoryController
+else Product Found
+    BatchInventoryService->BatchInventoryRepository: 8.2 GetByProductIdAsync(productId, page, pageSize)
+    activate BatchInventoryRepository
+    BatchInventoryRepository->Database: 9.2 Get batch inventories by product with pagination
+    Database-->BatchInventoryRepository: 10.2 Return batch inventories list
+    BatchInventoryRepository-->BatchInventoryService: 11.2 Return batchInventories
+    deactivate BatchInventoryRepository
+    BatchInventoryService-->BatchInventoryController: 12.2 Return success (IEnumerable<BatchInventoryResponeDTO>)
+    deactivate BatchInventoryService
+    BatchInventoryController->InventoryUI: 13.2 Return 200 OK (IEnumerable<BatchInventoryResponeDTO>)
+    deactivate BatchInventoryController
+    InventoryUI->Staff: 14.2 Display batch inventories list
+end
+

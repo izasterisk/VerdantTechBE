@@ -1,0 +1,77 @@
+title Create Product from Registration Sequence Diagram
+
+participant Admin
+participant ProductRegistrationController
+participant ProductRegistrationService
+participant Database
+participant ProductRepository
+participant MediaLinkRepository
+
+note over Admin,MediaLinkRepository: This happens when Admin approves ProductRegistration
+
+Admin->ProductRegistrationController: PATCH /api/ProductRegistrations/{id}/status
+activate ProductRegistrationController
+
+note over ProductRegistrationController: Body: { status: "Approved", approvedBy: adminId }
+
+ProductRegistrationController->ProductRegistrationService: ChangeStatusAsync(id, Approved, null, approvedBy)
+activate ProductRegistrationService
+
+ProductRegistrationService->Database: SELECT * FROM product_registrations WHERE id = ?
+Database-->ProductRegistrationService: ProductRegistration entity
+
+alt Registration Not Found
+    ProductRegistrationService-->ProductRegistrationController: false
+    ProductRegistrationController->Admin: 404 Not Found
+    deactivate ProductRegistrationService
+    deactivate ProductRegistrationController
+else Registration Found
+    ProductRegistrationService->ProductRegistrationService: Set status = Approved
+    ProductRegistrationService->ProductRegistrationService: Set approvedBy, approvedAt
+    ProductRegistrationService->ProductRegistrationService: Map ProductRegistration to Product entity
+    ProductRegistrationService->ProductRegistrationService: Generate slug from product name
+    ProductRegistrationService->ProductRegistrationService: Set IsActive = true
+    
+    ProductRegistrationService->Database: BEGIN TRANSACTION
+    ProductRegistrationService->Database: UPDATE product_registrations SET status=?, approved_by=?, approved_at=?, updated_at=?
+    Database-->ProductRegistrationService: Registration updated
+    
+    ProductRegistrationService->ProductRepository: Add Product to DbSet
+    ProductRepository->Database: INSERT INTO products (category_id, vendor_id, product_code, product_name, ...)
+    Database-->ProductRepository: Product created with ID
+    ProductRepository-->ProductRegistrationService: Product entity with ID
+    
+    ProductRegistrationService->MediaLinkRepository: Get product images from registration
+    MediaLinkRepository->Database: SELECT * FROM media_links WHERE owner_type = 'ProductRegistrations' AND owner_id = ? ORDER BY sort_order
+    Database-->MediaLinkRepository: Registration images
+    MediaLinkRepository-->ProductRegistrationService: List<MediaLink>
+    
+    opt Registration Has Images
+        ProductRegistrationService->ProductRegistrationService: Clone MediaLinks (change OwnerType to Products, OwnerId to product.Id)
+        ProductRegistrationService->MediaLinkRepository: Add cloned MediaLinks
+        MediaLinkRepository->Database: INSERT INTO media_links (owner_type, owner_id, image_public_id, ...) VALUES ...
+        Database-->MediaLinkRepository: Images copied
+    end
+    
+    opt Registration Has Certificates
+        ProductRegistrationService->MediaLinkRepository: Get certificates from registration
+        MediaLinkRepository->Database: SELECT * FROM media_links WHERE owner_type = 'ProductCertificates' AND owner_id = ? ORDER BY sort_order
+        Database-->MediaLinkRepository: Registration certificates
+        MediaLinkRepository-->ProductRegistrationService: List<MediaLink>
+        
+        ProductRegistrationService->ProductRegistrationService: Clone certificate MediaLinks (OwnerId = product.Id)
+        ProductRegistrationService->MediaLinkRepository: Add cloned certificate MediaLinks
+        MediaLinkRepository->Database: INSERT INTO media_links (owner_type='ProductCertificates', owner_id=?, ...) VALUES ...
+        Database-->MediaLinkRepository: Certificates copied
+    end
+    
+    ProductRegistrationService->Database: COMMIT TRANSACTION
+    Database-->ProductRegistrationService: Transaction committed
+    
+    ProductRegistrationService-->ProductRegistrationController: true
+    deactivate ProductRegistrationService
+    
+    ProductRegistrationController->Admin: 204 No Content (Success)
+    deactivate ProductRegistrationController
+end
+

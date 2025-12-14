@@ -1,0 +1,37 @@
+title Get Product By ID Sequence Diagram
+
+participant Client
+participant ProductUI
+participant ProductController
+participant ProductService
+participant ProductRepository
+participant Database
+
+Client->ProductUI: 1. Request product details (id)
+ProductUI->ProductController: 2. GET /api/Product/{id}
+activate ProductController
+
+ProductController->ProductService: 3. Call GetByIdAsync(id)
+activate ProductService
+
+ProductService->ProductRepository: 4. GetProductByIdAsync(id, useNoTracking: true)
+activate ProductRepository
+ProductRepository->Database: 5. Check if product exists
+Database-->ProductRepository: 6. Return product data
+ProductRepository-->ProductService: 7. Return product or null
+deactivate ProductRepository
+
+alt Product Not Found
+    ProductService-->ProductController: 8.1 Return null
+    ProductController->ProductUI: 9.1 Return 404 Not Found
+    ProductUI->Client: 10.1 Show error message
+    deactivate ProductService
+    deactivate ProductController
+else Product Found
+    ProductService->ProductService: 8.2 Load product images
+    ProductService-->ProductController: 9.2 Return success message (ProductResponseDTO)
+    deactivate ProductService
+    ProductController->ProductUI: 10.2 Return 200 OK (ProductResponseDTO)
+    deactivate ProductController
+    ProductUI->Client: 11.2 Display product details
+end

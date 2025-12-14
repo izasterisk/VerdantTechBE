@@ -1,0 +1,47 @@
+title Delete Wallet Cashout Request Sequence Diagram
+
+participant Vendor
+participant WalletUI
+participant WalletController
+participant WalletService
+participant WalletRepository
+participant CashoutRepository
+participant Database
+
+Vendor->WalletUI: 1. Delete cashout request
+WalletUI->WalletController: 2. DELETE /api/Wallet/cashout
+activate WalletController
+
+note over WalletController: Requires Authorization (Vendor)
+
+WalletController->WalletService: 3. Call DeleteWalletCashoutRequestAsync(userId)
+activate WalletService
+
+WalletService->WalletRepository: 4. GetWalletCashoutRequestByUserIdAsync(userId)
+activate WalletRepository
+WalletRepository->Database: 5. Get cashout request by user ID
+Database-->WalletRepository: 6. Return cashout data
+WalletRepository-->WalletService: 7. Return cashout or null
+deactivate WalletRepository
+
+alt Cashout Not Found
+    WalletService-->WalletController: 8.1 Return failure message
+    WalletController->WalletUI: 9.1 Return 404 Not Found
+    WalletUI->Vendor: 10.1 Show error message
+    deactivate WalletService
+    deactivate WalletController
+else Cashout Found
+    WalletService->CashoutRepository: 8.2 DeleteCashoutAsync(cashout)
+    activate CashoutRepository
+    CashoutRepository->Database: 9.2 Remove cashout request
+    Database-->CashoutRepository: 10.2 Return delete result
+    CashoutRepository-->WalletService: 11.2 Return success (bool)
+    deactivate CashoutRepository
+    
+    WalletService-->WalletController: 12.2 Return success
+    deactivate WalletService
+    WalletController->WalletUI: 13.2 Return 204 No Content
+    deactivate WalletController
+    WalletUI->Vendor: 14.2 Confirm deletion
+end
+

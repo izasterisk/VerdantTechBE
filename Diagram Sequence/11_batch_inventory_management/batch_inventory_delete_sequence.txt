@@ -1,0 +1,50 @@
+title Delete Batch Inventory Sequence Diagram
+
+participant Staff
+participant InventoryUI
+participant BatchInventoryController
+participant BatchInventoryService
+participant BatchInventoryRepository
+participant ProductRepository
+participant Database
+
+Staff->InventoryUI: 1. Delete batch inventory (id)
+InventoryUI->BatchInventoryController: 2. DELETE /api/BatchInventory/{id}
+activate BatchInventoryController
+
+BatchInventoryController->BatchInventoryService: 3. Call DeleteAsync(id)
+activate BatchInventoryService
+
+BatchInventoryService->BatchInventoryRepository: 4. GetByIdAsync(id)
+activate BatchInventoryRepository
+BatchInventoryRepository->Database: 5. Check if batch inventory exists
+Database-->BatchInventoryRepository: 6. Return batch inventory data
+BatchInventoryRepository-->BatchInventoryService: 7. Return batchInventory or null
+deactivate BatchInventoryRepository
+
+alt Batch Inventory Not Found
+    BatchInventoryService-->BatchInventoryController: 8.1 Throw KeyNotFoundException
+    BatchInventoryController->InventoryUI: 9.1 Return 404 Not Found
+    InventoryUI->Staff: 10.1 Show error message
+    deactivate BatchInventoryService
+    deactivate BatchInventoryController
+else Batch Inventory Found
+    BatchInventoryService->BatchInventoryRepository: 8.2 DeleteAsync(id)
+    activate BatchInventoryRepository
+    BatchInventoryRepository->Database: 9.2 Remove batch inventory and related product serials
+    Database-->BatchInventoryRepository: 10.2 Return delete result
+    BatchInventoryRepository-->BatchInventoryService: 11.2 Return delete result
+    deactivate BatchInventoryRepository
+    BatchInventoryService->ProductRepository: 12.2 UpdateProductStock(productId)
+    activate ProductRepository
+    ProductRepository->Database: 13.2 Calculate total quantity and update product stock
+    Database-->ProductRepository: 14.2 Return update result
+    ProductRepository-->BatchInventoryService: 15.2 Return update result
+    deactivate ProductRepository
+    BatchInventoryService-->BatchInventoryController: 16.2 Return success
+    deactivate BatchInventoryService
+    BatchInventoryController->InventoryUI: 17.2 Return 204 No Content
+    deactivate BatchInventoryController
+    InventoryUI->Staff: 18.2 Confirm deletion
+end
+
