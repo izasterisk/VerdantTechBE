@@ -289,16 +289,7 @@ namespace BLL.Services
             await UpdateProductStock(exists.ProductId, ct);
         }
 
-        public async Task QualityCheckAsync(ulong id, BatchInventoryQualityCheckDTO dto, CancellationToken ct = default)
-        {
-            var exists = await _repo.GetByIdAsync(id, ct);
-
-            if (exists == null)
-                throw new KeyNotFoundException($"Không tìm thấy kho hàng có ID {id}");
-
-            await _repo.QualityCheckAsync(id, dto.Status, dto.QualityCheckedByUserId, dto.Notes, ct);
-
-        }
+       
 
         public async Task<IEnumerable<ProductSerial>> GetAllSerialsByProductIdAsync(ulong productId, CancellationToken ct = default)
         {

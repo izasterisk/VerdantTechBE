@@ -20,10 +20,6 @@ namespace BLL.DTO.BatchInventory
             public DateOnly? ExpiryDate { get; set; }
             public DateOnly? ManufacturingDate { get; set; }
 
-            public QualityCheckStatus QualityCheckStatus { get; set; }
-            public ulong? QualityCheckedBy { get; set; }
-            public DateTime? QualityCheckedAt { get; set; }
-
             public string? Notes { get; set; }
 
             public DateTime CreatedAt { get; set; }
@@ -32,7 +28,6 @@ namespace BLL.DTO.BatchInventory
             //// Optional: lấy thêm info điều hướng
             public string? ProductName { get; set; }
             public string? VendorName { get; set; }
-            public string? QualityCheckedByName { get; set; }
         }
     }
 

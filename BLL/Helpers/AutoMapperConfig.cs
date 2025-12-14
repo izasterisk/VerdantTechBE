@@ -296,16 +296,10 @@ namespace BLL.Helpers
                 .ForMember(d => d.Sku, o => o.Ignore()) // SKU được tự động generate trong Service
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
                 .ForMember(d => d.UpdatedAt, o => o.Ignore())
-                .ForMember(d => d.ProductSerials, o => o.Ignore())
-                .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
-                .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
-                .ForMember(d => d.QualityCheckedAt, o => o.Ignore());
+                .ForMember(d => d.ProductSerials, o => o.Ignore());
+               
 
-            CreateMap<BatchInventoryQualityCheckDTO, BatchInventory>()
-                .ForMember(d => d.Id, o => o.Ignore())
-                .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
-                .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
-                .ForMember(d => d.Notes, o => o.Ignore());
+           
 
             CreateMap<BatchInventoryUpdateDTO, BatchInventory>()
                 .ForMember(d => d.Id, o => o.Ignore())
@@ -316,15 +310,11 @@ namespace BLL.Helpers
                 .ForMember(d => d.VendorId, o => o.Ignore())
                 .ForMember(d => d.CreatedAt, o => o.Ignore())
                 .ForMember(d => d.ProductSerials, o => o.Ignore())
-                .ForMember(d => d.QualityCheckStatus, o => o.Ignore())
-                .ForMember(d => d.QualityCheckedBy, o => o.Ignore())
-                .ForMember(d => d.QualityCheckedAt, o => o.Ignore())
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             CreateMap<BatchInventory, BatchInventoryResponeDTO>()
                 .ForMember(dest => dest.ProductName, o => o.MapFrom(src => src.Product != null ? src.Product.ProductName : null))
-                .ForMember(dest => dest.VendorName, o => o.MapFrom(src => src.Vendor != null ? src.Vendor.FullName : null))
-                .ForMember(dest => dest.QualityCheckedByName, o => o.MapFrom(src => src.QualityCheckedByNavigation != null ? src.QualityCheckedByNavigation.FullName : null));
+                .ForMember(dest => dest.VendorName, o => o.MapFrom(src => src.Vendor != null ? src.Vendor.FullName : null));
 
             // ===================== REQUEST =====================
             CreateMap<RequestCreateDTO, Request>();
