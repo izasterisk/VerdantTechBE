@@ -109,26 +109,12 @@ public class ProductSnapshotConfiguration : IEntityTypeConfiguration<ProductSnap
             .HasColumnName("warranty_months")
             .HasDefaultValue(12);
 
-        // JSON columns
-        var specificationsConverter = new ValueConverter<Dictionary<string, object>, string>(
-            v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-            v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new Dictionary<string, object>()
-        );
-
+        // JSON columns - Using JsonHelpers for converter and comparer
         builder.Property(e => e.Specifications)
-            .HasColumnType("json")
-            .HasColumnName("specifications")
-            .HasConversion(specificationsConverter);
-
-        var dimensionsConverter = new ValueConverter<Dictionary<string, decimal>, string>(
-            v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-            v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, decimal>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new Dictionary<string, decimal>()
-        );
+            .ConfigureAsJson("specifications");
 
         builder.Property(e => e.DimensionsCm)
-            .HasColumnType("json")
-            .HasColumnName("dimensions_cm")
-            .HasConversion(dimensionsConverter);
+            .ConfigureAsJson("dimensions_cm");
 
         // Enum
         var snapshotTypeConverter = new ValueConverter<ProductSnapshotType, string>(
