@@ -11,38 +11,53 @@ activate UserController
 
 UserController->UserController: 2. ValidateModel()
 alt Validation Failed
-    UserController->Client: 3.1 Return 400 Bad Request
+    UserController->Client: 3. Return 400 Bad Request
     deactivate UserController
 else Validation Success
-    UserController->UserService: 3.2 Call CreateUserAsync(dto)
+    UserController->UserService: 4. Call CreateUserAsync(dto, cancellationToken)
     activate UserService
     
-    UserService->UserRepository: 4. CheckEmailExistsAsync(email)
+    UserService->UserRepository: 5. CheckEmailExistsAsync(email)
     activate UserRepository
-    UserRepository->Database: 5. Check if email exists
-    Database-->UserRepository: 6. Return email existence status
-    UserRepository-->UserService: 7. Return emailExists (bool)
+    UserRepository->Database: 6. Query email existence
+    activate Database
+    Database-->UserRepository: 7. Return exists status
+    deactivate Database
+    UserRepository-->UserService: 8. Return emailExists (bool)
     deactivate UserRepository
     
     alt Email Already Exists
-        UserService-->UserController: 8.1 Return failure message
-        UserController->Client: 9.1 Return 400 Bad Request
+        UserService->UserService: 9a. Throw Exception("Email already exists")
+        UserService-->UserController: 10a. Exception propagated
+        UserController->UserController: 11a. HandleException(ex)
+        UserController->Client: 12a. Return 400 Bad Request
         deactivate UserService
         deactivate UserController
     else Email Available
-        UserService->UserService: 8.2 Hash password
-        UserService->UserService: 8.3 Set IsVerified = false
-        UserService->UserService: 8.4 Set Role = Customer (default)
-        UserService->UserRepository: 9.2 CreateUserWithTransactionAsync(user)
+        UserService->UserService: 9b. Map DTO to User entity
+        UserService->UserService: 10b. Hash password
+        UserService->UserService: 11b. Set IsVerified = false
+        UserService->UserRepository: 12b. CreateUserWithTransactionAsync(user)
         activate UserRepository
-        UserRepository->Database: 10.2 Insert new user
-        Database-->UserRepository: 11.2 Return insert result
-        UserRepository-->UserService: 12.2 Return created user
+        UserRepository->Database: 13b. Begin Transaction
+        activate Database
+        UserRepository->UserRepository: 14b. Set LastLoginAt, CreatedAt, UpdatedAt
+        UserRepository->UserRepository: 15b. Set Status = Active
+        UserRepository->UserRepository: 16b. Set Role = Customer (default)
+        UserRepository->Database: 17b. INSERT new user
+        Database-->UserRepository: 18b. Return insert result
+        UserRepository->Database: 19b. Commit Transaction
+        Database-->UserRepository: 20b. Transaction committed
+        deactivate Database
+        UserRepository-->UserService: 21b. Return created User entity
         deactivate UserRepository
-        UserService-->UserController: 13.2 Return success message
+        UserService->UserService: 22b. Map User to UserResponseDTO
+        UserService-->UserController: 23b. Return UserResponseDTO
         deactivate UserService
-        UserController->Client: 14.2 Return 201 Created (UserResponseDTO)
+        UserController->Client: 24b. Return 201 Created (UserResponseDTO)
         deactivate UserController
     end
 end
+
+note over Client,Database: After registration, user should verify email\nby calling Send Verification endpoint
 

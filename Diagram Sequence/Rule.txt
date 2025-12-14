@@ -340,7 +340,91 @@ end
 note over Client,Database: After registration, user should verify email\nby calling Send Verification endpoint
 
 ========================================
-VII. GHI CHÚ BỔ SUNG
+VII. QUY TẮC PARTICIPANTS (QUAN TRỌNG)
+========================================
+
+✅ CHỈ BAO GỒM BACKEND COMPONENTS:
+   - Client (đại diện cho bất kỳ client nào: web, mobile, postman)
+   - Controller
+   - Service
+   - Repository
+   - Database
+
+❌ KHÔNG BAO GỒM:
+   - User (người dùng)
+   - UI components (LoginUI, RegisterUI, etc.)
+   - Frontend components
+
+Lý do: Đây là BACKEND sequence diagram, chỉ mô tả luồng xử lý phía server.
+
+Ví dụ SAI:
+participant User
+participant LoginUI
+participant AuthController
+...
+
+Ví dụ ĐÚNG:
+participant Client
+participant AuthController
+participant AuthService
+...
+
+========================================
+VIII. XỬ LÝ NESTED ALT (ĐIỀU KIỆN LỒNG NHAU)
+========================================
+
+Khi có nhiều điều kiện kiểm tra tuần tự (ValidateStatus → ValidateCredentials),
+cần sử dụng nested alt và đánh số rõ ràng với suffix:
+
+CÁCH ĐÁNH SỐ CHO NESTED ALT:
+- Nhánh đầu tiên: 9a, 10a, 11a...
+- Nhánh thứ hai level 1: 9b, 10b
+  - Sub-nhánh 1 level 2: 10b1, 11b1, 12b1...
+  - Sub-nhánh 2 level 2: 10b2, 11b2
+    - Sub-sub-nhánh 1 level 3: 11b2a, 12b2a...
+    - Sub-sub-nhánh 2 level 3: 11b2b, 12b2b...
+
+Ví dụ ĐÚNG (từ Login flow):
+
+alt User Not Found
+    AuthService->AuthService: 9a. Throw Exception
+    ...
+else User Found
+    AuthService->AuthService: 9b. ValidateUserStatus(user)
+    alt User Status Invalid
+        AuthService->AuthService: 10b1. Throw Exception
+        ...
+    else User Status Valid
+        AuthService->AuthService: 10b2. ValidateLoginCredentials(user, password)
+        alt Invalid Credentials
+            AuthService->AuthService: 11b2a. Throw Exception
+            ...
+        else Valid Credentials
+            AuthService->AuthService: 11b2b. Process login
+            ...
+        end
+    end
+end
+
+========================================
+IX. TÊN METHOD PHẢI CHÍNH XÁC
+========================================
+
+✅ LUÔN COPY EXACT tên method từ code:
+- GetUserWithFarmByEmailAsync() (ĐÚNG)
+- GetUserByEmailAsync() (SAI nếu code dùng GetUserWithFarmByEmailAsync)
+
+✅ BAO GỒM PARAMETERS quan trọng:
+- LoginAsync(loginDto, cancellationToken) (ĐÚNG)
+- LoginAsync(loginDto) (CHẤP NHẬN được nhưng thiếu cancellationToken)
+- LoginAsync() (SAI)
+
+✅ PRIVATE METHODS cũng cần thể hiện nếu quan trọng:
+- GenerateTokensAndUpdateUserAsync(user)
+- CreateLoginResponseDTO()
+
+========================================
+X. GHI CHÚ BỔ SUNG
 ========================================
 
 1. Tool hỗ trợ: sequencediagram.org hoặc tương tự
@@ -348,6 +432,8 @@ VII. GHI CHÚ BỔ SUNG
 3. Nếu diagram quá dài (>30 steps), cân nhắc chia nhỏ
 4. Tham khảo code thực tế TRƯỚC KHI vẽ
 5. Review lại checklist Section IV trước khi hoàn thành
+6. KHÔNG tạo file review riêng, chỉ sửa file diagram
+7. Khi review: thấy lỗi → sửa luôn, không cần báo cáo chi tiết
 
 ========================================
 CẬP NHẬT CUỐI: Dec 2025

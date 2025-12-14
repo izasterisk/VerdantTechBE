@@ -1,37 +1,36 @@
 title Get All Users Sequence Diagram
 
-participant Admin
-participant UserManagementUI
+participant Client
 participant UserController
 participant UserService
 participant UserRepository
 participant Database
 
-Admin->UserManagementUI: 1. Request user list (page, pageSize, role)
-UserManagementUI->UserController: 2. GET /api/User?page={page}&pageSize={pageSize}&role={role}
+Client->UserController: 1. GET /api/User?page={page}&pageSize={pageSize}&role={role}
 activate UserController
 
-note over UserController: Requires Authorization (Admin/Staff)
+UserController->UserService: 2. Call GetAllUsersAsync(page, pageSize, role, cancellationToken)
+activate UserService
 
-UserController->UserController: 3. Validate pagination parameters
-alt Invalid Parameters
-    UserController->UserManagementUI: 4.1 Return 400 Bad Request
-    UserManagementUI->Admin: 5.1 Show error message
-    deactivate UserController
-else Valid Parameters
-    UserController->UserService: 4.2 Call GetAllUsersAsync(page, pageSize, role)
-    activate UserService
-    
-    UserService->UserRepository: 5.2 GetAllUsersAsync(page, pageSize, role)
-    activate UserRepository
-    UserRepository->Database: 6.2 Get users list with filter
-    Database-->UserRepository: 7.2 Return users list and total count
-    UserRepository-->UserService: 8.2 Return (users, totalCount)
-    deactivate UserRepository
-    UserService->UserService: 9.2 Calculate pagination info
-    UserService-->UserController: 10.2 Return success message (PagedResponse)
-    deactivate UserService
-    UserController->UserManagementUI: 11.2 Return 200 OK (PagedResponse)
-    deactivate UserController
-    UserManagementUI->Admin: 12.2 Display user list with pagination
-end
+UserService->UserRepository: 3. GetAllUsersAsync(page, pageSize, role)
+activate UserRepository
+UserRepository->Database: 4. Query users with pagination and role filter
+activate Database
+Database-->UserRepository: 5. Return users list and total count
+deactivate Database
+UserRepository-->UserService: 6. Return (users, totalCount)
+deactivate UserRepository
+
+UserService->UserService: 7. Map users to UserResponseDTO list
+UserService->UserService: 8. Calculate totalPages = Ceiling(totalCount / pageSize)
+UserService->UserService: 9. Create PagedResponse object
+UserService->UserService: 10. Set CurrentPage, PageSize, TotalPages, TotalRecords
+UserService->UserService: 11. Set HasNextPage = (page < totalPages)
+UserService->UserService: 12. Set HasPreviousPage = (page > 1)
+UserService-->UserController: 13. Return PagedResponse<UserResponseDTO>
+deactivate UserService
+
+UserController->Client: 14. Return 200 OK (PagedResponse)
+deactivate UserController
+
+note over Client,Database: Requires Authorization: Admin or Staff role\nSupports pagination and optional role filter

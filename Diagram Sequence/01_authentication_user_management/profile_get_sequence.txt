@@ -1,40 +1,43 @@
 title Get User Profile Sequence Diagram
 
-participant User
-participant UserManagementUI
+participant Client
 participant AuthController
 participant UserService
 participant UserRepository
 participant Database
 
-User->UserManagementUI: 1. Request profile
-UserManagementUI->AuthController: 2. GET /api/Auth/profile
+Client->AuthController: 1. GET /api/Auth/profile
 activate AuthController
 
 note over AuthController: Requires Authorization (JWT Token)
 
-AuthController->AuthController: 3. GetCurrentUserId() (from JWT)
-AuthController->UserService: 4. Call GetUserByIdAsync(userId)
+AuthController->AuthController: 2. GetCurrentUserId() (from JWT)
+AuthController->UserService: 3. Call GetUserByIdAsync(userId, cancellationToken)
 activate UserService
 
-UserService->UserRepository: 5. GetUserWithAddressesByIdAsync(userId)
+UserService->UserRepository: 4. GetUserWithAddressesByIdAsync(userId, cancellationToken)
 activate UserRepository
-UserRepository->Database: 6. Check if user exists
-Database-->UserRepository: 7. Return user data
-UserRepository-->UserService: 8. Return user or null
+UserRepository->Database: 5. Query user by ID with addresses
+activate Database
+Database-->UserRepository: 6. Return user data or null
+deactivate Database
+UserRepository-->UserService: 7. Return user or null
 deactivate UserRepository
 
 alt User Not Found
-    UserService-->AuthController: 9.1 Return failure message
-    AuthController->UserManagementUI: 10.1 Return 404 Not Found
-    UserManagementUI->User: 11.1 Show error message
+    UserService->UserService: 8a. Throw Exception("Người dùng với ID {userId} không tồn tại")
+    UserService-->AuthController: 9a. Exception propagated
+    AuthController->AuthController: 10a. HandleException(ex)
+    AuthController->Client: 11a. Return 500 Internal Server Error
     deactivate UserService
     deactivate AuthController
 else User Found
-    UserService-->AuthController: 9.2 Return success message (UserResponseDTO)
+    UserService->UserService: 8b. Map User to UserResponseDTO
+    UserService-->AuthController: 9b. Return UserResponseDTO
     deactivate UserService
-    AuthController->UserManagementUI: 10.2 Return 200 OK (UserResponseDTO)
+    AuthController->Client: 10b. Return 200 OK (UserResponseDTO)
     deactivate AuthController
-    UserManagementUI->User: 11.2 Display profile
 end
+
+note over Client,Database: Profile endpoint returns user info with addresses\nfrom JWT token authentication
 

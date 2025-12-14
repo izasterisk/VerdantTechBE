@@ -1,80 +1,71 @@
-title User Delete Sequence Diagram
+title User Delete (Soft Delete) Sequence Diagram
 
-participant Admin
-participant UserManagementUI
+participant Client
 participant UserController
 participant UserService
 participant UserRepository
 participant Database
 
-Admin->UserManagementUI: 1. Select user(s) to delete
-UserManagementUI->Admin: 2. Show delete options (Soft Delete / Permanent Delete)
+Client->UserController: 1. PATCH /api/User/{id} (UserUpdateDTO with Status=Deleted)
+activate UserController
 
-alt [Soft Delete]
-    UserManagementUI->UserController: 3.1 Choose Soft Delete
-    activate UserController
-    UserController->UserService: 4.1 Call UpdateUserAsync(id, {Status: Deleted})
+note over UserController: Requires Authorization\nSoft delete by setting Status to Deleted
+
+UserController->UserController: 2. ValidateModel()
+alt Validation Failed
+    UserController->Client: 3a. Return 400 Bad Request
+    deactivate UserController
+else Validation Success
+    UserController->UserService: 3b. Call UpdateUserAsync(id, dto, cancellationToken)
     activate UserService
     
-    UserService->UserRepository: 5.1 GetUserWithAddressesByIdAsync(id)
+    UserService->UserRepository: 4b. GetUserWithAddressesByIdAsync(userId, cancellationToken)
     activate UserRepository
-    UserRepository->Database: 6.1 Check if user exists
-    Database-->UserRepository: 7.1 Return user data
-    UserRepository-->UserService: 8.1 Return user or null
+    UserRepository->Database: 5b. Query user by ID with addresses
+    activate Database
+    Database-->UserRepository: 6b. Return user data or null
+    deactivate Database
+    UserRepository-->UserService: 7b. Return user or null
     deactivate UserRepository
     
     alt User Not Found
-        UserService-->UserController: 7.1.1 Return failure message
-        UserController->UserManagementUI: 8.1.1 Return 404 Not Found
-        UserManagementUI->Admin: 9.1.1 Show error message
+        UserService->UserService: 8b1. Throw Exception("User with ID {userId} not found")
+        UserService-->UserController: 9b1. Exception propagated
+        UserController->UserController: 10b1. HandleException(ex)
+        UserController->Client: 11b1. Return 500 Internal Server Error
         deactivate UserService
         deactivate UserController
     else User Found
-        UserService->UserService: 9.1.2 Set user.Status = Deleted
-        UserService->UserService: 9.1.3 Set user.DeletedAt = DateTime.UtcNow
-        UserService->UserRepository: 10.1.2 UpdateUserWithTransactionAsync(user)
-        activate UserRepository
-        UserRepository->Database: 11.1.2 Update user status to inactive
-        Database-->UserRepository: 12.1.2 Return success
-        UserRepository-->UserService: 13.1.2 Return updated user
-        deactivate UserRepository
-        UserService-->UserController: 14.1.2 Return soft delete success
-        deactivate UserService
-        UserController->UserManagementUI: 15.1.2 Show soft delete success
-        deactivate UserController
-        UserManagementUI->Admin: 16.1.2 Display updated user status
-    end
-
-else [Permanent Delete]
-    UserManagementUI->UserController: 3.2 Choose Permanent Delete
-    activate UserController
-    UserController->UserService: 4.2 Call DeleteUserPermanentlyAsync(id)
-    activate UserService
-    
-    UserService->UserRepository: 5.2 GetUserWithAddressesByIdAsync(id)
-    activate UserRepository
-    UserRepository->Database: 6.2 Check if user exists
-    Database-->UserRepository: 7.2 Return user data
-    UserRepository-->UserService: 8.2 Return user or null
-    deactivate UserRepository
-    
-    alt User Not Found
-        UserService-->UserController: 7.2.1 Return failure message
-        UserController->UserManagementUI: 8.2.1 Return 404 Not Found
-        UserManagementUI->Admin: 9.2.1 Show error message
-        deactivate UserService
-        deactivate UserController
-    else User Found
-        UserService->UserRepository: 9.2.2 DeleteUserPermanentlyAsync(id)
-        activate UserRepository
-        UserRepository->Database: 10.2.2 Remove user(s) from database
-        Database-->UserRepository: 11.2.2 Return success
-        UserRepository-->UserService: 12.2.2 Return delete result
-        deactivate UserRepository
-        UserService-->UserController: 13.2.2 Return delete success
-        deactivate UserService
-        UserController->UserManagementUI: 14.2.2 Show delete success
-        deactivate UserController
-        UserManagementUI->Admin: 15.2.2 Confirm deletion
+        alt User Already Deleted
+            UserService->UserService: 8b2a. Throw InvalidOperationException("Tài khoản này đã bị xóa")
+            UserService-->UserController: 9b2a. Exception propagated
+            UserController->UserController: 10b2a. HandleException(ex)
+            UserController->Client: 11b2a. Return 400 Bad Request
+            deactivate UserService
+            deactivate UserController
+        else User Not Deleted
+            UserService->UserService: 8b2b. Set existingUser.Status = Deleted
+            UserService->UserService: 9b2b. Set existingUser.DeletedAt = DateTime.UtcNow
+            UserService->UserService: 10b2b. Map DTO to existingUser
+            UserService->UserRepository: 11b2b. UpdateUserWithTransactionAsync(existingUser, cancellationToken)
+            activate UserRepository
+            UserRepository->Database: 12b2b. Begin Transaction
+            activate Database
+            UserRepository->UserRepository: 13b2b. Set UpdatedAt = DateTime.UtcNow
+            UserRepository->Database: 14b2b. UPDATE user (Status=Deleted, DeletedAt, UpdatedAt)
+            Database-->UserRepository: 15b2b. Return update result
+            UserRepository->Database: 16b2b. Commit Transaction
+            Database-->UserRepository: 17b2b. Transaction committed
+            deactivate Database
+            UserRepository-->UserService: 18b2b. Return updated user
+            deactivate UserRepository
+            UserService->UserService: 19b2b. Map User to UserResponseDTO
+            UserService-->UserController: 20b2b. Return UserResponseDTO
+            deactivate UserService
+            UserController->Client: 21b2b. Return 200 OK (UserResponseDTO)
+            deactivate UserController
+        end
     end
 end
+
+note over Client,Database: No permanent delete - only soft delete by Status\nDeleted users have Status=Deleted and DeletedAt timestamp
