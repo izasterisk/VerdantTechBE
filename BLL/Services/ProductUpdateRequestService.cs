@@ -33,8 +33,8 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         if(product.VendorId != userId)
             throw new UnauthorizedAccessException("Người dùng không có quyền cập nhật sản phẩm này.");
         
-        var productUpdateRequest = _mapper.Map<ProductUpdateRequest>(product);
-        _mapper.Map(dto, productUpdateRequest);
+        var productSnapshot = _mapper.Map<ProductUpdateRequest>(product);
+        _mapper.Map(dto, productSnapshot);
         
         if(dto.ManualFile != null)
         {

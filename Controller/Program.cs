@@ -119,6 +119,7 @@ builder.Services.AddScoped<IRepository<ChatbotMessage>, Repository<ChatbotMessag
 builder.Services.AddScoped<IRepository<Crop>, Repository<Crop>>();
 builder.Services.AddScoped<IRepository<RequestMessage>, Repository<RequestMessage>>();
 builder.Services.AddScoped<IRepository<ProductUpdateRequest>, Repository<ProductUpdateRequest>>();
+builder.Services.AddScoped<IRepository<ProductSnapshot>, Repository<ProductSnapshot>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
