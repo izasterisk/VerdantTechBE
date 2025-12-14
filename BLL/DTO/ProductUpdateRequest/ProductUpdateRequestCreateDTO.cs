@@ -12,8 +12,7 @@ public class ProductUpdateRequestCreateDTO
 
     // public ulong ProductId { get; set; }
 
-    [Range(1, ulong.MaxValue, ErrorMessage = "CategoryId phải lớn hơn 0")]
-    public ulong? CategoryId { get; set; }
+    // public ulong? CategoryId { get; set; }
 
     // public ulong VendorId { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using BLL.DTO.ProductUpdateRequest;
 using BLL.Interfaces;
+using DAL.Data;
 using DAL.IRepository;
 
 namespace BLL.Services;
@@ -23,13 +24,14 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
     public async Task<ProductUpdateRequestResponseDTO> CreateProductUpdateRequestAsync
         (ulong userId, ProductUpdateRequestCreateDTO dto, CancellationToken cancellationToken)
     {
-        if(dto.DimensionsCm != null)
+        var product = await _productUpdateRequestRepository.GetProductByIdAsync(dto.Id, cancellationToken);
+        if(product.VendorId != userId)
+            throw new UnauthorizedAccessException("Người dùng không có quyền cập nhật sản phẩm này.");
+        
+        if(dto.ManualFile != null)
         {
-            
-        }
-        if(dto.Specifications != null)
-        {
-            
+            var manualUrl = await FileHelper.UploadFileAsync(dto.ManualFile, "manuals");
+            dto.ManualUrls = manualUrl;
         }
     }
 }

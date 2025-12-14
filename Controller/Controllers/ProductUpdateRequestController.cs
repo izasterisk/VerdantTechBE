@@ -44,9 +44,7 @@ public class ProductUpdateRequestController : BaseController
                 KnownFormKeys
             );
 
-            // TODO: Get userId from authenticated user
-            ulong userId = 1; // Placeholder
-            
+            var userId = GetCurrentUserId();
             var result = await _service.CreateProductUpdateRequestAsync(userId, dto, GetCancellationToken());
             return SuccessResponse(result, HttpStatusCode.Created);
         }
@@ -57,7 +55,7 @@ public class ProductUpdateRequestController : BaseController
     }
     private static readonly HashSet<string> KnownFormKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Id", "CategoryId", "ProductCode", "ProductName", "Description",
+        "Id", "ProductCode", "ProductName", "Description",
         "UnitPrice", "DiscountPercentage", "EnergyEfficiencyRating",
         "ManualFile", "WarrantyMonths", "WeightKg", "Images"
     };
