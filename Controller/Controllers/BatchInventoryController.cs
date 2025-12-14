@@ -154,26 +154,7 @@ namespace API.Controllers
             }
         }
 
-        // ============================
-        // QUALITY CHECK
-        // ============================
-
-        [HttpPost("{id}/quality-check")]
-        [EndpointSummary("Run quality check on a batch inventory.")]
-        [EndpointDescription("Updates the quality check status, inspector ID, and notes for a specific batch inventory.")]
-        public async Task<IActionResult> QualityCheck( ulong id, [FromBody] BatchInventoryQualityCheckDTO dto, CancellationToken ct = default)
-        {
-            try
-            {
-                await _service.QualityCheckAsync(id, dto, ct);
-                return Ok(new { message = "Quality check updated successfully" }); ;
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-                     
-        }
+        
 
 
         // ===========================================

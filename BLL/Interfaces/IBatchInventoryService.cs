@@ -20,7 +20,6 @@ namespace BLL.Interfaces
         Task<BatchInventoryResponeDTO> UpdateAsync(BatchInventoryUpdateDTO dto, CancellationToken ct = default);
         Task DeleteAsync(ulong id, CancellationToken ct = default);
 
-        Task QualityCheckAsync(ulong id, BatchInventoryQualityCheckDTO dto, CancellationToken ct = default);
 
         Task<IEnumerable<ProductSerial>> GetAllSerialsByProductIdAsync(ulong productId, CancellationToken ct = default);
         Task<IEnumerable<ProductSerial>> GetAllSerialsByBatchIdAsync(ulong batchId, CancellationToken ct = default);

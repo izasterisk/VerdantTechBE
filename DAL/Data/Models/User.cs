@@ -67,7 +67,6 @@ public partial class User
     public virtual ICollection<ForumComment> ForumComments { get; set; } = new List<ForumComment>();
     public virtual ICollection<ChatbotConversation> ChatbotConversations { get; set; } = new List<ChatbotConversation>();
     public virtual ICollection<EnvironmentalDatum> EnvironmentalDataAsCustomer { get; set; } = new List<EnvironmentalDatum>();
-    public virtual ICollection<BatchInventory> BatchInventoriesQualityChecked { get; set; } = new List<BatchInventory>();
     public virtual ICollection<ExportInventory> ExportInventories { get; set; } = new List<ExportInventory>();
     public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
     public virtual ICollection<Transaction> TransactionsCreated { get; set; } = new List<Transaction>();

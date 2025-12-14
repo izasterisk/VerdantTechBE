@@ -31,7 +31,6 @@ namespace DAL.Repository
              return await _context.Set<BatchInventory>()
                 .Include(x => x.Product)
                 .Include(x => x.Vendor)
-                .Include(x => x.QualityCheckedByNavigation)
                 .OrderByDescending(x => x.CreatedAt)
                 .AsNoTracking()
                 .Skip((page - 1) * pageSize)
@@ -51,7 +50,6 @@ namespace DAL.Repository
             return await _context.Set<BatchInventory>()
                 .Include(x => x.Product)
                 .Include(x => x.Vendor)
-                .Include(x => x.QualityCheckedByNavigation)
                 .Where(x => x.ProductId == productId)
                 .OrderByDescending(x => x.CreatedAt)
                 .AsNoTracking()
@@ -72,7 +70,6 @@ namespace DAL.Repository
             return await _context.Set<BatchInventory>()
                 .Include(x => x.Product)
                 .Include(x => x.Vendor)
-                .Include(x => x.QualityCheckedByNavigation)
                 .Where(x => x.VendorId == vendorId)
                 .OrderByDescending(x => x.CreatedAt)
                 .AsNoTracking()
@@ -87,7 +84,6 @@ namespace DAL.Repository
                 .Include(x => x.Product)
                     .ThenInclude(p => p.Category)
                 .Include(x => x.Vendor)
-                .Include(x => x.QualityCheckedByNavigation)
                 .Include(x => x.ProductSerials)
                 .FirstOrDefaultAsync(x => x.Id == id, ct);
         }
@@ -130,43 +126,7 @@ namespace DAL.Repository
         }
 
 
-        public async Task QualityCheckAsync(
-           ulong id,
-           QualityCheckStatus status,
-           ulong? qualityCheckedByUserId,
-           string? notes,
-           CancellationToken ct = default)
-        {
-            using var tran = await _context.Database.BeginTransactionAsync(ct);
-
-            try
-            {
-                var entity = await _context.BatchInventories
-                    .FirstOrDefaultAsync(x => x.Id == id, ct);
-
-                if (entity == null)
-                    return;
-
-                entity.QualityCheckStatus = status;
-                entity.QualityCheckedBy = qualityCheckedByUserId;
-                entity.QualityCheckedAt = DateTime.UtcNow;
-
-                if (!string.IsNullOrWhiteSpace(notes))
-                {
-                    entity.Notes = string.IsNullOrWhiteSpace(entity.Notes)
-                        ? notes
-                        : $"{entity.Notes}\n{notes}";
-                }
-
-                await _context.SaveChangesAsync(ct);
-                await tran.CommitAsync(ct);
-            }
-            catch
-            {
-                await tran.RollbackAsync(ct);
-                throw;
-            }
-        }
+       
 
         public async Task<bool> SkuExistsAsync(string sku, ulong? excludeId = null, CancellationToken ct = default)
         {

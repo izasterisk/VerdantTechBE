@@ -630,20 +630,15 @@ CREATE TABLE batch_inventory (
     unit_cost_price DECIMAL(12,2) NOT NULL COMMENT 'Giá vốn mỗi đơn vị khi mua',
     expiry_date DATE NULL COMMENT 'Ngày hết hạn sản phẩm nếu có',
     manufacturing_date DATE NULL COMMENT 'Ngày sản xuất nếu có',
-    quality_check_status ENUM('pending', 'passed', 'failed', 'not_required') DEFAULT 'not_required' COMMENT 'Trạng thái kiểm tra chất lượng',
-    quality_checked_by BIGINT UNSIGNED NULL COMMENT 'Người thực hiện kiểm tra chất lượng',
-    quality_checked_at TIMESTAMP NULL COMMENT 'Khi nào kiểm tra chất lượng được thực hiện',
     notes VARCHAR(500) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
-    FOREIGN KEY (quality_checked_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_product (product_id),
     INDEX idx_sku (sku),
     INDEX idx_vendor (vendor_id),
-    INDEX idx_quality_status (quality_check_status),
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi tồn kho nhập - hàng vào với thông tin nhận hàng chi tiết';
 
