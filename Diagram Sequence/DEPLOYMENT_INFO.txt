@@ -1,0 +1,394 @@
+VERDANTTECH SOLUTIONS - DEPLOYMENT INFORMATION
+Tài liệu cấu hình và triển khai hệ thống
+================================================================================
+
+1. MODULE PHẦN MỀM
+--------------------------------------------------------------------------------
+
+1.1. TỔNG QUAN KIẾN TRÚC
+Hệ thống được phát triển theo kiến trúc 3-layer với .NET 8:
+
+VerdantTechSolution/
+|-- Controller/          # API Layer - ASP.NET Core Web API
+|-- BLL/                 # Business Logic Layer
+|-- DAL/                 # Data Access Layer
+|-- Infrastructure/      # External Services Integration
+|-- DB/                  # Database Scripts
+
+1.2. DANH SÁCH CÁC MODULE CHỨC NĂNG
+
+A. Authentication & User Management
+- Controller: AuthController.cs, UserController.cs
+- Service: AuthService.cs, UserService.cs
+- Repository: AuthRepository.cs, UserRepository.cs
+- Chức năng:
+  + Đăng nhập/đăng ký (Email/Password, Google OAuth)
+  + Quản lý tài khoản người dùng (Customer, Staff, Vendor, Admin)
+  + Xác thực email, đổi mật khẩu, quên mật khẩu
+  + JWT-based authentication với refresh token
+
+B. Product Management
+- Controller: ProductController.cs, ProductCategoryController.cs, ProductRegistrationController.cs, v.v...
+- Service: ProductService.cs, ProductCategoryService.cs, v.v...
+- Repository: ProductRepository.cs, ProductCategoryRepository.cs, v.v...
+- Chức năng:
+  + Quản lý sản phẩm nông nghiệp xanh
+  + Đăng ký sản phẩm mới (workflow: Pending -> Approved/Rejected)
+  + Chứng nhận sản phẩm (product certificates)
+  + Quản lý serial numbers cho thiết bị
+  + Đánh giá & review sản phẩm
+  + Yêu cầu cập nhật sản phẩm
+
+C. Vendor & Farm Management
+- Controller: VendorProfilesController.cs, VendorCertificatesController.cs, FarmProfileController.cs, CropController.cs
+- Service: VendorProfileService.cs, VendorCertificateService.cs, FarmProfileService.cs, CropService.cs
+- Repository: VendorProfileRepository.cs, VendorCertificateRepository.cs, FarmProfileRepository.cs, CropRepository.cs
+- Chức năng:
+  + Quản lý hồ sơ nhà cung cấp/vendor
+  + Chứng nhận vendor (VGaP, GlobalGaP, VietGaP, Organic, FDA, CE)
+  + Quản lý trang trại (farm profiles)
+  + Quản lý cây trồng
+
+D. Cart & Order Management
+- Controller: CartController.cs, OrderController.cs
+- Service: CartService.cs, OrderService.cs
+- Repository: CartRepository.cs, OrderRepository.cs, OrderDetailRepository.cs
+- Chức năng:
+  + Giỏ hàng
+  + Đặt hàng (Order workflow: Pending -> Processing -> Shipping -> Delivered/Cancelled)
+  + Quản lý chi tiết đơn hàng
+  + Tích hợp vận chuyển (GoShip, GHN)
+
+E. Payment & Wallet Management
+- Controller: PayOSController.cs, WalletController.cs, CashoutController.cs
+- Service: PayOSService.cs, WalletService.cs, CashoutService.cs
+- Repository: PaymentRepository.cs, TransactionRepository.cs, WalletRepository.cs, CashoutRepository.cs
+- Chức năng:
+  + Thanh toán online qua PayOS
+  + Ví điện tử người dùng (Wallet)
+  + Rút tiền (Cashout/Payout)
+  + Lịch sử giao dịch
+
+F. Inventory Management
+- Controller: BatchInventoryController.cs, ExportInventoryController.cs
+- Service: BatchInventoryService.cs, ExportInventoryService.cs
+- Repository: BatchInventoryRepository.cs, ExportInventoryRepository.cs
+- Chức năng:
+  + Quản lý lô hàng nhập kho (Batch Inventory)
+  + Quản lý xuất kho (Export Inventory)
+  + Tracking serial numbers
+
+G. Address Management
+- Controller: AddressController.cs
+- Service: AddressService.cs
+- Repository: AddressRepository.cs
+- Chức năng:
+  + Quản lý địa chỉ người dùng
+  + Tích hợp API địa chỉ Việt Nam
+
+H. User Bank Accounts
+- Controller: UserBankAccountsController.cs
+- Service: UserBankAccountsService.cs
+- Repository: UserBankAccountsRepository.cs
+- Chức năng:
+  + Quản lý tài khoản ngân hàng của người dùng
+  + Hỗ trợ rút tiền từ ví
+
+I. Environmental & Weather Data
+- Controller: WeatherController.cs, CO2Controller.cs
+- Service: WeatherService.cs, CO2Service.cs, EnvCacheService.cs
+- Repository: EnvironmentalDataRepository.cs, FertilizerRepository.cs, EnergyUsageRepository.cs
+- Chức năng:
+  + Lấy dữ liệu thời tiết (Open-Meteo API)
+  + Theo dõi dữ liệu môi trường, tính toán CO2 footprint
+  + Cache dữ liệu môi trường
+
+J. Forum Management
+- Controller: ForumCategoryController.cs, ForumPostController.cs, ForumCommentController.cs
+- Service: ForumCategoryService.cs, ForumPostService.cs, ForumCommentService.cs
+- Repository: ForumCategoryRepository.cs, ForumPostRepository.cs, ForumCommentRepository.cs
+- Chức năng:
+  + Diễn đàn thảo luận, danh mục, bài đăng, bình luận
+
+K. Support Ticket Management
+- Controller: RequestTicketController.cs
+- Service: RequestService.cs
+- Repository: RequestRepository.cs
+- Chức năng:
+  + Hệ thống ticket hỗ trợ khách hàng
+  + Chat real-time với staff
+
+L. AI Chatbot Management
+- Controller: ChatbotConversationController.cs
+- Service: ChatbotConversationService.cs
+- Repository: ChatbotConversationRepository.cs
+- Chức năng:
+  + Quản lý cuộc hội thoại với AI chatbot
+  + Lịch sử tin nhắn
+
+M. Notification System
+- Controller: NotificationController.cs
+- Service: NotificationService.cs
+- Repository: NotificationRepository.cs
+- Chức năng:
+  + Thông báo real-time qua SignalR Hub (/hubs/notification)
+
+N. Dashboard & Analytics
+- Controller: DashboardController.cs
+- Service: DashboardService.cs
+- Repository: DashboardRepository.cs
+- Chức năng:
+  + Thống kê, báo cáo tổng quan
+
+O. Survey & Feedback
+- Controller: SurveyResponseController.cs
+- Service: SurveyResponseService.cs
+- Repository: SurveyResponseRepository.cs
+- Chức năng:
+  + Khảo sát người dùng và thu thập phản hồi
+
+================================================================================
+
+2. THƯ VIỆN, FRAMEWORK VÀ CÔNG CỤ BÊN THỨ 3
+--------------------------------------------------------------------------------
+
+2.1. CORE FRAMEWORK & LIBRARIES
+
+- ASP.NET Core & Entity Framework: .NET 8.0 SDK, Microsoft.EntityFrameworkCore (v8.0.19), Pomelo.EntityFrameworkCore.MySql
+- Authentication: JwtBearer, Google OAuth, BCrypt.Net-Next
+- API Documentation: Swashbuckle.AspNetCore (Swagger/OpenAPI)
+- Object Mapping & JSON: AutoMapper, Newtonsoft.Json
+- Configuration: DotNetEnv
+- Caching: Microsoft.Extensions.Caching.Memory
+
+2.2. THIRD-PARTY SERVICES INTEGRATION
+
+- Cloud Storage: CloudinaryDotNet
+- Payment Gateway: payOS
+- Email Service: Google.Apis.Gmail.v1
+- Container: Docker Support
+
+================================================================================
+
+3. CẤU HÌNH CÁC THÀNH PHẦN BÊN TRONG PHẦN MỀM
+--------------------------------------------------------------------------------
+
+3.1. CONNECTION STRING & DATABASE
+
+File: Controller/.env
+
+[DATABASE CONFIGURATION]
+DATABASE_CONNECTION_STRING=Server=verdanttech.mysql.database.azure.com;Database=verdanttech;Uid=xxx;Pwd=xxx;SslMode=Required;
+DATABASE_TIMEOUT=30
+AUTO_CREATE_DB=False
+
+Database Server: Azure MySQL Database
+- Host: verdanttech.mysql.database.azure.com
+- Database: verdanttech
+- User: xxx
+- SSL: Required
+- Version: MySQL 8.0.43
+
+3.2. JWT AUTHENTICATION CONFIGURATION
+
+File: Controller/.env
+
+[JWT CONFIGURATION]
+JWT_SECRET=xxx
+JWT_ISSUER=VerdantTech
+JWT_AUDIENCE=VerdantTechUsers
+JWT_EXPIRE_HOURS=24
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
+3.3. API SERVER CONFIGURATION
+
+File: Controller/.env
+ASPNETCORE_ENVIRONMENT=Development
+OPEN_SWAGGER=True
+
+URLs:
+- Backend API: https://verdanttechbe-bpbaaghrg5ggexds.southeastasia-01.azurewebsites.net
+- Frontend: https://verdanttechsolution.verdev.id.vn
+
+3.4. SIGNALR REAL-TIME CONFIGURATION
+- Endpoint: /hubs/notification
+- KeepAliveInterval: 15s
+- ClientTimeoutInterval: 30s
+
+3.5. MEMORY CACHE
+- Sử dụng MemoryCache cho EnvCacheService.
+
+3.6. AUTOMAPPER
+- Config tại: BLL/Helpers/AutoMapperConfig.cs
+
+3.7. FILE UPLOAD
+- Configured: ValueLengthLimit = Max, MultipartBodyLengthLimit = Max
+
+================================================================================
+
+4. CẤU HÌNH DỊCH VỤ BÊN THỨ 3 (3RD PARTY API)
+--------------------------------------------------------------------------------
+
+4.1. CLOUDINARY (IMAGE/FILE STORAGE)
+
+File: Controller/.env
+CLOUDINARY__CLOUDNAME=xxx
+CLOUDINARY__APIKEY=xxx
+CLOUDINARY__APISECRET=xxx
+CLOUDINARY__DEFAULTFOLDER=VerdantTech_Image
+
+4.2. PAYOS (PAYMENT GATEWAY)
+
+File: Controller/.env
+PAYOS_CLIENT_ID=xxx
+PAYOS_API_KEY=xxx
+PAYOS_CHECKSUM_KEY=xxx
+PAYOS_CLIENT_ID_PAYOUT=xxx
+PAYOS_API_KEY_PAYOUT=xxx
+PAYOS_CHECKSUM_KEY_PAYOUT=xxx
+
+4.3. GOOGLE OAUTH & GMAIL API
+
+File: Controller/.env
+GOOGLE_CLIENT_ID=xxx
+GOOGLE_CLIENT_SECRET=xxx
+GMAIL_USER=xxx
+GMAIL_REFRESH_TOKEN=xxx
+
+4.4. OPEN-METEO (WEATHER DATA API)
+
+File: Controller/.env
+OPEN_METEO_URL=https://api.open-meteo.com/v1/
+OPEN_METEO_ARCHIVE_URL=https://archive-api.open-meteo.com/v1/
+DEFAULT_TIME_ZONE=Asia/Ho_Chi_Minh
+TIME_OUT_SECONDS=10
+
+4.5. SOILGRIDS API (SOIL DATA)
+
+File: Controller/.env
+SOIL_GRIDS_URL=https://rest.isric.org/soilgrids/v2.0/properties/
+SOIL_GRIDS_WMS=https://maps.isric.org/mapserv
+
+4.6. GOSHIP (COURIER/SHIPPING SERVICE)
+
+File: Controller/.env
+GOSHIP_TOKEN=xxx
+GOSHIP_CLIENT_ID=xxx
+GOSHIP_CLIENT_SECRET=xxx
+GOSHIP_SANDBOX_MANAGE_URL=https://dev-shop.goship.io
+GOSHIP_SANDBOX_MANAGE_API_ENDPOINT=https://sandbox.goship.io/api/v2
+GOSHIP_MANAGE_API_ENDPOINT_V1=https://api.goship.io/api/v1
+GOSHIP_TOKEN_V1=xxx
+
+4.7. GHN (GIAO HÀNG NHANH - SHIPPING)
+
+File: Controller/.env
+GHN_SHOP_ID=xxx
+GHN_PRODUCTION_TOKEN=xxx
+GHN_PRODUCTION_URL=https://online-gateway.ghn.vn/shiip/public-api/master-data
+GHN_TESTING_TOKEN=xxx
+GHN_TESTING_URL=https://dev-online-gateway.ghn.vn/shiip/public-api/v2
+
+================================================================================
+
+5. DANH SÁCH ROLES VÀ TÀI KHOẢN DEMO
+--------------------------------------------------------------------------------
+
+5.1. USER ROLES
+- Customer, Staff, Vendor, Admin
+
+5.2. TÀI KHOẢN DEMO (TEST ACCOUNTS)
+
+[Admin Account]
+- Email: admin@verdanttech.com
+- Password: xxx
+- Role: Admin
+- Chức năng: Quản trị toàn hệ thống.
+
+[Staff Account]
+- Email: staff@verdanttech.com
+- Password: xxx
+- Role: Staff
+- Chức năng: Hỗ trợ khách hàng, ticket.
+
+[Vendor Account]
+- Email: vendor@verdanttech.com
+- Password: xxx
+- Role: Vendor
+- Chức năng: Quản lý sản phẩm, đơn hàng, inventory.
+
+[Customer Account]
+- Email: customer@verdanttech.com
+- Password: xxx
+- Role: Customer
+- Chức năng: Mua hàng, chatbot, forum.
+
+5.3. USER STATUS
+- Active, Inactive, Suspended, Deleted
+
+================================================================================
+
+6. HƯỚNG DẪN CÀI ĐẶT & TRIỂN KHAI
+--------------------------------------------------------------------------------
+
+6.1. CÀI ĐẶT MÔI TRƯỜNG DEVELOPMENT
+
+B1: Clone repository (git clone ...)
+B2: Cấu hình file .env (Copy .env.example -> .env)
+B3: Restore packages (dotnet restore)
+B4: Apply database migrations (dotnet ef database update)
+B5: Run seeder (MySQL import)
+B6: Run application (dotnet run)
+
+6.2. BUILD & DEPLOY
+- Docker Build: docker build -t verdanttech-backend .
+- Deploy to Azure App Service: Configured via Portal App Settings.
+
+================================================================================
+
+7. DEPENDENCY INJECTION SUMMARY
+--------------------------------------------------------------------------------
+
+- Repositories: AddScoped(typeof(IRepository<>), typeof(Repository<>))
+- Services: AuthService, UserService, ProductService, v.v...
+- Infrastructure: Cloudinary, Email, Weather, Soil, Courier services.
+
+================================================================================
+
+8. API RESPONSE FORMAT
+--------------------------------------------------------------------------------
+
+Success:
+{
+  "status": 200,
+  "message": "Success",
+  "data": { ... }
+}
+
+Error:
+{
+  "status": 400,
+  "message": "Validation failed",
+  "data": { "errors": [...] }
+}
+
+================================================================================
+
+9. DATABASE SCHEMA
+--------------------------------------------------------------------------------
+
+Tables (40+ bảng): users, products, orders, payments, forum_posts, chatbot_conversations, environmental_data, v.v...
+
+================================================================================
+
+10. LIÊN HỆ & HỖ TRỢ
+--------------------------------------------------------------------------------
+
+- Backend Team Email: support@verdanttech.com
+- Production Backend: https://verdanttechbe-bpbaaghrg5ggexds.southeastasia-01.azurewebsites.net
+- Swagger: https://verdanttechbe-bpbaaghrg5ggexds.southeastasia-01.azurewebsites.net/swagger
+
+Last Updated: December 15, 2025
+Version: 1.0
+Framework: .NET 8.0
+Database: MySQL 8.0.43
