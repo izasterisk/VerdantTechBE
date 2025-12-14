@@ -45,6 +45,12 @@ public enum ProductRegistrationStatus
     Rejected
 }
 
+public enum ProductSnapshotType
+{
+    Proposed,
+    History
+}
+
 // =====================================================
 // ENVIRONMENTAL DATA ENUMS
 // =====================================================
@@ -250,7 +256,7 @@ public enum MediaOwnerType
     ProductReviews,
     ForumPosts,
     RequestMessage,
-    ProductUpdateRequests
+    ProductSnapshot
 }
 
 public enum MediaPurpose
@@ -275,7 +281,7 @@ public enum NotificationReferenceType
     WalletCashout,
     ProductRegistration,
     EnvironmentalData,
-    ProductUpdateRequests
+    ProductUpdateRequest
 }
 
 

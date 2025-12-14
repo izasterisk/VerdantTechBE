@@ -7,10 +7,10 @@ namespace BLL.DTO.ProductUpdateRequest;
 
 public class ProductUpdateRequestCreateDTO
 {
-    [Required(ErrorMessage = "Id là bắt buộc")]
-    public ulong Id { get; set; }
-
-    // public ulong ProductId { get; set; }
+    // public ulong Id { get; set; }
+    
+    [Required(ErrorMessage = "ProductId là bắt buộc")]
+    public ulong ProductId { get; set; }
 
     // public ulong? CategoryId { get; set; }
 

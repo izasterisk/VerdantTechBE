@@ -55,7 +55,7 @@ public class ProductUpdateRequestController : BaseController
     }
     private static readonly HashSet<string> KnownFormKeys = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Id", "ProductCode", "ProductName", "Description",
+        "ProductId", "ProductCode", "ProductName", "Description",
         "UnitPrice", "DiscountPercentage", "EnergyEfficiencyRating",
         "ManualFile", "WarrantyMonths", "WeightKg", "Images"
     };

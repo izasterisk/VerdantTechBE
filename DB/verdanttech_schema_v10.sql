@@ -352,6 +352,35 @@ CREATE TABLE product_categories (
     INDEX idx_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục sản phẩm theo cấp bậc';
 
+CREATE TABLE product_registrations (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    category_id BIGINT UNSIGNED NOT NULL,
+    proposed_product_code VARCHAR(100) UNIQUE NOT NULL,
+    proposed_product_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    unit_price DECIMAL(12,2) NOT NULL COMMENT 'Đơn giá sản phẩm đề xuất',
+    energy_efficiency_rating DECIMAL(3,1) CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5) COMMENT 'Xếp hạng hiệu suất năng lượng (0-5)',
+    specifications JSON COMMENT 'Thông số kỹ thuật dưới dạng cặp khóa-giá trị',
+    manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn/sổ tay, phân cách bằng dấu phẩy',
+    public_url VARCHAR(500) COMMENT 'URL công khai cho manual files',
+    warranty_months INT DEFAULT 12,
+    weight_kg DECIMAL(10,3) NOT NULL COMMENT 'Trọng lượng sản phẩm (kg) - bắt buộc',
+    dimensions_cm JSON COMMENT '{chiều dài, chiều rộng, chiều cao}',
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    rejection_reason VARCHAR(500) NULL,
+    approved_by BIGINT UNSIGNED NULL,
+    approved_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
+    FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_vendor (vendor_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Product registrations';
+
 -- Bảng sản phẩm
 CREATE TABLE products (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -391,34 +420,63 @@ CREATE TABLE products (
     FULLTEXT idx_search (product_name, description)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Sản phẩm thiết bị nông nghiệp xanh trong kho công ty';
 
-CREATE TABLE product_registrations (
+
+-- Bảng lưu trữ snapshot lịch sử thay đổi sản phẩm
+CREATE TABLE product_snapshot (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    vendor_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NOT NULL COMMENT 'ID sản phẩm tham chiếu',
     category_id BIGINT UNSIGNED NOT NULL,
-    proposed_product_code VARCHAR(100) UNIQUE NOT NULL,
-    proposed_product_name VARCHAR(255) NOT NULL,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    product_code VARCHAR(100) NOT NULL COMMENT 'Mã sản phẩm',
+    product_name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL COMMENT 'Slug',
     description TEXT,
-    unit_price DECIMAL(12,2) NOT NULL COMMENT 'Đơn giá sản phẩm đề xuất',
-    energy_efficiency_rating DECIMAL(3,1) CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5) COMMENT 'Xếp hạng hiệu suất năng lượng (0-5)',
+    unit_price DECIMAL(12,2) NOT NULL COMMENT 'Đơn giá sản phẩm',
+    commission_rate DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Tỷ lệ hoa hồng cho nhà cung cấp',
+    discount_percentage DECIMAL(5,2) DEFAULT 0.00,
+    energy_efficiency_rating INT CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5) COMMENT 'Xếp hạng hiệu suất năng lượng (0-5)',
     specifications JSON COMMENT 'Thông số kỹ thuật dưới dạng cặp khóa-giá trị',
     manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn/sổ tay, phân cách bằng dấu phẩy',
     public_url VARCHAR(500) COMMENT 'URL công khai cho manual files',
     warranty_months INT DEFAULT 12,
     weight_kg DECIMAL(10,3) NOT NULL COMMENT 'Trọng lượng sản phẩm (kg) - bắt buộc',
     dimensions_cm JSON COMMENT '{chiều dài, chiều rộng, chiều cao}',
-    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    rejection_reason VARCHAR(500) NULL,
-    approved_by BIGINT UNSIGNED NULL,
-    approved_at TIMESTAMP NULL,
+    registration_id BIGINT UNSIGNED NULL COMMENT 'Khóa ngoại đến product_registrations',
+    snapshot_type ENUM('proposed', 'history') NOT NULL COMMENT 'Loại snapshot: proposed (đề xuất chờ duyệt), history (lịch sử đã được duyệt và áp dụng vào product)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
-    FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (registration_id) REFERENCES product_registrations(id) ON DELETE RESTRICT,
+    
+    INDEX idx_product (product_id),
     INDEX idx_vendor (vendor_id),
+    INDEX idx_snapshot_type (snapshot_type),
+    INDEX idx_product_snapshot_type (product_id, snapshot_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lưu trữ toàn bộ lịch sử snapshot thay đổi của sản phẩm (cả đề xuất và đã duyệt)';
+
+-- Bảng yêu cầu cập nhật sản phẩm (chỉ chứa thông tin quản lý)
+CREATE TABLE product_update_requests (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_snapshot_id BIGINT UNSIGNED NOT NULL COMMENT 'ID snapshot đề xuất thay đổi',
+    product_id BIGINT UNSIGNED NOT NULL COMMENT 'ID sản phẩm cần cập nhật',
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu Staff không duyệt',    
+    processed_by BIGINT UNSIGNED NULL COMMENT 'Staff/Admin thực hiện duyệt',
+    processed_at TIMESTAMP NULL,  
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (product_snapshot_id) REFERENCES product_snapshot(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
+    
+    INDEX idx_product_snapshot (product_snapshot_id),
+    INDEX idx_product (product_id),
     INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Product registrations';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý yêu cầu cập nhật sản phẩm (chỉ chứa thông tin trạng thái và duyệt)';
 
 -- Thông tin chứng chỉ của sản phẩm
 CREATE TABLE product_certificates (
@@ -443,54 +501,6 @@ CREATE TABLE product_certificates (
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do sản phẩm gắn kết để xác minh';
 
--- Bảng yêu cầu cập nhật sản phẩm
-CREATE TABLE product_update_requests (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    
-    -- 1. LIÊN KẾT SẢN PHẨM GỐC
-    product_id BIGINT UNSIGNED NOT NULL COMMENT 'ID sản phẩm cần cập nhật',
-
-    -- 2. THÔNG TIN SẢN PHẨM (Đúng thứ tự bảng Products)
-    category_id BIGINT UNSIGNED NOT NULL,
-    vendor_id BIGINT UNSIGNED NOT NULL,
-    product_code VARCHAR(100) NOT NULL COMMENT 'Mã sản phẩm (Bỏ Unique vì đây là bản nháp)',
-    product_name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) NOT NULL COMMENT 'Slug (Bỏ Unique vì đây là bản nháp)',
-    description TEXT,
-    unit_price DECIMAL(12,2) NOT NULL COMMENT 'Đơn giá sản phẩm',
-    commission_rate DECIMAL(5,2) DEFAULT 0.00 COMMENT 'Tỷ lệ hoa hồng',
-    discount_percentage DECIMAL(5,2) DEFAULT 0.00,
-    energy_efficiency_rating INT CHECK (energy_efficiency_rating >= 0 AND energy_efficiency_rating <= 5),
-    specifications JSON COMMENT 'Thông số kỹ thuật',
-    manual_urls VARCHAR(1000) COMMENT 'URL hướng dẫn',
-    public_url VARCHAR(500) COMMENT 'URL công khai',
-    warranty_months INT DEFAULT 12,
-    -- stock_quantity INT DEFAULT 0,
-    weight_kg DECIMAL(10,3) NOT NULL COMMENT 'Trọng lượng (kg) - Bắt buộc',
-    dimensions_cm JSON COMMENT 'Kích thước',
-    -- is_active BOOLEAN DEFAULT TRUE,
-    -- registration_id BIGINT UNSIGNED NULL,
-
-    -- 3. THÔNG TIN QUẢN LÝ YÊU CẦU (REQUEST FIELDS)
-    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu Staff không duyệt',    
-    processed_by BIGINT UNSIGNED NULL COMMENT 'Staff/Admin thực hiện duyệt',
-    processed_at TIMESTAMP NULL,    
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    -- 4. KHÓA NGOẠI
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
-    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
-    
-    -- 5. INDEX
-    INDEX idx_product (product_id),
-    INDEX idx_vendor (vendor_id),
-    INDEX idx_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lưu trữ yêu cầu cập nhật thông tin sản phẩm (Snapshot đầy đủ) chờ Staff duyệt';
-
 -- Đánh giá và xếp hạng
 CREATE TABLE product_reviews (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -513,7 +523,7 @@ CREATE TABLE product_reviews (
 -- Bảng quản lý media tập trung
 CREATE TABLE media_links (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request_message', 'product_update_requests') NOT NULL,
+    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request_message', 'product_snapshot') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
     image_public_id VARCHAR(512) NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',
@@ -814,7 +824,7 @@ CREATE TABLE notifications (
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người nhận thông báo (customer, vendor, staff, admin)',
     title VARCHAR(255) NOT NULL COMMENT 'Tiêu đề thông báo (hiển thị ngắn gọn)',
     message TEXT NOT NULL COMMENT 'Nội dung chi tiết thông báo',
-    reference_type ENUM('order', 'payment', 'request', 'forum_post', 'chatbot_conversation', 'refund', 'wallet_cashout', 'product_registration', 'environmental_data', 'product_update_requests') NULL COMMENT 'Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết',
+    reference_type ENUM('order', 'payment', 'request', 'forum_post', 'chatbot_conversation', 'refund', 'wallet_cashout', 'product_registration', 'environmental_data', 'product_update_request') NULL COMMENT 'Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết',
     reference_id BIGINT UNSIGNED NULL COMMENT 'ID của entity tham chiếu (ví dụ: order_id, post_id)',
     is_read BOOLEAN DEFAULT FALSE COMMENT 'Thông báo đã đọc chưa (dùng để filter hiển thị)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -832,29 +842,46 @@ CREATE TABLE notifications (
 
 -- IX) BỔ SUNG TÍNH NĂNG QUẢN LÝ YÊU CẦU CẬP NHẬT SẢN PHẨM VÀ HOÀN TIỀN TỪNG PHẦN
 
--- A) BẢNG MỚI: product_update_requests
---   • Mục đích: Quản lý yêu cầu cập nhật thông tin sản phẩm từ vendor, chờ Staff duyệt
+-- A) BẢNG MỚI: product_snapshot
+--   • Mục đích: Lưu trữ toàn bộ lịch sử snapshot thay đổi của sản phẩm (cả đề xuất và đã duyệt)
 --   • Cấu trúc:
---     + product_id: Liên kết đến sản phẩm gốc cần cập nhật
---     + Các trường sản phẩm: Snapshot đầy đủ thông tin sản phẩm mới (category_id, product_code, product_name, slug, description, unit_price, commission_rate, discount_percentage, energy_efficiency_rating, specifications, manual_urls, public_url, warranty_months, weight_kg, dimensions_cm)
---     + Các trường quản lý: status ('pending', 'approved', 'rejected'), rejection_reason, processed_by, processed_at, created_at, updated_at
+--     + product_id: Liên kết đến sản phẩm gốc
+--     + snapshot_type: ENUM('proposed', 'history') - phân biệt loại snapshot
+--       * proposed: Snapshot đề xuất thay đổi (chờ duyệt)
+--       * history: Snapshot lịch sử đã được duyệt và áp dụng vào product
+--     + Các trường sản phẩm: Snapshot đầy đủ thông tin sản phẩm (category_id, vendor_id, product_code, product_name, slug, description, unit_price, commission_rate, discount_percentage, energy_efficiency_rating, specifications, manual_urls, public_url, warranty_months, weight_kg, dimensions_cm, registration_id)
 --   • Foreign Keys:
 --     + product_id → products(id) ON DELETE CASCADE
 --     + category_id → product_categories(id) ON DELETE RESTRICT
 --     + vendor_id → users(id) ON DELETE CASCADE
---     + processed_by → users(id) ON DELETE RESTRICT
+--     + registration_id → product_registrations(id) ON DELETE RESTRICT
 --   • Indexes:
 --     + idx_product (product_id): Tối ưu query theo sản phẩm
 --     + idx_vendor (vendor_id): Tối ưu query theo vendor
---     + idx_status (status): Tối ưu query theo trạng thái
---   • Lưu ý: Không có UNIQUE constraint cho product_code và slug vì đây là bản nháp chờ duyệt
+--     + idx_snapshot_type (snapshot_type): Tối ưu query theo loại snapshot
+--     + idx_product_snapshot_type (product_id, snapshot_type): Composite index cho query lịch sử
+--   • Lưu ý: Không có UNIQUE constraint cho product_code và slug vì đây là lịch sử snapshot
 
--- B) CẬP NHẬT BẢNG media_links
---   • Thêm giá trị 'product_update_requests' vào ENUM owner_type
---   • Mục đích: Cho phép upload ảnh cho yêu cầu cập nhật sản phẩm
+-- B) BẢNG MỚI: product_update_requests (refactored)
+--   • Mục đích: Quản lý yêu cầu cập nhật sản phẩm (chỉ chứa thông tin trạng thái và duyệt)
+--   • Cấu trúc:
+--     + product_snapshot_id: FK đến product_snapshot (snapshot đề xuất)
+--     + product_id: FK đến products (sản phẩm cần cập nhật)
+--     + status: ENUM('pending', 'approved', 'rejected')
+--     + rejection_reason: Lý do từ chối
+--     + processed_by, processed_at: Thông tin xử lý
+--   • Foreign Keys:
+--     + product_snapshot_id → product_snapshot(id) ON DELETE CASCADE
+--     + product_id → products(id) ON DELETE CASCADE
+--     + processed_by → users(id) ON DELETE RESTRICT
+--   • Lưu ý: vendor_id có thể lấy từ product_snapshot.vendor_id hoặc products.vendor_id
 
--- C) CẬP NHẬT BẢNG notifications
---   • Thêm giá trị 'product_update_requests' vào ENUM reference_type
+-- C) CẬP NHẬT BẢNG media_links
+--   • Thêm giá trị 'product_snapshot' vào ENUM owner_type
+--   • Mục đích: Cho phép upload ảnh cho snapshot sản phẩm
+
+-- D) CẬP NHẬT BẢNG notifications
+--   • Thêm giá trị 'product_update_request' vào ENUM reference_type
 --   • Mục đích: Gửi thông báo khi yêu cầu cập nhật sản phẩm được tạo/duyệt/từ chối
 
 -- D) CẬP NHẬT BẢNG orders
@@ -866,21 +893,25 @@ CREATE TABLE notifications (
 --   • Mục đích: Đánh dấu từng sản phẩm trong đơn hàng đã được hoàn tiền chưa (hỗ trợ partial refund)
 --   • Comment: 'Sản phẩm đã được hoàn tiền chưa'
 
--- F) WORKFLOW YÊU CẦU CẬP NHẬT SẢN PHẨM:
+-- F) WORKFLOW YÊU CẦU CẬP NHẬT SẢN PHẨM (REFACTORED):
 --   1. Vendor tạo yêu cầu:
---      a. Tạo product_update_requests với status='pending'
---      b. Upload ảnh mới (nếu có) vào media_links với owner_type='product_update_requests'
---      c. Gửi notification cho Staff/Admin
+--      a. Tạo product_snapshot mới với snapshot_type='proposed' (chứa thông tin sản phẩm mới)
+--      b. Tạo product_update_requests với FK đến product_snapshot vừa tạo, status='pending'
+--      c. Upload ảnh mới (nếu có) vào media_links với owner_type='product_snapshot', owner_id=product_snapshot.id
+--      d. Gửi notification cho Staff/Admin với reference_type='product_update_request'
 --   
 --   2. Staff/Admin duyệt:
 --      a. Nếu approve:
---         - Update products với thông tin từ product_update_requests
---         - Copy ảnh từ media_links (owner_type='product_update_requests') sang (owner_type='products')
+--         - Tạo product_snapshot mới với snapshot_type='history' (sao chép thông tin hiện tại từ products - lưu lại lịch sử cũ)
+--         - Update bảng products với thông tin từ product_snapshot (snapshot_type='proposed')
+--         - Copy ảnh từ media_links (owner_type='product_snapshot', owner_id=proposed_snapshot_id) sang (owner_type='products')
+--         - Update product_snapshot (proposed).snapshot_type='history'
 --         - Update product_update_requests.status='approved', processed_by, processed_at
---         - Gửi notification cho vendor
+--         - Gửi notification cho vendor với reference_type='product_update_request'
 --      b. Nếu reject:
 --         - Update product_update_requests.status='rejected', rejection_reason, processed_by, processed_at
---         - Gửi notification cho vendor
+--         - product_snapshot (proposed) vẫn giữ nguyên với snapshot_type='proposed' (để lưu lại lịch sử bị từ chối)
+--         - Gửi notification cho vendor với reference_type='product_update_request'
 --   
 --   3. Partial Refund Workflow:
 --      a. Admin đánh dấu order_details.is_refunded=TRUE cho các sản phẩm cần hoàn
@@ -889,11 +920,14 @@ CREATE TABLE notifications (
 --      d. Tạo cashout (reference_type='refund')
 --      e. Update orders.status='partial-refund' (nếu chưa phải 'refunded' toàn bộ)
 
--- G) LỢI ÍCH CỦA KIẾN TRÚC MỚI:
+-- G) LỢI ÍCH CỦA KIẾN TRÚC MỚI (SNAPSHOT-BASED):
 --   1. Quản lý yêu cầu cập nhật sản phẩm:
 --      - Vendor có thể tự đề xuất cập nhật thông tin sản phẩm
 --      - Staff kiểm soát chất lượng thông tin trước khi publish
---      - Lưu lại lịch sử thay đổi (audit trail)
+--      - Lưu lại toàn bộ lịch sử thay đổi (audit trail) với product_snapshot
+--      - Có thể rollback về phiên bản cũ nếu cần (từ snapshot history)
+--      - Tách biệt rõ ràng giữa dữ liệu snapshot (product_snapshot) và quản lý workflow (product_update_requests)
+--      - Dễ dàng so sánh sự khác biệt giữa các phiên bản sản phẩm
 --   
 --   2. Hoàn tiền linh hoạt:
 --      - Hỗ trợ hoàn tiền từng phần (partial refund) thay vì chỉ toàn bộ đơn
