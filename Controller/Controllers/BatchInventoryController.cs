@@ -1,4 +1,5 @@
-﻿using BLL.DTO.BatchInventory;
+﻿using System.IO;
+using BLL.DTO.BatchInventory;
 using BLL.Interfaces;
 using BLL.Services;
 using BLL.Helpers.Excel;
@@ -50,9 +51,8 @@ namespace API.Controllers
                 var result = await _service.GetByProductIdAsync(productId, page, pageSize, ct);
                 return Ok(result);
             }
-            catch (KeyNotFoundException e)
+            catch (KeyNotFoundException)
             {
-                //return NotFound(new { error = e.Message });
                 return NotFound();
             }
             
@@ -134,7 +134,7 @@ namespace API.Controllers
                 var result = await _service.UpdateAsync(dto, ct);
                 return Ok(result);
             }
-            catch (KeyNotFoundException e)
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
@@ -213,8 +213,8 @@ namespace API.Controllers
         {
             try
             {
-                OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-                using var package = new OfficeOpenXml.ExcelPackage();
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using var package = new ExcelPackage();
                 
                 var worksheet = package.Workbook.Worksheets.Add("BatchInventories");
 

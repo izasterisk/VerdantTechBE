@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -490,8 +491,8 @@ namespace Controller.Controllers
         {
             try
             {
-                OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
-                using var package = new OfficeOpenXml.ExcelPackage();
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using var package = new ExcelPackage();
                 
                 var worksheet = package.Workbook.Worksheets.Add("ProductRegistrations");
 
@@ -591,7 +592,8 @@ namespace Controller.Controllers
             {
                 try
                 {
-                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonVals ?? "{}")
+                    var jsonString = jsonVals.ToString();
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString ?? "{}")
                                ?? new Dictionary<string, object>();
                     dto.GetType().GetProperty("Specifications")?.SetValue(dto, dict);
                     return;

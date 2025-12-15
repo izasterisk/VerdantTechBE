@@ -127,7 +127,37 @@ public class ProductRegistrationImportService
 
     private ProductRegistrationCreateDTO ParseRowToDto(Dictionary<string, string> row, int rowNumber)
     {
-        var dto = new ProductRegistrationCreateDTO();
+        // Parse dimensions first since it's required
+        if (!row.TryGetValue("LengthCm", out var lengthStr) || string.IsNullOrWhiteSpace(lengthStr))
+            throw new InvalidOperationException($"Dòng {rowNumber}: LengthCm là bắt buộc.");
+
+        var length = ExcelHelper.ParseValue<decimal>(lengthStr);
+        if (!length.HasValue || length.Value < 0)
+            throw new InvalidOperationException($"Dòng {rowNumber}: LengthCm phải là số không âm.");
+
+        if (!row.TryGetValue("WidthCm", out var widthStr) || string.IsNullOrWhiteSpace(widthStr))
+            throw new InvalidOperationException($"Dòng {rowNumber}: WidthCm là bắt buộc.");
+
+        var width = ExcelHelper.ParseValue<decimal>(widthStr);
+        if (!width.HasValue || width.Value < 0)
+            throw new InvalidOperationException($"Dòng {rowNumber}: WidthCm phải là số không âm.");
+
+        if (!row.TryGetValue("HeightCm", out var heightStr) || string.IsNullOrWhiteSpace(heightStr))
+            throw new InvalidOperationException($"Dòng {rowNumber}: HeightCm là bắt buộc.");
+
+        var height = ExcelHelper.ParseValue<decimal>(heightStr);
+        if (!height.HasValue || height.Value < 0)
+            throw new InvalidOperationException($"Dòng {rowNumber}: HeightCm phải là số không âm.");
+
+        var dto = new ProductRegistrationCreateDTO
+        {
+            DimensionsCm = new DimensionsDTO
+            {
+                Length = length.Value,
+                Width = width.Value,
+                Height = height.Value
+            }
+        };
 
         // Required fields
         if (!row.TryGetValue("VendorId", out var vendorIdStr) || string.IsNullOrWhiteSpace(vendorIdStr))
@@ -207,35 +237,6 @@ public class ProductRegistrationImportService
             throw new InvalidOperationException($"Dòng {rowNumber}: WeightKg phải từ 0.001 đến 50.000 kg.");
 
         dto.WeightKg = weight.Value;
-
-        // Dimensions
-        if (!row.TryGetValue("LengthCm", out var lengthStr) || string.IsNullOrWhiteSpace(lengthStr))
-            throw new InvalidOperationException($"Dòng {rowNumber}: LengthCm là bắt buộc.");
-
-        var length = ExcelHelper.ParseValue<decimal>(lengthStr);
-        if (!length.HasValue || length.Value < 0)
-            throw new InvalidOperationException($"Dòng {rowNumber}: LengthCm phải là số không âm.");
-
-        if (!row.TryGetValue("WidthCm", out var widthStr) || string.IsNullOrWhiteSpace(widthStr))
-            throw new InvalidOperationException($"Dòng {rowNumber}: WidthCm là bắt buộc.");
-
-        var width = ExcelHelper.ParseValue<decimal>(widthStr);
-        if (!width.HasValue || width.Value < 0)
-            throw new InvalidOperationException($"Dòng {rowNumber}: WidthCm phải là số không âm.");
-
-        if (!row.TryGetValue("HeightCm", out var heightStr) || string.IsNullOrWhiteSpace(heightStr))
-            throw new InvalidOperationException($"Dòng {rowNumber}: HeightCm là bắt buộc.");
-
-        var height = ExcelHelper.ParseValue<decimal>(heightStr);
-        if (!height.HasValue || height.Value < 0)
-            throw new InvalidOperationException($"Dòng {rowNumber}: HeightCm phải là số không âm.");
-
-        dto.DimensionsCm = new DimensionsDTO
-        {
-            Length = length.Value,
-            Width = width.Value,
-            Height = height.Value
-        };
 
         // Specifications (optional JSON)
         if (row.TryGetValue("Specifications", out var specsStr) && !string.IsNullOrWhiteSpace(specsStr))

@@ -26,9 +26,13 @@ public static class ExcelHelper
         if (worksheet == null)
             throw new InvalidOperationException("Không tìm thấy worksheet trong file Excel.");
 
+        var dimension = worksheet.Dimension;
+        if (dimension == null)
+            return new List<Dictionary<string, string>>();
+
         var result = new List<Dictionary<string, string>>();
         var startRow = hasHeader ? 2 : 1; // Bắt đầu từ dòng 2 nếu có header
-        var endRow = worksheet.Dimension?.End.Row ?? 0;
+        var endRow = dimension.End.Row;
 
         if (endRow == 0)
             return result;
@@ -38,7 +42,7 @@ public static class ExcelHelper
         if (hasHeader)
         {
             columnHeaders = new Dictionary<int, string>();
-            var headerRow = worksheet.Cells[1, 1, 1, worksheet.Dimension.End.Column];
+            var headerRow = worksheet.Cells[1, 1, 1, dimension.End.Column];
             foreach (var cell in headerRow)
             {
                 if (cell.Value != null)
@@ -58,7 +62,7 @@ public static class ExcelHelper
             var rowData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             bool hasData = false;
 
-            for (int col = 1; col <= worksheet.Dimension.End.Column; col++)
+            for (int col = 1; col <= dimension.End.Column; col++)
             {
                 var cell = worksheet.Cells[row, col];
                 var cellValue = cell.Value?.ToString()?.Trim() ?? string.Empty;
@@ -99,59 +103,62 @@ public static class ExcelHelper
     }
 
     /// <summary>
-    /// Parse giá trị từ Excel cell sang kiểu dữ liệu cụ thể
+    /// Parse giá trị từ Excel cell sang kiểu dữ liệu cụ thể (nullable)
     /// </summary>
-    public static T? ParseValue<T>(string? value)
+    public static T? ParseValue<T>(string? value) where T : struct
     {
         if (string.IsNullOrWhiteSpace(value))
-            return default(T);
+            return null;
 
-        var type = typeof(T);
-        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        var underlyingType = typeof(T);
 
         try
         {
             if (underlyingType == typeof(ulong))
             {
                 if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var dec))
-                    return (T)(object)Convert.ToUInt64(dec);
+                    return (T?)(object)Convert.ToUInt64(dec);
             }
             else if (underlyingType == typeof(int))
             {
                 if (int.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var intVal))
-                    return (T)(object)intVal;
+                    return (T?)(object)intVal;
             }
             else if (underlyingType == typeof(decimal))
             {
                 if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var decVal))
-                    return (T)(object)decVal;
+                    return (T?)(object)decVal;
             }
             else if (underlyingType == typeof(DateTime))
             {
                 if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateVal))
-                    return (T)(object)dateVal;
+                    return (T?)(object)dateVal;
             }
             else if (underlyingType == typeof(DateOnly))
             {
                 if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dateVal))
-                    return (T)(object)DateOnly.FromDateTime(dateVal);
+                    return (T?)(object)DateOnly.FromDateTime(dateVal);
             }
             else if (underlyingType == typeof(bool))
             {
                 if (bool.TryParse(value, out var boolVal))
-                    return (T)(object)boolVal;
-            }
-            else if (underlyingType == typeof(string))
-            {
-                return (T)(object)value;
+                    return (T?)(object)boolVal;
             }
 
-            return default(T);
+            return null;
         }
         catch
         {
-            return default(T);
+            return null;
         }
+    }
+
+    /// <summary>
+    /// Parse giá trị string từ Excel cell
+    /// </summary>
+    public static string? ParseValueString(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     /// <summary>
