@@ -83,7 +83,7 @@ public class MediaLinkConfiguration : IEntityTypeConfiguration<MediaLink>
         builder.Property(e => e.OwnerType)
             .HasConversion(ownerTypeConverter)
             .HasMaxLength(500)                 
-            .HasColumnType("enum('vendor_certificates','chatbot_messages','products','product_registrations','product_certificates','product_reviews','forum_posts','request_message','product_update_requests')")
+            .HasColumnType("enum('vendor_certificates','chatbot_messages','products','product_registrations','product_certificates','product_reviews','forum_posts','request_message','product_snapshot')")
             .IsRequired()
             .HasColumnName("owner_type");
 

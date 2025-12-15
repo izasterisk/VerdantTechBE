@@ -65,5 +65,7 @@ public class ProductUpdateRequestCreateDTO
 
     // public DateTime UpdatedAt { get; set; }
     
-    public List<IFormFile>? Images { get; set; }
+    public List<IFormFile>? ImagesToAdd { get; set; }
+    
+    public List<ulong>? ImagesToDelete { get; set; }
 }

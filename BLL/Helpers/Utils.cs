@@ -107,6 +107,7 @@ public static class Utils
     /// <param name="images">Danh sách hình ảnh cần upload</param>
     /// <param name="folder">Thư mục lưu trên Cloudinary (VD: "products/images")</param>
     /// <param name="purpose">Mục đích của ảnh (VD: "none", "productimage")</param>
+    /// <param name="startIndex">Chỉ số bắt đầu cho SortOrder (mặc định = 0)</param>
     /// <param name="ct">CancellationToken</param>
     /// <returns>List MediaLinkItemDTO với thông tin ảnh đã upload</returns>
     /// <exception cref="InvalidOperationException">Nếu có file không phải ảnh hoặc quá số lượng</exception>
@@ -115,6 +116,7 @@ public static class Utils
         List<IFormFile>? images,
         string folder,
         string purpose = "none",
+        int startIndex = 1,
         CancellationToken ct = default)
     {
         if (images == null || images.Count == 0)
@@ -163,7 +165,7 @@ public static class Utils
             ImagePublicId = x.PublicId,
             ImageUrl = x.Url,
             Purpose = purpose,
-            SortOrder = index + 1
+            SortOrder = startIndex + index
         }).ToList();
     }
 }

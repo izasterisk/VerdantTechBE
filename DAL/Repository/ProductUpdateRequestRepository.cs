@@ -2,6 +2,7 @@
 using DAL.Data.Models;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace DAL.Repository;
 
@@ -29,8 +30,9 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
         _dbContext = dbContext;
     }
 
-    public async Task<(ProductSnapshot, ulong requestId)> CreateProductUpdateRequestWithTransactionAsync(ProductSnapshot productSnapshot, 
-        List<MediaLink> images, ProductUpdateRequest productUpdateRequest, CancellationToken cancellationToken)
+    public async Task<(ProductSnapshot, ulong requestId)> CreateProductUpdateRequestWithTransactionAsync
+    (ProductSnapshot productSnapshot, List<MediaLink> imagesToAdd, List<MediaLink> imagesToKeep, 
+        ProductUpdateRequest productUpdateRequest, CancellationToken cancellationToken)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -39,13 +41,26 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
             productSnapshot.UpdatedAt = DateTime.UtcNow;
             var snapshot = await _productSnapshotRepository.CreateAsync(productSnapshot, cancellationToken);
 
-            foreach (var image in images)
+            if (imagesToKeep.Count > 0)
             {
-                image.OwnerId = snapshot.Id;
-                image.CreatedAt = DateTime.UtcNow;
-                image.UpdatedAt = DateTime.UtcNow;
+                foreach (var image in imagesToKeep)
+                {
+                    image.OwnerId = snapshot.Id;
+                    image.CreatedAt = DateTime.UtcNow;
+                    image.UpdatedAt = DateTime.UtcNow;
+                }
+                await _mediaLinkRepository.CreateBulkAsync(imagesToKeep, cancellationToken);
             }
-            await _mediaLinkRepository.CreateBulkAsync(images, cancellationToken);
+            if (imagesToAdd.Count > 0)
+            {
+                foreach (var image in imagesToAdd)
+                {
+                    image.OwnerId = snapshot.Id;
+                    image.CreatedAt = DateTime.UtcNow;
+                    image.UpdatedAt = DateTime.UtcNow;
+                }
+                await _mediaLinkRepository.CreateBulkAsync(imagesToAdd, cancellationToken);
+            }
             
             productUpdateRequest.ProductSnapshotId = snapshot.Id;
             productUpdateRequest.CreatedAt = DateTime.UtcNow;
@@ -61,6 +76,76 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
             throw;
         }
     }
+    
+    public async Task ApproveProductUpdateRequestAsync
+        (ProductUpdateRequest request, ProductSnapshot productSnapshot, List<MediaLink> productSnapshotImages, 
+            Product productUpdate, List<MediaLink> productUpdateImages, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await _productUpdateRequestRepository.UpdateAsync(request, cancellationToken);
+            
+            productSnapshot.CreatedAt = DateTime.UtcNow;
+            productSnapshot.UpdatedAt = DateTime.UtcNow;
+            var snapshot = await _productSnapshotRepository.CreateAsync(productSnapshot, cancellationToken);
+
+            foreach (var productSnapshotImage in productSnapshotImages)
+            {
+                productSnapshotImage.UpdatedAt = DateTime.UtcNow;
+                productSnapshotImage.OwnerId = snapshot.Id;
+                productSnapshotImage.OwnerType = MediaOwnerType.ProductSnapshot;
+            }
+            await _mediaLinkRepository.BulkUpdateAsync(productSnapshotImages, cancellationToken);
+            
+            productUpdate.UpdatedAt = DateTime.UtcNow;
+            await _productRepository.UpdateAsync(productUpdate, cancellationToken);
+            
+            foreach (var productUpdateImage in productUpdateImages)
+            {
+                productUpdateImage.UpdatedAt = DateTime.UtcNow;
+                productUpdateImage.OwnerId = productUpdate.Id;
+                productUpdateImage.OwnerType = MediaOwnerType.Products;
+            }
+            await _mediaLinkRepository.BulkUpdateAsync(productUpdateImages, cancellationToken);
+            
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+    
+    public async Task DeleteProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            await _dbContext.MediaLinks
+                .Where(ml => ml.OwnerType == MediaOwnerType.ProductSnapshot && ml.OwnerId == request.ProductSnapshotId)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            _dbContext.ProductUpdateRequests.Remove(request);
+            
+            var productSnapshot = await _dbContext.ProductSnapshots
+                .FirstOrDefaultAsync(ps => ps.Id == request.ProductSnapshotId, cancellationToken)
+                ?? throw new KeyNotFoundException($"Không tìm thấy bản sao sản phẩm với Id: {request.ProductSnapshotId}.");
+            
+            _dbContext.ProductSnapshots.Remove(productSnapshot);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw new InvalidOperationException($"Không thể xóa yêu cầu cập nhật sản phẩm với Id: {request.Id}. Lỗi: {ex.Message}", ex);
+        }
+    }
+    
+    public async Task RejectProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken)
+        => await _productUpdateRequestRepository.UpdateAsync(request, cancellationToken);
     
     public async Task<Product> GetProductByIdAsync(ulong productId, CancellationToken cancellationToken)
     {
@@ -93,7 +178,7 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<ProductUpdateRequest> GetProductUpdateRequestAsync(ulong productUpdateRequestId, CancellationToken cancellationToken)
+    public async Task<ProductUpdateRequest> GetProductUpdateRequestWithRelationsByIdAsync(ulong productUpdateRequestId, CancellationToken cancellationToken)
     {
         return await _productUpdateRequestRepository.GetWithRelationsAsync
                    (pur => pur.Id == productUpdateRequestId, true, 
@@ -103,4 +188,15 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
                        cancellationToken)
                ?? throw new KeyNotFoundException($"Không tìm thấy yêu cầu cập nhật sản phẩm với Id: {productUpdateRequestId}.");
     }
+    
+    public async Task<ProductUpdateRequest> GetProductUpdateRequestByIdAsync(ulong productUpdateRequestId, CancellationToken cancellationToken)
+        => await _productUpdateRequestRepository.GetAsync(p => p.Id == productUpdateRequestId, true, cancellationToken)
+              ?? throw new KeyNotFoundException($"Không tìm thấy yêu cầu cập nhật sản phẩm với Id: {productUpdateRequestId}.");
+    
+    public async Task<List<ProductUpdateRequest>> GetAllProductUpdateRequestsByVendorUserIdAsync(ulong userId, CancellationToken cancellationToken)
+        => await _productUpdateRequestRepository.GetAllWithRelationsByFilterAsync(p => p.Product.VendorId == userId, true,
+            q => q.Include(r => r.Product)
+                .Include(r => r.ProductSnapshot)
+                .Include(r => r.ProcessedByUser),
+            cancellationToken);
 }
