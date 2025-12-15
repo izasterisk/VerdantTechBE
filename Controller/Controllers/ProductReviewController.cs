@@ -6,6 +6,7 @@ using BLL.DTO.ProductReview;
 using BLL.DTO.MediaLink;
 using BLL.Interfaces;
 using Infrastructure.Cloudinary;
+using BLL.Interfaces.Infrastructure;
 using System.Net;
 using Swashbuckle.AspNetCore.Annotations;
 

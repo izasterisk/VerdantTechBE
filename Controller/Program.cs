@@ -77,8 +77,6 @@ builder.Services.Configure<FormOptions>(o =>
     o.BufferBody = true;
 });
 
-builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-
 //Dependency Injection
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
@@ -118,6 +116,8 @@ builder.Services.AddScoped<IRepository<ChatbotConversation>, Repository<ChatbotC
 builder.Services.AddScoped<IRepository<ChatbotMessage>, Repository<ChatbotMessage>>();
 builder.Services.AddScoped<IRepository<Crop>, Repository<Crop>>();
 builder.Services.AddScoped<IRepository<RequestMessage>, Repository<RequestMessage>>();
+builder.Services.AddScoped<IRepository<ProductUpdateRequest>, Repository<ProductUpdateRequest>>();
+builder.Services.AddScoped<IRepository<ProductSnapshot>, Repository<ProductSnapshot>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -153,6 +153,7 @@ builder.Services.AddScoped<IChatbotConversationRepository, ChatbotConversationRe
 builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<ICropRepository, CropRepository>();
 builder.Services.AddScoped<ISurveyResponseRepository, SurveyResponseRepository>();
+builder.Services.AddScoped<IProductUpdateRequestRepository, ProductUpdateRequestRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -185,6 +186,7 @@ builder.Services.AddScoped<IExportInventoryService, ExportInventoryService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IEnvCacheService, EnvCacheService>();
 builder.Services.AddScoped<ISurveyResponseService, SurveyResponseService>();
+builder.Services.AddScoped<IProductUpdateRequestService, ProductUpdateRequestService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

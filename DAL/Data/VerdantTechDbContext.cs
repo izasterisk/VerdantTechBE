@@ -29,6 +29,7 @@ public class VerdantTechDbContext : DbContext
     public DbSet<ProductCategory> ProductCategories { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductRegistration> ProductRegistrations { get; set; }
+    public DbSet<ProductSnapshot> ProductSnapshots { get; set; }
     public DbSet<ProductUpdateRequest> ProductUpdateRequests { get; set; }
     public DbSet<Cart> Carts { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
@@ -83,6 +84,7 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ProductCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new ProductRegistrationConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductSnapshotConfiguration());
         modelBuilder.ApplyConfiguration(new ProductUpdateRequestConfiguration());
         modelBuilder.ApplyConfiguration(new CartConfiguration());
         modelBuilder.ApplyConfiguration(new CartItemConfiguration());

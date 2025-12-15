@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using BLL.Helpers.Order;
 using System.Security;
+using System.Text.Json;
+using System.Globalization;
 
 namespace Controller.Controllers;
 
@@ -158,4 +160,138 @@ public abstract class BaseController : ControllerBase
     }
 
     protected CancellationToken GetCancellationToken() => HttpContext.RequestAborted;
+
+    /// <summary>
+    /// Parse Specifications and DimensionsCm from multipart/form-data
+    /// Supports both JSON string and Swagger flatten format
+    /// </summary>
+    protected static void ParseDictionaryFields(
+        IFormCollection form,
+        Action<Dictionary<string, object>?>? setSpecifications = null,
+        Action<Dictionary<string, decimal>?>? setDimensions = null,
+        HashSet<string>? knownFormKeys = null)
+    {
+        knownFormKeys ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        
+        // Always exclude these fields from Specifications parsing
+        var excludeKeys = new HashSet<string>(knownFormKeys, StringComparer.OrdinalIgnoreCase)
+        {
+            "Specifications", "DimensionsCm"
+        };
+
+        // Parse Specifications
+        if (setSpecifications != null)
+        {
+            if (form.ContainsKey("Specifications"))
+            {
+                var specsJson = form["Specifications"].ToString();
+                if (string.IsNullOrWhiteSpace(specsJson))
+                {
+                    setSpecifications(null); // Empty string -> null
+                }
+                else
+                {
+                    try
+                    {
+                        var specs = JsonSerializer.Deserialize<Dictionary<string, object>>(specsJson);
+                        setSpecifications(specs);
+                    }
+                    catch (JsonException)
+                    {
+                        throw new InvalidOperationException("Specifications phải là JSON hợp lệ dạng Dictionary<string, object>");
+                    }
+                }
+            }
+            else
+            {
+                // Swagger flatten - parse unknown fields as Specifications
+                var specs = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kv in form)
+                {
+                    if (excludeKeys.Contains(kv.Key) || 
+                        kv.Key.StartsWith("DimensionsCm.", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var raw = kv.Value.ToString();
+                    // Keep all as string - JSON serializer will handle types
+                    specs[kv.Key] = raw;
+                }
+                setSpecifications(specs.Count > 0 ? specs : null);
+            }
+        }
+
+        // Parse DimensionsCm
+        if (setDimensions != null)
+        {
+            if (form.ContainsKey("DimensionsCm"))
+            {
+                var dimsJson = form["DimensionsCm"].ToString();
+                if (string.IsNullOrWhiteSpace(dimsJson))
+                {
+                    setDimensions(null); // Empty string -> null
+                }
+                else
+                {
+                    try
+                    {
+                        var dims = JsonSerializer.Deserialize<Dictionary<string, decimal>>(dimsJson);
+                        ValidateAndCreateDimensions(dims, setDimensions);
+                    }
+                    catch (JsonException)
+                    {
+                        throw new InvalidOperationException("DimensionsCm phải là JSON hợp lệ dạng Dictionary<string, decimal>");
+                    }
+                }
+            }
+            else
+            {
+                // Parse từ DimensionsCm.length, width, height
+                var dims = new Dictionary<string, decimal>();
+                
+                if (form.TryGetValue("DimensionsCm.length", out var lengthVal) && 
+                    decimal.TryParse(lengthVal, NumberStyles.Any, CultureInfo.InvariantCulture, out var length))
+                    dims["length"] = length;
+                    
+                if (form.TryGetValue("DimensionsCm.width", out var widthVal) && 
+                    decimal.TryParse(widthVal, NumberStyles.Any, CultureInfo.InvariantCulture, out var width))
+                    dims["width"] = width;
+                    
+                if (form.TryGetValue("DimensionsCm.height", out var heightVal) && 
+                    decimal.TryParse(heightVal, NumberStyles.Any, CultureInfo.InvariantCulture, out var height))
+                    dims["height"] = height;
+
+                if (dims.Count > 0)
+                    ValidateAndCreateDimensions(dims, setDimensions);
+                else
+                    setDimensions(null);
+            }
+        }
+    }
+
+    private static void ValidateAndCreateDimensions(
+        Dictionary<string, decimal>? dims, 
+        Action<Dictionary<string, decimal>?> setDimensions)
+    {
+        if (dims == null || dims.Count == 0)
+        {
+            setDimensions(null);
+            return;
+        }
+        if (dims.Count != 3)
+            throw new InvalidOperationException("DimensionsCm phải có đúng 3 giá trị: length, width, height");
+        if (!dims.ContainsKey("length") || !dims.ContainsKey("width") || !dims.ContainsKey("height"))
+            throw new InvalidOperationException("DimensionsCm phải có các key: length, width, height");
+        foreach (var kvp in dims)
+        {
+            if (kvp.Value <= 0 || kvp.Value > 10000)
+                throw new InvalidOperationException($"Giá trị kích thước '{kvp.Key}' phải lớn hơn 0 và không được vượt quá 10000.");
+        }
+        var orderedDims = new Dictionary<string, decimal>
+        {
+            ["length"] = dims["length"],
+            ["width"] = dims["width"],
+            ["height"] = dims["height"]
+        };
+        setDimensions(orderedDims);
+    }
 }

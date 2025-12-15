@@ -10,6 +10,8 @@ using Microsoft.Extensions.Options;
 
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+using BLL.Interfaces.Infrastructure;
+using BLL.DTO.Cloudinary;
 
 namespace Infrastructure.Cloudinary
 {

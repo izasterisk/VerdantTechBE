@@ -1,5 +1,6 @@
 using BLL.Interfaces.Infrastructure;
 using Infrastructure.Address;
+using Infrastructure.Cloudinary;
 using Infrastructure.Email;
 using Infrastructure.Soil;
 using Infrastructure.Weather;
@@ -58,6 +59,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INotificationHub, NotificationHubService>();
         return services;
     }
+    
+    public static IServiceCollection AddCloudinary(this IServiceCollection services)
+    {
+        services.AddScoped<ICloudinaryService, CloudinaryService>();
+        return services;
+    }
 
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
@@ -68,6 +75,7 @@ public static class ServiceCollectionExtensions
         services.AddAddress();
         services.AddPayOS();
         services.AddSignalRNotification();
+        services.AddCloudinary();
         return services;
     }
 }

@@ -31,6 +31,7 @@ using BLL.DTO.ForumPost;
 using BLL.DTO.ForumComment;
 using BLL.DTO.ExportInventory;
 using BLL.DTO.Payment.PayOS;
+using BLL.DTO.ProductUpdateRequest;
 using BLL.DTO.SurveyResponse;
 
 namespace BLL.Helpers
@@ -355,6 +356,14 @@ namespace BLL.Helpers
             CreateMap<Transaction, TransactionResponseDTO>()
                 .ForMember(d => d.ProcessedBy, o => o.MapFrom(s => s.ProcessedByNavigation))
                 .ForMember(d => d.CreatedBy, o => o.MapFrom(s => s.CreatedByNavigation));
+            
+            // ===================== PRODUCT UPDATE REQUEST =====================
+            CreateMap<ProductSnapshot, Product>().ReverseMap();
+            CreateMap<ProductUpdateRequestCreateDTO, ProductSnapshot>()
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));;
+            CreateMap<DAL.Data.Models.ProductUpdateRequest, ProductUpdateRequestResponseDTO>();
+            CreateMap<ProductSnapshotResponseDTO, ProductSnapshot>().ReverseMap();
+            CreateMap<FullyProductResponseDTO, Product>().ReverseMap();
         }
     }
 }

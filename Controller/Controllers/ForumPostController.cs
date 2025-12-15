@@ -1,8 +1,8 @@
 ﻿using BLL.DTO.ForumPost;
 using BLL.DTO.MediaLink;
 using BLL.Interfaces;
+using BLL.Interfaces.Infrastructure;
 using DAL.Data;
-using Infrastructure.Cloudinary;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controller.Controllers

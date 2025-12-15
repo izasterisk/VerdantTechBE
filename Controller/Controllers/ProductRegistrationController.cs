@@ -13,7 +13,7 @@ using BLL.DTO;
 using BLL.DTO.MediaLink;
 using BLL.DTO.ProductRegistration;
 using BLL.Interfaces;
-using Infrastructure.Cloudinary;
+using BLL.Interfaces.Infrastructure;
 using Microsoft.Extensions.Logging;
 
 namespace Controller.Controllers
