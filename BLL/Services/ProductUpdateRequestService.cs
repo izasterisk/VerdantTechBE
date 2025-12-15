@@ -41,7 +41,19 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
             throw new InvalidOperationException("Đã có yêu cầu cập nhật sản phẩm đang chờ xử lý.");
         
         var productSnapshot = _mapper.Map<ProductSnapshot>(product);
-        _mapper.Map(dto, productSnapshot);
+        
+        if (dto.ProductCode != null) productSnapshot.ProductCode = dto.ProductCode;
+        if (dto.ProductName != null) productSnapshot.ProductName = dto.ProductName;
+        if (dto.Description != null) productSnapshot.Description = dto.Description;
+        if (dto.UnitPrice.HasValue) productSnapshot.UnitPrice = dto.UnitPrice.Value;
+        if (dto.DiscountPercentage.HasValue) productSnapshot.DiscountPercentage = dto.DiscountPercentage.Value;
+        if (dto.EnergyEfficiencyRating.HasValue) productSnapshot.EnergyEfficiencyRating = dto.EnergyEfficiencyRating.Value;
+        if (dto.WarrantyMonths.HasValue) productSnapshot.WarrantyMonths = dto.WarrantyMonths.Value;
+        if (dto.WeightKg.HasValue) productSnapshot.WeightKg = dto.WeightKg.Value;
+        if (dto.Specifications != null && dto.Specifications.Count > 0) productSnapshot.Specifications = dto.Specifications;
+        if (dto.DimensionsCm != null && dto.DimensionsCm.Count > 0) productSnapshot.DimensionsCm = dto.DimensionsCm;        
+        
+        productSnapshot.ProductId = product.Id;
         productSnapshot.SnapshotType = ProductSnapshotType.Proposed;
         
         if(dto.ProductName != null)
