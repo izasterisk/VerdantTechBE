@@ -77,8 +77,6 @@ builder.Services.Configure<FormOptions>(o =>
     o.BufferBody = true;
 });
 
-builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-
 //Dependency Injection
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();

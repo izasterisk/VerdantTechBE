@@ -165,6 +165,12 @@ public class ProductSnapshotConfiguration : IEntityTypeConfiguration<ProductSnap
             .OnDelete(DeleteBehavior.Restrict)
             .HasConstraintName("product_snapshot_ibfk_4");
 
+        // 1:1 Relationship with ProductUpdateRequest
+        builder.HasOne(e => e.ProductUpdateRequest)
+            .WithOne(p => p.ProductSnapshot)
+            .HasForeignKey<ProductUpdateRequest>(p => p.ProductSnapshotId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // Indexes
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");

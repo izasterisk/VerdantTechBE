@@ -27,6 +27,7 @@ public partial class ProductSnapshot
     [StringLength(255)]
     public string Slug { get; set; } = null!;
 
+    [StringLength(1000)]
     public string? Description { get; set; }
 
     public decimal UnitPrice { get; set; }
@@ -84,5 +85,5 @@ public partial class ProductSnapshot
     public virtual User Vendor { get; set; } = null!;
     public virtual ProductRegistration? Registration { get; set; }
     
-    public virtual ICollection<ProductUpdateRequest> ProductUpdateRequests { get; set; } = new List<ProductUpdateRequest>();
+    public virtual ProductUpdateRequest? ProductUpdateRequest { get; set; }
 }

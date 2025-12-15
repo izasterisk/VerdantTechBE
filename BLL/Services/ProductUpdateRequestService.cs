@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BLL.DTO.MediaLink;
 using BLL.DTO.ProductUpdateRequest;
 using BLL.Helpers;
 using BLL.Interfaces;
@@ -36,12 +37,15 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         var product = await _productUpdateRequestRepository.GetProductByIdAsync(dto.ProductId, cancellationToken);
         if(product.VendorId != userId)
             throw new UnauthorizedAccessException("Người dùng không có quyền cập nhật sản phẩm này.");
-        if(!await _productUpdateRequestRepository.IsThereAnyPendingRequestAsync(dto.ProductId,cancellationToken))
+        if(await _productUpdateRequestRepository.IsThereAnyPendingRequestAsync(dto.ProductId,cancellationToken))
             throw new InvalidOperationException("Đã có yêu cầu cập nhật sản phẩm đang chờ xử lý.");
         
         var productSnapshot = _mapper.Map<ProductSnapshot>(product);
         _mapper.Map(dto, productSnapshot);
+        productSnapshot.SnapshotType = ProductSnapshotType.Proposed;
         
+        if(dto.ProductName != null)
+            productSnapshot.Slug = Utils.GenerateSlug(dto.ProductName);
         if(dto.ManualFile != null)
         {
             var manualResult = await Utils.UploadManualFileAsync(
@@ -88,5 +92,17 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
             // ProcessedBy 
             // ProcessedAt 
         };
+
+        var created = await _productUpdateRequestRepository.CreateProductUpdateRequestWithTransactionAsync
+            (productSnapshot, images, request, cancellationToken);
+        
+        var responseDto = _mapper.Map<ProductUpdateRequestResponseDTO>
+            (await _productUpdateRequestRepository.GetProductUpdateRequestAsync(created.Item2, cancellationToken));
+        
+        responseDto.ProductSnapshot.Images = _mapper.Map<List<MediaLinkItemDTO>>
+            (await _productUpdateRequestRepository.GetAllImagesByProductSnapshotIdAsync(created.Item1.Id, cancellationToken));
+        responseDto.Product.Images = _mapper.Map<List<MediaLinkItemDTO>>
+            (await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(product.Id, cancellationToken));
+        return responseDto;
     }
 }

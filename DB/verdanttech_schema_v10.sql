@@ -460,7 +460,7 @@ CREATE TABLE product_snapshot (
 -- Bảng yêu cầu cập nhật sản phẩm (chỉ chứa thông tin quản lý)
 CREATE TABLE product_update_requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    product_snapshot_id BIGINT UNSIGNED NOT NULL COMMENT 'ID snapshot đề xuất thay đổi',
+    product_snapshot_id BIGINT UNSIGNED NOT NULL UNIQUE COMMENT 'ID snapshot đề xuất thay đổi - quan hệ 1:1 với product_snapshot',
     product_id BIGINT UNSIGNED NOT NULL COMMENT 'ID sản phẩm cần cập nhật',
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     rejection_reason VARCHAR(500) NULL COMMENT 'Lý do từ chối nếu Staff không duyệt',    
@@ -473,7 +473,6 @@ CREATE TABLE product_update_requests (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
     
-    INDEX idx_product_snapshot (product_snapshot_id),
     INDEX idx_product (product_id),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý yêu cầu cập nhật sản phẩm (chỉ chứa thông tin trạng thái và duyệt)';

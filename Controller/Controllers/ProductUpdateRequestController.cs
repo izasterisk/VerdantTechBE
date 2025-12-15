@@ -41,7 +41,12 @@ public class ProductUpdateRequestController : BaseController
                 Request.Form,
                 specs => dto.Specifications = specs,
                 dims => dto.DimensionsCm = dims,
-                KnownFormKeys
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "ProductId", "ProductCode", "ProductName", "Description",
+                    "UnitPrice", "DiscountPercentage", "EnergyEfficiencyRating",
+                    "ManualFile", "WarrantyMonths", "WeightKg", "Images"
+                }
             );
 
             var userId = GetCurrentUserId();
@@ -53,10 +58,4 @@ public class ProductUpdateRequestController : BaseController
             return HandleException(ex);
         }
     }
-    private static readonly HashSet<string> KnownFormKeys = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "ProductId", "ProductCode", "ProductName", "Description",
-        "UnitPrice", "DiscountPercentage", "EnergyEfficiencyRating",
-        "ManualFile", "WarrantyMonths", "WeightKg", "Images"
-    };
 }

@@ -65,16 +65,16 @@ public class ProductUpdateRequestConfiguration : IEntityTypeConfiguration<Produc
             .HasColumnName("updated_at");
 
         // Indexes
-        builder.HasIndex(e => e.ProductSnapshotId).HasDatabaseName("idx_product_snapshot");
+        builder.HasIndex(e => e.ProductSnapshotId).HasDatabaseName("idx_product_snapshot").IsUnique();
         builder.HasIndex(e => e.ProductId).HasDatabaseName("idx_product");
         builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
 
-        // Foreign Keys
-        builder.HasOne(e => e.ProductSnapshot)
-            .WithMany(p => p.ProductUpdateRequests)
-            .HasForeignKey(e => e.ProductSnapshotId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("product_update_requests_ibfk_1");
+        // Foreign Keys - 1:1 Relationship configured in ProductSnapshotConfiguration
+        // builder.HasOne(e => e.ProductSnapshot)
+        //     .WithOne(p => p.ProductUpdateRequest)
+        //     .HasForeignKey<ProductUpdateRequest>(e => e.ProductSnapshotId)
+        //     .OnDelete(DeleteBehavior.Cascade)
+        //     .HasConstraintName("product_update_requests_ibfk_1");
 
         builder.HasOne(e => e.Product)
             .WithMany()
