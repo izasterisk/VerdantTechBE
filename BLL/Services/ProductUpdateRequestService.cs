@@ -163,6 +163,8 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         }
         else
         {
+            if(dto.RejectionReason == null)
+                throw new InvalidOperationException("Phải cung cấp lý do từ chối khi trạng thái là 'Từ chối'.");
             request.RejectionReason = dto.RejectionReason;
             request.Product = null!;
             request.ProductSnapshot = null!;
@@ -175,6 +177,19 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
             response.Product = _mapper.Map<FullyProductResponseDTO>
                 (await _productUpdateRequestRepository.GetProductByIdAsync(request.ProductId, cancellationToken));
         return response;
+    }
+    
+    public async Task<string> DeleteProductUpdateRequestAsync(ulong userId, ulong requestId, CancellationToken cancellationToken)
+    {
+        var request = await _productUpdateRequestRepository.GetProductUpdateRequestByIdAsync(requestId, cancellationToken);
+        var product = await _productUpdateRequestRepository.GetProductByIdAsync(request.ProductId, cancellationToken);
+        if(product.VendorId != userId)
+            throw new UnauthorizedAccessException("Người dùng không có quyền xóa yêu cầu cập nhật sản phẩm này.");
+        if(request.Status != ProductRegistrationStatus.Pending)
+            throw new InvalidOperationException("Chỉ có thể xóa các yêu cầu đang chờ xử lý.");
+        
+        await _productUpdateRequestRepository.DeleteProductUpdateRequestAsync(request, cancellationToken);
+        return "Yêu cầu cập nhật sản phẩm đã được xóa thành công.";
     }
     
     public async Task<(List<ProductUpdateRequestResponseDTO>, int totalCount)> GetAllProductUpdateRequestsAsync

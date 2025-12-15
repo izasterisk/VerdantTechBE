@@ -18,4 +18,5 @@ public interface IProductUpdateRequestRepository
         Product productUpdate, List<MediaLink> productUpdateImages, CancellationToken cancellationToken);
     Task RejectProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken);
     Task<ProductUpdateRequest> GetProductUpdateRequestByIdAsync(ulong productUpdateRequestId, CancellationToken cancellationToken);
+    Task DeleteProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken);
 }

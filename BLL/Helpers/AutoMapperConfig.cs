@@ -360,7 +360,22 @@ namespace BLL.Helpers
             // ===================== PRODUCT UPDATE REQUEST =====================
             CreateMap<ProductSnapshot, Product>().ReverseMap();
             CreateMap<ProductUpdateRequestCreateDTO, ProductSnapshot>()
-                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));;
+                .ForMember(d => d.Specifications, opt => opt.Condition((src, dest, srcMember) => 
+                    srcMember != null && ((Dictionary<string, object>)srcMember).Count > 0))
+                .ForMember(d => d.DimensionsCm, opt => opt.Condition((src, dest, srcMember) => 
+                    srcMember != null && ((Dictionary<string, decimal>)srcMember).Count > 0))
+                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => 
+                {
+                    if (srcMember == null) return false;
+                    // Check nullable types (decimal?, int?, etc.)
+                    var type = srcMember.GetType();
+                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        var hasValue = type.GetProperty("HasValue")?.GetValue(srcMember);
+                        return hasValue is true;
+                    }
+                    return true;
+                }));
             CreateMap<DAL.Data.Models.ProductUpdateRequest, ProductUpdateRequestResponseDTO>();
             CreateMap<ProductSnapshotResponseDTO, ProductSnapshot>().ReverseMap();
             CreateMap<FullyProductResponseDTO, Product>().ReverseMap();

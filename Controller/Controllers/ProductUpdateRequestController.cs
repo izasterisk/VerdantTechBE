@@ -90,6 +90,29 @@ public class ProductUpdateRequestController : BaseController
     }
 
     /// <summary>
+    /// Xóa yêu cầu cập nhật sản phẩm
+    /// </summary>
+    /// <param name="requestId">ID của yêu cầu cập nhật</param>
+    /// <returns>Thông báo xóa thành công</returns>
+    [HttpDelete("{requestId}")]
+    [Authorize]
+    [EndpointSummary("Delete Product Update Request")]
+    [EndpointDescription("Xóa yêu cầu cập nhật sản phẩm. Chỉ có thể xóa các yêu cầu đang chờ xử lý (Pending).")]
+    public async Task<ActionResult<APIResponse>> DeleteProductUpdateRequest(ulong requestId)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var result = await _service.DeleteProductUpdateRequestAsync(userId, requestId, GetCancellationToken());
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Lấy danh sách tất cả yêu cầu cập nhật sản phẩm với phân trang và filter theo status
     /// </summary>
     /// <param name="page">Số trang (mặc định: 1)</param>

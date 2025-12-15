@@ -118,6 +118,28 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
         }
     }
     
+    public async Task DeleteProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var productSnapshot =  await _productSnapshotRepository.GetAsync(ps => ps.Id == request.ProductSnapshotId, true, cancellationToken)
+                ?? throw new KeyNotFoundException($"Không tìm thấy bản sao sản phẩm với Id: {request.ProductSnapshotId}.");
+            var productSnapshotImages = await GetAllImagesByProductSnapshotIdAsync(productSnapshot.Id, cancellationToken);
+
+            await _mediaLinkRepository.DeleteBulkAsync(productSnapshotImages, cancellationToken);
+            await _productUpdateRequestRepository.DeleteAsync(request, cancellationToken);
+            await _productSnapshotRepository.DeleteAsync(productSnapshot, cancellationToken);
+            
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw new InvalidOperationException($"Không thể xóa yêu cầu cập nhật sản phẩm với Id: {request.Id}. Lỗi: {ex.Message}", ex);
+        }
+    }
+    
     public async Task RejectProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken)
         => await _productUpdateRequestRepository.UpdateAsync(request, cancellationToken);
     
