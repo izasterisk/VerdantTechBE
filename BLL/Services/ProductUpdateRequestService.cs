@@ -60,19 +60,42 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
                 productSnapshot.PublicUrl = manualResult.Value.PublicUrl;
             }
         }
-        var images = new List<MediaLink>();
-        if(dto.Images != null && dto.Images.Count > 0)
+        
+        var productImages = await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(product.Id, cancellationToken);
+        var imagesToKeep = productImages;
+        var nextSortOrder = 1;
+        if(dto.ImagesToDelete != null && dto.ImagesToDelete.Count > 0)
+        {
+            var imagesToKeepDict = imagesToKeep.ToDictionary(img => img.Id);
+            foreach (var imageId in dto.ImagesToDelete)
+            {
+                if (!imagesToKeepDict.Remove(imageId))
+                    throw new InvalidOperationException($"Hình ảnh với ID {imageId} không tồn tại hoặc không thuộc về sản phẩm này.");
+            }
+            imagesToKeep = imagesToKeepDict
+                .Values
+                .OrderBy(img => img.SortOrder)
+                .ToList();
+        }
+        foreach (var imageToKeep in imagesToKeep)
+        {
+            imageToKeep.Id = 0;
+            imageToKeep.OwnerType = MediaOwnerType.ProductSnapshot;
+            imageToKeep.SortOrder = nextSortOrder;
+            nextSortOrder++;
+        }
+        
+        var imagesToAdd = new List<MediaLink>();
+        if(dto.ImagesToAdd != null && dto.ImagesToAdd.Count > 0)
         {
             var uploadedImages = await Utils.UploadImagesAsync(
-                _cloudinaryService,
-                dto.Images,
-                "product-update-requests/images",
-                "productImage",
-                cancellationToken
+                _cloudinaryService, dto.ImagesToAdd,
+                "product-update-requests/images", "productImage", 
+                nextSortOrder, cancellationToken
             );
             foreach (var img in uploadedImages)
             {
-                images.Add(new MediaLink
+                imagesToAdd.Add(new MediaLink
                 {
                     OwnerType = MediaOwnerType.ProductSnapshot,
                     // OwnerId
@@ -92,17 +115,86 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
             // ProcessedBy 
             // ProcessedAt 
         };
-
+        
         var created = await _productUpdateRequestRepository.CreateProductUpdateRequestWithTransactionAsync
-            (productSnapshot, images, request, cancellationToken);
+            (productSnapshot, imagesToAdd, imagesToKeep, request, cancellationToken);
         
         var responseDto = _mapper.Map<ProductUpdateRequestResponseDTO>
-            (await _productUpdateRequestRepository.GetProductUpdateRequestAsync(created.Item2, cancellationToken));
+            (await _productUpdateRequestRepository.GetProductUpdateRequestWithRelationsByIdAsync(created.Item2, cancellationToken));
         
         responseDto.ProductSnapshot.Images = _mapper.Map<List<MediaLinkItemDTO>>
             (await _productUpdateRequestRepository.GetAllImagesByProductSnapshotIdAsync(created.Item1.Id, cancellationToken));
         responseDto.Product.Images = _mapper.Map<List<MediaLinkItemDTO>>
-            (await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(product.Id, cancellationToken));
+            (productImages);
         return responseDto;
+    }
+    
+    public async Task<ProductUpdateRequestResponseDTO> ProcessProductUpdateRequestAsync(ulong staffId, ulong requestId, ProductUpdateRequestUpdateDTO dto, CancellationToken cancellationToken)
+    {
+        if(dto.Status == ProductRegistrationStatus.Pending)
+            throw new InvalidOperationException("Trạng thái yêu cầu cập nhật sản phẩm không thể là 'Đang chờ xử lý' khi xử lý.");
+        var request = await _productUpdateRequestRepository.GetProductUpdateRequestWithRelationsByIdAsync(requestId, cancellationToken);
+        if(request.Status != ProductRegistrationStatus.Pending)
+            throw new InvalidOperationException("Chỉ có thể xử lý các yêu cầu đang chờ xử lý.");
+        
+        request.Status = dto.Status;
+        request.ProcessedBy = staffId;
+        request.ProcessedAt = DateTime.UtcNow;
+        request.UpdatedAt = DateTime.UtcNow;
+        if (dto.Status == ProductRegistrationStatus.Approved)
+        {
+            if(dto.RejectionReason != null)
+                throw new InvalidOperationException("Chỉ có thể cung cấp lý do từ chối khi trạng thái là 'Từ chối'.");
+            
+            var productSnapshot = _mapper.Map<ProductSnapshot>(request.Product);
+            productSnapshot.SnapshotType = ProductSnapshotType.History;
+            var productSnapshotImages = await _productUpdateRequestRepository.GetAllImagesByProductIdAsync
+                (request.Product.Id, cancellationToken);
+
+            var productUpdate = _mapper.Map<Product>(request.ProductSnapshot);
+            productUpdate.Id = request.ProductSnapshot.ProductId;
+            var productUpdateImages = await _productUpdateRequestRepository.GetAllImagesByProductSnapshotIdAsync
+                (request.ProductSnapshot.Id, cancellationToken);
+            
+            request.Product = null!;
+            request.ProductSnapshot = null!;
+            await _productUpdateRequestRepository.ApproveProductUpdateRequestAsync
+                (request, productSnapshot, productSnapshotImages, productUpdate, productUpdateImages, cancellationToken);
+        }
+        else
+        {
+            request.RejectionReason = dto.RejectionReason;
+            request.Product = null!;
+            request.ProductSnapshot = null!;
+            await _productUpdateRequestRepository.RejectProductUpdateRequestAsync(request, cancellationToken);
+        }
+        
+        var response = _mapper.Map<ProductUpdateRequestResponseDTO>
+            (await _productUpdateRequestRepository.GetProductUpdateRequestByIdAsync(requestId, cancellationToken));
+        if(response.Status == ProductRegistrationStatus.Approved)
+            response.Product = _mapper.Map<FullyProductResponseDTO>
+                (await _productUpdateRequestRepository.GetProductByIdAsync(request.ProductId, cancellationToken));
+        return response;
+    }
+    
+    public async Task<(List<ProductUpdateRequestResponseDTO>, int totalCount)> GetAllProductUpdateRequestsAsync
+        (int page, int pageSize, ProductRegistrationStatus? status = null, CancellationToken cancellationToken = default)
+    {
+        var (requests, totalCount) = await _productUpdateRequestRepository.GetAllProductUpdateRequestsAsync(page, pageSize, status, cancellationToken);
+        
+        var responseDtos = new List<ProductUpdateRequestResponseDTO>();
+        
+        foreach (var request in requests)
+        {
+            var responseDto = _mapper.Map<ProductUpdateRequestResponseDTO>(request);
+            
+            responseDto.ProductSnapshot.Images = _mapper.Map<List<MediaLinkItemDTO>>
+                (await _productUpdateRequestRepository.GetAllImagesByProductSnapshotIdAsync(request.ProductSnapshot.Id, cancellationToken));
+            responseDto.Product.Images = _mapper.Map<List<MediaLinkItemDTO>>
+                (await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(request.Product.Id, cancellationToken));
+            
+            responseDtos.Add(responseDto);
+        }
+        return (responseDtos, totalCount);
     }
 }
