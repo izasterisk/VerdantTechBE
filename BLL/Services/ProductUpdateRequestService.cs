@@ -159,6 +159,8 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
                 throw new InvalidOperationException("Chỉ có thể cung cấp lý do từ chối khi trạng thái là 'Từ chối'.");
             
             var productSnapshot = _mapper.Map<ProductSnapshot>(request.Product);
+            productSnapshot.Id = 0;
+            productSnapshot.ProductId = request.ProductId;
             productSnapshot.SnapshotType = ProductSnapshotType.History;
             var productSnapshotImages = await _productUpdateRequestRepository.GetAllImagesByProductIdAsync
                 (request.Product.Id, cancellationToken);
@@ -185,9 +187,13 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         
         var response = _mapper.Map<ProductUpdateRequestResponseDTO>
             (await _productUpdateRequestRepository.GetProductUpdateRequestByIdAsync(requestId, cancellationToken));
-        if(response.Status == ProductRegistrationStatus.Approved)
+        if (response.Status == ProductRegistrationStatus.Approved)
+        {
             response.Product = _mapper.Map<FullyProductResponseDTO>
                 (await _productUpdateRequestRepository.GetProductByIdAsync(request.ProductId, cancellationToken));
+            response.Product.Images = _mapper.Map<List<MediaLinkItemDTO>>
+                (await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(request.ProductId, cancellationToken));
+        }
         return response;
     }
     
@@ -204,24 +210,19 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         return "Yêu cầu cập nhật sản phẩm đã được xóa thành công.";
     }
     
-    public async Task<(List<ProductUpdateRequestResponseDTO>, int totalCount)> GetAllProductUpdateRequestsAsync
-        (int page, int pageSize, ProductRegistrationStatus? status = null, CancellationToken cancellationToken = default)
+    public async Task<List<ProductUpdateRequestResponseDTO>> GetAllProductUpdateRequestsByVendorUserIdAsync(ulong userId, CancellationToken cancellationToken)
     {
-        var (requests, totalCount) = await _productUpdateRequestRepository.GetAllProductUpdateRequestsAsync(page, pageSize, status, cancellationToken);
-        
+        var requests = await _productUpdateRequestRepository.GetAllProductUpdateRequestsByVendorUserIdAsync(userId, cancellationToken);
         var responseDtos = new List<ProductUpdateRequestResponseDTO>();
-        
         foreach (var request in requests)
         {
-            var responseDto = _mapper.Map<ProductUpdateRequestResponseDTO>(request);
-            
-            responseDto.ProductSnapshot.Images = _mapper.Map<List<MediaLinkItemDTO>>
-                (await _productUpdateRequestRepository.GetAllImagesByProductSnapshotIdAsync(request.ProductSnapshot.Id, cancellationToken));
-            responseDto.Product.Images = _mapper.Map<List<MediaLinkItemDTO>>
-                (await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(request.Product.Id, cancellationToken));
-            
-            responseDtos.Add(responseDto);
+            var dto = _mapper.Map<ProductUpdateRequestResponseDTO>(request);
+            dto.Product.Images = _mapper.Map<List<MediaLinkItemDTO>>
+                (await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(request.ProductId, cancellationToken));
+            dto.ProductSnapshot.Images = _mapper.Map<List<MediaLinkItemDTO>>
+                (await _productUpdateRequestRepository.GetAllImagesByProductSnapshotIdAsync(request.ProductSnapshotId, cancellationToken));
+            responseDtos.Add(dto);
         }
-        return (responseDtos, totalCount);
+        return responseDtos;
     }
 }

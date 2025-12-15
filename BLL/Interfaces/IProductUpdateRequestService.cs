@@ -1,4 +1,4 @@
-using BLL.DTO.ProductUpdateRequest;
+﻿using BLL.DTO.ProductUpdateRequest;
 using DAL.Data;
 
 namespace BLL.Interfaces;
@@ -20,10 +20,4 @@ public interface IProductUpdateRequestService
         ulong userId, 
         ulong requestId, 
         CancellationToken cancellationToken);
-    
-    Task<(List<ProductUpdateRequestResponseDTO>, int totalCount)> GetAllProductUpdateRequestsAsync(
-        int page, 
-        int pageSize, 
-        ProductRegistrationStatus? status = null,
-        CancellationToken cancellationToken = default);
 }

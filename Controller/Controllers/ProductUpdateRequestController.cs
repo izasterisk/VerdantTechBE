@@ -111,39 +111,4 @@ public class ProductUpdateRequestController : BaseController
             return HandleException(ex);
         }
     }
-
-    /// <summary>
-    /// Lấy danh sách tất cả yêu cầu cập nhật sản phẩm với phân trang và filter theo status
-    /// </summary>
-    /// <param name="page">Số trang (mặc định: 1)</param>
-    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10)</param>
-    /// <param name="status">Status để filter (Pending, Approved, Rejected). Để trống để lấy tất cả</param>
-    /// <returns>Danh sách yêu cầu cập nhật sản phẩm có phân trang</returns>
-    [HttpGet]
-    [Authorize(Roles = "Admin,Staff")]
-    [EndpointSummary("Get All Product Update Requests (note.)")]
-    [EndpointDescription("Lọc yêu cầu theo status. Nếu không truyền status thì trả về tất cả. " +
-                         "Mẫu: /api/ProductUpdateRequest?page=1&pageSize=10&status=Pending")]
-    public async Task<ActionResult<APIResponse>> GetAllProductUpdateRequests(
-        [FromQuery] int page = 1, 
-        [FromQuery] int pageSize = 10, 
-        [FromQuery] ProductRegistrationStatus? status = null)
-    {
-        try
-        {
-            // Validate pagination parameters
-            if (page < 1)
-                return ErrorResponse("Page number must be greater than 0");
-
-            if (pageSize < 1 || pageSize > 100)
-                return ErrorResponse("Page size must be between 1 and 100");
-
-            var result = await _service.GetAllProductUpdateRequestsAsync(page, pageSize, status, GetCancellationToken());
-            return SuccessResponse(result);
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex);
-        }
-    }
 }

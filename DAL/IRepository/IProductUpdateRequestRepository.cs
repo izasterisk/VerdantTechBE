@@ -12,11 +12,11 @@ public interface IProductUpdateRequestRepository
     Task<List<MediaLink>> GetAllImagesByProductSnapshotIdAsync(ulong productSnapshotId, CancellationToken cancellationToken);
     Task<List<MediaLink>> GetAllImagesByProductIdAsync(ulong productId, CancellationToken cancellationToken);
     Task<ProductUpdateRequest> GetProductUpdateRequestWithRelationsByIdAsync(ulong productUpdateRequestId, CancellationToken cancellationToken);
-    Task<(List<ProductUpdateRequest>, int totalCount)> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status = null, CancellationToken cancellationToken = default);
     Task ApproveProductUpdateRequestAsync
     (ProductUpdateRequest request, ProductSnapshot productSnapshot, List<MediaLink> productSnapshotImages,
         Product productUpdate, List<MediaLink> productUpdateImages, CancellationToken cancellationToken);
     Task RejectProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken);
     Task<ProductUpdateRequest> GetProductUpdateRequestByIdAsync(ulong productUpdateRequestId, CancellationToken cancellationToken);
     Task DeleteProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken);
+    Task<List<ProductUpdateRequest>> GetAllProductUpdateRequestsByVendorUserIdAsync(ulong userId, CancellationToken cancellationToken);
 }

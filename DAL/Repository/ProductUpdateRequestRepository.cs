@@ -123,14 +123,18 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            var productSnapshot =  await _productSnapshotRepository.GetAsync(ps => ps.Id == request.ProductSnapshotId, true, cancellationToken)
-                ?? throw new KeyNotFoundException($"Không tìm thấy bản sao sản phẩm với Id: {request.ProductSnapshotId}.");
-            var productSnapshotImages = await GetAllImagesByProductSnapshotIdAsync(productSnapshot.Id, cancellationToken);
+            await _dbContext.MediaLinks
+                .Where(ml => ml.OwnerType == MediaOwnerType.ProductSnapshot && ml.OwnerId == request.ProductSnapshotId)
+                .ExecuteDeleteAsync(cancellationToken);
 
-            await _mediaLinkRepository.DeleteBulkAsync(productSnapshotImages, cancellationToken);
-            await _productUpdateRequestRepository.DeleteAsync(request, cancellationToken);
-            await _productSnapshotRepository.DeleteAsync(productSnapshot, cancellationToken);
+            _dbContext.ProductUpdateRequests.Remove(request);
             
+            var productSnapshot = await _dbContext.ProductSnapshots
+                .FirstOrDefaultAsync(ps => ps.Id == request.ProductSnapshotId, cancellationToken)
+                ?? throw new KeyNotFoundException($"Không tìm thấy bản sao sản phẩm với Id: {request.ProductSnapshotId}.");
+            
+            _dbContext.ProductSnapshots.Remove(productSnapshot);
+            await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }
         catch (Exception ex)
@@ -185,29 +189,14 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
                ?? throw new KeyNotFoundException($"Không tìm thấy yêu cầu cập nhật sản phẩm với Id: {productUpdateRequestId}.");
     }
     
-    public async Task<(List<ProductUpdateRequest>, int totalCount)> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status = null, CancellationToken cancellationToken = default)
-    {
-        Expression<Func<ProductUpdateRequest, bool>> filter = pur => true;
-        
-        if (status.HasValue)
-        {
-            filter = pur => pur.Status == status.Value;
-        }
-        
-        return await _productUpdateRequestRepository.GetPaginatedWithRelationsAsync(
-            page,
-            pageSize,
-            filter,
-            useNoTracking: true,
-            orderBy: query => query.OrderByDescending(pur => pur.UpdatedAt),
-            includeFunc: query => query.Include(r => r.ProductSnapshot)
-                .Include(r => r.Product)
-                .Include(r => r.ProcessedByUser),
-            cancellationToken
-        );
-    }
-    
     public async Task<ProductUpdateRequest> GetProductUpdateRequestByIdAsync(ulong productUpdateRequestId, CancellationToken cancellationToken)
         => await _productUpdateRequestRepository.GetAsync(p => p.Id == productUpdateRequestId, true, cancellationToken)
               ?? throw new KeyNotFoundException($"Không tìm thấy yêu cầu cập nhật sản phẩm với Id: {productUpdateRequestId}.");
+    
+    public async Task<List<ProductUpdateRequest>> GetAllProductUpdateRequestsByVendorUserIdAsync(ulong userId, CancellationToken cancellationToken)
+        => await _productUpdateRequestRepository.GetAllWithRelationsByFilterAsync(p => p.Product.VendorId == userId, true,
+            q => q.Include(r => r.Product)
+                .Include(r => r.ProductSnapshot)
+                .Include(r => r.ProcessedByUser),
+            cancellationToken);
 }
