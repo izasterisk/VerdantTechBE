@@ -14,6 +14,10 @@ using BLL.DTO.MediaLink;
 using BLL.DTO.ProductRegistration;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
+using BLL.Services;
+using BLL.Helpers.Excel;
+using BLL.DTO.Product;
+using OfficeOpenXml;
 using Microsoft.Extensions.Logging;
 
 namespace Controller.Controllers
@@ -25,15 +29,18 @@ namespace Controller.Controllers
         private readonly IProductRegistrationService _service;
         private readonly ICloudinaryService _cloud;
         private readonly ILogger<ProductRegistrationsController> _logger;
+        private readonly ProductRegistrationImportService _importService;
 
         public ProductRegistrationsController(
             IProductRegistrationService service,
             ICloudinaryService cloud,
-            ILogger<ProductRegistrationsController> logger)
+            ILogger<ProductRegistrationsController> logger,
+            ProductRegistrationImportService importService)
         {
             _service = service;
             _cloud = cloud;
             _logger = logger;
+            _importService = importService;
         }
 
 
@@ -371,6 +378,176 @@ namespace Controller.Controllers
 
 
         // =====================================================================
+        // 📌 EXCEL IMPORT ENDPOINTS
+        // =====================================================================
+
+        [HttpPost("import")]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Import ProductRegistrations từ file Excel")]
+        [EndpointDescription("Import nhiều ProductRegistration từ file Excel. " +
+            "File Excel phải có các cột: VendorId, CategoryId, ProposedProductCode, ProposedProductName, " +
+            "UnitPrice, WeightKg, LengthCm, WidthCm, HeightCm và các trường tùy chọn khác.")]
+        public async Task<ActionResult<ProductRegistrationImportResponseDTO>> ImportFromExcel(
+            [FromForm] IFormFile file,
+            CancellationToken ct = default)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File Excel không được để trống.");
+
+            if (!ExcelHelper.ValidateExcelFormat(file.FileName))
+                return BadRequest("File phải có định dạng .xlsx hoặc .xls");
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                var result = await _importService.ImportFromExcelAsync(stream, ct);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi import ProductRegistrations từ Excel");
+                return StatusCode(500, new { error = $"Lỗi khi xử lý file Excel: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("{id}/images")]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Cập nhật hình ảnh cho ProductRegistration sau khi import")]
+        [EndpointDescription("Upload hình ảnh cho ProductRegistration đã được tạo từ import Excel. " +
+            "Hình ảnh sẽ được upload lên Cloudinary và liên kết với ProductRegistration.")]
+        public async Task<ActionResult<ProductRegistrationReponseDTO>> UpdateImages(
+            ulong id,
+            [FromForm] List<IFormFile> images,
+            CancellationToken ct = default)
+        {
+            if (images == null || images.Count == 0)
+                return BadRequest("Vui lòng chọn ít nhất một hình ảnh.");
+
+            try
+            {
+                // Upload images to Cloudinary
+                var uploadedImages = await _cloud.UploadManyAsync(images, "product-registrations/images", ct);
+                var imageDtos = uploadedImages.Select((x, i) => new MediaLinkItemDTO
+                {
+                    ImagePublicId = x.PublicId,
+                    ImageUrl = x.Url,
+                    Purpose = "none",
+                    SortOrder = i + 1
+                }).ToList();
+
+                // Get existing ProductRegistration to update
+                var existing = await _service.GetByIdAsync(id, ct);
+                if (existing == null)
+                    return NotFound("Không tìm thấy ProductRegistration với ID này.");
+
+                // Update with new images (using UpdateAsync with empty remove lists)
+                var updateDto = new ProductRegistrationUpdateDTO
+                {
+                    Id = id,
+                    VendorId = existing.VendorId,
+                    CategoryId = existing.CategoryId,
+                    ProposedProductCode = existing.ProposedProductCode,
+                    ProposedProductName = existing.ProposedProductName,
+                    Description = existing.Description,
+                    UnitPrice = existing.UnitPrice,
+                    EnergyEfficiencyRating = existing.EnergyEfficiencyRating,
+                    WarrantyMonths = existing.WarrantyMonths,
+                    WeightKg = existing.WeightKg,
+                    DimensionsCm = new ProductUpdateDTO.DimensionsDTO
+                    {
+                        Length = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("length", out var len) 
+                            ? Convert.ToDecimal(len) : 0,
+                        Width = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("width", out var wid) 
+                            ? Convert.ToDecimal(wid) : 0,
+                        Height = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("height", out var hei) 
+                            ? Convert.ToDecimal(hei) : 0
+                    }
+                };
+
+                var updated = await _service.UpdateAsync(
+                    updateDto,
+                    manualUrl: null,
+                    manualPublicUrl: null,
+                    addImages: imageDtos,
+                    addCertificates: new List<MediaLinkItemDTO>(),
+                    removedImages: new List<string>(),
+                    removedCertificates: new List<string>(),
+                    ct);
+
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi cập nhật hình ảnh cho ProductRegistration {Id}", id);
+                return StatusCode(500, new { error = $"Lỗi khi cập nhật hình ảnh: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("import/template")]
+        [EndpointSummary("Tải template Excel cho ProductRegistration import")]
+        [EndpointDescription("Tải file Excel template với các cột mẫu để import ProductRegistration.")]
+        public IActionResult DownloadTemplate()
+        {
+            try
+            {
+                OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+                using var package = new OfficeOpenXml.ExcelPackage();
+                
+                var worksheet = package.Workbook.Worksheets.Add("ProductRegistrations");
+
+                // Header row
+                worksheet.Cells[1, 1].Value = "VendorId";
+                worksheet.Cells[1, 2].Value = "CategoryId";
+                worksheet.Cells[1, 3].Value = "ProposedProductCode";
+                worksheet.Cells[1, 4].Value = "ProposedProductName";
+                worksheet.Cells[1, 5].Value = "Description";
+                worksheet.Cells[1, 6].Value = "UnitPrice";
+                worksheet.Cells[1, 7].Value = "EnergyEfficiencyRating";
+                worksheet.Cells[1, 8].Value = "WarrantyMonths";
+                worksheet.Cells[1, 9].Value = "WeightKg";
+                worksheet.Cells[1, 10].Value = "LengthCm";
+                worksheet.Cells[1, 11].Value = "WidthCm";
+                worksheet.Cells[1, 12].Value = "HeightCm";
+                worksheet.Cells[1, 13].Value = "Specifications";
+                worksheet.Cells[1, 14].Value = "CertificationCode";
+                worksheet.Cells[1, 15].Value = "CertificationName";
+
+                // Example row
+                worksheet.Cells[2, 1].Value = 1;
+                worksheet.Cells[2, 2].Value = 1;
+                worksheet.Cells[2, 3].Value = "PROD001";
+                worksheet.Cells[2, 4].Value = "Sản phẩm mẫu";
+                worksheet.Cells[2, 5].Value = "Mô tả sản phẩm";
+                worksheet.Cells[2, 6].Value = 100000;
+                worksheet.Cells[2, 7].Value = "5";
+                worksheet.Cells[2, 8].Value = 12;
+                worksheet.Cells[2, 9].Value = 1.5;
+                worksheet.Cells[2, 10].Value = 10;
+                worksheet.Cells[2, 11].Value = 20;
+                worksheet.Cells[2, 12].Value = 30;
+                worksheet.Cells[2, 13].Value = "{\"key1\":\"value1\"}";
+                worksheet.Cells[2, 14].Value = "CERT001";
+                worksheet.Cells[2, 15].Value = "Chứng chỉ mẫu";
+
+                // Auto-fit columns
+                worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+                    "ProductRegistration_Import_Template.xlsx");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi tạo template Excel");
+                return StatusCode(500, new { error = $"Lỗi khi tạo template: {ex.Message}" });
+            }
+        }
+
+
+        // =====================================================================
         // 📌 FORM MODELS
         // =====================================================================
 
@@ -414,7 +591,7 @@ namespace Controller.Controllers
             {
                 try
                 {
-                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonVals)
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonVals ?? "{}")
                                ?? new Dictionary<string, object>();
                     dto.GetType().GetProperty("Specifications")?.SetValue(dto, dict);
                     return;

@@ -1,5 +1,8 @@
 ﻿using BLL.DTO.BatchInventory;
 using BLL.Interfaces;
+using BLL.Services;
+using BLL.Helpers.Excel;
+using OfficeOpenXml;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -10,10 +13,14 @@ namespace API.Controllers
     public class BatchInventoryController : ControllerBase
     {
         private readonly IBatchInventoryService _service;
+        private readonly BatchInventoryImportService _importService;
 
-        public BatchInventoryController(IBatchInventoryService service)
+        public BatchInventoryController(
+            IBatchInventoryService service,
+            BatchInventoryImportService importService)
         {
             _service = service;
+            _importService = importService;
         }
 
         // ============================
@@ -166,6 +173,87 @@ namespace API.Controllers
         {
             var serials = await _service.GetAllSerialsByBatchIdAsync(batchId, ct);
             return Ok(serials);
+        }
+
+        // ===========================================
+        // EXCEL IMPORT
+        // ===========================================
+        [HttpPost("import")]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Import BatchInventories từ file Excel")]
+        [EndpointDescription("Import nhiều BatchInventory từ file Excel. " +
+            "File Excel phải có các cột: ProductId, BatchNumber, LotNumber, Quantity, UnitCostPrice " +
+            "và các trường tùy chọn khác. SKU sẽ được tự động tạo.")]
+        public async Task<ActionResult<BatchInventoryImportResponseDTO>> ImportFromExcel(
+            [FromForm] IFormFile file,
+            CancellationToken ct = default)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File Excel không được để trống.");
+
+            if (!ExcelHelper.ValidateExcelFormat(file.FileName))
+                return BadRequest("File phải có định dạng .xlsx hoặc .xls");
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                var result = await _importService.ImportFromExcelAsync(stream, ct);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Lỗi khi xử lý file Excel: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("import/template")]
+        [EndpointSummary("Tải template Excel cho BatchInventory import")]
+        [EndpointDescription("Tải file Excel template với các cột mẫu để import BatchInventory.")]
+        public IActionResult DownloadTemplate()
+        {
+            try
+            {
+                OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+                using var package = new OfficeOpenXml.ExcelPackage();
+                
+                var worksheet = package.Workbook.Worksheets.Add("BatchInventories");
+
+                // Header row
+                worksheet.Cells[1, 1].Value = "ProductId";
+                worksheet.Cells[1, 2].Value = "VendorId";
+                worksheet.Cells[1, 3].Value = "BatchNumber";
+                worksheet.Cells[1, 4].Value = "LotNumber";
+                worksheet.Cells[1, 5].Value = "Quantity";
+                worksheet.Cells[1, 6].Value = "UnitCostPrice";
+                worksheet.Cells[1, 7].Value = "ExpiryDate";
+                worksheet.Cells[1, 8].Value = "ManufacturingDate";
+                worksheet.Cells[1, 9].Value = "SerialNumbers";
+
+                // Example row
+                worksheet.Cells[2, 1].Value = 1;
+                worksheet.Cells[2, 2].Value = 1;
+                worksheet.Cells[2, 3].Value = "BATCH001";
+                worksheet.Cells[2, 4].Value = "LOT001";
+                worksheet.Cells[2, 5].Value = 10;
+                worksheet.Cells[2, 6].Value = 90000;
+                worksheet.Cells[2, 7].Value = "2025-12-31";
+                worksheet.Cells[2, 8].Value = "2025-01-01";
+                worksheet.Cells[2, 9].Value = "SN001,SN002,SN003";
+
+                // Auto-fit columns
+                worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+                    "BatchInventory_Import_Template.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = $"Lỗi khi tạo template: {ex.Message}" });
+            }
         }
     }
 }

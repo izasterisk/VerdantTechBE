@@ -9,6 +9,7 @@
 		<PackageReference Include="AutoMapper" Version="14.0.0" />
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="DotNetEnv" Version="3.1.1" />
+		<PackageReference Include="EPPlus" Version="7.5.2" />
 		<PackageReference Include="Google.Apis.Auth" Version="1.71.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.3.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
