@@ -4,6 +4,7 @@ using BLL.Interfaces;
 using BLL.Services;
 using BLL.Helpers.Excel;
 using OfficeOpenXml;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -185,18 +186,18 @@ namespace API.Controllers
             "File Excel phải có các cột: ProductId, BatchNumber, LotNumber, Quantity, UnitCostPrice " +
             "và các trường tùy chọn khác. SKU sẽ được tự động tạo.")]
         public async Task<ActionResult<BatchInventoryImportResponseDTO>> ImportFromExcel(
-            [FromForm] IFormFile file,
+            [FromForm] ImportExcelForm form,
             CancellationToken ct = default)
         {
-            if (file == null || file.Length == 0)
+            if (form.File == null || form.File.Length == 0)
                 return BadRequest("File Excel không được để trống.");
 
-            if (!ExcelHelper.ValidateExcelFormat(file.FileName))
+            if (!ExcelHelper.ValidateExcelFormat(form.File.FileName))
                 return BadRequest("File phải có định dạng .xlsx hoặc .xls");
 
             try
             {
-                using var stream = file.OpenReadStream();
+                using var stream = form.File.OpenReadStream();
                 var result = await _importService.ImportFromExcelAsync(stream, ct);
                 return Ok(result);
             }
@@ -254,6 +255,15 @@ namespace API.Controllers
             {
                 return StatusCode(500, new { error = $"Lỗi khi tạo template: {ex.Message}" });
             }
+        }
+
+        // =====================================================================
+        // 📌 FORM MODELS
+        // =====================================================================
+
+        public sealed class ImportExcelForm
+        {
+            [FromForm] public IFormFile File { get; set; } = null!;
         }
     }
 }

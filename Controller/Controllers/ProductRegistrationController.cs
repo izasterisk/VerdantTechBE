@@ -389,18 +389,18 @@ namespace Controller.Controllers
             "File Excel phải có các cột: VendorId, CategoryId, ProposedProductCode, ProposedProductName, " +
             "UnitPrice, WeightKg, LengthCm, WidthCm, HeightCm và các trường tùy chọn khác.")]
         public async Task<ActionResult<ProductRegistrationImportResponseDTO>> ImportFromExcel(
-            [FromForm] IFormFile file,
+            [FromForm] ImportExcelForm form,
             CancellationToken ct = default)
         {
-            if (file == null || file.Length == 0)
+            if (form.File == null || form.File.Length == 0)
                 return BadRequest("File Excel không được để trống.");
 
-            if (!ExcelHelper.ValidateExcelFormat(file.FileName))
+            if (!ExcelHelper.ValidateExcelFormat(form.File.FileName))
                 return BadRequest("File phải có định dạng .xlsx hoặc .xls");
 
             try
             {
-                using var stream = file.OpenReadStream();
+                using var stream = form.File.OpenReadStream();
                 var result = await _importService.ImportFromExcelAsync(stream, ct);
                 return Ok(result);
             }
@@ -568,6 +568,11 @@ namespace Controller.Controllers
             [FromForm] public List<IFormFile>? Certificate { get; set; }
             [FromForm] public List<string>? RemoveImagePublicIds { get; set; }
             [FromForm] public List<string>? RemoveCertificatePublicIds { get; set; }
+        }
+
+        public sealed class ImportExcelForm
+        {
+            [FromForm] public IFormFile File { get; set; } = null!;
         }
 
 
