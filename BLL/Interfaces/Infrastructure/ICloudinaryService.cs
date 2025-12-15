@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+using BLL.DTO.Cloudinary;
+using Microsoft.AspNetCore.Http;
 
-namespace Infrastructure.Cloudinary;
+namespace BLL.Interfaces.Infrastructure;
 
 public interface ICloudinaryService
 {

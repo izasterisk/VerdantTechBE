@@ -9,6 +9,7 @@ using DAL.Data;
 using DAL.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Infrastructure.Cloudinary;
+using BLL.Interfaces.Infrastructure;
 
 namespace Controller.Controllers
 {

@@ -3,10 +3,10 @@ using System.ComponentModel.DataAnnotations;
 using BLL.DTO.MediaLink;
 using BLL.DTO.VendorProfile;
 using BLL.Interfaces;
+using BLL.Interfaces.Infrastructure;
 using CloudinaryDotNet.Actions;
 using DAL.Data;
 using DAL.Data.Models;
-using Infrastructure.Cloudinary;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

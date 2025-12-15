@@ -1,8 +1,8 @@
 using BLL.DTO.MediaLink;
 using BLL.DTO.VendorCertificate;
 using BLL.Interfaces;
+using BLL.Interfaces.Infrastructure;
 using DAL.Data;
-using Infrastructure.Cloudinary;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
