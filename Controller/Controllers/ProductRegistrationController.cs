@@ -23,7 +23,6 @@ using OfficeOpenXml;
 using Microsoft.Extensions.Logging;
 using DAL.Data;
 using DAL.Data.Models;
-using static DAL.Data.Enums;
 
 namespace Controller.Controllers;
 
