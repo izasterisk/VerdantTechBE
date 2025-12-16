@@ -42,6 +42,7 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
             throw new InvalidOperationException("Đã có yêu cầu cập nhật sản phẩm đang chờ xử lý.");
         
         var productSnapshot = _mapper.Map<ProductSnapshot>(product);
+        productSnapshot.Id = 0;
         
         if (dto.ProductCode != null) productSnapshot.ProductCode = dto.ProductCode;
         if (dto.ProductName != null) productSnapshot.ProductName = dto.ProductName;

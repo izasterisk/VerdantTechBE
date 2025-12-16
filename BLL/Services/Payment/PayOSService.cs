@@ -166,7 +166,7 @@ public class PayOSService : IPayOSService
         {
             if (!long.TryParse(transaction.GatewayPaymentId, out long orderCode))
                 throw new FormatException($"GatewayPaymentId '{transaction.GatewayPaymentId}' không phải là định dạng hợp lệ.");
-            response.Payment.PaymentLinkInformation = await _payOSApiClient.GetPaymentLinkInformationAsync(orderCode);
+            response.Payment!.PaymentLinkInformation = await _payOSApiClient.GetPaymentLinkInformationAsync(orderCode);
         }
         
         return response;
