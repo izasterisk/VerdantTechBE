@@ -33,7 +33,6 @@ public class BatchInventoryImportService
 
     public async Task<BatchInventoryImportResponseDTO> ImportFromExcelAsync(
         Stream excelStream,
-        ulong vendorId,
         CancellationToken ct = default)
     {
         var response = new BatchInventoryImportResponseDTO();
@@ -104,6 +103,14 @@ public class BatchInventoryImportService
 
             try
             {
+                var Product = await _db.Products.Where(p => p.Id == dto.ProductId).FirstOrDefaultAsync();
+                if(Product == null)
+                {
+                    throw new KeyNotFoundException(
+                        $"Dòng {rowNumber} - Sản phẩm số {productIndex}: " +
+                        $"Sản phẩm với ID {dto.ProductId} không tồn tại trong hệ thống.");
+                }
+                var vendorId = Product.VendorId;
                 // Set VendorId từ user đăng nhập (không lấy từ Excel)
                 dto.VendorId = vendorId;
 

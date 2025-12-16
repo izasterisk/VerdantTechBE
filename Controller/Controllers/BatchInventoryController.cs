@@ -227,8 +227,6 @@ namespace API.Controllers
 
             try
             {
-                // Tự động lấy VendorId từ user đăng nhập
-                var vendorId = GetCurrentUserId();
                 
                 // Sử dụng OpenReadStream() và đảm bảo dispose đúng cách
                 byte[] fileBytes;
@@ -240,7 +238,7 @@ namespace API.Controllers
                 }
                 
                 using var stream = new MemoryStream(fileBytes);
-                var result = await _importService.ImportFromExcelAsync(stream, vendorId, ct);
+                var result = await _importService.ImportFromExcelAsync(stream, ct);
                 return SuccessResponse(result);
             }
             catch (Exception ex)
