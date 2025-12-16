@@ -121,7 +121,7 @@ public class ProductUpdateRequestController : BaseController
     /// <param name="vendorId">ID của vendor để filter theo vendor. Mặc định: tất cả</param>
     /// <returns>Danh sách yêu cầu cập nhật sản phẩm có phân trang</returns>
     [HttpGet]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize]
     [EndpointSummary("Get All Product Update Requests")]
     [EndpointDescription("Lọc yêu cầu cập nhật sản phẩm theo trạng thái: Pending, Approved, Rejected và/hoặc theo vendorId. Nếu không ghi status hoặc vendorId, trả về tất cả. Mẫu: /api/ProductUpdateRequest?page=1&pageSize=20&status=Pending&vendorId=123")]
     public async Task<ActionResult<APIResponse>> GetAllProductUpdateRequests([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] ulong? vendorId = null)
