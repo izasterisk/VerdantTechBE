@@ -217,6 +217,55 @@ namespace BLL.Services
             return result;
         }
 
+        // ================= CREATE FOR IMPORT (Optimized) =================
+
+        /// <summary>
+        /// Tạo ProductRegistration cho import Excel - tối ưu performance, bỏ email và media hydration
+        /// </summary>
+        public async Task<ProductRegistrationReponseDTO> CreateForImportAsync(
+            ProductRegistrationCreateDTO dto,
+            CancellationToken ct = default)
+        {
+            // Bỏ validation trùng lặp - đã validate ở ImportService
+            // Chỉ validate dữ liệu cơ bản
+            var rating = ParseNullableDecimal(dto.EnergyEfficiencyRating);
+            if (rating is < 0 or > 5)
+                throw new InvalidOperationException("EnergyEfficiencyRating phải từ 0 đến 5.0");
+
+            var dims = ToDecimalDict(dto.DimensionsCm);
+            if (dto.DimensionsCm != null && dims is null)
+                throw new InvalidOperationException("Kích thước không hợp lệ.");
+
+            var entity = _mapper.Map<ProductRegistration>(dto);
+
+            entity.Specifications = dto.Specifications?.Count > 0
+                ? dto.Specifications
+                : new Dictionary<string, object>();
+
+            entity.EnergyEfficiencyRating = rating;
+            entity.DimensionsCm = dims ?? new Dictionary<string, decimal>();
+
+            entity.Status = ProductRegistrationStatus.Pending;
+            entity.ManualUrls = null; // Upload sau
+            entity.PublicUrl = null; // Upload sau
+            entity.CreatedAt = DateTime.UtcNow;
+            entity.UpdatedAt = DateTime.UtcNow;
+
+            // Tạo ProductRegistration (không có images và certificates - upload sau)
+            // Sử dụng CreateForImportAsync để tránh nested transaction và load media
+            entity = await _repo.CreateForImportAsync(entity, ct);            // KHÔNG tạo ProductCertificates trong import - sẽ được tạo sau qua endpoint riêng
+            // Điều này giúp tránh nhiều lần SaveChangesAsync trong batch transaction
+            // ProductCertificates có thể được upload sau khi import thành công
+
+            // Map trực tiếp từ entity, không query lại và không hydrate media
+            var result = _mapper.Map<ProductRegistrationReponseDTO>(entity);
+            
+            // Không gửi email trong import
+            // Không hydrate media (sẽ upload sau)
+
+            return result;
+        }
+
 
         // ================= UPDATE =================
 

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
@@ -14,42 +16,50 @@ using BLL.DTO.MediaLink;
 using BLL.DTO.ProductRegistration;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
+using BLL.Services;
+using BLL.Helpers.Excel;
+using BLL.DTO.Product;
+using OfficeOpenXml;
 using Microsoft.Extensions.Logging;
 
-namespace Controller.Controllers
+namespace Controller.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class ProductRegistrationsController : BaseController
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProductRegistrationsController : ControllerBase
+    private readonly IProductRegistrationService _service;
+    private readonly ICloudinaryService _cloud;
+    private readonly ILogger<ProductRegistrationsController> _logger;
+    private readonly ProductRegistrationImportService _importService;
+
+    public ProductRegistrationsController(
+        IProductRegistrationService service,
+        ICloudinaryService cloud,
+        ILogger<ProductRegistrationsController> logger,
+        ProductRegistrationImportService importService)
     {
-        private readonly IProductRegistrationService _service;
-        private readonly ICloudinaryService _cloud;
-        private readonly ILogger<ProductRegistrationsController> _logger;
+        _service = service;
+        _cloud = cloud;
+        _logger = logger;
+        _importService = importService;
+    }
 
-        public ProductRegistrationsController(
-            IProductRegistrationService service,
-            ICloudinaryService cloud,
-            ILogger<ProductRegistrationsController> logger)
+
+    // 🔧 Logging helper
+    private void LogDict(string label, Dictionary<string, object>? dict)
+    {
+        try
         {
-            _service = service;
-            _cloud = cloud;
-            _logger = logger;
+            var json = dict is null ? "null" : JsonSerializer.Serialize(dict);
+            _logger.LogInformation("{Label}: {Json}", label, json);
         }
-
-
-        // 🔧 Logging helper
-        private void LogDict(string label, Dictionary<string, object>? dict)
+        catch (Exception ex)
         {
-            try
-            {
-                var json = dict is null ? "null" : JsonSerializer.Serialize(dict);
-                _logger.LogInformation("{Label}: {Json}", label, json);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Serialize specs failed in controller");
-            }
+            _logger.LogWarning(ex, "Serialize specs failed in controller");
         }
+    }
 
         // =====================================================================
         // 📌 READ ENDPOINTS
@@ -371,6 +381,342 @@ namespace Controller.Controllers
 
 
         // =====================================================================
+        // 📌 EXCEL IMPORT ENDPOINTS
+        // =====================================================================
+
+        [HttpPost("import")]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Import ProductRegistrations từ file Excel")]
+        [EndpointDescription("Import nhiều ProductRegistration từ file Excel. " +
+            "File Excel phải có các cột: CategoryId, ProposedProductCode, ProposedProductName, " +
+            "UnitPrice, WeightKg, LengthCm, WidthCm, HeightCm và các trường tùy chọn khác. " +
+            "VendorId sẽ được tự động lấy từ user đăng nhập. " +
+            "Files (images, certificates, manual) có thể được upload sau khi import thành công.")]
+        public async Task<ActionResult<ProductRegistrationImportResponseDTO>> ImportFromExcel(
+            [FromForm] ImportExcelForm form,
+            CancellationToken ct = default)
+        {
+            if (form.File == null || form.File.Length == 0)
+                return BadRequest("File Excel không được để trống.");
+
+            if (!ExcelHelper.ValidateExcelFormat(form.File.FileName))
+                return BadRequest("File phải có định dạng .xlsx hoặc .xls");
+
+            try
+            {
+                // Tự động lấy VendorId từ user đăng nhập
+                var vendorId = GetCurrentUserId();
+                
+                // Sử dụng OpenReadStream() và đảm bảo dispose đúng cách
+                byte[] fileBytes;
+                using (var fileStream = form.File.OpenReadStream())
+                using (var memoryStream = new MemoryStream())
+                {
+                    await fileStream.CopyToAsync(memoryStream, ct);
+                    fileBytes = memoryStream.ToArray();
+                }
+                
+                using var stream = new MemoryStream(fileBytes);
+                var result = await _importService.ImportFromExcelAsync(stream, vendorId, ct);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi import ProductRegistrations từ Excel");
+                return StatusCode(500, new { error = $"Lỗi khi xử lý file Excel: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("{id}/images")]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Cập nhật hình ảnh cho ProductRegistration sau khi import")]
+        [EndpointDescription("Upload hình ảnh cho ProductRegistration đã được tạo từ import Excel. " +
+            "Hình ảnh sẽ được upload lên Cloudinary và liên kết với ProductRegistration.")]
+        public async Task<ActionResult<ProductRegistrationReponseDTO>> UpdateImages(
+            ulong id,
+            [FromForm] List<IFormFile> images,
+            CancellationToken ct = default)
+        {
+            if (images == null || images.Count == 0)
+                return BadRequest("Vui lòng chọn ít nhất một hình ảnh.");
+
+            try
+            {
+                // Upload images to Cloudinary
+                var uploadedImages = await _cloud.UploadManyAsync(images, "product-registrations/images", ct);
+                var imageDtos = uploadedImages.Select((x, i) => new MediaLinkItemDTO
+                {
+                    ImagePublicId = x.PublicId,
+                    ImageUrl = x.Url,
+                    Purpose = "none",
+                    SortOrder = i + 1
+                }).ToList();
+
+                // Get existing ProductRegistration to update
+                var existing = await _service.GetByIdAsync(id, ct);
+                if (existing == null)
+                    return NotFound("Không tìm thấy ProductRegistration với ID này.");
+
+                // Update with new images (using UpdateAsync with empty remove lists)
+                var updateDto = new ProductRegistrationUpdateDTO
+                {
+                    Id = id,
+                    VendorId = existing.VendorId,
+                    CategoryId = existing.CategoryId,
+                    ProposedProductCode = existing.ProposedProductCode,
+                    ProposedProductName = existing.ProposedProductName,
+                    Description = existing.Description,
+                    UnitPrice = existing.UnitPrice,
+                    EnergyEfficiencyRating = existing.EnergyEfficiencyRating,
+                    WarrantyMonths = existing.WarrantyMonths,
+                    WeightKg = existing.WeightKg,
+                    DimensionsCm = new ProductUpdateDTO.DimensionsDTO
+                    {
+                        Length = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("length", out var len) 
+                            ? Convert.ToDecimal(len) : 0,
+                        Width = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("width", out var wid) 
+                            ? Convert.ToDecimal(wid) : 0,
+                        Height = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("height", out var hei) 
+                            ? Convert.ToDecimal(hei) : 0
+                    }
+                };
+
+                var updated = await _service.UpdateAsync(
+                    updateDto,
+                    manualUrl: null,
+                    manualPublicUrl: null,
+                    addImages: imageDtos,
+                    addCertificates: new List<MediaLinkItemDTO>(),
+                    removedImages: new List<string>(),
+                    removedCertificates: new List<string>(),
+                    ct);
+
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi cập nhật hình ảnh cho ProductRegistration {Id}", id);
+                return StatusCode(500, new { error = $"Lỗi khi cập nhật hình ảnh: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("{id}/certificates")]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Upload certificates cho ProductRegistration sau khi import")]
+        [EndpointDescription("Upload file chứng chỉ PDF cho ProductRegistration đã được tạo từ import Excel. " +
+            "Files sẽ được upload lên Cloudinary và liên kết với ProductRegistration.")]
+        public async Task<ActionResult<ProductRegistrationReponseDTO>> UpdateCertificates(
+            ulong id,
+            [FromForm] List<IFormFile> certificates,
+            CancellationToken ct = default)
+        {
+            if (certificates == null || certificates.Count == 0)
+                return BadRequest("Vui lòng chọn ít nhất một file chứng chỉ.");
+
+            try
+            {
+                // Chỉ chấp nhận file PDF
+                var pdfFiles = certificates.Where(f =>
+                    string.Equals(f.ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase) ||
+                    f.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+
+                if (pdfFiles.Count != certificates.Count)
+                {
+                    return BadRequest("Chỉ chấp nhận file PDF cho chứng chỉ. Vui lòng kiểm tra lại các file đã chọn.");
+                }
+
+                // Upload certificates to Cloudinary
+                var uploadedCerts = await _cloud.UploadManyAsync(pdfFiles, "product-registrations/certificates", ct);
+                var certDtos = uploadedCerts.Select((x, i) => new MediaLinkItemDTO
+                {
+                    ImagePublicId = x.PublicId,
+                    ImageUrl = x.PublicUrl,
+                    Purpose = "certificatepdf",
+                    SortOrder = i + 1
+                }).ToList();
+
+                // Get existing ProductRegistration to update
+                var existing = await _service.GetByIdAsync(id, ct);
+                if (existing == null)
+                    return NotFound("Không tìm thấy ProductRegistration với ID này.");
+
+                // Update with new certificates (using UpdateAsync with empty remove lists)
+                var updateDto = new ProductRegistrationUpdateDTO
+                {
+                    Id = id,
+                    VendorId = existing.VendorId,
+                    CategoryId = existing.CategoryId,
+                    ProposedProductCode = existing.ProposedProductCode,
+                    ProposedProductName = existing.ProposedProductName,
+                    Description = existing.Description,
+                    UnitPrice = existing.UnitPrice,
+                    EnergyEfficiencyRating = existing.EnergyEfficiencyRating,
+                    WarrantyMonths = existing.WarrantyMonths,
+                    WeightKg = existing.WeightKg,
+                    DimensionsCm = new ProductUpdateDTO.DimensionsDTO
+                    {
+                        Length = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("length", out var len) 
+                            ? Convert.ToDecimal(len) : 0,
+                        Width = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("width", out var wid) 
+                            ? Convert.ToDecimal(wid) : 0,
+                        Height = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("height", out var hei) 
+                            ? Convert.ToDecimal(hei) : 0
+                    }
+                };
+
+                var updated = await _service.UpdateAsync(
+                    updateDto,
+                    manualUrl: null,
+                    manualPublicUrl: null,
+                    addImages: new List<MediaLinkItemDTO>(),
+                    addCertificates: certDtos,
+                    removedImages: new List<string>(),
+                    removedCertificates: new List<string>(),
+                    ct);
+
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi cập nhật certificates cho ProductRegistration {Id}", id);
+                return StatusCode(500, new { error = $"Lỗi khi cập nhật certificates: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("{id}/manual")]
+        [Consumes("multipart/form-data")]
+        [EndpointSummary("Upload manual PDF cho ProductRegistration sau khi import")]
+        [EndpointDescription("Upload file manual PDF cho ProductRegistration đã được tạo từ import Excel. " +
+            "File sẽ được upload lên Cloudinary và liên kết với ProductRegistration.")]
+        public async Task<ActionResult<ProductRegistrationReponseDTO>> UpdateManual(
+            ulong id,
+            [FromForm] UpdateManualForm form,
+            CancellationToken ct = default)
+        {
+            if (form.ManualFile == null || form.ManualFile.Length == 0)
+                return BadRequest("Vui lòng chọn file manual.");
+
+            try
+            {
+                // Upload manual to Cloudinary
+                var uploadResult = await _cloud.UploadAsync(form.ManualFile, "product-registrations/manuals", ct);
+                if (uploadResult == null)
+                {
+                    return StatusCode(500, new { error = "Lỗi khi upload file manual." });
+                }
+
+                // Get existing ProductRegistration to update
+                var existing = await _service.GetByIdAsync(id, ct);
+                if (existing == null)
+                    return NotFound("Không tìm thấy ProductRegistration với ID này.");
+
+                // Update with new manual (using UpdateAsync with empty lists)
+                var updateDto = new ProductRegistrationUpdateDTO
+                {
+                    Id = id,
+                    VendorId = existing.VendorId,
+                    CategoryId = existing.CategoryId,
+                    ProposedProductCode = existing.ProposedProductCode,
+                    ProposedProductName = existing.ProposedProductName,
+                    Description = existing.Description,
+                    UnitPrice = existing.UnitPrice,
+                    EnergyEfficiencyRating = existing.EnergyEfficiencyRating,
+                    WarrantyMonths = existing.WarrantyMonths,
+                    WeightKg = existing.WeightKg,
+                    DimensionsCm = new ProductUpdateDTO.DimensionsDTO
+                    {
+                        Length = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("length", out var len) 
+                            ? Convert.ToDecimal(len) : 0,
+                        Width = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("width", out var wid) 
+                            ? Convert.ToDecimal(wid) : 0,
+                        Height = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("height", out var hei) 
+                            ? Convert.ToDecimal(hei) : 0
+                    }
+                };
+
+                var updated = await _service.UpdateAsync(
+                    updateDto,
+                    manualUrl: uploadResult.Url,
+                    manualPublicUrl: uploadResult.PublicUrl,
+                    addImages: new List<MediaLinkItemDTO>(),
+                    addCertificates: new List<MediaLinkItemDTO>(),
+                    removedImages: new List<string>(),
+                    removedCertificates: new List<string>(),
+                    ct);
+
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi cập nhật manual cho ProductRegistration {Id}", id);
+                return StatusCode(500, new { error = $"Lỗi khi cập nhật manual: {ex.Message}" });
+            }
+        }
+
+        [HttpGet("import/template")]
+        [EndpointSummary("Tải template Excel cho ProductRegistration import")]
+        [EndpointDescription("Tải file Excel template với các cột mẫu để import ProductRegistration.")]
+        public IActionResult DownloadTemplate()
+        {
+            try
+            {
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using var package = new ExcelPackage();
+                
+                var worksheet = package.Workbook.Worksheets.Add("ProductRegistrations");
+
+                // Header row (VendorId sẽ được tự động lấy từ user đăng nhập)
+                worksheet.Cells[1, 1].Value = "CategoryId";
+                worksheet.Cells[1, 2].Value = "ProposedProductCode";
+                worksheet.Cells[1, 3].Value = "ProposedProductName";
+                worksheet.Cells[1, 4].Value = "Description";
+                worksheet.Cells[1, 5].Value = "UnitPrice";
+                worksheet.Cells[1, 6].Value = "EnergyEfficiencyRating";
+                worksheet.Cells[1, 7].Value = "WarrantyMonths";
+                worksheet.Cells[1, 8].Value = "WeightKg";
+                worksheet.Cells[1, 9].Value = "LengthCm";
+                worksheet.Cells[1, 10].Value = "WidthCm";
+                worksheet.Cells[1, 11].Value = "HeightCm";
+                worksheet.Cells[1, 12].Value = "Specifications";
+                worksheet.Cells[1, 13].Value = "CertificationCode";
+                worksheet.Cells[1, 14].Value = "CertificationName";
+
+                // Example row
+                worksheet.Cells[2, 1].Value = 1;
+                worksheet.Cells[2, 2].Value = "PROD001";
+                worksheet.Cells[2, 3].Value = "Sản phẩm mẫu";
+                worksheet.Cells[2, 4].Value = "Mô tả sản phẩm";
+                worksheet.Cells[2, 5].Value = 100000;
+                worksheet.Cells[2, 6].Value = "5";
+                worksheet.Cells[2, 7].Value = 12;
+                worksheet.Cells[2, 8].Value = 1.5;
+                worksheet.Cells[2, 9].Value = 10;
+                worksheet.Cells[2, 10].Value = 20;
+                worksheet.Cells[2, 11].Value = 30;
+                worksheet.Cells[2, 12].Value = "{\"key1\":\"value1\"}";
+                worksheet.Cells[2, 13].Value = "CERT001";
+                worksheet.Cells[2, 14].Value = "Chứng chỉ mẫu";
+
+                // Auto-fit columns
+                worksheet.Cells.AutoFitColumns();
+
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+                stream.Position = 0;
+
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
+                    "ProductRegistration_Import_Template.xlsx");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi tạo template Excel");
+                return StatusCode(500, new { error = $"Lỗi khi tạo template: {ex.Message}" });
+            }
+        }
+
+
+        // =====================================================================
         // 📌 FORM MODELS
         // =====================================================================
 
@@ -390,6 +736,16 @@ namespace Controller.Controllers
             [FromForm] public List<IFormFile>? Certificate { get; set; }
             [FromForm] public List<string>? RemoveImagePublicIds { get; set; }
             [FromForm] public List<string>? RemoveCertificatePublicIds { get; set; }
+        }
+
+        public sealed class ImportExcelForm
+        {
+            [FromForm] public IFormFile File { get; set; } = null!;
+        }
+
+        public sealed class UpdateManualForm
+        {
+            [FromForm] public IFormFile ManualFile { get; set; } = null!;
         }
 
 
@@ -414,7 +770,8 @@ namespace Controller.Controllers
             {
                 try
                 {
-                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonVals)
+                    var jsonString = jsonVals.ToString();
+                    var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString ?? "{}")
                                ?? new Dictionary<string, object>();
                     dto.GetType().GetProperty("Specifications")?.SetValue(dto, dict);
                     return;
@@ -444,5 +801,4 @@ namespace Controller.Controllers
             if (specs.Count > 0)
                 dto.GetType().GetProperty("Specifications")?.SetValue(dto, specs);
         }
-    }
 }

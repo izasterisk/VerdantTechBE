@@ -129,6 +129,25 @@ public sealed class ProductRegistrationRepository : IProductRegistrationReposito
         return registration;
     }
 
+    // ========= CREATE FOR IMPORT (Optimized - No transaction, No media load) =========
+    public async Task<ProductRegistration> CreateForImportAsync(
+        ProductRegistration registration, 
+        CancellationToken ct = default)
+    {
+        // đảm bảo trạng thái mặc định
+        if (registration.Status == default)
+            registration.Status = ProductRegistrationStatus.Pending;
+
+        // KHÔNG tạo transaction riêng - sử dụng transaction từ bên ngoài (ImportService)
+        await _db.ProductRegistrations.AddAsync(registration, ct);
+        await _db.SaveChangesAsync(ct); // để có Id
+
+        // KHÔNG load media - tối ưu cho import
+        // await LoadMediaAsync(...);
+
+        return registration;
+    }
+
     // ========= UPDATE =========
     public async Task<ProductRegistration> UpdateAsync( ProductRegistration registration, IEnumerable<MediaLink>? addProductImages, IEnumerable<MediaLink>? addCertificateImages, IEnumerable<string>? removeImagePublicIds, IEnumerable<string>? removeCertificatePublicIds, CancellationToken ct = default)
     {
