@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using BLL.DTO;
 using BLL.DTO.BatchInventory;
 using BLL.Interfaces;
 using BLL.Services;
@@ -7,12 +8,16 @@ using OfficeOpenXml;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization;
+using Controller.Controllers;
+using System.Net;
 
 namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class BatchInventoryController : ControllerBase
+    [Authorize]
+    public class BatchInventoryController : BaseController
     {
         private readonly IBatchInventoryService _service;
         private readonly BatchInventoryImportService _importService;
@@ -32,10 +37,17 @@ namespace API.Controllers
         [HttpGet]
         [EndpointSummary("Get all batch inventories with pagination.")]
         [EndpointDescription("Returns all batch inventories with paging options including page number and page size.")]
-        public async Task<IActionResult> GetAll( int page = 1, int pageSize = 20,CancellationToken ct = default)
+        public async Task<ActionResult<APIResponse>> GetAll(int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
-            var result = await _service.GetAllAsync(page, pageSize, ct);
-            return Ok(result);
+            try
+            {
+                var result = await _service.GetAllAsync(page, pageSize, ct);
+                return SuccessResponse(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         // ============================
@@ -45,18 +57,17 @@ namespace API.Controllers
         [HttpGet("product/{productId}")]
         [EndpointSummary("Get batch inventories by product ID.")]
         [EndpointDescription("Returns a paginated list of batch inventories linked to a specific product.")]
-        public async Task<IActionResult> GetByProduct(ulong productId, int page = 1, int pageSize = 20,CancellationToken ct = default)
+        public async Task<ActionResult<APIResponse>> GetByProduct(ulong productId, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             try
             {
                 var result = await _service.GetByProductIdAsync(productId, page, pageSize, ct);
-                return Ok(result);
+                return SuccessResponse(result);
             }
-            catch (KeyNotFoundException)
+            catch (Exception ex)
             {
-                return NotFound();
+                return HandleException(ex);
             }
-            
         }
 
         // ============================
@@ -66,16 +77,16 @@ namespace API.Controllers
         [HttpGet("vendor/{vendorId}")]
         [EndpointSummary("Get batch inventories by vendor ID.")]
         [EndpointDescription("Returns a paginated list of batch inventories associated with a specific vendor.")]
-        public async Task<IActionResult> GetByVendor( ulong vendorId, int page = 1, int pageSize = 20, CancellationToken ct = default)
+        public async Task<ActionResult<APIResponse>> GetByVendor(ulong vendorId, int page = 1, int pageSize = 20, CancellationToken ct = default)
         {
             try
             {
                 var result = await _service.GetByVendorIdAsync(vendorId, page, pageSize, ct);
-                return Ok(result);
+                return SuccessResponse(result);
             }
-            catch (KeyNotFoundException)
+            catch (Exception ex)
             {
-                return NotFound();
+                return HandleException(ex);
             }
         }
 
@@ -86,16 +97,18 @@ namespace API.Controllers
         [HttpGet("{id}")]
         [EndpointSummary("Get batch inventory by ID.")]
         [EndpointDescription("Returns a single batch inventory entry by its unique identifier.")]
-        public async Task<IActionResult> GetById(ulong id, CancellationToken ct = default)
+        public async Task<ActionResult<APIResponse>> GetById(ulong id, CancellationToken ct = default)
         {
             try
             {
                 var result = await _service.GetByIdAsync(id, ct);
-                return Ok(result);
+                if (result == null)
+                    return ErrorResponse("Không tìm thấy batch inventory với ID này.", HttpStatusCode.NotFound);
+                return SuccessResponse(result);
             }
-            catch (KeyNotFoundException)
+            catch (Exception ex)
             {
-                return NotFound();
+                return HandleException(ex);
             }
         }
 
@@ -105,17 +118,24 @@ namespace API.Controllers
 
         [HttpPost]
         [EndpointSummary("Create a new batch inventory entry.")]
-        [EndpointDescription("Creates a new batch inventory record using the provided information.")]
-        public async Task<IActionResult> Create([FromBody] BatchInventoryCreateDTO dto, CancellationToken ct = default)
+        [EndpointDescription("Creates a new batch inventory record using the provided information. VendorId sẽ được tự động lấy từ user đăng nhập.")]
+        public async Task<ActionResult<APIResponse>> Create([FromBody] BatchInventoryCreateDTO dto, CancellationToken ct = default)
         {
+            var validationResult = ValidateModel();
+            if (validationResult != null) return validationResult;
+
             try
             {
+                // Tự động lấy VendorId từ user đăng nhập
+                var userId = GetCurrentUserId();
+                dto.VendorId = userId;
+                
                 var result = await _service.CreateAsync(dto, ct);
-                return Ok(result);
+                return SuccessResponse(result, HttpStatusCode.Created);
             }
-            catch (KeyNotFoundException)
+            catch (Exception ex)
             {
-                return NotFound();
+                return HandleException(ex);
             }
         }
 
@@ -126,20 +146,22 @@ namespace API.Controllers
         [HttpPut("{id}")]
         [EndpointSummary("Update an existing batch inventory.")]
         [EndpointDescription("Updates the details of an existing batch inventory record using the provided DTO.")]
-        public async Task<IActionResult> Update(ulong id, [FromBody] BatchInventoryUpdateDTO dto, CancellationToken ct = default)
+        public async Task<ActionResult<APIResponse>> Update(ulong id, [FromBody] BatchInventoryUpdateDTO dto, CancellationToken ct = default)
         {
+            var validationResult = ValidateModel();
+            if (validationResult != null) return validationResult;
+
             dto.Id = id;
 
             try
             {
                 var result = await _service.UpdateAsync(dto, ct);
-                return Ok(result);
+                return SuccessResponse(result);
             }
-            catch (KeyNotFoundException)
+            catch (Exception ex)
             {
-                return NotFound();
+                return HandleException(ex);
             }
-          
         }
 
         // ============================
@@ -149,16 +171,16 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         [EndpointSummary("Delete a batch inventory entry.")]
         [EndpointDescription("Delete a batch inventory record by its unique identifier.")]
-        public async Task<IActionResult> Delete(ulong id, CancellationToken ct = default)
+        public async Task<ActionResult<APIResponse>> Delete(ulong id, CancellationToken ct = default)
         {
             try
             {
                 await _service.DeleteAsync(id, ct);
-                return NoContent();
+                return SuccessResponse(null, HttpStatusCode.NoContent);
             }
-            catch (KeyNotFoundException)
+            catch (Exception ex)
             {
-                return NotFound();
+                return HandleException(ex);
             }
         }
 
@@ -169,11 +191,19 @@ namespace API.Controllers
         // GET SERIALS BY BATCH ID
         // ===========================================
         [HttpGet("{batchId}/serials")]
-        [EndpointSummary ("Get all serials of a batch.")]
-        public async Task<IActionResult> GetSerialsByBatch(ulong batchId, CancellationToken ct = default)
+        [EndpointSummary("Get all serials of a batch.")]
+        [EndpointDescription("Lấy danh sách tất cả serial numbers của một batch inventory.")]
+        public async Task<ActionResult<APIResponse>> GetSerialsByBatch(ulong batchId, CancellationToken ct = default)
         {
-            var serials = await _service.GetAllSerialsByBatchIdAsync(batchId, ct);
-            return Ok(serials);
+            try
+            {
+                var serials = await _service.GetAllSerialsByBatchIdAsync(batchId, ct);
+                return SuccessResponse(serials);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
         }
 
         // ===========================================
@@ -184,33 +214,45 @@ namespace API.Controllers
         [EndpointSummary("Import BatchInventories từ file Excel")]
         [EndpointDescription("Import nhiều BatchInventory từ file Excel. " +
             "File Excel phải có các cột: ProductId, BatchNumber, LotNumber, Quantity, UnitCostPrice " +
-            "và các trường tùy chọn khác. SKU sẽ được tự động tạo.")]
-        public async Task<ActionResult<BatchInventoryImportResponseDTO>> ImportFromExcel(
+            "và các trường tùy chọn khác. SKU và VendorId sẽ được tự động tạo (VendorId lấy từ user đăng nhập).")]
+        public async Task<ActionResult<APIResponse>> ImportFromExcel(
             [FromForm] ImportExcelForm form,
             CancellationToken ct = default)
         {
             if (form.File == null || form.File.Length == 0)
-                return BadRequest("File Excel không được để trống.");
+                return ErrorResponse("File Excel không được để trống.", HttpStatusCode.BadRequest);
 
             if (!ExcelHelper.ValidateExcelFormat(form.File.FileName))
-                return BadRequest("File phải có định dạng .xlsx hoặc .xls");
+                return ErrorResponse("File phải có định dạng .xlsx hoặc .xls", HttpStatusCode.BadRequest);
 
             try
             {
-                using var stream = form.File.OpenReadStream();
-                var result = await _importService.ImportFromExcelAsync(stream, ct);
-                return Ok(result);
+                // Tự động lấy VendorId từ user đăng nhập
+                var vendorId = GetCurrentUserId();
+                
+                // Sử dụng OpenReadStream() và đảm bảo dispose đúng cách
+                byte[] fileBytes;
+                using (var fileStream = form.File.OpenReadStream())
+                using (var memoryStream = new MemoryStream())
+                {
+                    await fileStream.CopyToAsync(memoryStream, ct);
+                    fileBytes = memoryStream.ToArray();
+                }
+                
+                using var stream = new MemoryStream(fileBytes);
+                var result = await _importService.ImportFromExcelAsync(stream, vendorId, ct);
+                return SuccessResponse(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Lỗi khi xử lý file Excel: {ex.Message}" });
+                return HandleException(ex);
             }
         }
 
         [HttpGet("import/template")]
         [EndpointSummary("Tải template Excel cho BatchInventory import")]
         [EndpointDescription("Tải file Excel template với các cột mẫu để import BatchInventory.")]
-        public IActionResult DownloadTemplate()
+        public ActionResult DownloadTemplate()
         {
             try
             {
@@ -219,27 +261,25 @@ namespace API.Controllers
                 
                 var worksheet = package.Workbook.Worksheets.Add("BatchInventories");
 
-                // Header row
+                // Header row (VendorId sẽ được tự động lấy từ user đăng nhập)
                 worksheet.Cells[1, 1].Value = "ProductId";
-                worksheet.Cells[1, 2].Value = "VendorId";
-                worksheet.Cells[1, 3].Value = "BatchNumber";
-                worksheet.Cells[1, 4].Value = "LotNumber";
-                worksheet.Cells[1, 5].Value = "Quantity";
-                worksheet.Cells[1, 6].Value = "UnitCostPrice";
-                worksheet.Cells[1, 7].Value = "ExpiryDate";
-                worksheet.Cells[1, 8].Value = "ManufacturingDate";
-                worksheet.Cells[1, 9].Value = "SerialNumbers";
+                worksheet.Cells[1, 2].Value = "BatchNumber";
+                worksheet.Cells[1, 3].Value = "LotNumber";
+                worksheet.Cells[1, 4].Value = "Quantity";
+                worksheet.Cells[1, 5].Value = "UnitCostPrice";
+                worksheet.Cells[1, 6].Value = "ExpiryDate";
+                worksheet.Cells[1, 7].Value = "ManufacturingDate";
+                worksheet.Cells[1, 8].Value = "SerialNumbers";
 
                 // Example row
                 worksheet.Cells[2, 1].Value = 1;
-                worksheet.Cells[2, 2].Value = 1;
-                worksheet.Cells[2, 3].Value = "BATCH001";
-                worksheet.Cells[2, 4].Value = "LOT001";
-                worksheet.Cells[2, 5].Value = 10;
-                worksheet.Cells[2, 6].Value = 90000;
-                worksheet.Cells[2, 7].Value = "2025-12-31";
-                worksheet.Cells[2, 8].Value = "2025-01-01";
-                worksheet.Cells[2, 9].Value = "SN001,SN002,SN003";
+                worksheet.Cells[2, 2].Value = "BATCH001";
+                worksheet.Cells[2, 3].Value = "LOT001";
+                worksheet.Cells[2, 4].Value = 10;
+                worksheet.Cells[2, 5].Value = 90000;
+                worksheet.Cells[2, 6].Value = "2025-12-31";
+                worksheet.Cells[2, 7].Value = "2025-01-01";
+                worksheet.Cells[2, 8].Value = "SN001,SN002,SN003";
 
                 // Auto-fit columns
                 worksheet.Cells.AutoFitColumns();
@@ -253,7 +293,9 @@ namespace API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = $"Lỗi khi tạo template: {ex.Message}" });
+                // Trả về JSON error response thay vì file
+                return StatusCode((int)HttpStatusCode.InternalServerError, 
+                    APIResponse.Error($"Lỗi khi tạo template Excel: {ex.Message}", HttpStatusCode.InternalServerError));
             }
         }
 

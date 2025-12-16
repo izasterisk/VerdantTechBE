@@ -15,82 +15,162 @@ public static class ExcelHelper
     /// <returns>Danh sách các dòng dữ liệu, mỗi dòng là Dictionary với key là tên cột</returns>
     public static List<Dictionary<string, string>> ReadExcelFile(Stream stream, string? sheetName = null, bool hasHeader = true)
     {
+        if (stream == null)
+            throw new ArgumentNullException(nameof(stream), "Stream không được null.");
+
+        if (!stream.CanRead)
+            throw new InvalidOperationException("Stream không thể đọc được.");
+
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         
-        using var package = new ExcelPackage(stream);
-        
-        var worksheet = sheetName != null
-            ? package.Workbook.Worksheets[sheetName]
-            : package.Workbook.Worksheets[0];
-
-        if (worksheet == null)
-            throw new InvalidOperationException("Không tìm thấy worksheet trong file Excel.");
-
-        var dimension = worksheet.Dimension;
-        if (dimension == null)
-            return new List<Dictionary<string, string>>();
-
-        var result = new List<Dictionary<string, string>>();
-        var startRow = hasHeader ? 2 : 1; // Bắt đầu từ dòng 2 nếu có header
-        var endRow = dimension.End.Row;
-
-        if (endRow == 0)
-            return result;
-
-        // Đọc header row nếu có
-        Dictionary<int, string>? columnHeaders = null;
-        if (hasHeader)
+        // Copy stream vào memory để tránh dispose và có thể đọc lại
+        byte[] fileBytes;
+        try
         {
-            columnHeaders = new Dictionary<int, string>();
-            var headerRow = worksheet.Cells[1, 1, 1, dimension.End.Column];
-            foreach (var cell in headerRow)
+            if (stream is MemoryStream ms && ms.CanSeek && ms.CanRead)
             {
-                if (cell.Value != null)
+                // Nếu đã là MemoryStream và có thể seek, chỉ cần reset position và copy
+                ms.Position = 0;
+                fileBytes = ms.ToArray();
+            }
+            else
+            {
+                // Copy stream vào memory
+                using var tempStream = new MemoryStream();
+                if (stream.CanSeek)
+                    stream.Position = 0;
+                stream.CopyTo(tempStream);
+                fileBytes = tempStream.ToArray();
+            }
+
+            if (fileBytes == null || fileBytes.Length == 0)
+                throw new InvalidOperationException("File Excel rỗng hoặc không có dữ liệu.");
+        }
+        catch (Exception ex) when (!(ex is InvalidOperationException))
+        {
+            throw new InvalidOperationException($"Lỗi khi đọc stream: {ex.Message}", ex);
+        }
+        
+        // Sử dụng fileBytes để tạo MemoryStream mới
+        using var memoryStream = new MemoryStream(fileBytes);
+        ExcelPackage package;
+        try
+        {
+            package = new ExcelPackage(memoryStream);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Lỗi khi mở file Excel. File có thể bị hỏng hoặc không đúng định dạng: {ex.Message}", ex);
+        }
+
+        using (package)
+        {
+            ExcelWorksheet? worksheet;
+            try
+            {
+                worksheet = sheetName != null
+                    ? package.Workbook.Worksheets[sheetName]
+                    : package.Workbook.Worksheets[0];
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Lỗi khi truy cập worksheet: {ex.Message}", ex);
+            }
+
+            if (worksheet == null)
+                throw new InvalidOperationException("Không tìm thấy worksheet trong file Excel.");
+
+            var dimension = worksheet.Dimension;
+            if (dimension == null)
+                return new List<Dictionary<string, string>>();
+
+            var result = new List<Dictionary<string, string>>();
+            var startRow = hasHeader ? 2 : 1; // Bắt đầu từ dòng 2 nếu có header
+            var endRow = dimension.End.Row;
+
+            if (endRow == 0)
+                return result;
+
+            // Đọc header row nếu có
+            Dictionary<int, string>? columnHeaders = null;
+            if (hasHeader)
+            {
+                try
                 {
-                    var headerName = cell.Value.ToString()?.Trim() ?? string.Empty;
-                    if (!string.IsNullOrEmpty(headerName))
+                    columnHeaders = new Dictionary<int, string>();
+                    var headerRow = worksheet.Cells[1, 1, 1, dimension.End.Column];
+                    foreach (var cell in headerRow)
                     {
-                        columnHeaders[cell.Start.Column] = headerName;
+                        if (cell.Value != null)
+                        {
+                            var headerName = cell.Value.ToString()?.Trim() ?? string.Empty;
+                            if (!string.IsNullOrEmpty(headerName))
+                            {
+                                // Normalize tên cột: bỏ khoảng trắng và underscore để tránh lỗi khi parse
+                                // Ví dụ: "Length Cm" → "LengthCm", "Length_Cm" → "LengthCm"
+                                var normalizedName = headerName.Replace(" ", "").Replace("_", "");
+                                columnHeaders[cell.Start.Column] = normalizedName;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Lỗi khi đọc header row: {ex.Message}", ex);
+                }
+            }
+
+            // Đọc dữ liệu
+            try
+            {
+                for (int row = startRow; row <= endRow; row++)
+                {
+                    var rowData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    bool hasData = false;
+
+                    for (int col = 1; col <= dimension.End.Column; col++)
+                    {
+                        try
+                        {
+                            var cell = worksheet.Cells[row, col];
+                            var cellValue = cell.Value?.ToString()?.Trim() ?? string.Empty;
+
+                            if (!string.IsNullOrEmpty(cellValue))
+                                hasData = true;
+
+                            string columnName;
+                            if (hasHeader && columnHeaders != null && columnHeaders.ContainsKey(col))
+                            {
+                                columnName = columnHeaders[col];
+                            }
+                            else
+                            {
+                                columnName = $"Column{col}";
+                            }
+
+                            rowData[columnName] = cellValue;
+                        }
+                        catch (Exception ex)
+                        {
+                            // Log warning nhưng tiếp tục đọc các cell khác
+                            rowData[$"Column{col}"] = string.Empty;
+                        }
+                    }
+
+                    // Chỉ thêm dòng nếu có ít nhất một cell có dữ liệu
+                    if (hasData)
+                    {
+                        result.Add(rowData);
                     }
                 }
             }
-        }
-
-        // Đọc dữ liệu
-        for (int row = startRow; row <= endRow; row++)
-        {
-            var rowData = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            bool hasData = false;
-
-            for (int col = 1; col <= dimension.End.Column; col++)
+            catch (Exception ex)
             {
-                var cell = worksheet.Cells[row, col];
-                var cellValue = cell.Value?.ToString()?.Trim() ?? string.Empty;
-
-                if (!string.IsNullOrEmpty(cellValue))
-                    hasData = true;
-
-                string columnName;
-                if (hasHeader && columnHeaders != null && columnHeaders.ContainsKey(col))
-                {
-                    columnName = columnHeaders[col];
-                }
-                else
-                {
-                    columnName = $"Column{col}";
-                }
-
-                rowData[columnName] = cellValue;
+                throw new InvalidOperationException($"Lỗi khi đọc dữ liệu từ Excel: {ex.Message}", ex);
             }
 
-            // Chỉ thêm dòng nếu có ít nhất một cell có dữ liệu
-            if (hasData)
-            {
-                result.Add(rowData);
-            }
+            return result;
         }
-
-        return result;
     }
 
     /// <summary>

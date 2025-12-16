@@ -19,6 +19,8 @@ public interface IProductRegistrationRepository
     // CREATE / UPDATE
     Task<ProductRegistration> CreateAsync(ProductRegistration registration, IEnumerable<MediaLink>? productImages, IEnumerable<MediaLink>? certificateImages, CancellationToken ct = default);
 
+    Task<ProductRegistration> CreateForImportAsync(ProductRegistration registration, CancellationToken ct = default);
+
     Task<ProductRegistration> UpdateAsync( ProductRegistration registration, IEnumerable<MediaLink>? addProductImages, IEnumerable<MediaLink>? addCertificateImages, IEnumerable<string>? removeImagePublicIds, IEnumerable<string>? removeCertificatePublicIds, CancellationToken ct = default);
 
     // STATUS / DELETE

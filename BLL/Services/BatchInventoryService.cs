@@ -193,7 +193,12 @@ namespace BLL.Services
 
             await UpdateProductStock(dto.ProductId, ct);
 
-            return _mapper.Map<BatchInventoryResponeDTO>(created);
+            // Reload entity với navigation properties trước khi map
+            var reloaded = await _repo.GetByIdAsync(created.Id, ct);
+            if (reloaded == null)
+                throw new InvalidOperationException("Không thể reload entity sau khi tạo.");
+
+            return _mapper.Map<BatchInventoryResponeDTO>(reloaded);
         }
 
         public async Task<BatchInventoryResponeDTO> UpdateAsync(BatchInventoryUpdateDTO dto, CancellationToken ct = default)

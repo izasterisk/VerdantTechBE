@@ -33,10 +33,24 @@ public class BatchInventoryImportService
 
     public async Task<BatchInventoryImportResponseDTO> ImportFromExcelAsync(
         Stream excelStream,
+        ulong vendorId,
         CancellationToken ct = default)
     {
         var response = new BatchInventoryImportResponseDTO();
-        var rows = ExcelHelper.ReadExcelFile(excelStream);
+        
+        List<Dictionary<string, string>> rows;
+        try
+        {
+            rows = ExcelHelper.ReadExcelFile(excelStream);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("worksheet") || ex.Message.Contains("Excel"))
+        {
+            throw new InvalidOperationException($"Lỗi khi đọc file Excel: {ex.Message}", ex);
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Lỗi không mong đợi khi xử lý file Excel: {ex.Message}", ex);
+        }
 
         response.TotalRows = rows.Count;
 
@@ -77,9 +91,11 @@ public class BatchInventoryImportService
         }
 
         // Process each valid row
+        int productIndex = 0; // Đếm số thứ tự sản phẩm
         foreach (var (rowIndex, dto) in validDtos)
         {
-            var rowNumber = rowIndex + 2;
+            productIndex++;
+            var rowNumber = rowIndex + 2; // +2 vì Excel bắt đầu từ dòng 1 và có header
             var result = new BatchInventoryImportRowResultDTO
             {
                 RowNumber = rowNumber,
@@ -88,23 +104,33 @@ public class BatchInventoryImportService
 
             try
             {
+                // Set VendorId từ user đăng nhập (không lấy từ Excel)
+                dto.VendorId = vendorId;
+
                 // Validate product exists
                 var product = await _productRepo.GetProductByIdAsync(dto.ProductId, useNoTracking: true, ct);
                 if (product == null)
                 {
-                    throw new KeyNotFoundException($"Sản phẩm với ID {dto.ProductId} không tồn tại.");
+                    throw new KeyNotFoundException(
+                        $"Dòng {rowNumber} - Sản phẩm số {productIndex}: " +
+                        $"Sản phẩm với ID {dto.ProductId} không tồn tại trong hệ thống.");
                 }
 
-                // Validate vendor if provided
-                if (dto.VendorId.HasValue)
+                var productName = product.ProductName ?? $"ID {dto.ProductId}";
+                var category = product.Category;
+                var categoryName = category?.Name ?? "Không xác định";
+                
+                // Thông tin chi tiết về sản phẩm và vị trí
+                var productInfo = $"Dòng {rowNumber} - Sản phẩm số {productIndex}: '{productName}' (ID: {dto.ProductId}, Danh mục: '{categoryName}')";
+
+                // Validate vendor
+                var vendorExists = await _db.Users
+                    .AnyAsync(x => x.Id == vendorId && x.Role == UserRole.Vendor, ct);
+
+                if (!vendorExists)
                 {
-                    var vendorExists = await _db.Users
-                        .AnyAsync(x => x.Id == dto.VendorId.Value && x.Role == UserRole.Vendor, ct);
-                    
-                    if (!vendorExists)
-                    {
-                        throw new ArgumentException($"Vendor với ID {dto.VendorId.Value} không tồn tại hoặc không phải là vendor.");
-                    }
+                    throw new ArgumentException(
+                        $"{productInfo}: Vendor với ID {vendorId} không tồn tại hoặc không phải là vendor.");
                 }
 
                 // Auto-generate SKU (ensure uniqueness)
@@ -115,17 +141,19 @@ public class BatchInventoryImportService
                     sku = BatchInventoryHelper.GenerateSku(dto.ProductId);
                     attempts++;
                     if (attempts > 10)
-                        throw new InvalidOperationException("Không thể tạo SKU duy nhất sau nhiều lần thử.");
+                        throw new InvalidOperationException(
+                            $"{productInfo}: Không thể tạo SKU duy nhất sau {attempts} lần thử.");
                 } while (await _batchInventoryRepo.SkuExistsAsync(sku, null, ct));
 
                 // Validate BatchNumber uniqueness
                 if (await _batchInventoryRepo.BatchNumberExistsAsync(dto.BatchNumber, null, ct))
                 {
-                    throw new ArgumentException($"BatchNumber '{dto.BatchNumber}' đã tồn tại trong hệ thống.");
+                    throw new ArgumentException(
+                        $"{productInfo}: BatchNumber '{dto.BatchNumber}' đã tồn tại trong hệ thống. " +
+                        $"Vui lòng sử dụng BatchNumber khác.");
                 }
 
                 // Check if product requires serial numbers
-                var category = product.Category;
                 bool serialRequired = category?.SerialRequired ?? false;
 
                 if (serialRequired)
@@ -133,7 +161,9 @@ public class BatchInventoryImportService
                     // Validate serial numbers
                     if (dto.SerialNumbers == null || dto.SerialNumbers.Count == 0)
                     {
-                        throw new ArgumentException("Sản phẩm yêu cầu serial: Vui lòng nhập danh sách số serial.");
+                        throw new ArgumentException(
+                            $"{productInfo}: Sản phẩm thuộc danh mục '{categoryName}' yêu cầu serial. " +
+                            $"Vui lòng nhập danh sách số serial trong cột SerialNumbers (cần {dto.Quantity} serial).");
                     }
 
                     var validSerials = dto.SerialNumbers
@@ -143,7 +173,9 @@ public class BatchInventoryImportService
 
                     if (validSerials.Count != dto.Quantity)
                     {
-                        throw new ArgumentException($"Số lượng serial ({validSerials.Count}) phải bằng số lượng sản phẩm ({dto.Quantity}).");
+                        throw new ArgumentException(
+                            $"{productInfo}: Số lượng serial nhập vào ({validSerials.Count}) không khớp với số lượng sản phẩm ({dto.Quantity}). " +
+                            $"Cần nhập đúng {dto.Quantity} serial số.");
                     }
 
                     // Check for duplicates within input
@@ -155,14 +187,22 @@ public class BatchInventoryImportService
 
                     if (duplicateSerials.Any())
                     {
-                        throw new ArgumentException($"Có serial trùng lặp trong danh sách nhập: {string.Join(", ", duplicateSerials)}");
+                        var duplicateCount = duplicateSerials.Count;
+                        throw new ArgumentException(
+                            $"{productInfo}: Có {duplicateCount} serial trùng lặp trong danh sách nhập: " +
+                            $"{string.Join(", ", duplicateSerials.Take(10))}" +
+                            (duplicateCount > 10 ? "..." : ""));
                     }
 
                     // Check for existing serials in database
                     var existingSerials = await _serialRepo.GetExistingSerialNumbersAsync(validSerials, ct);
-                    if (existingSerials.Any())
+                    var existingSerialsList = existingSerials.ToList();
+                    if (existingSerialsList.Any())
                     {
-                        throw new ArgumentException($"Các serial sau đã tồn tại trong hệ thống: {string.Join(", ", existingSerials)}");
+                        throw new ArgumentException(
+                            $"{productInfo}: Có {existingSerialsList.Count} serial đã tồn tại trong hệ thống: " +
+                            $"{string.Join(", ", existingSerialsList.Take(10))}" +
+                            (existingSerialsList.Count > 10 ? "..." : ""));
                     }
                 }
                 else
@@ -170,7 +210,9 @@ public class BatchInventoryImportService
                     // Non-serial products should not have serial numbers
                     if (dto.SerialNumbers != null && dto.SerialNumbers.Any(s => !string.IsNullOrWhiteSpace(s)))
                     {
-                        throw new ArgumentException("Sản phẩm này không yêu cầu serial. Vui lòng không nhập số serial.");
+                        throw new ArgumentException(
+                            $"{productInfo}: Sản phẩm thuộc danh mục '{categoryName}' không yêu cầu serial. " +
+                            $"Vui lòng để trống cột SerialNumbers hoặc xóa dữ liệu serial trong file Excel.");
                     }
                 }
 
@@ -185,7 +227,7 @@ public class BatchInventoryImportService
             catch (Exception ex)
             {
                 result.IsSuccess = false;
-                result.ErrorMessage = ex.Message;
+                result.ErrorMessage = ex.Message; // Đã có đầy đủ thông tin trong message
                 response.FailedCount++;
             }
 
@@ -201,63 +243,81 @@ public class BatchInventoryImportService
 
         // Required: ProductId
         if (!row.TryGetValue("ProductId", out var productIdStr) || string.IsNullOrWhiteSpace(productIdStr))
-            throw new InvalidOperationException($"Dòng {rowNumber}: ProductId là bắt buộc.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: Cột ProductId là bắt buộc nhưng không có giá trị. " +
+                $"Vui lòng nhập ProductId (số nguyên dương) cho dòng này.");
 
         var productId = ExcelHelper.ParseValue<ulong>(productIdStr);
         if (!productId.HasValue)
-            throw new InvalidOperationException($"Dòng {rowNumber}: ProductId không hợp lệ.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: ProductId '{productIdStr}' không hợp lệ. " +
+                $"Phải là số nguyên dương (ví dụ: 1, 123, 456).");
 
         dto.ProductId = productId.Value;
 
-        // Optional: VendorId
-        if (row.TryGetValue("VendorId", out var vendorIdStr) && !string.IsNullOrWhiteSpace(vendorIdStr))
-        {
-            var vendorId = ExcelHelper.ParseValue<ulong>(vendorIdStr);
-            if (vendorId.HasValue)
-                dto.VendorId = vendorId.Value;
-        }
+        // VendorId sẽ được set từ user đăng nhập, không lấy từ Excel
 
         // Required: BatchNumber
         if (!row.TryGetValue("BatchNumber", out var batchNumber) || string.IsNullOrWhiteSpace(batchNumber))
-            throw new InvalidOperationException($"Dòng {rowNumber}: BatchNumber là bắt buộc.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: Cột BatchNumber là bắt buộc nhưng không có giá trị. " +
+                $"Vui lòng nhập BatchNumber cho sản phẩm (ID: {dto.ProductId}).");
 
         dto.BatchNumber = batchNumber.Trim();
 
         if (dto.BatchNumber.Length > 100)
-            throw new InvalidOperationException($"Dòng {rowNumber}: BatchNumber không được vượt quá 100 ký tự.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: BatchNumber '{dto.BatchNumber}' không được vượt quá 100 ký tự " +
+                $"(hiện tại: {dto.BatchNumber.Length} ký tự).");
 
         if (!dto.BatchNumber.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == ' '))
-            throw new InvalidOperationException($"Dòng {rowNumber}: BatchNumber chỉ được chứa chữ cái, số, dấu gạch ngang (-), gạch dưới (_) và khoảng trắng.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: BatchNumber '{dto.BatchNumber}' chứa ký tự không hợp lệ. " +
+                $"Chỉ được chứa chữ cái, số, dấu gạch ngang (-), gạch dưới (_) và khoảng trắng.");
 
         // Required: LotNumber
         if (!row.TryGetValue("LotNumber", out var lotNumber) || string.IsNullOrWhiteSpace(lotNumber))
-            throw new InvalidOperationException($"Dòng {rowNumber}: LotNumber là bắt buộc.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: Cột LotNumber là bắt buộc nhưng không có giá trị. " +
+                $"Vui lòng nhập LotNumber cho sản phẩm (ID: {dto.ProductId}).");
 
         dto.LotNumber = lotNumber.Trim();
 
         if (dto.LotNumber.Length > 100)
-            throw new InvalidOperationException($"Dòng {rowNumber}: LotNumber không được vượt quá 100 ký tự.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: LotNumber '{dto.LotNumber}' không được vượt quá 100 ký tự " +
+                $"(hiện tại: {dto.LotNumber.Length} ký tự).");
 
         if (!dto.LotNumber.All(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == ' '))
-            throw new InvalidOperationException($"Dòng {rowNumber}: LotNumber chỉ được chứa chữ cái, số, dấu gạch ngang (-), gạch dưới (_) và khoảng trắng.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: LotNumber '{dto.LotNumber}' chứa ký tự không hợp lệ. " +
+                $"Chỉ được chứa chữ cái, số, dấu gạch ngang (-), gạch dưới (_) và khoảng trắng.");
 
         // Required: Quantity
         if (!row.TryGetValue("Quantity", out var quantityStr) || string.IsNullOrWhiteSpace(quantityStr))
-            throw new InvalidOperationException($"Dòng {rowNumber}: Quantity là bắt buộc.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: Cột Quantity là bắt buộc nhưng không có giá trị. " +
+                $"Vui lòng nhập số lượng sản phẩm (ID: {dto.ProductId}).");
 
         var quantity = ExcelHelper.ParseValue<int>(quantityStr);
         if (!quantity.HasValue || quantity.Value <= 0)
-            throw new InvalidOperationException($"Dòng {rowNumber}: Quantity phải là số nguyên dương.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: Quantity '{quantityStr}' không hợp lệ cho sản phẩm (ID: {dto.ProductId}). " +
+                $"Phải là số nguyên dương lớn hơn 0 (ví dụ: 1, 10, 100).");
 
         dto.Quantity = quantity.Value;
 
         // Required: UnitCostPrice
         if (!row.TryGetValue("UnitCostPrice", out var costPriceStr) || string.IsNullOrWhiteSpace(costPriceStr))
-            throw new InvalidOperationException($"Dòng {rowNumber}: UnitCostPrice là bắt buộc.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: Cột UnitCostPrice là bắt buộc nhưng không có giá trị. " +
+                $"Vui lòng nhập giá vốn đơn vị cho sản phẩm (ID: {dto.ProductId}).");
 
         var costPrice = ExcelHelper.ParseValue<decimal>(costPriceStr);
         if (!costPrice.HasValue || costPrice.Value < 0)
-            throw new InvalidOperationException($"Dòng {rowNumber}: UnitCostPrice phải là số không âm.");
+            throw new InvalidOperationException(
+                $"Dòng {rowNumber}: UnitCostPrice '{costPriceStr}' không hợp lệ cho sản phẩm (ID: {dto.ProductId}). " +
+                $"Phải là số không âm (>= 0), ví dụ: 0, 100000, 50000.5.");
 
         dto.UnitCostPrice = costPrice.Value;
 
@@ -267,6 +327,8 @@ public class BatchInventoryImportService
             var expiryDate = ExcelHelper.ParseValue<DateOnly>(expiryStr);
             if (expiryDate.HasValue)
                 dto.ExpiryDate = expiryDate.Value;
+            else
+                throw new InvalidOperationException($"Dòng {rowNumber}: ExpiryDate '{expiryStr}' không hợp lệ. Định dạng đúng: YYYY-MM-DD (ví dụ: 2025-12-31).");
         }
 
         // Optional: ManufacturingDate
@@ -275,6 +337,8 @@ public class BatchInventoryImportService
             var mfgDate = ExcelHelper.ParseValue<DateOnly>(mfgStr);
             if (mfgDate.HasValue)
                 dto.ManufacturingDate = mfgDate.Value;
+            else
+                throw new InvalidOperationException($"Dòng {rowNumber}: ManufacturingDate '{mfgStr}' không hợp lệ. Định dạng đúng: YYYY-MM-DD (ví dụ: 2025-01-01).");
         }
 
         // Optional: SerialNumbers (comma-separated)

@@ -6,6 +6,7 @@ using DAL.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using static BLL.DTO.Product.ProductUpdateDTO;
 using System.Text.Json;
+using System.Linq;
 
 namespace BLL.Services;
 
@@ -24,12 +25,44 @@ public class ProductRegistrationImportService
 
     public async Task<ProductRegistrationImportResponseDTO> ImportFromExcelAsync(
         Stream excelStream,
+        ulong vendorId,
         CancellationToken ct = default)
     {
         var response = new ProductRegistrationImportResponseDTO();
+        
+        // Giới hạn số rows để tránh memory issue
+        const int maxRows = 1000;
+        const int batchSize = 20; // Commit mỗi 20 rows để tối ưu memory và performance (giảm từ 50)
+        
         var rows = ExcelHelper.ReadExcelFile(excelStream);
+        
+        if (rows.Count > maxRows)
+        {
+            throw new InvalidOperationException($"File Excel có quá nhiều dòng ({rows.Count}). Vui lòng giới hạn tối đa {maxRows} dòng mỗi lần import.");
+        }
+
+        if (rows.Count == 0)
+        {
+            response.FailedCount = 1;
+            response.Results.Add(new ProductRegistrationImportRowResultDTO
+            {
+                RowNumber = 0,
+                IsSuccess = false,
+                ErrorMessage = "File Excel không có dữ liệu hoặc không đúng định dạng."
+            });
+            return response;
+        }
 
         response.TotalRows = rows.Count;
+
+        // Validate vendor một lần trước khi xử lý
+        var vendorExists = await _db.Users
+            .AnyAsync(x => x.Id == vendorId && x.Role == UserRole.Vendor, ct);
+        
+        if (!vendorExists)
+        {
+            throw new InvalidOperationException($"Vendor với ID {vendorId} không tồn tại hoặc không phải là vendor.");
+        }
 
         // Validate all rows first (fail-fast approach)
         var validationErrors = new List<(int rowIndex, string error)>();
@@ -43,6 +76,8 @@ public class ProductRegistrationImportService
             try
             {
                 var dto = ParseRowToDto(row, rowNumber);
+                dto.VendorId = vendorId; // Set VendorId từ user đăng nhập
+                
                 validDtos.Add((i, dto));
             }
             catch (Exception ex)
@@ -67,59 +102,107 @@ public class ProductRegistrationImportService
             return response;
         }
 
-        // Process each valid row
+        // Cache categories để tránh query nhiều lần (tối ưu performance)
+        var categoryIds = validDtos.Select(d => d.dto.CategoryId).Distinct().ToList();
+        var categoryCache = await _db.ProductCategories
+            .Where(c => categoryIds.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, ct);
+
+        // Validate categories từ cache
         foreach (var (rowIndex, dto) in validDtos)
         {
-            var rowNumber = rowIndex + 2;
-            var result = new ProductRegistrationImportRowResultDTO
+            if (!categoryCache.TryGetValue(dto.CategoryId, out var category))
             {
-                RowNumber = rowNumber,
-                ProposedProductName = dto.ProposedProductName
-            };
+                validationErrors.Add((rowIndex, $"Category với ID {dto.CategoryId} không tồn tại."));
+            }
+            else if (category.ParentId == null)
+            {
+                validationErrors.Add((rowIndex, $"Category với ID {dto.CategoryId} là parent category, không thể sử dụng."));
+            }
+        }
 
+        // Nếu có lỗi validation category, return
+        if (validationErrors.Any())
+        {
+            foreach (var (rowIndex, error) in validationErrors)
+            {
+                response.Results.Add(new ProductRegistrationImportRowResultDTO
+                {
+                    RowNumber = rowIndex + 2,
+                    IsSuccess = false,
+                    ErrorMessage = error
+                });
+                response.FailedCount++;
+            }
+            return response;
+        }
+
+        // Process với batch transaction để tối ưu memory và performance
+        int processedCount = 0;
+        int currentBatch = 0;
+
+        // Xử lý theo batch
+        for (int batchStart = 0; batchStart < validDtos.Count; batchStart += batchSize)
+        {
+            var batch = validDtos.Skip(batchStart).Take(batchSize).ToList();
+            
+            // Tạo transaction cho mỗi batch
+            await using var transaction = await _db.Database.BeginTransactionAsync(ct);
             try
             {
-                // Validate vendor exists
-                if (!await _db.Users.AnyAsync(x => x.Id == dto.VendorId && x.Role == UserRole.Vendor, ct))
+                foreach (var (rowIndex, dto) in batch)
                 {
-                    throw new InvalidOperationException($"Vendor với ID {dto.VendorId} không tồn tại hoặc không phải là vendor.");
+                    var rowNumber = rowIndex + 2;
+                    var result = new ProductRegistrationImportRowResultDTO
+                    {
+                        RowNumber = rowNumber,
+                        ProposedProductName = dto.ProposedProductName
+                    };
+
+                    try
+                    {
+                        // Sử dụng CreateForImportAsync thay vì CreateAsync (tối ưu - bỏ email, media hydration)
+                        var created = await _productRegistrationService.CreateForImportAsync(dto, ct);
+
+                        result.IsSuccess = true;
+                        result.ProductRegistrationId = created.Id;
+                        response.SuccessfulCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        result.IsSuccess = false;
+                        result.ErrorMessage = ex.Message;
+                        response.FailedCount++;
+                    }
+
+                    response.Results.Add(result);
+                    processedCount++;
                 }
 
-                // Validate category exists and is not parent
-                var category = await _db.ProductCategories
-                    .FirstOrDefaultAsync(x => x.Id == dto.CategoryId, ct);
-                
-                if (category == null)
-                {
-                    throw new InvalidOperationException($"Category với ID {dto.CategoryId} không tồn tại.");
-                }
-
-                if (category.ParentId == null)
-                {
-                    throw new InvalidOperationException($"Category với ID {dto.CategoryId} là parent category, không thể sử dụng.");
-                }
-
-                // Create ProductRegistration (without images and certificates - can be added later)
-                var created = await _productRegistrationService.CreateAsync(
-                    dto,
-                    manualUrl: null,
-                    manualPublicUrl: null,
-                    addImages: new List<DTO.MediaLink.MediaLinkItemDTO>(),
-                    addCertificates: new List<DTO.MediaLink.MediaLinkItemDTO>(),
-                    ct);
-
-                result.IsSuccess = true;
-                result.ProductRegistrationId = created.Id;
-                response.SuccessfulCount++;
+                // Commit batch
+                await _db.SaveChangesAsync(ct);
+                await transaction.CommitAsync(ct);
             }
             catch (Exception ex)
             {
-                result.IsSuccess = false;
-                result.ErrorMessage = ex.Message;
-                response.FailedCount++;
+                await transaction.RollbackAsync(ct);
+                // Đánh dấu tất cả rows trong batch này là failed nếu chưa có result
+                foreach (var (rowIndex, _) in batch)
+                {
+                    var existingResult = response.Results.FirstOrDefault(r => r.RowNumber == rowIndex + 2);
+                    if (existingResult != null && existingResult.IsSuccess)
+                    {
+                        existingResult.IsSuccess = false;
+                        existingResult.ErrorMessage = $"Lỗi batch: {ex.Message}";
+                        response.SuccessfulCount--;
+                        response.FailedCount++;
+                    }
+                }
+                // Log error nhưng tiếp tục với batch tiếp theo
+                System.Diagnostics.Debug.WriteLine($"Batch {currentBatch} failed: {ex.Message}");
             }
-
-            response.Results.Add(result);
+            
+            currentBatch++;
         }
 
         return response;
@@ -160,13 +243,7 @@ public class ProductRegistrationImportService
         };
 
         // Required fields
-        if (!row.TryGetValue("VendorId", out var vendorIdStr) || string.IsNullOrWhiteSpace(vendorIdStr))
-            throw new InvalidOperationException($"Dòng {rowNumber}: VendorId là bắt buộc.");
-
-        if (!ExcelHelper.ParseValue<ulong>(vendorIdStr).HasValue)
-            throw new InvalidOperationException($"Dòng {rowNumber}: VendorId không hợp lệ.");
-
-        dto.VendorId = ExcelHelper.ParseValue<ulong>(vendorIdStr)!.Value;
+        // VendorId sẽ được tự động lấy từ user đăng nhập, không cần nhập trong Excel
 
         if (!row.TryGetValue("CategoryId", out var categoryIdStr) || string.IsNullOrWhiteSpace(categoryIdStr))
             throw new InvalidOperationException($"Dòng {rowNumber}: CategoryId là bắt buộc.");
