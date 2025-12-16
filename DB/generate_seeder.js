@@ -552,17 +552,17 @@ function generateProductMediaLinks(products) {
     products.forEach(p => {
         if (!p.dbId) return;
         
-        // Image 1 (front)
+        // Image 1
         if (p.imageUrl1) {
             const publicId = p.imageUrl1.split('/').pop().split('.')[0];
-            rows.push(`(${mediaId}, 'products', ${p.dbId}, '${escapeSQL(p.imageUrl1)}', '${publicId}', 'front', 0, NOW(), NOW())`);
+            rows.push(`(${mediaId}, 'products', ${p.dbId}, '${escapeSQL(p.imageUrl1)}', '${publicId}', 'none', 0, NOW(), NOW())`);
             mediaId++;
         }
         
-        // Image 2 (back)
+        // Image 2
         if (p.imageUrl2) {
             const publicId = p.imageUrl2.split('/').pop().split('.')[0];
-            rows.push(`(${mediaId}, 'products', ${p.dbId}, '${escapeSQL(p.imageUrl2)}', '${publicId}', 'back', 1, NOW(), NOW())`);
+            rows.push(`(${mediaId}, 'products', ${p.dbId}, '${escapeSQL(p.imageUrl2)}', '${publicId}', 'none', 1, NOW(), NOW())`);
             mediaId++;
         }
     });

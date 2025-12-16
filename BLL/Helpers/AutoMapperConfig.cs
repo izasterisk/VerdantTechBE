@@ -359,8 +359,6 @@ namespace BLL.Helpers
             
             // ===================== PRODUCT UPDATE REQUEST =====================
             CreateMap<ProductSnapshot, Product>().ReverseMap();
-            CreateMap<ProductUpdateRequestCreateDTO, ProductSnapshot>()
-                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));;
             CreateMap<DAL.Data.Models.ProductUpdateRequest, ProductUpdateRequestResponseDTO>();
             CreateMap<ProductSnapshotResponseDTO, ProductSnapshot>().ReverseMap();
             CreateMap<FullyProductResponseDTO, Product>().ReverseMap();
