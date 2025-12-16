@@ -63,7 +63,7 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         // Enum conversion for reference type
         builder.Property(e => e.ReferenceType)
             .HasConversion(EnumConverter)
-            .HasColumnType("enum('order','payment','request','forum_post','forum_comment','chatbot_conversation','refund','wallet_cashout','product_registration','environmental_data','product_update_requests')")
+            .HasColumnType("enum('order','payment','request','forum_post','forum_comment','chatbot_conversation','refund','wallet_cashout','product_registration','environmental_data','product_update_request')")
             .HasColumnName("reference_type")
             .HasComment("Loại entity tham chiếu (nếu có) - dùng để link đến chi tiết");
             
