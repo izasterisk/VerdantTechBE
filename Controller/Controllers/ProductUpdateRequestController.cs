@@ -118,12 +118,13 @@ public class ProductUpdateRequestController : BaseController
     /// <param name="page">Số trang (mặc định: 1)</param>
     /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10, tối đa: 100)</param>
     /// <param name="status">Trạng thái để filter (Pending, Approved, Rejected). Mặc định: tất cả</param>
+    /// <param name="vendorId">ID của vendor để filter theo vendor. Mặc định: tất cả</param>
     /// <returns>Danh sách yêu cầu cập nhật sản phẩm có phân trang</returns>
     [HttpGet]
     [Authorize(Roles = "Admin,Staff")]
     [EndpointSummary("Get All Product Update Requests")]
-    [EndpointDescription("Lọc yêu cầu cập nhật sản phẩm theo trạng thái: Pending, Approved, Rejected. Nếu không ghi status, trả về tất cả. Mẫu: /api/ProductUpdateRequest?page=1&pageSize=20&status=Pending")]
-    public async Task<ActionResult<APIResponse>> GetAllProductUpdateRequests([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
+    [EndpointDescription("Lọc yêu cầu cập nhật sản phẩm theo trạng thái: Pending, Approved, Rejected và/hoặc theo vendorId. Nếu không ghi status hoặc vendorId, trả về tất cả. Mẫu: /api/ProductUpdateRequest?page=1&pageSize=20&status=Pending&vendorId=123")]
+    public async Task<ActionResult<APIResponse>> GetAllProductUpdateRequests([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null, [FromQuery] ulong? vendorId = null)
     {
         try
         {
@@ -148,7 +149,7 @@ public class ProductUpdateRequestController : BaseController
                 }
             }
 
-            var requests = await _service.GetAllProductUpdateRequestsAsync(page, pageSize, statusEnum, GetCancellationToken());
+            var requests = await _service.GetAllProductUpdateRequestsAsync(page, pageSize, statusEnum, vendorId, GetCancellationToken());
             return SuccessResponse(requests);
         }
         catch (Exception ex)

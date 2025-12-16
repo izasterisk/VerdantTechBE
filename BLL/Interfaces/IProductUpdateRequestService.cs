@@ -26,6 +26,7 @@ public interface IProductUpdateRequestService
         int page, 
         int pageSize, 
         ProductRegistrationStatus? status, 
+        ulong? vendorId,
         CancellationToken cancellationToken);
     
     Task<PagedResponse<ProductSnapshotResponseDTO>> GetAllProductHistoriesAsync(

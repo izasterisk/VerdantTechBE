@@ -19,6 +19,6 @@ public interface IProductUpdateRequestRepository
     Task<ProductUpdateRequest> GetProductUpdateRequestByIdAsync(ulong productUpdateRequestId, CancellationToken cancellationToken);
     Task DeleteProductUpdateRequestAsync(ProductUpdateRequest request, CancellationToken cancellationToken);
     Task<List<ProductUpdateRequest>> GetAllProductUpdateRequestsByVendorUserIdAsync(ulong userId, CancellationToken cancellationToken);
-    Task<(List<ProductUpdateRequest>, int totalCount)> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status, CancellationToken cancellationToken);
+    Task<(List<ProductUpdateRequest>, int totalCount)> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status, ulong? vendorId, CancellationToken cancellationToken);
     Task<(List<ProductSnapshot>, int totalCount)> GetAllProductHistoriesAsync(ulong productId, int page, int pageSize, CancellationToken cancellationToken);
 }

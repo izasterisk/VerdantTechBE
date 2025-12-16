@@ -202,14 +202,22 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
                 .Include(r => r.ProcessedByUser),
             cancellationToken);
     
-    public async Task<(List<ProductUpdateRequest>, int totalCount)> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status = null, CancellationToken cancellationToken = default)
+    public async Task<(List<ProductUpdateRequest>, int totalCount)> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status = null, ulong? vendorId = null, CancellationToken cancellationToken = default)
     {
         Expression<Func<ProductUpdateRequest, bool>> filter = pur => true;
         
-        // Apply status filter
-        if (status.HasValue)
+        // Apply status and vendorId filters
+        if (status.HasValue && vendorId.HasValue)
+        {
+            filter = pur => pur.Status == status.Value && pur.ProductSnapshot.VendorId == vendorId.Value;
+        }
+        else if (status.HasValue)
         {
             filter = pur => pur.Status == status.Value;
+        }
+        else if (vendorId.HasValue)
+        {
+            filter = pur => pur.ProductSnapshot.VendorId == vendorId.Value;
         }
 
         return await _productUpdateRequestRepository.GetPaginatedWithRelationsAsync(

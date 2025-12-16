@@ -227,9 +227,9 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         return responseDtos;
     }
     
-    public async Task<PagedResponse<ProductUpdateRequestResponseDTO>> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status, CancellationToken cancellationToken)
+    public async Task<PagedResponse<ProductUpdateRequestResponseDTO>> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status, ulong? vendorId, CancellationToken cancellationToken)
     {
-        var (requests, totalCount) = await _productUpdateRequestRepository.GetAllProductUpdateRequestsAsync(page, pageSize, status, cancellationToken);
+        var (requests, totalCount) = await _productUpdateRequestRepository.GetAllProductUpdateRequestsAsync(page, pageSize, status, vendorId, cancellationToken);
         var responseDtos = new List<ProductUpdateRequestResponseDTO>();
         foreach (var request in requests)
         {
