@@ -103,11 +103,13 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
             
             foreach (var productUpdateImage in productUpdateImages)
             {
-                productUpdateImage.UpdatedAt = DateTime.UtcNow;
-                productUpdateImage.OwnerId = productUpdate.Id;
+                productUpdateImage.Id = 0;
                 productUpdateImage.OwnerType = MediaOwnerType.Products;
+                productUpdateImage.OwnerId = productUpdate.Id;
+                productUpdateImage.UpdatedAt = DateTime.UtcNow;
+                productUpdateImage.CreatedAt = DateTime.UtcNow;
             }
-            await _mediaLinkRepository.BulkUpdateAsync(productUpdateImages, cancellationToken);
+            await _mediaLinkRepository.CreateBulkAsync(productUpdateImages, cancellationToken);
             
             await transaction.CommitAsync(cancellationToken);
         }
