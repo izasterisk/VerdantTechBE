@@ -21,6 +21,9 @@ using BLL.Helpers.Excel;
 using BLL.DTO.Product;
 using OfficeOpenXml;
 using Microsoft.Extensions.Logging;
+using DAL.Data;
+using DAL.Data.Models;
+using static DAL.Data.Enums;
 
 namespace Controller.Controllers;
 
@@ -33,17 +36,20 @@ public class ProductRegistrationsController : BaseController
     private readonly ICloudinaryService _cloud;
     private readonly ILogger<ProductRegistrationsController> _logger;
     private readonly ProductRegistrationImportService _importService;
+    private readonly VerdantTechDbContext _db;
 
     public ProductRegistrationsController(
         IProductRegistrationService service,
         ICloudinaryService cloud,
         ILogger<ProductRegistrationsController> logger,
-        ProductRegistrationImportService importService)
+        ProductRegistrationImportService importService,
+        VerdantTechDbContext db)
     {
         _service = service;
         _cloud = cloud;
         _logger = logger;
         _importService = importService;
+        _db = db;
     }
 
 
@@ -504,14 +510,31 @@ public class ProductRegistrationsController : BaseController
         [Consumes("multipart/form-data")]
         [EndpointSummary("Upload certificates cho ProductRegistration sau khi import")]
         [EndpointDescription("Upload file chứng chỉ PDF cho ProductRegistration đã được tạo từ import Excel. " +
-            "Files sẽ được upload lên Cloudinary và liên kết với ProductRegistration.")]
+            "Files sẽ được upload lên Cloudinary và liên kết với ProductRegistration. " +
+            "Hỗ trợ CertificationCode và CertificationName arrays.")]
         public async Task<ActionResult<ProductRegistrationReponseDTO>> UpdateCertificates(
             ulong id,
             [FromForm] List<IFormFile> certificates,
+            [FromForm] List<string>? certificationCodes = null,
+            [FromForm] List<string>? certificationNames = null,
             CancellationToken ct = default)
         {
             if (certificates == null || certificates.Count == 0)
                 return BadRequest("Vui lòng chọn ít nhất một file chứng chỉ.");
+
+            // Validate: nếu có code hoặc name thì số lượng phải khớp với số files
+            if ((certificationCodes != null && certificationCodes.Count != certificates.Count) ||
+                (certificationNames != null && certificationNames.Count != certificates.Count))
+            {
+                return BadRequest("Số lượng mã chứng chỉ và tên chứng chỉ phải khớp với số lượng file.");
+            }
+
+            // Validate: nếu có code thì phải có name và ngược lại
+            if ((certificationCodes != null && certificationNames == null) ||
+                (certificationCodes == null && certificationNames != null))
+            {
+                return BadRequest("Phải cung cấp cả mã chứng chỉ và tên chứng chỉ hoặc không cung cấp cả hai.");
+            }
 
             try
             {
@@ -526,55 +549,54 @@ public class ProductRegistrationsController : BaseController
                     return BadRequest("Chỉ chấp nhận file PDF cho chứng chỉ. Vui lòng kiểm tra lại các file đã chọn.");
                 }
 
-                // Upload certificates to Cloudinary
-                var uploadedCerts = await _cloud.UploadManyAsync(pdfFiles, "product-registrations/certificates", ct);
-                var certDtos = uploadedCerts.Select((x, i) => new MediaLinkItemDTO
-                {
-                    ImagePublicId = x.PublicId,
-                    ImageUrl = x.PublicUrl,
-                    Purpose = "certificatepdf",
-                    SortOrder = i + 1
-                }).ToList();
-
-                // Get existing ProductRegistration to update
+                // Get existing ProductRegistration
                 var existing = await _service.GetByIdAsync(id, ct);
                 if (existing == null)
                     return NotFound("Không tìm thấy ProductRegistration với ID này.");
 
-                // Update with new certificates (using UpdateAsync with empty remove lists)
-                var updateDto = new ProductRegistrationUpdateDTO
+                // Upload certificates to Cloudinary
+                var uploadedCerts = await _cloud.UploadManyAsync(pdfFiles, "product-registrations/certificates", ct);
+
+                // Tạo ProductCertificate với code và name nếu có
+                for (int i = 0; i < uploadedCerts.Count; i++)
                 {
-                    Id = id,
-                    VendorId = existing.VendorId,
-                    CategoryId = existing.CategoryId,
-                    ProposedProductCode = existing.ProposedProductCode,
-                    ProposedProductName = existing.ProposedProductName,
-                    Description = existing.Description,
-                    UnitPrice = existing.UnitPrice,
-                    EnergyEfficiencyRating = existing.EnergyEfficiencyRating,
-                    WarrantyMonths = existing.WarrantyMonths,
-                    WeightKg = existing.WeightKg,
-                    DimensionsCm = new ProductUpdateDTO.DimensionsDTO
+                    var cert = new ProductCertificate
                     {
-                        Length = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("length", out var len) 
-                            ? Convert.ToDecimal(len) : 0,
-                        Width = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("width", out var wid) 
-                            ? Convert.ToDecimal(wid) : 0,
-                        Height = existing.DimensionsCm != null && existing.DimensionsCm.TryGetValue("height", out var hei) 
-                            ? Convert.ToDecimal(hei) : 0
-                    }
-                };
+                        RegistrationId = existing.Id,
+                        ProductId = null,
+                        CertificationName = certificationNames != null && i < certificationNames.Count && !string.IsNullOrWhiteSpace(certificationNames[i])
+                            ? certificationNames[i].Trim()
+                            : $"Chứng chỉ {i + 1}",
+                        CertificationCode = certificationCodes != null && i < certificationCodes.Count && !string.IsNullOrWhiteSpace(certificationCodes[i])
+                            ? certificationCodes[i].Trim()
+                            : $"CERT-{existing.Id}-{i + 1}",
+                        Status = ProductCertificateStatus.Pending,
+                        UploadedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
 
-                var updated = await _service.UpdateAsync(
-                    updateDto,
-                    manualUrl: null,
-                    manualPublicUrl: null,
-                    addImages: new List<MediaLinkItemDTO>(),
-                    addCertificates: certDtos,
-                    removedImages: new List<string>(),
-                    removedCertificates: new List<string>(),
-                    ct);
+                    await _db.ProductCertificates.AddAsync(cert, ct);
+                    await _db.SaveChangesAsync(ct);
 
+                    var media = new MediaLink
+                    {
+                        OwnerType = MediaOwnerType.ProductCertificates,
+                        OwnerId = cert.Id,
+                        ImagePublicId = uploadedCerts[i].PublicId,
+                        ImageUrl = uploadedCerts[i].PublicUrl,
+                        Purpose = MediaPurpose.ProductCertificatePdf,
+                        SortOrder = i + 1,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    await _db.MediaLinks.AddAsync(media, ct);
+                    await _db.SaveChangesAsync(ct);
+                }
+
+                // Reload để trả về dữ liệu mới nhất
+                var updated = await _service.GetByIdAsync(id, ct);
                 return Ok(updated);
             }
             catch (Exception ex)
