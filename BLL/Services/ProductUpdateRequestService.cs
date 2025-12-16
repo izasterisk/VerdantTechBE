@@ -19,10 +19,12 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
     private readonly ICloudinaryService _cloudinaryService;
+    private readonly INotificationService _notificationService;
     
     public ProductUpdateRequestService(IProductCategoryRepository productCategoryRepository, IProductRepository productRepository,
         IProductUpdateRequestRepository productUpdateRequestRepository, IUserRepository userRepository,
-        IMapper mapper, ICloudinaryService cloudinaryService)
+        IMapper mapper, ICloudinaryService cloudinaryService,
+        INotificationService notificationService)
     {
         _productCategoryRepository = productCategoryRepository;
         _productRepository = productRepository;
@@ -30,6 +32,7 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         _userRepository = userRepository;
         _mapper = mapper;
         _cloudinaryService = cloudinaryService;
+        _notificationService = notificationService;
     }
     
     public async Task<ProductUpdateRequestResponseDTO> CreateProductUpdateRequestAsync
@@ -148,6 +151,7 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         if(dto.Status == ProductRegistrationStatus.Pending)
             throw new InvalidOperationException("Trạng thái yêu cầu cập nhật sản phẩm không thể là 'Đang chờ xử lý' khi xử lý.");
         var request = await _productUpdateRequestRepository.GetProductUpdateRequestWithRelationsByIdAsync(requestId, cancellationToken);
+        var vendorId = request.Product.VendorId;
         if(request.Status != ProductRegistrationStatus.Pending)
             throw new InvalidOperationException("Chỉ có thể xử lý các yêu cầu đang chờ xử lý.");
         
@@ -189,13 +193,22 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
         
         var response = _mapper.Map<ProductUpdateRequestResponseDTO>
             (await _productUpdateRequestRepository.GetProductUpdateRequestByIdAsync(requestId, cancellationToken));
+        var message = "Yêu cầu cập nhật sản phẩm của bạn đã bị từ chối.";
         if (response.Status == ProductRegistrationStatus.Approved)
         {
             response.Product = _mapper.Map<FullyProductResponseDTO>
                 (await _productUpdateRequestRepository.GetProductByIdAsync(request.ProductId, cancellationToken));
             response.Product.Images = _mapper.Map<List<MediaLinkItemDTO>>
                 (await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(request.ProductId, cancellationToken));
+            message = "Yêu cầu cập nhật sản phẩm của bạn đã được chấp thuận.";
         }
+        await _notificationService.CreateAndSendNotificationAsync(
+            vendorId,
+            "Đơn hàng của bạn vừa chuyển sang trạng thái mới.",
+            message,
+            NotificationReferenceType.ProductUpdateRequest,
+            request.Id,
+            cancellationToken);
         return response;
     }
     
