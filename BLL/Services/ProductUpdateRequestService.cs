@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BLL.DTO;
 using BLL.DTO.MediaLink;
 using BLL.DTO.ProductUpdateRequest;
 using BLL.Helpers;
@@ -224,5 +225,55 @@ public class ProductUpdateRequestService : IProductUpdateRequestService
             responseDtos.Add(dto);
         }
         return responseDtos;
+    }
+    
+    public async Task<PagedResponse<ProductUpdateRequestResponseDTO>> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status, CancellationToken cancellationToken)
+    {
+        var (requests, totalCount) = await _productUpdateRequestRepository.GetAllProductUpdateRequestsAsync(page, pageSize, status, cancellationToken);
+        var responseDtos = new List<ProductUpdateRequestResponseDTO>();
+        foreach (var request in requests)
+        {
+            var dto = _mapper.Map<ProductUpdateRequestResponseDTO>(request);
+            dto.ProductSnapshot.Images = _mapper.Map<List<MediaLinkItemDTO>>
+                (await _productUpdateRequestRepository.GetAllImagesByProductSnapshotIdAsync(request.ProductSnapshotId, cancellationToken));
+            responseDtos.Add(dto);
+        }
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<ProductUpdateRequestResponseDTO>
+        {
+            Data = responseDtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
+    }
+    
+    public async Task<PagedResponse<ProductSnapshotResponseDTO>> GetAllProductHistoriesAsync(ulong productId, int page, int pageSize, CancellationToken cancellationToken)
+    {
+        var (snapshots, totalCount) = await _productUpdateRequestRepository.GetAllProductHistoriesAsync(productId, page, pageSize, cancellationToken);
+        var responseDtos = new List<ProductSnapshotResponseDTO>();
+        foreach (var snapshot in snapshots)
+        {
+            var dto = _mapper.Map<ProductSnapshotResponseDTO>(snapshot);
+            dto.Images = _mapper.Map<List<MediaLinkItemDTO>>
+                (await _productUpdateRequestRepository.GetAllImagesByProductSnapshotIdAsync(snapshot.Id, cancellationToken));
+            responseDtos.Add(dto);
+        }
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<ProductSnapshotResponseDTO>
+        {
+            Data = responseDtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
     }
 }

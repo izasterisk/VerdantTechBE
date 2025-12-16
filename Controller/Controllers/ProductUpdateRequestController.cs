@@ -111,4 +111,80 @@ public class ProductUpdateRequestController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Lấy tất cả yêu cầu cập nhật sản phẩm
+    /// </summary>
+    /// <param name="page">Số trang (mặc định: 1)</param>
+    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10, tối đa: 100)</param>
+    /// <param name="status">Trạng thái để filter (Pending, Approved, Rejected). Mặc định: tất cả</param>
+    /// <returns>Danh sách yêu cầu cập nhật sản phẩm có phân trang</returns>
+    [HttpGet]
+    [Authorize(Roles = "Admin,Staff")]
+    [EndpointSummary("Get All Product Update Requests")]
+    [EndpointDescription("Lọc yêu cầu cập nhật sản phẩm theo trạng thái: Pending, Approved, Rejected. Nếu không ghi status, trả về tất cả. Mẫu: /api/ProductUpdateRequest?page=1&pageSize=20&status=Pending")]
+    public async Task<ActionResult<APIResponse>> GetAllProductUpdateRequests([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? status = null)
+    {
+        try
+        {
+            // Validate pagination parameters
+            if (page < 1)
+                return ErrorResponse("Page number must be greater than 0");
+
+            if (pageSize < 1 || pageSize > 100)
+                return ErrorResponse("Page size must be between 1 and 100");
+
+            // Parse status if provided
+            ProductRegistrationStatus? statusEnum = null;
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (Enum.TryParse<ProductRegistrationStatus>(status, true, out var parsedStatus))
+                {
+                    statusEnum = parsedStatus;
+                }
+                else
+                {
+                    return ErrorResponse($"Invalid status value. Valid values are: {string.Join(", ", Enum.GetNames(typeof(ProductRegistrationStatus)))}");
+                }
+            }
+
+            var requests = await _service.GetAllProductUpdateRequestsAsync(page, pageSize, statusEnum, GetCancellationToken());
+            return SuccessResponse(requests);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Lấy lịch sử các thay đổi của sản phẩm
+    /// </summary>
+    /// <param name="productId">ID của sản phẩm</param>
+    /// <param name="page">Số trang (mặc định: 1)</param>
+    /// <param name="pageSize">Số bản ghi mỗi trang (mặc định: 10, tối đa: 100)</param>
+    /// <returns>Danh sách lịch sử thay đổi sản phẩm có phân trang</returns>
+    [HttpGet("product/{productId}/history")]
+    [Authorize]
+    [EndpointSummary("Get Product History")]
+    [EndpointDescription("Lấy toàn bộ lịch sử các thay đổi đã được duyệt của một sản phẩm. Mẫu: /api/ProductUpdateRequest/product/1/history?page=1&pageSize=10")]
+    public async Task<ActionResult<APIResponse>> GetAllProductHistories(ulong productId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        try
+        {
+            // Validate pagination parameters
+            if (page < 1)
+                return ErrorResponse("Page number must be greater than 0");
+
+            if (pageSize < 1 || pageSize > 100)
+                return ErrorResponse("Page size must be between 1 and 100");
+
+            var histories = await _service.GetAllProductHistoriesAsync(productId, page, pageSize, GetCancellationToken());
+            return SuccessResponse(histories);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }
