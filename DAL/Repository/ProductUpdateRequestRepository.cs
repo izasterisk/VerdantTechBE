@@ -201,4 +201,41 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
                 .Include(r => r.ProductSnapshot)
                 .Include(r => r.ProcessedByUser),
             cancellationToken);
+    
+    public async Task<(List<ProductUpdateRequest>, int totalCount)> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status = null, CancellationToken cancellationToken = default)
+    {
+        Expression<Func<ProductUpdateRequest, bool>> filter = pur => true;
+        
+        // Apply status filter
+        if (status.HasValue)
+        {
+            filter = pur => pur.Status == status.Value;
+        }
+
+        return await _productUpdateRequestRepository.GetPaginatedWithRelationsAsync(
+            page, 
+            pageSize, 
+            filter, 
+            useNoTracking: true, 
+            orderBy: query => query.OrderByDescending(pur => pur.UpdatedAt),
+            includeFunc: 
+            query => query.Include(pur => pur.ProductSnapshot)
+                                       .Include(pur => pur.ProcessedByUser),
+            cancellationToken
+        );
+    }
+    
+    public async Task<(List<ProductSnapshot>, int totalCount)> GetAllProductHistoriesAsync(ulong productId, int page, int pageSize, CancellationToken cancellationToken)
+    {
+        Expression<Func<ProductSnapshot, bool>> filter = ps => ps.ProductId == productId && ps.SnapshotType == ProductSnapshotType.History;
+
+        return await _productSnapshotRepository.GetPaginatedAsync(
+            page,
+            pageSize,
+            filter,
+            useNoTracking: true,
+            orderBy: query => query.OrderByDescending(ps => ps.CreatedAt),
+            cancellationToken
+        );
+    }
 }
