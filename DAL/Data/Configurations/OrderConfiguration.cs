@@ -108,6 +108,11 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(e => e.Weight)
             .HasColumnType("int")
             .HasColumnName("weight");
+        
+        // IsWalletCredited field
+        builder.Property(e => e.IsWalletCredited)
+            .HasDefaultValue(false)
+            .HasColumnName("is_wallet_credited");
             
         builder.Property(e => e.CancelledReason)
             .HasColumnType("text")

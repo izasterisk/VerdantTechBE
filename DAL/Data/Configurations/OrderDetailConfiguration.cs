@@ -45,11 +45,6 @@ public class OrderDetailConfiguration : IEntityTypeConfiguration<OrderDetail>
             .HasPrecision(12, 2)
             .IsRequired();
         
-        // IsWalletCredited field
-        builder.Property(e => e.IsWalletCredited)
-            .HasDefaultValue(false)
-            .HasColumnName("is_wallet_credited");
-        
         // IsRefunded field
         builder.Property(e => e.IsRefunded)
             .HasDefaultValue(false)
@@ -79,9 +74,5 @@ public class OrderDetailConfiguration : IEntityTypeConfiguration<OrderDetail>
             
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");
-        
-        // Composite index for wallet credit queries
-        builder.HasIndex(e => new { e.IsWalletCredited, e.UpdatedAt })
-            .HasDatabaseName("idx_wallet_credited_updated");
     }
 }

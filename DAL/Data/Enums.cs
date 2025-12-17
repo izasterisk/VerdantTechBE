@@ -190,6 +190,7 @@ public enum TransactionType
 {
     PaymentIn,
     WalletCashout,
+    WalletTopup,
     Refund,
     Adjustment
 }

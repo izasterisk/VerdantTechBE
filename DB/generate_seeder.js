@@ -843,6 +843,7 @@ function generateOrders(products) {
             height: 20,
             length: 40,
             weight: 1000,
+            isWalletCredited: 1,
             createdAt: formatDateTime(orderDate),
             confirmedAt: formatDateTime(confirmedAt),
             shippedAt: formatDateTime(shippedAt),
@@ -859,7 +860,6 @@ function generateOrders(products) {
                 unitPrice: item.unitPrice.toFixed(2),
                 discountAmount: '0.00',
                 subtotal: item.subtotal.toFixed(2),
-                isWalletCredited: 1,
                 isRefunded: 0
             });
             
@@ -933,19 +933,19 @@ function generateOrders(products) {
     
     // Generate SQL for orders
     sql += `-- Insert Orders (60 completed orders for vendor01 & vendor02 products)\n`;
-    sql += `INSERT INTO orders (id, customer_id, status, subtotal, tax_amount, shipping_fee, discount_amount, total_amount, address_id, order_payment_method, shipping_method, tracking_number, courier_id, width, height, length, weight, confirmed_at, shipped_at, delivered_at, created_at, updated_at) VALUES\n`;
+    sql += `INSERT INTO orders (id, customer_id, status, subtotal, tax_amount, shipping_fee, discount_amount, total_amount, address_id, order_payment_method, shipping_method, tracking_number, courier_id, width, height, length, weight, is_wallet_credited, confirmed_at, shipped_at, delivered_at, created_at, updated_at) VALUES\n`;
     
     const orderRows = orders.map(o => 
-        `(${o.id}, ${o.customerId}, '${o.status}', ${o.subtotal}, ${o.taxAmount}, ${o.shippingFee}, ${o.discountAmount}, ${o.totalAmount}, ${o.addressId}, '${o.orderPaymentMethod}', '${o.shippingMethod}', '${o.trackingNumber}', ${o.courierId}, ${o.width}, ${o.height}, ${o.length}, ${o.weight}, '${o.confirmedAt}', '${o.shippedAt}', '${o.deliveredAt}', '${o.createdAt}', '${o.createdAt}')`
+        `(${o.id}, ${o.customerId}, '${o.status}', ${o.subtotal}, ${o.taxAmount}, ${o.shippingFee}, ${o.discountAmount}, ${o.totalAmount}, ${o.addressId}, '${o.orderPaymentMethod}', '${o.shippingMethod}', '${o.trackingNumber}', ${o.courierId}, ${o.width}, ${o.height}, ${o.length}, ${o.weight}, ${o.isWalletCredited}, '${o.confirmedAt}', '${o.shippedAt}', '${o.deliveredAt}', '${o.createdAt}', '${o.createdAt}')`
     );
     sql += orderRows.join(',\n') + ';\n\n';
     
     // Generate SQL for order details
     sql += `-- Insert Order Details\n`;
-    sql += `INSERT INTO order_details (id, order_id, product_id, quantity, unit_price, discount_amount, subtotal, is_wallet_credited, is_refunded, updated_at) VALUES\n`;
+    sql += `INSERT INTO order_details (id, order_id, product_id, quantity, unit_price, discount_amount, subtotal, is_refunded, updated_at) VALUES\n`;
     
     const detailRows = orderDetails.map(d =>
-        `(${d.id}, ${d.orderId}, ${d.productId}, ${d.quantity}, ${d.unitPrice}, ${d.discountAmount}, ${d.subtotal}, ${d.isWalletCredited}, ${d.isRefunded}, NOW())`
+        `(${d.id}, ${d.orderId}, ${d.productId}, ${d.quantity}, ${d.unitPrice}, ${d.discountAmount}, ${d.subtotal}, ${d.isRefunded}, NOW())`
     );
     sql += detailRows.join(',\n') + ';\n\n';
     

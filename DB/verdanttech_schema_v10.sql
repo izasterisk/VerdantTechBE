@@ -586,6 +586,7 @@ CREATE TABLE orders (
     height INT NOT NULL COMMENT 'Chiều cao gói hàng (cm)',
     length INT NOT NULL COMMENT 'Chiều dài gói hàng (cm)',
     weight INT NOT NULL COMMENT 'Cân nặng gói hàng (gram)',
+    is_wallet_credited BOOLEAN DEFAULT FALSE COMMENT 'Đã cộng tiền vào ví vendor chưa',
     
     cancelled_reason VARCHAR(500),
     cancelled_at TIMESTAMP NULL,
@@ -613,14 +614,12 @@ CREATE TABLE order_details (
     unit_price DECIMAL(12,2) NOT NULL,
     discount_amount DECIMAL(12,2) DEFAULT 0.00,
     subtotal DECIMAL(12,2) NOT NULL,
-    is_wallet_credited BOOLEAN DEFAULT FALSE COMMENT 'Đã cộng tiền vào ví vendor chưa',
     is_refunded BOOLEAN DEFAULT FALSE COMMENT 'Sản phẩm đã được hoàn tiền chưa',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
 
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
-    INDEX idx_order (order_id),
-    INDEX idx_wallet_credited_updated (is_wallet_credited, updated_at)
+    INDEX idx_order (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các mục trong đơn hàng';
 
 -- =========================
@@ -753,7 +752,7 @@ CREATE TABLE payments (
 -- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
 CREATE TABLE transactions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    transaction_type ENUM('payment_in', 'wallet_cashout', 'refund', 'adjustment') NOT NULL,
+    transaction_type ENUM('payment_in', 'wallet_cashout', 'wallet_topup', 'refund', 'adjustment') NOT NULL,
     amount DECIMAL(12,2) NOT NULL COMMENT 'Số tiền giao dịch - NGUỒN SỰ THẬT DUY NHẤT',
     currency VARCHAR(3) DEFAULT 'VND',
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người dùng liên quan đến giao dịch này (khách hàng hoặc nhà cung cấp)',

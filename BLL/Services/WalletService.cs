@@ -33,22 +33,61 @@ public class WalletService : IWalletService
         _payOSApiClient = payOSService;
         _notificationService = notificationService;
     }
-
     public async Task<WalletResponseDTO> ProcessWalletCreditsAsync(ulong userId, CancellationToken cancellationToken = default)
     {
         if (!await _walletRepository.ValidateVendorQualified(userId, cancellationToken))
             throw new KeyNotFoundException("Người dùng không tồn tại hoặc không đủ điều kiện.");
         
-        var orderDetails = await _walletRepository.GetAllOrderDetailsAvailableForCreditAsync(userId, cancellationToken);
-        if(orderDetails.Count > 0)
+        var orders = await _walletRepository.GetAllOrdersAvailableForCreditAsync(cancellationToken);
+        var transactions = new List<Transaction>();
+        if(orders.Count > 0)
         {
-            var wallet = await _walletRepository.GetWalletByUserIdAsync(userId, cancellationToken);
-            foreach (var orderDetail in orderDetails)
+            Dictionary<(ulong, ulong), decimal> moneyToCredit = new(); // (orderId, vendorId), money
+            Dictionary<ulong, decimal> walletsToUpdate = new(); // vendorId, money
+            foreach (var order in orders)
             {
-                orderDetail.IsWalletCredited = true;
-                wallet.Balance += orderDetail.Subtotal * ((100 - orderDetail.Product.CommissionRate) / 100);
+                foreach (var orderDetail in order.OrderDetails)
+                {
+                    var money = orderDetail.Subtotal * ((100 - orderDetail.Product.CommissionRate) / 100);
+                    if (moneyToCredit.TryGetValue((order.Id, orderDetail.Product.VendorId), out var current))
+                    {                        
+                        moneyToCredit[(order.Id, orderDetail.Product.VendorId)] = current + money;
+                    }
+                    else
+                    {                        
+                        moneyToCredit[(order.Id, orderDetail.Product.VendorId)] = money;
+                    }
+                }
+                order.IsWalletCredited = true;
+                order.UpdatedAt = DateTime.UtcNow;
             }
-            await _walletRepository.UpdateWalletAndOrderDetailsWithTransactionAsync(orderDetails, wallet, cancellationToken);
+            foreach (var money in moneyToCredit)
+            {
+                transactions.Add(new Transaction
+                {
+                    TransactionType = TransactionType.WalletTopup,
+                    Amount = money.Value,
+                    Currency = "VND",
+                    UserId = money.Key.Item2,
+                    OrderId = money.Key.Item1,
+                    Status = TransactionStatus.Completed,
+                    Note = $"Tiền vào ví từ đơn hàng #{money.Key.Item1}",
+                    CreatedBy = 1,
+                    ProcessedBy = 1,
+                    ProcessedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+                if (walletsToUpdate.TryGetValue(money.Key.Item2, out var current))
+                {                        
+                    walletsToUpdate[money.Key.Item2] = current + money.Value;
+                }
+                else
+                {                        
+                    walletsToUpdate[money.Key.Item2] = money.Value;
+                }
+            }
+            await _walletRepository.ProcessWalletTopUpAsync(orders, transactions, walletsToUpdate, cancellationToken);
         }
         return _mapper.Map<WalletResponseDTO>(await _walletRepository.GetWalletByUserIdWithRelationsAsync(userId, cancellationToken));
     }

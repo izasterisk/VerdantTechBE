@@ -40,6 +40,7 @@ public class OrderRepository : IOrderRepository
             order.CreatedAt = DateTime.UtcNow;
             order.UpdatedAt = DateTime.UtcNow;
             order.Status = OrderStatus.Pending;
+            order.IsWalletCredited = false;
             var createdOrder = await _orderRepository.CreateAsync(order, cancellationToken);
             foreach (var product in products)
             {

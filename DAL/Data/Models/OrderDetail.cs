@@ -21,8 +21,6 @@ public partial class OrderDetail
 
     public decimal Subtotal { get; set; }
 
-    public bool IsWalletCredited { get; set; } = false;
-
     public bool IsRefunded { get; set; } = false;
 
     public DateTime UpdatedAt { get; set; }

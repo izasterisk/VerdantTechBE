@@ -10,48 +10,47 @@ public class WalletRepository : IWalletRepository
     private readonly IRepository<Wallet> _walletRepository;
     private readonly IRepository<UserBankAccount> _userBankAccountRepository;
     private readonly VerdantTechDbContext _dbContext;
-    private readonly IRepository<OrderDetail> _orderDetailRepository;
     private readonly IRepository<VendorProfile> _vendorProfileRepository;
     private readonly IRepository<Cashout> _cashoutRepository;
     private readonly IRepository<Transaction> _transactionRepository;
+    private readonly IRepository<Order> _orderRepository;
     
     public WalletRepository(IRepository<Wallet> walletRepository, IRepository<UserBankAccount> userBankAccountRepository,
-        VerdantTechDbContext dbContext, IRepository<OrderDetail> orderDetailRepository,
-        IRepository<VendorProfile> vendorProfileRepository, IRepository<Cashout> cashoutRepository,
-        IRepository<Transaction> transactionRepository)
+        VerdantTechDbContext dbContext, IRepository<VendorProfile> vendorProfileRepository,
+        IRepository<Cashout> cashoutRepository, IRepository<Transaction> transactionRepository,
+        IRepository<Order> orderRepository)
     {
         _walletRepository = walletRepository;
         _userBankAccountRepository = userBankAccountRepository;
         _dbContext = dbContext;
-        _orderDetailRepository = orderDetailRepository;
         _vendorProfileRepository = vendorProfileRepository;
         _cashoutRepository = cashoutRepository;
         _transactionRepository = transactionRepository;
+        _orderRepository = orderRepository;
     }
 
-    public async Task<Wallet> CreateWalletAsync(Wallet wallet, CancellationToken cancellationToken = default)
-    {
-        wallet.CreatedAt = DateTime.UtcNow;
-        wallet.UpdatedAt = DateTime.UtcNow;
-
-        return await _walletRepository.CreateAsync(wallet, cancellationToken);
-    }
-
-    public async Task<Wallet> UpdateWalletAndOrderDetailsWithTransactionAsync(List<OrderDetail> orderDetails, Wallet wallet, CancellationToken cancellationToken = default)
+    public async Task ProcessWalletTopUpAsync(List<Order> orders, 
+        List<Transaction> transactions, Dictionary<ulong, decimal> walletsToUpdate, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            foreach (var orderDetail in orderDetails)
+            await _orderRepository.BulkUpdateAsync(orders, cancellationToken);
+            
+            var wallets = new List<Wallet>();
+            foreach (var walletToUpdate in walletsToUpdate)
             {
-                orderDetail.Product = null!;
-                orderDetail.UpdatedAt = DateTime.UtcNow;
-                await _orderDetailRepository.UpdateAsync(orderDetail, cancellationToken);
+                var w = await GetWalletByUserIdAsync(walletToUpdate.Key, cancellationToken);
+                w.Balance += walletToUpdate.Value;
+                w.LastUpdatedBy = 1;
+                w.UpdatedAt = DateTime.UtcNow;
+                wallets.Add(w);
             }
-            wallet.UpdatedAt = DateTime.UtcNow;
-            var updatedWallet = await _walletRepository.UpdateAsync(wallet, cancellationToken);
+            await _walletRepository.BulkUpdateAsync(wallets, cancellationToken);
+
+            await _transactionRepository.CreateBulkAsync(transactions, cancellationToken);
+            
             await transaction.CommitAsync(cancellationToken);
-            return updatedWallet;
         }
         catch (Exception)
         {
@@ -98,9 +97,12 @@ public class WalletRepository : IWalletRepository
             var create = new Wallet
             {
                 VendorId = vendorId,
-                Balance = 0
+                Balance = 0,
+                LastUpdatedBy = vendorId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
-            var created = await CreateWalletAsync(create, cancellationToken);
+            var created = await _walletRepository.CreateAsync(create, cancellationToken);
             wallet = await _walletRepository.GetWithRelationsAsync(w => w.Id == created.Id,
                 useNoTracking: false,
                 query => query.Include(w => w.Vendor), cancellationToken);
@@ -120,27 +122,29 @@ public class WalletRepository : IWalletRepository
             var create = new Wallet
             {
                 VendorId = vendorId,
-                Balance = 0
+                Balance = 0,
+                LastUpdatedBy = vendorId,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
-            w = await CreateWalletAsync(create, cancellationToken);
+            w = await _walletRepository.CreateAsync(create, cancellationToken);
         }
         return w;
     }
     
-    public async Task<List<OrderDetail>> GetAllOrderDetailsAvailableForCreditAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    public async Task<List<Order>> GetAllOrdersAvailableForCreditAsync(CancellationToken cancellationToken = default)
     { 
         var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
-        return await _dbContext.OrderDetails
-            .Include(o => o.Product)
+        return await _dbContext.Orders
+            .Include(o => o.OrderDetails)
+            .ThenInclude(o => o.Product)
             .Where(o => o.IsWalletCredited == false)
-            .Where(o => o.Product.VendorId == vendorId)
-            .Where(o => o.Order.Status != OrderStatus.Refunded && o.Order.DeliveredAt != null
-                && o.Order.DeliveredAt < sevenDaysAgo)
+            .Where(o => o.Status == OrderStatus.Delivered && o.DeliveredAt != null
+                && o.DeliveredAt < sevenDaysAgo)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
         
-    
     public async Task<bool> ValidateVendorQualified(ulong userId, CancellationToken cancellationToken = default) =>
         await _vendorProfileRepository.AnyAsync(w => w.UserId == userId && w.VerifiedAt != null 
             && w.VerifiedBy != null, cancellationToken);

@@ -46,6 +46,8 @@ public partial class Order
 
     public int Weight { get; set; } = 0;
 
+    public bool IsWalletCredited { get; set; } = false;
+
     [StringLength(500)]
     public string? CancelledReason { get; set; }
 
