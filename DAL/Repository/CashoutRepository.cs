@@ -265,7 +265,7 @@ public class CashoutRepository : ICashoutRepository
         return totalRefundAmount;
     }
 
-    public async Task<(Order, List<OrderDetail>)> GetOrderAndChosenOrderDetailsById(List<ulong> orderDetailIds, CancellationToken cancellationToken = default)
+    public async Task<(Order, List<OrderDetail>, OrderStatus status)> GetOrderAndChosenOrderDetailsById(List<ulong> orderDetailIds, CancellationToken cancellationToken = default)
     {
         if(orderDetailIds.Count == 0)
             throw new ArgumentException("Danh sách OrderDetailIds không được để trống.");
@@ -287,8 +287,9 @@ public class CashoutRepository : ICashoutRepository
                         query => query.Include(o => o.OrderDetails), 
                         cancellationToken) 
             ?? throw new KeyNotFoundException("Đơn hàng không tồn tại.");
+        var status = order.Status;
         order.Status = count == order.OrderDetails.Count ? OrderStatus.Refunded : OrderStatus.PartialRefund;
-        return (order, orderDetails);
+        return (order, orderDetails, status);
     }
     
     public async Task<List<ExportInventory>> GetAllExportInventoriesByOrderDetailIdsAsync(HashSet<ulong> orderDetailIds, CancellationToken cancellationToken = default)

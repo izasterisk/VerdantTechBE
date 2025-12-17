@@ -1,4 +1,5 @@
-﻿using DAL.Data.Models;
+﻿using DAL.Data;
+using DAL.Data.Models;
 
 namespace DAL.IRepository;
 
@@ -17,6 +18,6 @@ public interface ICashoutRepository
         CancellationToken cancellationToken = default);
     Task<List<ExportInventory>> GetAllExportInventoriesByOrderDetailIdsAsync(HashSet<ulong> orderDetailIds,
         CancellationToken cancellationToken = default);
-    Task<(Order, List<OrderDetail>)> GetOrderAndChosenOrderDetailsById(List<ulong> orderDetailIds,
+    Task<(Order, List<OrderDetail>, OrderStatus status)> GetOrderAndChosenOrderDetailsById(List<ulong> orderDetailIds,
         CancellationToken cancellationToken = default);
 }

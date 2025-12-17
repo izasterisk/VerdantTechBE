@@ -74,9 +74,9 @@ public class CashoutService : ICashoutService
         
         if(orderTuple.Item1.CustomerId != request.UserId)
             throw new UnauthorizedAccessException("Yêu cầu hoàn tiền không thuộc về người đặt hàng.");
-        if(orderTuple.Item1.Status is OrderStatus.Refunded or OrderStatus.PartialRefund)
+        if(orderTuple.Item3 is OrderStatus.Refunded or OrderStatus.PartialRefund)
             throw new InvalidDataException("Đơn hàng đã được hoàn tiền trước đó.");
-        if(orderTuple.Item1.Status != OrderStatus.Delivered || orderTuple.Item1.DeliveredAt == null)
+        if(orderTuple.Item3 != OrderStatus.Delivered || orderTuple.Item1.DeliveredAt == null)
             throw new InvalidDataException("Đơn hàng chưa được giao, không thể hoàn tiền.");
         if(orderTuple.Item1.DeliveredAt.Value.AddDays(7) < request.CreatedAt)
             throw new InvalidDataException("Không thể hoàn tiền cho đơn hàng đã quá 7 ngày kể từ khi giao hàng.");
