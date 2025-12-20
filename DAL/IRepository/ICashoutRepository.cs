@@ -11,11 +11,6 @@ public interface ICashoutRepository
         List<ExportInventory> exports, List<OrderDetail> orderDetails, CancellationToken cancellationToken = default);
     Task<Transaction> UpdateCashoutAsync(Cashout cashout, Transaction tr, CancellationToken cancellationToken = default);
     Task<Transaction> GetCashoutRequestWithRelationsByTransactionIdAsync(ulong transactionId, CancellationToken cancellationToken = default);
-    Task<List<ProductSerial>> GetSoldProductSerialsBySerialNumbersAsync(Dictionary<string, string> serials, CancellationToken cancellationToken = default);
-    Task<(Order, List<ExportInventory>)> ValidateExportedOrderByOrderDetailIdsAsync(
-        Dictionary<(ulong OrderDetailId, string LotNumber), int> validateLotNumber, CancellationToken cancellationToken = default);
-    Task<decimal> GetTotalRefundedAmountByOrderDetailIdsAsync(Dictionary<(ulong OrderDetailId, string LotNumber), int> validateLotNumber,
-        CancellationToken cancellationToken = default);
     Task<List<ExportInventory>> GetAllExportInventoriesByOrderDetailIdsAsync(HashSet<ulong> orderDetailIds,
         CancellationToken cancellationToken = default);
     Task<(Order, List<OrderDetail>, OrderStatus status)> GetOrderAndChosenOrderDetailsById(List<ulong> orderDetailIds,

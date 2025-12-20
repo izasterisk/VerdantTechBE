@@ -24,10 +24,4 @@ public class FertilizerRepository : IFertilizerRepository
     {
         return await _fertilizerRepository.DeleteAsync(fertilizer, cancellationToken);
     }
-    
-    // public async Task<Fertilizer> UpdateFertilizerAsync(Fertilizer fertilizer, CancellationToken cancellationToken = default)
-    // {
-    //     fertilizer.UpdatedAt = DateTime.UtcNow;
-    //     return await _fertilizerRepository.UpdateAsync(fertilizer, cancellationToken);
-    // }
 }

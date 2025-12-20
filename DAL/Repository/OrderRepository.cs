@@ -102,12 +102,6 @@ public class OrderRepository : IOrderRepository
         }
     }
     
-    public async Task<Order> GetOrderByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
-    {
-        return await _orderRepository.GetAsync(o => o.Id == orderId, true, cancellationToken) ?? 
-               throw new KeyNotFoundException($"Không tìm thấy đơn hàng với ID {orderId}.");
-    }
-    
     public async Task<Order?> GetOrderWithRelationsByIdAsync(ulong orderId, CancellationToken cancellationToken = default)
     {
         return await _orderRepository.GetWithRelationsAsync(

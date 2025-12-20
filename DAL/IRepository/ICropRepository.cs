@@ -4,11 +4,9 @@ namespace DAL.IRepository;
 
 public interface ICropRepository
 {
-    Task<Crop> GetCropBelongToFarm(ulong cropId, ulong farmId, CancellationToken cancellationToken = default);
     Task<bool> IsFarmExistsAsync(ulong farmId, CancellationToken cancellationToken = default);
     Task<List<Crop>> GetAllPlantingCropsByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default);
     Task CreateBulkCropsAsync(List<Crop> crops, CancellationToken cancellationToken = default);
     Task UpdateBulkCropsAsync(List<Crop> crops, CancellationToken cancellationToken = default);
     Task<List<Crop>> GetAllCropsByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default);
-    Task<List<Crop>> GetBulkCropsAsync(List<ulong> cropIds, CancellationToken cancellationToken = default);
 }
