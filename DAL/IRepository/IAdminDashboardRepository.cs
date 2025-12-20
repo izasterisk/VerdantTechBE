@@ -43,6 +43,7 @@ public interface IAdminDashboardRepository
     Task<List<(VendorProfile vendor, decimal grossRevenue, decimal commission, int orderCount, int productCount, decimal avgRating, decimal walletBalance)>> GetTopVendorsAsync(DateOnly from, DateOnly to, int limit, CancellationToken cancellationToken = default);
     
     // Transactions
+    Task<List<Transaction>> GetAllTransactionsInTimeRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
     Task<(decimal totalInflow, decimal totalOutflow)> GetTransactionFlowAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
     Task<(int count, decimal completedAmount, decimal pendingAmount, int failedCount)> GetPaymentInStatisticsAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
     Task<(int count, decimal completedAmount)> GetWalletTopupStatisticsAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);

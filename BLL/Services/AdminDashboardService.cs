@@ -1,6 +1,9 @@
+using BLL.DTO.Dashboard;
 using BLL.DTO.Dashboard.Dashboard;
 using BLL.Interfaces;
 using DAL.IRepository;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 
 namespace BLL.Services;
 
@@ -513,6 +516,81 @@ public class AdminDashboardService : IAdminDashboardService
                 AverageWaitDays = cashoutQueue.avgWaitDays
             }
         };
+    }
+
+    public async Task<byte[]> ExportTransactionHistoryAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        ValidateDateRange(from, to);
+        var transactions = await _repository.GetAllTransactionsInTimeRangeAsync(from, to, cancellationToken);
+        var dtos = new List<TransactionExportDTO>();
+        foreach (var tx in transactions)
+        {
+            dtos.Add(new TransactionExportDTO
+            {
+                TransactionId = tx.Id,
+                TransactionType = tx.TransactionType.ToString(),
+                Amount = tx.Amount,
+                Status = tx.Status.ToString(),
+                CreatedAt = tx.CreatedAt,
+                Description = tx.Note
+            });
+        }
+        
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using var package = new ExcelPackage();
+        var worksheet = package.Workbook.Worksheets.Add("Lịch sử giao dịch");
+        var headers = new[] { "ID Giao Dịch", "Ngày tạo", "Loại giao dịch", "Số tiền (VNĐ)", "Trạng thái", "Mã tham chiếu", "Mô tả" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            worksheet.Cells[1, i + 1].Value = headers[i];
+        }
+        using (var range = worksheet.Cells[1, 1, 1, headers.Length])
+        {
+            range.Style.Font.Bold = true;
+            range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGreen);
+            range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+        }
+        int row = 2;
+        foreach (var trans in dtos)
+        {
+            worksheet.Cells[row, 1].Value = trans.TransactionId;
+        
+            worksheet.Cells[row, 2].Value = trans.CreatedAt;
+            worksheet.Cells[row, 2].Style.Numberformat.Format = "dd/MM/yyyy HH:mm";
+
+            worksheet.Cells[row, 3].Value = trans.TransactionType;
+        
+            worksheet.Cells[row, 4].Value = trans.Amount;
+            worksheet.Cells[row, 4].Style.Numberformat.Format = "#,##0"; // Format tiền tệ
+
+            worksheet.Cells[row, 5].Value = trans.Status;
+        
+            // Tô màu trạng thái
+            if (trans.Status == "Completed" || trans.Status == "Success") 
+                worksheet.Cells[row, 5].Style.Font.Color.SetColor(System.Drawing.Color.Green);
+            else if (trans.Status == "Failed" || trans.Status == "Cancelled") 
+                worksheet.Cells[row, 5].Style.Font.Color.SetColor(System.Drawing.Color.Red);
+
+            worksheet.Cells[row, 6].Value = trans.ReferenceCode;
+            worksheet.Cells[row, 7].Value = trans.Description;
+
+            row++;
+        }
+
+        // --- Footer (Tổng cộng) ---
+        worksheet.Cells[row, 3].Value = "TỔNG CỘNG:";
+        worksheet.Cells[row, 3].Style.Font.Bold = true;
+    
+        // Dùng công thức Excel để tính tổng cột Số tiền (Cột D là cột 4)
+        worksheet.Cells[row, 4].Formula = $"SUM(D2:D{row - 1})";
+        worksheet.Cells[row, 4].Style.Font.Bold = true;
+        worksheet.Cells[row, 4].Style.Numberformat.Format = "#,##0";
+
+        // AutoFit các cột cho đẹp
+        worksheet.Cells.AutoFitColumns();
+
+        return package.GetAsByteArray();
     }
 
     #region Private Helpers

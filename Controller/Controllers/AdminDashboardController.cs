@@ -254,5 +254,26 @@ public class AdminDashboardController : BaseController
             return HandleException(ex);
         }
     }
+    
+    [HttpGet("export-transactions")]
+    public async Task<IActionResult> ExportTransactions(
+        [FromQuery] DateOnly from, 
+        [FromQuery] DateOnly to, 
+        CancellationToken cancellationToken)
+    {
+        try 
+        {
+            var fileContent = await _dashboardService.ExportTransactionHistoryAsync(from, to, cancellationToken);
+        
+            var fileName = $"TransactionHistory_{from:yyyyMMdd}_{to:yyyyMMdd}.xlsx";
+            var mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+            return File(fileContent, mimeType, fileName);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 }
 

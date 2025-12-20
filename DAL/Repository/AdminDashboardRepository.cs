@@ -538,6 +538,18 @@ public class AdminDashboardRepository : IAdminDashboardRepository
     #endregion
 
     #region Transactions
+    
+    public async Task<List<Transaction>> GetAllTransactionsInTimeRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+        var toDateTime = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+        return await _dbContext.Transactions
+            .AsNoTracking()
+            .Where(t => t.CreatedAt >= fromDateTime && t.CreatedAt < toDateTime)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task<(decimal totalInflow, decimal totalOutflow)> GetTransactionFlowAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
     {

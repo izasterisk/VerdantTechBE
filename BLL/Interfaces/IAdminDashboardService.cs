@@ -16,5 +16,6 @@ public interface IAdminDashboardService
     Task<AdminTopVendorsDTO> GetTopVendorsAsync(DateOnly? from, DateOnly? to, int limit, CancellationToken cancellationToken = default);
     Task<AdminTransactionStatisticsDTO> GetTransactionStatisticsAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
     Task<AdminQueueStatisticsDTO> GetQueueStatisticsAsync(CancellationToken cancellationToken = default);
+    Task<byte[]> ExportTransactionHistoryAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
 }
 
