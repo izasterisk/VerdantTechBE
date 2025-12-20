@@ -172,16 +172,12 @@ public class ProductSnapshotConfiguration : IEntityTypeConfiguration<ProductSnap
             .OnDelete(DeleteBehavior.Cascade);
 
         // Indexes
-        builder.HasIndex(e => e.ProductId)
-            .HasDatabaseName("idx_product");
-
-        builder.HasIndex(e => e.VendorId)
-            .HasDatabaseName("idx_vendor");
-
-        builder.HasIndex(e => e.SnapshotType)
-            .HasDatabaseName("idx_snapshot_type");
-
-        builder.HasIndex(e => new { e.ProductId, e.SnapshotType })
-            .HasDatabaseName("idx_product_snapshot_type");
+        // Composite index cho history pagination
+        builder.HasIndex(e => new { e.ProductId, e.SnapshotType, e.CreatedAt })
+            .HasDatabaseName("idx_product_snapshot_created");
+        
+        // Composite index cho queries filter theo vendor và snapshot type
+        builder.HasIndex(e => new { e.VendorId, e.SnapshotType })
+            .HasDatabaseName("idx_vendor_snapshot");
     }
 }

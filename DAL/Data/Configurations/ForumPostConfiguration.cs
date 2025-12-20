@@ -128,8 +128,9 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
 
 
         // Indexes
-        builder.HasIndex(e => e.ForumCategoryId)
-            .HasDatabaseName("idx_category");
+        // Composite index cho pagination theo category
+        builder.HasIndex(e => new { e.ForumCategoryId, e.CreatedAt })
+            .HasDatabaseName("idx_category_created");
 
         builder.HasIndex(e => e.UserId)
             .HasDatabaseName("idx_user");
@@ -138,8 +139,9 @@ public class ForumPostConfiguration : IEntityTypeConfiguration<ForumPost>
             .IsUnique()
             .HasDatabaseName("idx_slug");
 
-        builder.HasIndex(e => new { e.Status, e.IsPinned })
-            .HasDatabaseName("idx_status_pinned");
+        // Composite index cho filter status + sort (pinned + status queries)
+        builder.HasIndex(e => new { e.Status, e.CreatedAt })
+            .HasDatabaseName("idx_status_created");
 
 
         // Full-text search index - chỉ search title theo schema mới

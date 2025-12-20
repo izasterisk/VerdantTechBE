@@ -79,13 +79,16 @@ public class ProductReviewConfiguration : IEntityTypeConfiguration<ProductReview
             .HasDatabaseName("unique_product_order_customer");
         
         // Indexes
-        builder.HasIndex(e => new { e.ProductId, e.Rating })
-            .HasDatabaseName("idx_product_rating");
-            
-        builder.HasIndex(e => e.CustomerId)
-            .HasDatabaseName("idx_customer");
-            
-        builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("idx_created_at");
+        // Composite index cho pagination reviews theo product, sort by created_at
+        builder.HasIndex(e => new { e.ProductId, e.CreatedAt })
+            .HasDatabaseName("idx_product_created");
+        
+        // Composite index cho pagination reviews theo order
+        builder.HasIndex(e => new { e.OrderId, e.CreatedAt })
+            .HasDatabaseName("idx_order_created");
+        
+        // Composite index cho pagination reviews theo customer
+        builder.HasIndex(e => new { e.CustomerId, e.CreatedAt })
+            .HasDatabaseName("idx_customer_created");
     }
 }

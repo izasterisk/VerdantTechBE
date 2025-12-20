@@ -69,10 +69,11 @@ public class FarmProfileConfiguration : IEntityTypeConfiguration<FarmProfile>
             .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
-        builder.HasIndex(e => e.UserId)
-            .HasDatabaseName("idx_user");
-            
         builder.HasIndex(e => e.AddressId)
             .HasDatabaseName("idx_address");
+        
+        // Composite index cho queries filter farms theo user và status
+        builder.HasIndex(e => new { e.UserId, e.Status })
+            .HasDatabaseName("idx_user_status");
     }
 }

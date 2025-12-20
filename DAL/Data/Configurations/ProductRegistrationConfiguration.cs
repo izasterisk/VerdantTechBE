@@ -169,9 +169,13 @@ public class ProductRegistrationConfiguration : IEntityTypeConfiguration<Product
             .HasColumnName("approved_at");
 
         // Indexes
-        builder.HasIndex(e => e.VendorId).HasDatabaseName("idx_vendor");
-        builder.HasIndex(e => new { e.VendorId, e.Status }).HasDatabaseName("idx_vendor_status");
-        builder.HasIndex(e => e.CreatedAt).HasDatabaseName("idx_created");
+        // Composite index cho pagination theo vendor
+        builder.HasIndex(e => new { e.VendorId, e.CreatedAt })
+            .HasDatabaseName("idx_vendor_created");
+        builder.HasIndex(e => new { e.VendorId, e.Status })
+            .HasDatabaseName("idx_vendor_status");
+        builder.HasIndex(e => e.Status)
+            .HasDatabaseName("idx_status");
 
         // FKs
         builder.HasOne(e => e.Vendor)

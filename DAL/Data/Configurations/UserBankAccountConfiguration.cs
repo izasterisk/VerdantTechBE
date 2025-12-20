@@ -66,8 +66,8 @@ public class UserBankAccountConfiguration : IEntityTypeConfiguration<UserBankAcc
             .HasDatabaseName("unique_user_bank_account");
 
         // Index
-        builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
-
-        builder.HasIndex(e => e.IsActive).HasDatabaseName("idx_is_active");
+        // Composite index cho queries filter bank account active của user
+        builder.HasIndex(e => new { e.UserId, e.IsActive })
+            .HasDatabaseName("idx_user_active");
     }
 }

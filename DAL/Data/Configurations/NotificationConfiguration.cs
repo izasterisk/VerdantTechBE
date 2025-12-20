@@ -92,14 +92,12 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
             .HasColumnName("updated_at");
         
         // Indexes
-        builder.HasIndex(e => new { e.UserId, e.IsRead })
-            .HasDatabaseName("idx_user_read");
+        // Composite index cho pagination với filter unread
+        builder.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAt })
+            .HasDatabaseName("idx_user_read_created");
             
         builder.HasIndex(e => new { e.ReferenceType, e.ReferenceId })
             .HasDatabaseName("idx_reference");
-            
-        builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("idx_created");
         
         // Relationships
         builder.HasOne(d => d.User)

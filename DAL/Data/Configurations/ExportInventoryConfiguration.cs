@@ -108,20 +108,22 @@ public class ExportInventoryConfiguration : IEntityTypeConfiguration<ExportInven
             .HasDatabaseName("uk_order_detail_lot");
 
         // Indexes
-        builder.HasIndex(e => e.ProductId)
-            .HasDatabaseName("idx_product");
-
         builder.HasIndex(e => e.OrderDetailId)
             .HasDatabaseName("idx_order_detail");
 
         builder.HasIndex(e => e.ProductSerialId)
             .HasDatabaseName("idx_serial");
-
-        builder.HasIndex(e => e.LotNumber)
-            .HasDatabaseName("idx_lot");
-
-        // Composite index for ProductId and LotNumber (used in inventory queries)
+        
+        // Composite index cho queries tính remaining quantity theo lot
         builder.HasIndex(e => new { e.ProductId, e.LotNumber })
             .HasDatabaseName("idx_product_lot");
+        
+        // Composite index cho pagination export history
+        builder.HasIndex(e => new { e.ProductId, e.CreatedAt })
+            .HasDatabaseName("idx_product_created");
+        
+        // Composite index cho filter theo movement type
+        builder.HasIndex(e => new { e.MovementType, e.CreatedAt })
+            .HasDatabaseName("idx_movement_created");
     }
 }

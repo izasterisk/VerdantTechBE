@@ -71,8 +71,13 @@ public class OrderDetailConfiguration : IEntityTypeConfiguration<OrderDetail>
         // Indexes
         builder.HasIndex(e => e.OrderId)
             .HasDatabaseName("idx_order");
-            
+        
+        // Index cho revenue analytics JOIN queries    
         builder.HasIndex(e => e.ProductId)
             .HasDatabaseName("idx_product");
+        
+        // Index cho partial refund tracking
+        builder.HasIndex(e => e.IsRefunded)
+            .HasDatabaseName("idx_refunded");
     }
 }

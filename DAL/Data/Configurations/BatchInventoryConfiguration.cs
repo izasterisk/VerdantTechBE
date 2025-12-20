@@ -94,16 +94,23 @@ public class BatchInventoryConfiguration : IEntityTypeConfiguration<BatchInvento
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(e => e.ProductId)
-            .HasDatabaseName("idx_product");
+        // Composite index cho pagination theo product
+        builder.HasIndex(e => new { e.ProductId, e.CreatedAt })
+            .HasDatabaseName("idx_product_created");
 
         builder.HasIndex(e => e.Sku)
             .HasDatabaseName("idx_sku");
 
-        builder.HasIndex(e => e.VendorId)
-            .HasDatabaseName("idx_vendor");
-
-        builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("idx_created");
+        // Composite index cho pagination theo vendor
+        builder.HasIndex(e => new { e.VendorId, e.CreatedAt })
+            .HasDatabaseName("idx_vendor_created");
+        
+        // Composite index cho queries filter theo lot_number + product
+        builder.HasIndex(e => new { e.LotNumber, e.ProductId })
+            .HasDatabaseName("idx_lot_product");
+        
+        // Index cho batch number uniqueness check
+        builder.HasIndex(e => e.BatchNumber)
+            .HasDatabaseName("idx_batch_number");
     }
 }

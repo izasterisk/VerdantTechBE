@@ -56,7 +56,6 @@ CREATE TABLE users (
     deleted_at TIMESTAMP NULL,
     
     INDEX idx_email (email),
-    INDEX idx_role (role),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at),
     INDEX idx_role_created (role, created_at) COMMENT 'Cho queries thống kê user mới theo role',
@@ -114,8 +113,7 @@ CREATE TABLE vendor_certificates (
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_vendor_uploaded (vendor_id, uploaded_at) COMMENT 'Cho queries lấy certificates theo vendor, sort by uploaded_at',
-    INDEX idx_vendor_status (vendor_id, status),
-    INDEX idx_status (status)
+    INDEX idx_vendor_status (vendor_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do nhà cung cấp tải lên để xác minh';
 
 -- Tài khoản ngân hàng của người dùng (user và vendor đều có thể có nhiều tài khoản ngân hàng)
@@ -149,7 +147,6 @@ CREATE TABLE farm_profiles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE RESTRICT,
-    INDEX idx_user (user_id),
     INDEX idx_user_status (user_id, status) COMMENT 'Cho queries filter farms theo user và status',
     INDEX idx_address (address_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hồ sơ trang trại cho người dùng nông dân';
@@ -381,6 +378,7 @@ CREATE TABLE product_registrations (
     FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
     FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE RESTRICT,
     INDEX idx_vendor_created (vendor_id, created_at) COMMENT 'Optimized cho pagination theo vendor',
+    INDEX idx_vendor_status (vendor_id, status),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Product registrations';
 

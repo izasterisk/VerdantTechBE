@@ -86,13 +86,12 @@ public class VendorCertificateConfiguration : IEntityTypeConfiguration<VendorCer
             .OnDelete(DeleteBehavior.SetNull);
 
         // Indexes
-        builder.HasIndex(e => e.VendorId)
-            .HasDatabaseName("idx_vendor");
-
-        builder.HasIndex(e => e.Status)
-            .HasDatabaseName("idx_status");
-
-        builder.HasIndex(e => e.UploadedAt)
-            .HasDatabaseName("idx_uploaded");
+        // Composite index cho queries lấy certificates theo vendor, sort by uploaded_at
+        builder.HasIndex(e => new { e.VendorId, e.UploadedAt })
+            .HasDatabaseName("idx_vendor_uploaded");
+        
+        // Composite index cho queries filter theo vendor và status
+        builder.HasIndex(e => new { e.VendorId, e.Status })
+            .HasDatabaseName("idx_vendor_status");
     }
 }

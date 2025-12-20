@@ -81,7 +81,12 @@ public class RequestConfiguration : IEntityTypeConfiguration<Request>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(e => e.UserId).HasDatabaseName("idx_user");
-        builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
+        // Composite index cho user request history pagination
+        builder.HasIndex(e => new { e.UserId, e.UpdatedAt })
+            .HasDatabaseName("idx_user_updated");
+        
+        // Composite index cho admin queues filter + sort
+        builder.HasIndex(e => new { e.RequestType, e.Status, e.UpdatedAt })
+            .HasDatabaseName("idx_type_status_updated");
     }
 }
