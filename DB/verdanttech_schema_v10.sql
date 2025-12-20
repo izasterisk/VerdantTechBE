@@ -56,9 +56,10 @@ CREATE TABLE users (
     deleted_at TIMESTAMP NULL,
     
     INDEX idx_email (email),
-    INDEX idx_role (role),
     INDEX idx_status (status),
-    INDEX idx_created_at (created_at)
+    INDEX idx_created_at (created_at),
+    INDEX idx_role_created (role, created_at) COMMENT 'Cho queries thống kê user mới theo role',
+    INDEX idx_refresh_token (RefreshToken, RefreshTokenExpiresAt) COMMENT 'Cho refresh token validation'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng xác thực và hồ sơ người dùng cơ bản';
 
 -- Bảng trung gian quản lý nhiều địa chỉ cho người dùng
@@ -73,8 +74,8 @@ CREATE TABLE user_addresses (
     
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE RESTRICT,
-    INDEX idx_user_id (user_id),
-    INDEX idx_address_id (address_id)
+    INDEX idx_user_deleted (user_id, is_deleted) COMMENT 'Optimized cho queries filter theo user và trạng thái',
+    INDEX idx_address_deleted (address_id, is_deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng trung gian quản lý nhiều địa chỉ cho người dùng';
 
 -- Hồ sơ nhà cung cấp cho người bán
@@ -92,8 +93,8 @@ CREATE TABLE vendor_profiles (
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_company_name (company_name)
-    -- Note: idx_verified (verified_at) đã bị xóa vì query sử dụng user_id làm filter chính (đã có UNIQUE constraint)
+    INDEX idx_company_name (company_name),
+    INDEX idx_verified_pending (verified_at, verified_by) COMMENT 'Cho queries tìm vendor chờ xác minh'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Hồ sơ nhà cung cấp/người bán và chi tiết xác minh';
 
 -- Thông tin chứng chỉ của nhà cung cấp
@@ -111,8 +112,8 @@ CREATE TABLE vendor_certificates (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_vendor (vendor_id),
-    INDEX idx_status (status)
+    INDEX idx_vendor_uploaded (vendor_id, uploaded_at) COMMENT 'Cho queries lấy certificates theo vendor, sort by uploaded_at',
+    INDEX idx_vendor_status (vendor_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do nhà cung cấp tải lên để xác minh';
 
 -- Tài khoản ngân hàng của người dùng (user và vendor đều có thể có nhiều tài khoản ngân hàng)
@@ -127,8 +128,7 @@ CREATE TABLE user_bank_accounts (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     UNIQUE KEY unique_user_bank_account (user_id, account_number),
-    INDEX idx_user (user_id),
-    INDEX idx_is_active (is_active)
+    INDEX idx_user_active (user_id, is_active) COMMENT 'Optimized cho queries filter bank account active của user'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tài khoản ngân hàng của người dùng (cả customer và vendor)';
 
 -- =====================================================
@@ -147,7 +147,7 @@ CREATE TABLE farm_profiles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE RESTRICT,
-    INDEX idx_user (user_id),
+    INDEX idx_user_status (user_id, status) COMMENT 'Cho queries filter farms theo user và status',
     INDEX idx_address (address_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chi tiết hồ sơ trang trại cho người dùng nông dân';
 
@@ -165,7 +165,7 @@ CREATE TABLE crops (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE RESTRICT,
-    INDEX idx_farm_profile (farm_profile_id),
+    INDEX idx_farm_status (farm_profile_id, status) COMMENT 'Optimized cho queries filter crops theo farm và status',
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý cây trồng của trang trại (một trang trại có nhiều cây trồng)';
 
@@ -235,7 +235,7 @@ CREATE TABLE survey_responses (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     FOREIGN KEY (farm_profile_id) REFERENCES farm_profiles(id) ON DELETE CASCADE,
-    INDEX idx_farm (farm_profile_id)
+    INDEX idx_farm_question (farm_profile_id, question_id) COMMENT 'Optimized cho queries ORDER BY question_id'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu câu trả lời đánh giá độ bền vững của người dùng';
 
 -- =====================================================
@@ -253,7 +253,7 @@ CREATE TABLE chatbot_conversations (
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_customer (customer_id),
+    INDEX idx_customer_active_started (customer_id, is_active, started_at) COMMENT 'Optimized cho pagination với filter is_active',
     INDEX idx_session_id (session_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các phiên hội thoại chatbot';
 
@@ -266,7 +266,7 @@ CREATE TABLE chatbot_messages (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 
     FOREIGN KEY (conversation_id) REFERENCES chatbot_conversations(id) ON DELETE RESTRICT,
-    INDEX idx_conversation (conversation_id)
+    INDEX idx_conversation_created (conversation_id, created_at) COMMENT 'Optimized cho ORDER BY created_at'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các tin nhắn chatbot riêng lẻ';
 
 -- =====================================================
@@ -304,11 +304,10 @@ CREATE TABLE forum_posts (
 
     FOREIGN KEY (forum_category_id) REFERENCES forum_categories(id) ON DELETE RESTRICT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_category (forum_category_id),
+    INDEX idx_category_created (forum_category_id, created_at) COMMENT 'Optimized cho pagination theo category',
     INDEX idx_user (user_id),
     INDEX idx_slug (slug),
-    INDEX idx_status (status),
-    INDEX idx_created (created_at)
+    INDEX idx_status_created (status, created_at) COMMENT 'Optimized cho filter status + sort created_at'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bài viết thảo luận diễn đàn';
 
 -- Bình luận diễn đàn
@@ -327,7 +326,7 @@ CREATE TABLE forum_comments (
     FOREIGN KEY (forum_post_id) REFERENCES forum_posts(id) ON DELETE RESTRICT,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (parent_id) REFERENCES forum_comments(id) ON DELETE RESTRICT,
-    INDEX idx_post (forum_post_id),
+    INDEX idx_post_parent_created (forum_post_id, parent_id, created_at) COMMENT 'Optimized cho queries filter parent + sort created',
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bình luận bài viết diễn đàn';
 
@@ -349,7 +348,8 @@ CREATE TABLE product_categories (
     
     FOREIGN KEY (parent_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
     INDEX idx_parent (parent_id),
-    INDEX idx_slug (slug)
+    INDEX idx_slug (slug),
+    INDEX idx_active_parent (is_active, parent_id) COMMENT 'Optimized cho queries filter active categories'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Danh mục sản phẩm theo cấp bậc';
 
 CREATE TABLE product_registrations (
@@ -377,7 +377,8 @@ CREATE TABLE product_registrations (
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
     FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_vendor (vendor_id),
+    INDEX idx_vendor_created (vendor_id, created_at) COMMENT 'Optimized cho pagination theo vendor',
+    INDEX idx_vendor_status (vendor_id, status),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Product registrations';
 
@@ -412,8 +413,10 @@ CREATE TABLE products (
     FOREIGN KEY (category_id) REFERENCES product_categories(id) ON DELETE RESTRICT,
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (registration_id) REFERENCES product_registrations(id) ON DELETE RESTRICT,
-    INDEX idx_category (category_id),
-    INDEX idx_vendor (vendor_id),
+    INDEX idx_category_created (category_id, created_at) COMMENT 'Optimized cho pagination theo category',
+    INDEX idx_vendor_created (vendor_id, created_at) COMMENT 'Optimized cho pagination theo vendor',
+    INDEX idx_vendor_active (vendor_id, is_active) COMMENT 'Cho queries filter active products của vendor',
+    INDEX idx_active_stock (is_active, stock_quantity) COMMENT 'Cho queries tìm out of stock / low stock products',
     INDEX idx_product_code (product_code),
     INDEX idx_slug (slug),
     INDEX idx_registration (registration_id),
@@ -451,10 +454,8 @@ CREATE TABLE product_snapshot (
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (registration_id) REFERENCES product_registrations(id) ON DELETE RESTRICT,
     
-    INDEX idx_product (product_id),
-    INDEX idx_vendor (vendor_id),
-    INDEX idx_snapshot_type (snapshot_type),
-    INDEX idx_product_snapshot_type (product_id, snapshot_type)
+    INDEX idx_product_snapshot_created (product_id, snapshot_type, created_at) COMMENT 'Optimized cho history pagination',
+    INDEX idx_vendor_snapshot (vendor_id, snapshot_type) COMMENT 'Cho queries filter theo vendor và snapshot type'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Lưu trữ toàn bộ lịch sử snapshot thay đổi của sản phẩm (cả đề xuất và đã duyệt)';
 
 -- Bảng yêu cầu cập nhật sản phẩm (chỉ chứa thông tin quản lý)
@@ -473,8 +474,8 @@ CREATE TABLE product_update_requests (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
     
-    INDEX idx_product (product_id),
-    INDEX idx_status (status)
+    INDEX idx_product_status (product_id, status) COMMENT 'Cho queries check pending request của product',
+    INDEX idx_status_updated (status, updated_at) COMMENT 'Optimized cho admin pagination theo status'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý yêu cầu cập nhật sản phẩm (chỉ chứa thông tin trạng thái và duyệt)';
 
 -- Thông tin chứng chỉ của sản phẩm
@@ -495,9 +496,9 @@ CREATE TABLE product_certificates (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     FOREIGN KEY (registration_id) REFERENCES product_registrations(id) ON DELETE RESTRICT,
     FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_product (product_id),
+    INDEX idx_product_status (product_id, status) COMMENT 'Cho queries filter certificates theo product và status',
     INDEX idx_registration (registration_id),
-    INDEX idx_status (status)
+    INDEX idx_status_uploaded (status, uploaded_at) COMMENT 'Optimized cho admin queue pagination'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Chứng chỉ bền vững do sản phẩm gắn kết để xác minh';
 
 -- Đánh giá và xếp hạng
@@ -515,8 +516,9 @@ CREATE TABLE product_reviews (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
     UNIQUE KEY unique_product_order_customer (product_id, order_id, customer_id),
-    INDEX idx_product (product_id),
-    INDEX idx_customer (customer_id)
+    INDEX idx_product_created (product_id, created_at) COMMENT 'Optimized cho pagination reviews theo product',
+    INDEX idx_order_created (order_id, created_at) COMMENT 'Cho pagination reviews theo order',
+    INDEX idx_customer_created (customer_id, created_at) COMMENT 'Cho pagination reviews theo customer'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đánh giá và xếp hạng sản phẩm';
 
 -- Bảng quản lý media tập trung
@@ -531,9 +533,7 @@ CREATE TABLE media_links (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    INDEX idx_owner (owner_type, owner_id),
-    INDEX idx_owner_type (owner_type),
-    INDEX idx_owner_id (owner_id)
+    INDEX idx_owner_sort (owner_type, owner_id, sort_order) COMMENT 'Optimized cho queries ORDER BY sort_order'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng quản lý media tập trung cho tất cả các thực thể';
 
 -- =========================
@@ -598,11 +598,10 @@ CREATE TABLE orders (
 
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE RESTRICT,
-    INDEX idx_customer (customer_id),
+    INDEX idx_customer_created (customer_id, created_at) COMMENT 'Optimized cho customer order history pagination',
     INDEX idx_address (address_id),
-    INDEX idx_status (status),
-    INDEX idx_created (created_at),
-    INDEX idx_status_created (status, created_at) COMMENT 'Composite index cho vendor revenue queries'
+    INDEX idx_status_created (status, created_at) COMMENT 'Optimized cho vendor revenue queries và admin filters',
+    INDEX idx_wallet_status_delivered (is_wallet_credited, status, delivered_at) COMMENT 'Optimized cho wallet credit cron job'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Đơn hàng của khách hàng';
 
 -- Chi tiết đơn hàng
@@ -619,7 +618,9 @@ CREATE TABLE order_details (
 
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
-    INDEX idx_order (order_id)
+    INDEX idx_order (order_id),
+    INDEX idx_product (product_id) COMMENT 'Cho revenue analytics JOIN queries',
+    INDEX idx_refunded (is_refunded) COMMENT 'Cho partial refund tracking'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các mục trong đơn hàng';
 
 -- =========================
@@ -644,10 +645,11 @@ CREATE TABLE batch_inventory (
 
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_product (product_id),
+    INDEX idx_product_created (product_id, created_at) COMMENT 'Optimized cho pagination theo product',
     INDEX idx_sku (sku),
-    INDEX idx_vendor (vendor_id),
-    INDEX idx_created (created_at)
+    INDEX idx_vendor_created (vendor_id, created_at) COMMENT 'Optimized cho pagination theo vendor',
+    INDEX idx_lot_product (lot_number, product_id) COMMENT 'Cho queries filter theo lot_number + product',
+    INDEX idx_batch_number (batch_number) COMMENT 'Cho batch number uniqueness check'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi tồn kho nhập - hàng vào với thông tin nhận hàng chi tiết';
 
 -- Quản lý số seri máy móc trong lô
@@ -663,7 +665,8 @@ CREATE TABLE product_serials (
     FOREIGN KEY (batch_inventory_id) REFERENCES batch_inventory(id) ON DELETE RESTRICT,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     INDEX idx_batch (batch_inventory_id),
-    INDEX idx_product (product_id)
+    INDEX idx_product_status (product_id, status) COMMENT 'Optimized cho queries tìm available stock serials',
+    INDEX idx_product_created (product_id, created_at) COMMENT 'Cho pagination theo product'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Quản lý số seri từng sản phẩm trong lô hàng';
 
 -- Theo dõi tồn kho bán hàng (hàng ra)
@@ -686,11 +689,11 @@ CREATE TABLE export_inventory (
     FOREIGN KEY (order_detail_id) REFERENCES order_details(id) ON DELETE RESTRICT,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
     UNIQUE KEY uk_order_detail_lot (order_detail_id, lot_number, product_serial_id),
-    INDEX idx_product (product_id),
+    INDEX idx_product_lot (product_id, lot_number) COMMENT 'Cho queries tính remaining quantity theo lot',
     INDEX idx_order_detail (order_detail_id),
     INDEX idx_serial (product_serial_id),
-    INDEX idx_lot (lot_number),
-    INDEX idx_product_lot (product_id, lot_number)
+    INDEX idx_product_created (product_id, created_at) COMMENT 'Cho pagination export history',
+    INDEX idx_movement_created (movement_type, created_at) COMMENT 'Cho filter theo movement type'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Theo dõi xuất kho - hỗ trợ cả sản phẩm có serial (máy móc) và không có serial (phân bón)';
 
 -- =====================================================
@@ -711,8 +714,8 @@ CREATE TABLE requests (
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_user (user_id),
-    INDEX idx_status (status)
+    INDEX idx_user_updated (user_id, updated_at) COMMENT 'Optimized cho user request history pagination',
+    INDEX idx_type_status_updated (request_type, status, updated_at) COMMENT 'Optimized cho admin queues filter + sort'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Hệ thống quản lý yêu cầu tổng quát';
 
 -- Bảng tin nhắn yêu cầu (lưu trữ nội dung trao đổi giữa user và admin)
@@ -824,9 +827,8 @@ CREATE TABLE notifications (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
-    INDEX idx_user_read (user_id, is_read),
-    INDEX idx_reference (reference_type, reference_id),
-    INDEX idx_created (created_at)
+    INDEX idx_user_read_created (user_id, is_read, created_at) COMMENT 'Optimized cho pagination với filter unread',
+    INDEX idx_reference (reference_type, reference_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Bảng lưu trữ thông báo cho người dùng, hỗ trợ real-time qua SignalR. Hard delete khi user xóa.';
 
 -- =====================================================

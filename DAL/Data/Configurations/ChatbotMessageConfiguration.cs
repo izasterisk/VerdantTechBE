@@ -51,13 +51,8 @@ public class ChatbotMessageConfiguration : IEntityTypeConfiguration<ChatbotMessa
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(e => e.ConversationId)
-            .HasDatabaseName("idx_conversation");
-
-        builder.HasIndex(e => e.MessageType)
-            .HasDatabaseName("idx_type");
-
-        builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("idx_created");
+        // Composite index cho ORDER BY created_at trong conversation
+        builder.HasIndex(e => new { e.ConversationId, e.CreatedAt })
+            .HasDatabaseName("idx_conversation_created");
     }
 }

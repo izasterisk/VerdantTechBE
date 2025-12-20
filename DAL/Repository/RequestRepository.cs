@@ -120,15 +120,6 @@ public class RequestRepository : IRequestRepository
                ?? throw new KeyNotFoundException($"Request với ID {id} không tồn tại.");
     }
     
-    public async Task<List<Request>> GetAllRequestByUserIdWithRelationsAsync(ulong userId, CancellationToken cancellationToken = default)
-    {
-        return await _requestRepository.GetAllWithRelationsByFilterAsync(r => r.UserId == userId, true, 
-            q => q.Include(u => u.User)
-                .Include(u =>  u.ProcessedByNavigation)
-                .Include(u => u.RequestMessages.OrderBy(rm => rm.Id))
-                .ThenInclude(rm => rm.Staff), cancellationToken);
-    }
-    
     public async Task<(List<Request>, int totalCount)> GetAllRequestByUserIdWithRelationsAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         return await _requestRepository.GetPaginatedWithRelationsAsync(

@@ -19,12 +19,6 @@ public class CropRepository : ICropRepository
         _cropRepository = cropRepository;
     }
     
-    public async Task<Crop> GetCropBelongToFarm(ulong cropId, ulong farmId, CancellationToken cancellationToken = default)
-    {
-        return await _cropRepository.GetAsync(c => c.Id == cropId && c.FarmProfileId == farmId, true, cancellationToken)
-               ?? throw new KeyNotFoundException("Cây trồng không thuộc về trang trại hoặc không tồn tại");
-    }
-    
     public async Task<bool> IsFarmExistsAsync(ulong farmId, CancellationToken cancellationToken = default)
     {
         var x = await _farmProfileRepository.AnyAsync(f => f.Id == farmId
@@ -43,12 +37,6 @@ public class CropRepository : ICropRepository
     public async Task<List<Crop>> GetAllCropsByFarmIdAsync(ulong farmId, CancellationToken cancellationToken = default)
     {
         return await _cropRepository.GetAllByFilterAsync(c => c.FarmProfileId == farmId, true, cancellationToken);
-    }
-    
-    public async Task<List<Crop>> GetBulkCropsAsync(List<ulong> cropIds, CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.Crops.Where(c => cropIds.Contains(c.Id))
-            .ToListAsync(cancellationToken);
     }
     
     public async Task CreateBulkCropsAsync(List<Crop> crops, CancellationToken cancellationToken = default)

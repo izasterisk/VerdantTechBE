@@ -159,20 +159,19 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
-        builder.HasIndex(e => e.CustomerId)
-            .HasDatabaseName("idx_customer");
+        // Composite index cho customer order history pagination
+        builder.HasIndex(e => new { e.CustomerId, e.CreatedAt })
+            .HasDatabaseName("idx_customer_created");
             
         builder.HasIndex(e => e.AddressId)
             .HasDatabaseName("idx_address");
             
-        builder.HasIndex(e => e.Status)
-            .HasDatabaseName("idx_status");
-            
-        builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("idx_created");
-            
-        // Composite index for vendor revenue queries
+        // Composite index cho vendor revenue queries và admin filters
         builder.HasIndex(e => new { e.Status, e.CreatedAt })
             .HasDatabaseName("idx_status_created");
+        
+        // Composite index cho wallet credit cron job
+        builder.HasIndex(e => new { e.IsWalletCredited, e.Status, e.DeliveredAt })
+            .HasDatabaseName("idx_wallet_status_delivered");
     }
 }

@@ -89,19 +89,11 @@ public class ForumCommentConfiguration : IEntityTypeConfiguration<ForumComment>
         
         
         // Indexes
-        builder.HasIndex(e => e.ForumPostId)
-            .HasDatabaseName("idx_post");
+        // Composite index cho queries filter parent + sort created
+        builder.HasIndex(e => new { e.ForumPostId, e.ParentId, e.CreatedAt })
+            .HasDatabaseName("idx_post_parent_created");
             
         builder.HasIndex(e => e.UserId)
             .HasDatabaseName("idx_user");
-            
-        builder.HasIndex(e => e.ParentId)
-            .HasDatabaseName("idx_parent");
-            
-        builder.HasIndex(e => e.Status)
-            .HasDatabaseName("idx_status");
-            
-        builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("idx_created_at");
     }
 }

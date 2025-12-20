@@ -56,10 +56,12 @@ public class UserAddressConfiguration : IEntityTypeConfiguration<UserAddress>
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(e => e.UserId)
-            .HasDatabaseName("idx_user_id");
-            
-        builder.HasIndex(e => e.AddressId)
-            .HasDatabaseName("idx_address_id");
+        // Composite index cho queries filter theo user và trạng thái
+        builder.HasIndex(e => new { e.UserId, e.IsDeleted })
+            .HasDatabaseName("idx_user_deleted");
+        
+        // Composite index cho filter theo address và trạng thái
+        builder.HasIndex(e => new { e.AddressId, e.IsDeleted })
+            .HasDatabaseName("idx_address_deleted");
     }
 }

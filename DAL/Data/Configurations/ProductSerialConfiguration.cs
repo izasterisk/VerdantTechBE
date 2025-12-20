@@ -75,7 +75,12 @@ public class ProductSerialConfiguration : IEntityTypeConfiguration<ProductSerial
         builder.HasIndex(e => e.BatchInventoryId)
             .HasDatabaseName("idx_batch");
 
-        builder.HasIndex(e => e.ProductId)
-            .HasDatabaseName("idx_product");
+        // Composite index cho queries tìm available stock serials
+        builder.HasIndex(e => new { e.ProductId, e.Status })
+            .HasDatabaseName("idx_product_status");
+        
+        // Composite index cho pagination theo product
+        builder.HasIndex(e => new { e.ProductId, e.CreatedAt })
+            .HasDatabaseName("idx_product_created");
     }
 }

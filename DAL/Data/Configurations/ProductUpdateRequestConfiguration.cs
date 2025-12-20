@@ -65,9 +65,17 @@ public class ProductUpdateRequestConfiguration : IEntityTypeConfiguration<Produc
             .HasColumnName("updated_at");
 
         // Indexes
-        builder.HasIndex(e => e.ProductSnapshotId).HasDatabaseName("idx_product_snapshot").IsUnique();
-        builder.HasIndex(e => e.ProductId).HasDatabaseName("idx_product");
-        builder.HasIndex(e => e.Status).HasDatabaseName("idx_status");
+        builder.HasIndex(e => e.ProductSnapshotId)
+            .HasDatabaseName("idx_product_snapshot")
+            .IsUnique();
+        
+        // Composite index cho queries check pending request của product
+        builder.HasIndex(e => new { e.ProductId, e.Status })
+            .HasDatabaseName("idx_product_status");
+        
+        // Composite index cho admin pagination theo status
+        builder.HasIndex(e => new { e.Status, e.UpdatedAt })
+            .HasDatabaseName("idx_status_updated");
 
         // Foreign Keys - 1:1 Relationship configured in ProductSnapshotConfiguration
         // builder.HasOne(e => e.ProductSnapshot)

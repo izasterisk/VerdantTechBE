@@ -61,10 +61,11 @@ public class ChatbotConversationConfiguration : IEntityTypeConfiguration<Chatbot
             .OnDelete(DeleteBehavior.Restrict);
         
         // Indexes
-        builder.HasIndex(e => e.CustomerId)
-            .HasDatabaseName("idx_customer");
-        
         builder.HasIndex(e => e.SessionId)
             .HasDatabaseName("idx_session_id");
+        
+        // Composite index cho pagination với filter is_active
+        builder.HasIndex(e => new { e.CustomerId, e.IsActive, e.StartedAt })
+            .HasDatabaseName("idx_customer_active_started");
     }
 }

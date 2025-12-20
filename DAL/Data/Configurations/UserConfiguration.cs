@@ -119,9 +119,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(e => e.Email)
             .IsUnique()
             .HasDatabaseName("idx_email");
-        
-        builder.HasIndex(e => e.Role)
-            .HasDatabaseName("idx_role");
             
         builder.HasIndex(e => e.Status)
             .HasDatabaseName("idx_status");
@@ -132,5 +129,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(e => e.TaxCode)
             .IsUnique()
             .HasDatabaseName("idx_tax_code");
+        
+        // Composite index cho queries thống kê user mới theo role
+        builder.HasIndex(e => new { e.Role, e.CreatedAt })
+            .HasDatabaseName("idx_role_created");
+        
+        // Composite index cho refresh token validation
+        builder.HasIndex(e => new { e.RefreshToken, e.RefreshTokenExpiresAt })
+            .HasDatabaseName("idx_refresh_token");
     }
 }

@@ -98,16 +98,15 @@ public class ProductCertificateConfiguration : IEntityTypeConfiguration<ProductC
             .OnDelete(DeleteBehavior.SetNull);
 
         // Indexes
-        builder.HasIndex(e => e.ProductId)
-            .HasDatabaseName("idx_product");
-
         builder.HasIndex(e => e.RegistrationId)
             .HasDatabaseName("idx_registration");
-
-        builder.HasIndex(e => e.Status)
-            .HasDatabaseName("idx_status");
-
-        builder.HasIndex(e => e.UploadedAt)
-            .HasDatabaseName("idx_uploaded");
+        
+        // Composite index cho queries filter certificates theo product và status
+        builder.HasIndex(e => new { e.ProductId, e.Status })
+            .HasDatabaseName("idx_product_status");
+        
+        // Composite index cho admin queue pagination (status + uploaded_at)
+        builder.HasIndex(e => new { e.Status, e.UploadedAt })
+            .HasDatabaseName("idx_status_uploaded");
     }
 }
