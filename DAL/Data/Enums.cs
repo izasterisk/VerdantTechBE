@@ -107,6 +107,12 @@ public enum MessageType
     System
 }
 
+public enum CustomerVendorSenderType
+{
+    Customer,
+    Vendor
+}
+
 // =====================================================
 // COMMUNITY ENUMS
 // =====================================================
@@ -257,7 +263,8 @@ public enum MediaOwnerType
     ProductReviews,
     ForumPosts,
     RequestMessage,
-    ProductSnapshot
+    ProductSnapshot,
+    CustomerVendorMessages
 }
 
 public enum MediaPurpose

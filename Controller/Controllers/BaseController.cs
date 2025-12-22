@@ -159,6 +159,18 @@ public abstract class BaseController : ControllerBase
         return userId;
     }
 
+    protected DAL.Data.UserRole GetCurrentUserRole()
+    {
+        var roleClaim = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (string.IsNullOrEmpty(roleClaim))
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin vai trò người dùng");
+
+        if (!Enum.TryParse<DAL.Data.UserRole>(roleClaim, true, out var userRole))
+            throw new ArgumentException("Vai trò người dùng không hợp lệ");
+
+        return userRole;
+    }
+
     protected CancellationToken GetCancellationToken() => HttpContext.RequestAborted;
 
     /// <summary>
