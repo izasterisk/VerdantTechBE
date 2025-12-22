@@ -270,6 +270,38 @@ CREATE TABLE chatbot_messages (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các tin nhắn chatbot riêng lẻ';
 
 -- =====================================================
+-- CÁC BẢNG CHAT GIỮA CUSTOMER VÀ VENDOR
+-- =====================================================
+
+-- Các cuộc hội thoại giữa customer và vendor
+CREATE TABLE customer_vendor_conversations (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    customer_id BIGINT UNSIGNED NOT NULL,
+    vendor_id BIGINT UNSIGNED NOT NULL,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_message_at TIMESTAMP NULL COMMENT 'Thời điểm tin nhắn cuối cùng - dùng để sắp xếp',
+
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+    INDEX idx_customer_last (customer_id, last_message_at) COMMENT 'Optimized cho pagination theo customer sort by last_message_at',
+    INDEX idx_vendor_last (vendor_id, last_message_at) COMMENT 'Optimized cho pagination theo vendor sort by last_message_at'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các cuộc hội thoại giữa customer và vendor';
+
+-- Tin nhắn trong cuộc hội thoại customer-vendor
+CREATE TABLE customer_vendor_messages (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    conversation_id BIGINT UNSIGNED NOT NULL,
+    sender_type ENUM('customer', 'vendor') NOT NULL COMMENT 'Người gửi: customer hoặc vendor',
+    message_text TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE COMMENT 'Tin nhắn đã được đọc chưa - để tracking unread messages',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (conversation_id) REFERENCES customer_vendor_conversations(id) ON DELETE RESTRICT,
+    INDEX idx_conversation_created (conversation_id, created_at) COMMENT 'Optimized cho ORDER BY created_at khi load tin nhắn',
+    INDEX idx_conversation_unread (conversation_id, is_read) COMMENT 'Optimized cho queries đếm unread messages'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các tin nhắn trong cuộc hội thoại giữa customer và vendor';
+
+-- =====================================================
 -- CÁC BẢNG CỘNG ĐỒNG
 -- =====================================================
 
@@ -524,7 +556,7 @@ CREATE TABLE product_reviews (
 -- Bảng quản lý media tập trung
 CREATE TABLE media_links (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request_message', 'product_snapshot') NOT NULL,
+    owner_type ENUM('vendor_certificates', 'chatbot_messages', 'products', 'product_registrations', 'product_certificates', 'product_reviews', 'forum_posts', 'request_message', 'product_snapshot', 'customer_vendor_messages') NOT NULL,
     owner_id BIGINT UNSIGNED NOT NULL,
     image_url VARCHAR(1024) NOT NULL COMMENT 'URL hình ảnh trên cloud storage',
     image_public_id VARCHAR(512) NULL COMMENT 'Public ID từ cloud storage (Cloudinary, S3, etc.)',

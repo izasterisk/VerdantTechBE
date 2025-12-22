@@ -61,6 +61,10 @@ public class VerdantTechDbContext : DbContext
     public DbSet<ChatbotConversation> ChatbotConversations { get; set; }
     public DbSet<ChatbotMessage> ChatbotMessages { get; set; }
     
+    // Customer-Vendor Chat DbSets
+    public DbSet<CustomerVendorConversation> CustomerVendorConversations { get; set; }
+    public DbSet<CustomerVendorMessage> CustomerVendorMessages { get; set; }
+    
     // Community DbSets
     public DbSet<ForumCategory> ForumCategories { get; set; }
     public DbSet<ForumPost> ForumPosts { get; set; }
@@ -104,6 +108,8 @@ public class VerdantTechDbContext : DbContext
         modelBuilder.ApplyConfiguration(new EnergyUsageConfiguration());
         modelBuilder.ApplyConfiguration(new ChatbotConversationConfiguration());
         modelBuilder.ApplyConfiguration(new ChatbotMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new CustomerVendorConversationConfiguration());
+        modelBuilder.ApplyConfiguration(new CustomerVendorMessageConfiguration());
         modelBuilder.ApplyConfiguration(new ForumCategoryConfiguration());
         modelBuilder.ApplyConfiguration(new ForumPostConfiguration());
         modelBuilder.ApplyConfiguration(new ForumCommentConfiguration());

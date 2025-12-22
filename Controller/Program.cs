@@ -118,6 +118,8 @@ builder.Services.AddScoped<IRepository<Crop>, Repository<Crop>>();
 builder.Services.AddScoped<IRepository<RequestMessage>, Repository<RequestMessage>>();
 builder.Services.AddScoped<IRepository<ProductUpdateRequest>, Repository<ProductUpdateRequest>>();
 builder.Services.AddScoped<IRepository<ProductSnapshot>, Repository<ProductSnapshot>>();
+builder.Services.AddScoped<IRepository<CustomerVendorConversation>, Repository<CustomerVendorConversation>>();
+builder.Services.AddScoped<IRepository<CustomerVendorMessage>, Repository<CustomerVendorMessage>>();
 
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -155,6 +157,7 @@ builder.Services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>(
 builder.Services.AddScoped<ICropRepository, CropRepository>();
 builder.Services.AddScoped<ISurveyResponseRepository, SurveyResponseRepository>();
 builder.Services.AddScoped<IProductUpdateRequestRepository, ProductUpdateRequestRepository>();
+builder.Services.AddScoped<ICustomerVendorConversationsRepository, CustomerVendorConversationsRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -191,6 +194,7 @@ builder.Services.AddScoped<IAdminDashboardService, AdminDashboardService>();
 builder.Services.AddScoped<IEnvCacheService, EnvCacheService>();
 builder.Services.AddScoped<ISurveyResponseService, SurveyResponseService>();
 builder.Services.AddScoped<IProductUpdateRequestService, ProductUpdateRequestService>();
+builder.Services.AddScoped<ICustomerVendorConversationsService, CustomerVendorConversationsService>();
 
 // Infrastructure registrations
 builder.Services.AddInfrastructure();

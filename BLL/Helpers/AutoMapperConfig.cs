@@ -340,9 +340,6 @@ namespace BLL.Helpers
             // ===================== CHATBOT =====================
             CreateMap<ChatbotConversation, ChatbotConversationsResponseDTO>().ReverseMap();
             CreateMap<ChatbotMessage, ChatbotMessagesResponseDTO>().ReverseMap();
-            CreateMap<ChatbotConversationUpdateDTO, ChatbotConversation>()
-                .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
-            CreateMap<ChatbotMessage, ChatbotMessageCreateDTO>().ReverseMap();
             
             // ===================== EXPORT INVENTORY =====================
             CreateMap<ExportInventory, ExportInventoryResponseDTO>()

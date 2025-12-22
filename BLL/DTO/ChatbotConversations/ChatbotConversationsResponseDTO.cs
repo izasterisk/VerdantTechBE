@@ -16,9 +16,3 @@ public class ChatbotConversationsResponseDTO
 
     public DateTime StartedAt { get; set; }
 }
-
-public class SendNewMessageResponseDTO
-{
-    public ChatbotConversationsResponseDTO Conversation { get; set; } = null!;
-    public ChatbotMessagesResponseDTO Message { get; set; } = null!;
-}
