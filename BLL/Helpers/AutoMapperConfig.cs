@@ -26,6 +26,7 @@ using DAL.Data.Models;
 using System.Numerics;
 using BLL.DTO.ChatbotConversations;
 using BLL.DTO.Crops;
+using BLL.DTO.CustomerVendorConversation;
 using ProductResponseDTO = BLL.DTO.Order.ProductResponseDTO;
 using BLL.DTO.ForumPost;
 using BLL.DTO.ForumComment;
@@ -340,6 +341,10 @@ namespace BLL.Helpers
             // ===================== CHATBOT =====================
             CreateMap<ChatbotConversation, ChatbotConversationsResponseDTO>().ReverseMap();
             CreateMap<ChatbotMessage, ChatbotMessagesResponseDTO>().ReverseMap();
+            
+            // ===================== CUSTOMER VENDOR CONVERSATIONS =====================
+            CreateMap<CustomerVendorConversation, CustomerVendorConversationReponseDTO>().ReverseMap();
+            CreateMap<CustomerVendorMessage, CustomerVendorMessageResponseDTO>().ReverseMap();
             
             // ===================== EXPORT INVENTORY =====================
             CreateMap<ExportInventory, ExportInventoryResponseDTO>()

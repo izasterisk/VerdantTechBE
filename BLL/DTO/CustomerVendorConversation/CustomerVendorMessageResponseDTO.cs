@@ -18,5 +18,5 @@ public class CustomerVendorMessageResponseDTO
 
     public DateTime CreatedAt { get; set; }
     
-    public List<MediaLinkItemDTO> MediaLinks { get; set; } = new();
+    public List<MediaLinkItemDTO> Images { get; set; } = new();
 }

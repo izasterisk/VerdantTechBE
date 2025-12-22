@@ -1,12 +1,16 @@
-﻿namespace BLL.DTO.CustomerVendorConversation;
+﻿using BLL.DTO.User;
+
+namespace BLL.DTO.CustomerVendorConversation;
 
 public class CustomerVendorConversationReponseDTO
 {
-    // public ulong Id { get; set; }
+    public ulong Id { get; set; }
 
     // public ulong CustomerId { get; set; }
+    public UserResponseDTO Customer { get; set; } = null!;
 
     // public ulong VendorId { get; set; }
+    public UserResponseDTO Vendor { get; set; } = null!;
 
     public DateTime StartedAt { get; set; }
 
