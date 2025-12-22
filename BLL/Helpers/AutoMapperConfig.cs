@@ -344,6 +344,7 @@ namespace BLL.Helpers
             
             // ===================== CUSTOMER VENDOR CONVERSATIONS =====================
             CreateMap<CustomerVendorConversation, CustomerVendorConversationReponseDTO>().ReverseMap();
+            CreateMap<CustomerVendorConversation, CustomerVendorListConversationsReponseDTO>().ReverseMap();
             CreateMap<CustomerVendorMessage, CustomerVendorMessageResponseDTO>().ReverseMap();
             
             // ===================== EXPORT INVENTORY =====================
