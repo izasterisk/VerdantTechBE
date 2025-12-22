@@ -60,6 +60,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
     
+    public static IServiceCollection AddSignalRChat(this IServiceCollection services)
+    {
+        services.AddScoped<IChatHub, ChatHubService>();
+        return services;
+    }
+    
     public static IServiceCollection AddCloudinary(this IServiceCollection services)
     {
         services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -75,6 +81,7 @@ public static class ServiceCollectionExtensions
         services.AddAddress();
         services.AddPayOS();
         services.AddSignalRNotification();
+        services.AddSignalRChat();
         services.AddCloudinary();
         return services;
     }

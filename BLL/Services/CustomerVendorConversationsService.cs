@@ -18,14 +18,16 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
     private readonly ICloudinaryService _cloudinaryService;
     private readonly IMapper _mapper;
     private readonly IUserRepository _userRepository;
+    private readonly IChatHub _chatHub;
     
     public CustomerVendorConversationsService(ICustomerVendorConversationsRepository customerVendorConversationsRepository,
-        ICloudinaryService cloudinaryService, IMapper mapper, IUserRepository userRepository)
+        ICloudinaryService cloudinaryService, IMapper mapper, IUserRepository userRepository, IChatHub chatHub)
     {
         _customerVendorConversationsRepository = customerVendorConversationsRepository;
         _cloudinaryService = cloudinaryService;
         _mapper = mapper;
         _userRepository = userRepository;
+        _chatHub = chatHub;
     }
     
     public async Task<CustomerVendorConversationReponseDTO> CreateConversationAsync(ulong customerId, 
@@ -145,6 +147,13 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
             (await _customerVendorConversationsRepository.GetNewestMessageByConversationIdAsync(conversationId, cancellationToken));
         response.Images = _mapper.Map<List<MediaLinkItemDTO>>
             (await _customerVendorConversationsRepository.GetAllMessageImagesByIdAsync(response.Id, cancellationToken));
+        
+        // Gửi tin nhắn realtime qua SignalR
+        await _chatHub.SendMessageToConversation(
+            conversation.CustomerId, 
+            conversation.VendorId, 
+            response);
+        
         return response;
     }
     
