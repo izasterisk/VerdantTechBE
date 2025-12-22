@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BLL.DTO;
 using BLL.DTO.CustomerVendorConversation;
 using BLL.DTO.MediaLink;
 using BLL.DTO.User;
@@ -145,5 +146,62 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
         response.Images = _mapper.Map<List<MediaLinkItemDTO>>
             (await _customerVendorConversationsRepository.GetAllMessageImagesByIdAsync(response.Id, cancellationToken));
         return response;
+    }
+    
+    public async Task<PagedResponse<CustomerVendorMessageResponseDTO>> GetAllMessagesByConversationIdAsync(ulong conversationId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var (messages, totalCount) = await _customerVendorConversationsRepository
+            .GetAllMessagesByConversationIdAsync(conversationId, page, pageSize, cancellationToken);
+        
+        var messageIds = messages.Select(m => m.Id).ToList();
+        
+        var mediaLinks = await _customerVendorConversationsRepository
+            .GetMediaLinksByOwnerIdsAsync(messageIds, cancellationToken);
+        
+        var mediaLinksDictionary = mediaLinks
+            .GroupBy(ml => ml.OwnerId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        
+        var messageDtos = _mapper.Map<List<CustomerVendorMessageResponseDTO>>(messages);
+        
+        foreach (var messageDto in messageDtos)
+        {
+            if (mediaLinksDictionary.TryGetValue(messageDto.Id, out var links))
+            {
+                messageDto.Images = _mapper.Map<List<MediaLinkItemDTO>>(links);
+            }
+        }
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<CustomerVendorMessageResponseDTO>
+        {
+            Data = messageDtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
+    }
+    
+    public async Task<PagedResponse<CustomerVendorListConversationsReponseDTO>> GetAllConversationsByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var (conversations, totalCount) = await _customerVendorConversationsRepository
+            .GetAllConversationsByUserIdAsync(userId, page, pageSize, cancellationToken);
+        
+        var conversationDtos = _mapper.Map<List<CustomerVendorListConversationsReponseDTO>>(conversations);
+        
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResponse<CustomerVendorListConversationsReponseDTO>
+        {
+            Data = conversationDtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
     }
 }

@@ -124,4 +124,49 @@ public class CustomerVendorConversationsRepository : ICustomerVendorConversation
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new KeyNotFoundException("Không tìm thấy tin nhắn nào trong cuộc trò chuyện này.");
     }
+    
+    public async Task<(List<CustomerVendorMessage>, int totalCount)> GetAllMessagesByConversationIdAsync
+        (ulong conversationId, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.CustomerVendorMessages.AsNoTracking()
+            .Where(m => m.ConversationId == conversationId);
+        
+        var totalCount = await query.CountAsync(cancellationToken);
+        var messages = await query
+            .OrderByDescending(m => m.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+        return (messages, totalCount);
+    }
+    
+    public async Task<List<MediaLink>> GetMediaLinksByOwnerIdsAsync(List<ulong> ownerIds,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.MediaLinks
+            .AsNoTracking()
+            .Where(ml => ml.OwnerType == MediaOwnerType.CustomerVendorMessages && ownerIds.Contains(ml.OwnerId))
+            .OrderBy(ml => ml.OwnerId)
+            .ThenBy(ml => ml.SortOrder)
+            .ToListAsync(cancellationToken);
+    }
+    
+    public async Task<(List<CustomerVendorConversation>, int totalCount)> GetAllConversationsByUserIdAsync(ulong userId, int page, int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.CustomerVendorConversations
+            .AsNoTracking()
+            .Where(c => c.CustomerId == userId || c.VendorId == userId)
+            .Include(c => c.Vendor);
+        
+        var totalCount = await query.CountAsync(cancellationToken);
+        
+        var conversations = await query
+            .OrderByDescending(c => c.LastMessageAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+        
+        return (conversations, totalCount);
+    }
 }
