@@ -198,7 +198,8 @@ public enum TransactionType
     WalletCashout,
     WalletTopup,
     Refund,
-    Adjustment
+    Adjustment,
+    VendorSubscription
 }
 
 public enum TransactionStatus

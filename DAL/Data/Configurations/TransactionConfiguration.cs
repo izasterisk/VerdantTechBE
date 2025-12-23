@@ -24,13 +24,15 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
                     .ToLowerInvariant()
                     .Replace("paymentin", "payment_in")
                     .Replace("walletcashout", "wallet_cashout")
-                    .Replace("wallettopup", "wallet_topup"),
+                    .Replace("wallettopup", "wallet_topup")
+                    .Replace("vendorsubscription", "vendor_subscription"),
                 v => Enum.Parse<TransactionType>(v
                     .Replace("payment_in", "PaymentIn")
                     .Replace("wallet_cashout", "WalletCashout")
-                    .Replace("wallet_topup", "WalletTopup"), true))
+                    .Replace("wallet_topup", "WalletTopup")
+                    .Replace("vendor_subscription", "VendorSubscription"), true))
             .HasColumnName("transaction_type")
-            .HasColumnType("enum('payment_in','wallet_cashout','wallet_topup','refund','adjustment')")
+            .HasColumnType("enum('payment_in','wallet_cashout','wallet_topup','refund','adjustment','vendor_subscription')")
             .IsRequired();
 
         builder.Property(e => e.Amount)

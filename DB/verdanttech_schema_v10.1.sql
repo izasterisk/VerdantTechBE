@@ -791,7 +791,7 @@ CREATE TABLE payments (
 -- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
 CREATE TABLE transactions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    transaction_type ENUM('payment_in', 'wallet_cashout', 'wallet_topup', 'refund', 'adjustment') NOT NULL,
+    transaction_type ENUM('payment_in', 'wallet_cashout', 'wallet_topup', 'refund', 'adjustment', 'vendor_subscription') NOT NULL,
     amount DECIMAL(12,2) NOT NULL COMMENT 'Số tiền giao dịch - NGUỒN SỰ THẬT DUY NHẤT',
     currency VARCHAR(3) DEFAULT 'VND',
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người dùng liên quan đến giao dịch này (khách hàng hoặc nhà cung cấp)',
