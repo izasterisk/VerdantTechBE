@@ -9,6 +9,7 @@ using BLL.Interfaces.Infrastructure;
 using DAL.Data;
 using DAL.Data.Models;
 using DAL.IRepository;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BLL.Services;
 
@@ -19,97 +20,41 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
     private readonly IMapper _mapper;
     private readonly IUserRepository _userRepository;
     private readonly IChatHub _chatHub;
+    private readonly IMemoryCache _cache;
     
     public CustomerVendorConversationsService(ICustomerVendorConversationsRepository customerVendorConversationsRepository,
-        ICloudinaryService cloudinaryService, IMapper mapper, IUserRepository userRepository, IChatHub chatHub)
+        ICloudinaryService cloudinaryService, IMapper mapper, IUserRepository userRepository, IChatHub chatHub,
+        IMemoryCache cache)
     {
         _customerVendorConversationsRepository = customerVendorConversationsRepository;
         _cloudinaryService = cloudinaryService;
         _mapper = mapper;
         _userRepository = userRepository;
         _chatHub = chatHub;
-    }
-    
-    public async Task<CustomerVendorConversationReponseDTO> CreateConversationAsync(ulong customerId, 
-        CustomerVendorConversationCreateDTO dto, CancellationToken cancellationToken = default)
-    {
-        var user = await _userRepository.GetVerifiedAndActiveUserByIdAsync(customerId, cancellationToken);
-        if(user.Role != UserRole.Customer)
-            throw new InvalidOperationException("Chỉ người dùng với vai trò Customer mới có thể khởi tạo cuộc trò chuyện với nhà cung cấp.");
-        var vendor = await _userRepository.GetVerifiedAndActiveUserByIdAsync(dto.VendorId, cancellationToken);
-        if(vendor.Role != UserRole.Vendor)
-            throw new InvalidOperationException("Chỉ Vendor mới có thể nhận tin nhắn.");
-        
-        var conversation = new CustomerVendorConversation
-        {
-            CustomerId = customerId,
-            VendorId = dto.VendorId
-        };
-        var message = new CustomerVendorMessage
-        {
-            SenderType = CustomerVendorSenderType.Customer,
-            MessageText = dto.InitialMessage.MessageText
-        };
-
-        var mediaLinks = new List<MediaLink>();
-        if (dto.InitialMessage.Images?.Count > 0)
-        {
-            if (dto.InitialMessage.Images.Count > 3)
-                throw new InvalidOperationException("Chỉ được upload tối đa 3 ảnh cho mỗi tin nhắn.");
-            
-            var uploadedImages = await Utils.UploadImagesAsync(
-                _cloudinaryService,
-                dto.InitialMessage.Images,
-                "customer-vendor-chat/messages",
-                "none",
-                1,
-                cancellationToken
-            );
-            foreach (var img in uploadedImages)
-            {
-                mediaLinks.Add(new MediaLink
-                {
-                    OwnerType = MediaOwnerType.CustomerVendorMessages,
-                    ImageUrl = img.ImageUrl,
-                    ImagePublicId = img.ImagePublicId,
-                    Purpose = MediaPurpose.None,
-                    SortOrder = img.SortOrder
-                });
-            }
-        }
-        
-        await _customerVendorConversationsRepository.CreateConversationAsync(
-            conversation, 
-            message, 
-            mediaLinks, 
-            cancellationToken
-        );
-        var createdConversation = await _customerVendorConversationsRepository
-            .GetConversationWithRelationByIdAsync(conversation.Id, cancellationToken);
-
-        var response = _mapper.Map<CustomerVendorConversationReponseDTO>(createdConversation);
-        response.Customer = _mapper.Map<UserResponseDTO>(user);
-        response.Vendor = _mapper.Map<UserResponseDTO>(vendor);
-        foreach (var customerVendorMessage in response.CustomerVendorMessages)
-        {
-            customerVendorMessage.Images = _mapper.Map<List<MediaLinkItemDTO>>
-                (await _customerVendorConversationsRepository.GetAllMessageImagesByIdAsync(customerVendorMessage.Id, cancellationToken));
-        }
-        return response;
+        _cache = cache;
     }
     
     public async Task<CustomerVendorMessageResponseDTO> SendNewMessageAsync(ulong userId, UserRole role, 
-        ulong conversationId, CustomerVendorMessageCreateDTO dto, CancellationToken cancellationToken = default)
+        CustomerVendorMessageCreateDTO dto, CancellationToken cancellationToken = default)
     {
-        var conversation = await _customerVendorConversationsRepository.GetConversationByIdAsync(conversationId, cancellationToken);
-        if (conversation.CustomerId != userId && conversation.VendorId != userId)
-            throw new UnauthorizedAccessException("Người dùng không có quyền gửi tin nhắn trong cuộc trò chuyện này.");
-        if(role != UserRole.Customer && role != UserRole.Vendor)
-            throw new InvalidOperationException("Chỉ người dùng với vai trò Customer hoặc Vendor mới có thể gửi tin nhắn trong cuộc trò chuyện này.");
+        if (userId != dto.CustomerId && userId != dto.VendorId)
+            throw new InvalidOperationException("Người dùng không thể mạo danh người khác trong cuộc trò chuyện này.");
+        if ((userId == dto.CustomerId && role != UserRole.Customer) || (userId == dto.VendorId && role != UserRole.Vendor))
+            throw new InvalidOperationException("Vai trò không khớp với danh tính người dùng.");
+        if (dto.ProductId != null)
+            await _customerVendorConversationsRepository.ValidateProductBelongsToVendor(dto.ProductId.Value, dto.VendorId, cancellationToken);
+        
+        var cacheKey = $"conversation:{dto.CustomerId}:{dto.VendorId}";
+        if (!_cache.TryGetValue<CustomerVendorConversation>(cacheKey, out var conversation))
+        {
+            conversation = await _customerVendorConversationsRepository.GetOrCreateConversationByUserIdAsync
+                (dto.CustomerId, dto.VendorId, role, cancellationToken);
+        }
         
         var message = new CustomerVendorMessage
         {
-            ConversationId = conversationId,
+            ConversationId = conversation!.Id,
+            ProductId = dto.ProductId,
             SenderType = role == UserRole.Customer ? CustomerVendorSenderType.Customer : CustomerVendorSenderType.Vendor,
             MessageText = dto.MessageText,
             IsRead = false,
@@ -133,6 +78,7 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
             {
                 mediaLinks.Add(new MediaLink
                 {
+                    // OwnerId 
                     OwnerType = MediaOwnerType.CustomerVendorMessages,
                     ImageUrl = img.ImageUrl,
                     ImagePublicId = img.ImagePublicId,
@@ -142,18 +88,17 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
             }
         }
         
+        conversation.LastMessageAt = DateTime.UtcNow;
         await _customerVendorConversationsRepository.SendNewMessageAsync(conversation, message, mediaLinks, cancellationToken);
+        _cache.Set(cacheKey, conversation, TimeSpan.FromMinutes(30));
+        
         var response = _mapper.Map<CustomerVendorMessageResponseDTO>
-            (await _customerVendorConversationsRepository.GetNewestMessageByConversationIdAsync(conversationId, cancellationToken));
+            (await _customerVendorConversationsRepository.GetNewestMessageByConversationIdAsync(conversation.Id, cancellationToken));
         response.Images = _mapper.Map<List<MediaLinkItemDTO>>
             (await _customerVendorConversationsRepository.GetAllMessageImagesByIdAsync(response.Id, cancellationToken));
         
         // Gửi tin nhắn realtime qua SignalR
-        await _chatHub.SendMessageToConversation(
-            conversation.CustomerId, 
-            conversation.VendorId, 
-            response);
-        
+        await _chatHub.SendMessageToConversation(dto.CustomerId, dto.VendorId, response);
         return response;
     }
     
@@ -194,15 +139,15 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
         };
     }
     
-    public async Task<PagedResponse<CustomerVendorListConversationsReponseDTO>> GetAllConversationsByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<PagedResponse<CustomerVendorConversationReponseDTO>> GetAllConversationsByUserIdAsync(ulong userId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var (conversations, totalCount) = await _customerVendorConversationsRepository
             .GetAllConversationsByUserIdAsync(userId, page, pageSize, cancellationToken);
         
-        var conversationDtos = _mapper.Map<List<CustomerVendorListConversationsReponseDTO>>(conversations);
+        var conversationDtos = _mapper.Map<List<CustomerVendorConversationReponseDTO>>(conversations);
         
         var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-        return new PagedResponse<CustomerVendorListConversationsReponseDTO>
+        return new PagedResponse<CustomerVendorConversationReponseDTO>
         {
             Data = conversationDtos,
             CurrentPage = page,

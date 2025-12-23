@@ -54,6 +54,10 @@ public class VendorProfileConfiguration : IEntityTypeConfiguration<VendorProfile
             .UseCollation("utf8mb4_unicode_ci")
             .HasColumnName("notes");
         
+        builder.Property(e => e.SubscriptionActive)
+            .HasDefaultValue(false)
+            .HasColumnName("subscription_active");
+        
         // DateTime fields
         builder.Property(e => e.VerifiedAt)
             .HasColumnType("timestamp")

@@ -19,44 +19,15 @@ public class CustomerVendorConversationController : BaseController
     }
 
     /// <summary>
-    /// Tạo cuộc hội thoại mới giữa customer và vendor
+    /// Gửi tin nhắn mới trong cuộc hội thoại giữa khách hàng và người bán
     /// </summary>
-    /// <param name="dto">Thông tin cuộc hội thoại và tin nhắn đầu tiên</param>
-    /// <returns>Thông tin cuộc hội thoại đã tạo</returns>
-    [HttpPost]
-    [Authorize(Roles = "Customer")]
-    [Consumes("multipart/form-data")]
-    [EndpointSummary("Create Customer-Vendor Conversation")]
-    [EndpointDescription("Tạo cuộc hội thoại mới với tin nhắn đầu tiên. Có thể đính kèm tối đa 3 ảnh.")]
-    public async Task<ActionResult<APIResponse>> CreateConversation([FromForm] CustomerVendorConversationCreateDTO dto)
-    {
-        var validationResult = ValidateModel();
-        if (validationResult != null) return validationResult;
-
-        try
-        {
-            var userId = GetCurrentUserId();
-            var result = await _service.CreateConversationAsync(userId, dto, GetCancellationToken());
-            return SuccessResponse(result, HttpStatusCode.Created);
-        }
-        catch (Exception ex)
-        {
-            return HandleException(ex);
-        }
-    }
-
-    /// <summary>
-    /// Gửi tin nhắn mới trong cuộc hội thoại
-    /// </summary>
-    /// <param name="conversationId">ID cuộc hội thoại</param>
-    /// <param name="dto">Nội dung tin nhắn và ảnh đính kèm</param>
+    /// <param name="dto">Thông tin tin nhắn cần gửi</param>
     /// <returns>Thông tin tin nhắn đã gửi</returns>
-    [HttpPost("{conversationId}/messages")]
-    [Authorize]
-    [Consumes("multipart/form-data")]
-    [EndpointSummary("Send Message in Conversation")]
-    [EndpointDescription("Gửi tin nhắn mới trong cuộc hội thoại. Có thể đính kèm tối đa 3 ảnh.")]
-    public async Task<ActionResult<APIResponse>> SendMessage(ulong conversationId, [FromForm] CustomerVendorMessageCreateDTO dto)
+    [HttpPost("send-message")]
+    [Authorize(Roles = "Customer,Vendor")]
+    [EndpointSummary("Send New Message")]
+    [EndpointDescription("Gửi tin nhắn mới giữa khách hàng và người bán. Chỉ Customer và Vendor mới có quyền gửi tin nhắn.")]
+    public async Task<ActionResult<APIResponse>> SendNewMessage([FromForm] CustomerVendorMessageCreateDTO dto)
     {
         var validationResult = ValidateModel();
         if (validationResult != null) return validationResult;
@@ -65,7 +36,7 @@ public class CustomerVendorConversationController : BaseController
         {
             var userId = GetCurrentUserId();
             var role = GetCurrentUserRole();
-            var result = await _service.SendNewMessageAsync(userId, role, conversationId, dto, GetCancellationToken());
+            var result = await _service.SendNewMessageAsync(userId, role, dto, GetCancellationToken());
             return SuccessResponse(result, HttpStatusCode.Created);
         }
         catch (Exception ex)
@@ -82,7 +53,7 @@ public class CustomerVendorConversationController : BaseController
     /// <param name="pageSize">Số lượng tin nhắn mỗi trang (mặc định: 20)</param>
     /// <returns>Danh sách tin nhắn với phân trang, tin nhắn mới nhất ở đầu</returns>
     [HttpGet("{conversationId}/messages")]
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer,Vendor")]
     [EndpointSummary("Get All Messages by Conversation ID")]
     [EndpointDescription("Lấy tất cả tin nhắn trong cuộc hội thoại với phân trang. Tin nhắn mới nhất được sắp xếp trên cùng.")]
     public async Task<ActionResult<APIResponse>> GetAllMessagesByConversationId(

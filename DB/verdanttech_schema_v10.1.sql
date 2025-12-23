@@ -86,6 +86,7 @@ CREATE TABLE vendor_profiles (
     slug VARCHAR(255) UNIQUE NOT NULL,
     business_registration_number VARCHAR(100) UNIQUE,
     notes VARCHAR(255) NULL,
+    subscription_active BOOLEAN DEFAULT FALSE COMMENT 'Trạng thái gói đăng ký/subscription của vendor',
     verified_at TIMESTAMP NULL,
     verified_by BIGINT UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -283,6 +284,7 @@ CREATE TABLE customer_vendor_conversations (
 
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE RESTRICT,
     FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE RESTRICT,
+    UNIQUE INDEX idx_customer_vendor (customer_id, vendor_id) COMMENT 'Đảm bảo một cặp customer-vendor chỉ có 1 conversation',
     INDEX idx_customer_last (customer_id, last_message_at) COMMENT 'Optimized cho pagination theo customer sort by last_message_at',
     INDEX idx_vendor_last (vendor_id, last_message_at) COMMENT 'Optimized cho pagination theo vendor sort by last_message_at'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các cuộc hội thoại giữa customer và vendor';
@@ -291,12 +293,14 @@ CREATE TABLE customer_vendor_conversations (
 CREATE TABLE customer_vendor_messages (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     conversation_id BIGINT UNSIGNED NOT NULL,
+    product_id BIGINT UNSIGNED NULL COMMENT 'Sản phẩm được đề cập trong tin nhắn (nếu có)',
     sender_type ENUM('customer', 'vendor') NOT NULL COMMENT 'Người gửi: customer hoặc vendor',
     message_text TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE COMMENT 'Tin nhắn đã được đọc chưa - để tracking unread messages',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (conversation_id) REFERENCES customer_vendor_conversations(id) ON DELETE RESTRICT,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT,
     INDEX idx_conversation_created (conversation_id, created_at) COMMENT 'Optimized cho ORDER BY created_at khi load tin nhắn',
     INDEX idx_conversation_unread (conversation_id, is_read) COMMENT 'Optimized cho queries đếm unread messages'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Các tin nhắn trong cuộc hội thoại giữa customer và vendor';
@@ -787,7 +791,7 @@ CREATE TABLE payments (
 -- Bảng giao dịch (sổ cái trung tâm - nguồn sự thật duy nhất cho tất cả các chuyển động tài chính)
 CREATE TABLE transactions (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    transaction_type ENUM('payment_in', 'wallet_cashout', 'wallet_topup', 'refund', 'adjustment') NOT NULL,
+    transaction_type ENUM('payment_in', 'wallet_cashout', 'wallet_topup', 'refund', 'adjustment', 'vendor_subscription') NOT NULL,
     amount DECIMAL(12,2) NOT NULL COMMENT 'Số tiền giao dịch - NGUỒN SỰ THẬT DUY NHẤT',
     currency VARCHAR(3) DEFAULT 'VND',
     user_id BIGINT UNSIGNED NOT NULL COMMENT 'Người dùng liên quan đến giao dịch này (khách hàng hoặc nhà cung cấp)',

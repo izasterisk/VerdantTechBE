@@ -55,6 +55,10 @@ public class CustomerVendorConversationConfiguration : IEntityTypeConfiguration<
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
+        builder.HasIndex(e => new { e.CustomerId, e.VendorId })
+            .HasDatabaseName("idx_customer_vendor")
+            .IsUnique();
+
         builder.HasIndex(e => new { e.CustomerId, e.LastMessageAt })
             .HasDatabaseName("idx_customer_last");
 

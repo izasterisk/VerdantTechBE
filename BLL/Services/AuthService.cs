@@ -2,6 +2,7 @@ using BLL.DTO.Auth;
 using BLL.Helpers.Auth;
 using BLL.Interfaces;
 using BLL.Interfaces.Infrastructure;
+using DAL.Data;
 using DAL.IRepository;
 using Microsoft.Extensions.Configuration;
 using DAL.Data.Models;
@@ -37,6 +38,11 @@ public class AuthService : IAuthService
         var user = await _authRepository.GetUserWithFarmByEmailAsync(loginDto.Email, cancellationToken);
         if(user == null)
             throw new InvalidOperationException(AuthConstants.USER_NOT_FOUND);
+        if (user.Role == UserRole.Vendor)
+        {
+            var v = await _authRepository.GetVendorProfileByUserIdAsync(user.Id, cancellationToken);
+            await AuthUtils.ValidateVendorSubscriptionAsync(_authRepository, v, cancellationToken);
+        }
         
         AuthValidationHelper.ValidateUserStatus(user);
         AuthValidationHelper.ValidateLoginCredentials(user, loginDto.Password);

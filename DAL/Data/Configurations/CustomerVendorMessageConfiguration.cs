@@ -26,6 +26,10 @@ public class CustomerVendorMessageConfiguration : IEntityTypeConfiguration<Custo
             .HasColumnType("bigint unsigned")
             .IsRequired();
 
+        builder.Property(e => e.ProductId)
+            .HasColumnName("product_id")
+            .HasColumnType("bigint unsigned");
+
         builder.Property(e => e.SenderType)
             .HasColumnName("sender_type")
             .HasConversion<string>()
@@ -54,6 +58,12 @@ public class CustomerVendorMessageConfiguration : IEntityTypeConfiguration<Custo
             .WithMany(c => c.CustomerVendorMessages)
             .HasForeignKey(e => e.ConversationId)
             .HasConstraintName("fk_customer_vendor_messages_conversation_id")
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.Product)
+            .WithMany()
+            .HasForeignKey(e => e.ProductId)
+            .HasConstraintName("fk_customer_vendor_messages_product_id")
             .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes

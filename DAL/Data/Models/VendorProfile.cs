@@ -26,6 +26,8 @@ public partial class VendorProfile
     [StringLength(255)]
     public string? Notes { get; set; }
 
+    public bool SubscriptionActive { get; set; } = false;
+
     public DateTime? VerifiedAt { get; set; }
 
     public ulong? VerifiedBy { get; set; }
