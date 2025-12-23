@@ -22,43 +22,8 @@ public class CustomerVendorConversationsRepository : ICustomerVendorConversation
         _mediaLinkRepository = mediaLinkRepository;
         _dbContext = dbContext;
     }
-
-    public async Task CreateConversationAsync(CustomerVendorConversation conversation,
-        CustomerVendorMessage message, List<MediaLink> images, CancellationToken cancellationToken = default)
-    {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            conversation.StartedAt = DateTime.UtcNow;
-            conversation.LastMessageAt = DateTime.UtcNow;
-            var createdConversation = await _customerVendorConversationsRepository.CreateAsync(conversation, cancellationToken);
-            
-            message.ConversationId = createdConversation.Id;
-            message.IsRead = false;
-            message.CreatedAt = DateTime.UtcNow;
-            var createdMessage = await _customerVendorMessageRepository.CreateAsync(message, cancellationToken);
-            
-            if(images.Count > 0)
-            {
-                foreach (var image in images)
-                {
-                    image.OwnerId = createdMessage.Id;
-                    image.CreatedAt = DateTime.UtcNow;
-                    image.UpdatedAt = DateTime.UtcNow;
-                }
-                await _mediaLinkRepository.CreateBulkAsync(images, cancellationToken);
-            }
-            
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
-    }
     
-    public async Task SendNewMessageAsync(CustomerVendorConversation conversation,
+    public async Task SendNewMessageAsync(ulong senderId, 
         CustomerVendorMessage message, List<MediaLink> images, CancellationToken cancellationToken = default)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -98,12 +63,23 @@ public class CustomerVendorConversationsRepository : ICustomerVendorConversation
             ?? throw new KeyNotFoundException("Hội thoại không tồn tại hoặc đã bị xóa.");
     }
     
-    public async Task<CustomerVendorConversation> GetConversationByIdAsync(ulong conversationId, CancellationToken cancellationToken = default)
+    public async Task<(CustomerVendorConversation, bool)> GetOrCreateConversationByUserIdAsync(ulong customerId, ulong vendorId, CancellationToken cancellationToken = default)
     {
-        return await _customerVendorConversationsRepository.GetAsync
-               (c => c.Id == conversationId, true, 
-                   cancellationToken)
-               ?? throw new KeyNotFoundException("Hội thoại không tồn tại hoặc đã bị xóa.");
+        bool isNewlyCreated = false;
+        var con = await _customerVendorConversationsRepository.GetAsync
+               (c => c.CustomerId == customerId && c.VendorId == vendorId, true, cancellationToken);
+        if (con == null)
+        {
+            isNewlyCreated = true;
+            var create = new CustomerVendorConversation
+            {
+                CustomerId = customerId,
+                VendorId = vendorId,
+                StartedAt = DateTime.UtcNow
+            };
+            con = await _customerVendorConversationsRepository.CreateAsync(create, cancellationToken);
+        }
+        return (con, isNewlyCreated);
     }
     
     public async Task<List<MediaLink>> GetAllMessageImagesByIdAsync(ulong id, CancellationToken cancellationToken)

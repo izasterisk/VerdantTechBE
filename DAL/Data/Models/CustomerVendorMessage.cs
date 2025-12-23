@@ -11,6 +11,8 @@ public partial class CustomerVendorMessage
 
     public ulong ConversationId { get; set; }
 
+    public ulong? ProductId { get; set; }
+
     public CustomerVendorSenderType SenderType { get; set; }
 
     [Required]
@@ -22,4 +24,5 @@ public partial class CustomerVendorMessage
 
     // Navigation Properties
     public virtual CustomerVendorConversation Conversation { get; set; } = null!;
+    public virtual Product? Product { get; set; }
 }
