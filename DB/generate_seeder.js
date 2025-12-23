@@ -333,7 +333,7 @@ function generateVendorData() {
     
     // Vendor Profiles
     sql += `-- Insert Vendor Profiles (20 vendors)\n`;
-    sql += `INSERT INTO vendor_profiles (id, user_id, company_name, slug, business_registration_number, notes, verified_at, verified_by, created_at, updated_at) VALUES\n`;
+    sql += `INSERT INTO vendor_profiles (id, user_id, company_name, slug, business_registration_number, notes, subscription_active, verified_at, verified_by, created_at, updated_at) VALUES\n`;
     
     const vendors = [
         'Công Ty Phân Bón Xanh Việt',
@@ -364,7 +364,7 @@ function generateVendorData() {
         const userId = 16 + id;
         const slug = slugify(name);
         const brn = `BRN${(1000000000 + id).toString()}`;
-        vendorRows.push(`(${id}, ${userId}, '${name}', '${slug}', '${brn}', NULL, NOW(), 1, NOW(), NOW())`);
+        vendorRows.push(`(${id}, ${userId}, '${name}', '${slug}', '${brn}', NULL, 1, NOW(), 1, NOW(), NOW())`);
     });
     sql += vendorRows.join(',\n') + ';\n\n';
     

@@ -19,6 +19,33 @@ public class CustomerVendorConversationController : BaseController
     }
 
     /// <summary>
+    /// Gửi tin nhắn mới trong cuộc hội thoại giữa khách hàng và người bán
+    /// </summary>
+    /// <param name="dto">Thông tin tin nhắn cần gửi</param>
+    /// <returns>Thông tin tin nhắn đã gửi</returns>
+    [HttpPost("send-message")]
+    [Authorize(Roles = "Customer,Vendor")]
+    [EndpointSummary("Send New Message")]
+    [EndpointDescription("Gửi tin nhắn mới giữa khách hàng và người bán. Chỉ Customer và Vendor mới có quyền gửi tin nhắn.")]
+    public async Task<ActionResult<APIResponse>> SendNewMessage([FromForm] CustomerVendorMessageCreateDTO dto)
+    {
+        var validationResult = ValidateModel();
+        if (validationResult != null) return validationResult;
+
+        try
+        {
+            var userId = GetCurrentUserId();
+            var role = GetCurrentUserRole();
+            var result = await _service.SendNewMessageAsync(userId, role, dto, GetCancellationToken());
+            return SuccessResponse(result, HttpStatusCode.Created);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Lấy tất cả tin nhắn trong cuộc hội thoại với phân trang
     /// </summary>
     /// <param name="conversationId">ID cuộc hội thoại</param>
@@ -26,7 +53,7 @@ public class CustomerVendorConversationController : BaseController
     /// <param name="pageSize">Số lượng tin nhắn mỗi trang (mặc định: 20)</param>
     /// <returns>Danh sách tin nhắn với phân trang, tin nhắn mới nhất ở đầu</returns>
     [HttpGet("{conversationId}/messages")]
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer,Vendor")]
     [EndpointSummary("Get All Messages by Conversation ID")]
     [EndpointDescription("Lấy tất cả tin nhắn trong cuộc hội thoại với phân trang. Tin nhắn mới nhất được sắp xếp trên cùng.")]
     public async Task<ActionResult<APIResponse>> GetAllMessagesByConversationId(

@@ -37,22 +37,22 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
     public async Task<CustomerVendorMessageResponseDTO> SendNewMessageAsync(ulong userId, UserRole role, 
         CustomerVendorMessageCreateDTO dto, CancellationToken cancellationToken = default)
     {
+        if (userId != dto.CustomerId && userId != dto.VendorId)
+            throw new InvalidOperationException("Người dùng không thể mạo danh người khác trong cuộc trò chuyện này.");
+        if ((userId == dto.CustomerId && role != UserRole.Customer) || (userId == dto.VendorId && role != UserRole.Vendor))
+            throw new InvalidOperationException("Vai trò không khớp với danh tính người dùng.");
+        
         var cacheKey = $"conversation:{dto.CustomerId}:{dto.VendorId}";
-        bool isNewlyCreated = false;
-        var conversation = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+        if (!_cache.TryGetValue<CustomerVendorConversation>(cacheKey, out var conversation))
         {
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30);
-            var (conv, wasCreated) = await _customerVendorConversationsRepository.GetOrCreateConversationByUserIdAsync
-                (dto.CustomerId, dto.VendorId, cancellationToken);
-            isNewlyCreated = wasCreated;
-            return conv;
-        });        
-        if (isNewlyCreated && role != UserRole.Customer)
-            throw new InvalidOperationException("Chỉ khách hàng mới có thể bắt đầu cuộc trò chuyện với nhà cung cấp.");
+            conversation = await _customerVendorConversationsRepository.GetOrCreateConversationByUserIdAsync
+                (dto.CustomerId, dto.VendorId, role, cancellationToken);
+        }
         
         var message = new CustomerVendorMessage
         {
             ConversationId = conversation!.Id,
+            ProductId = dto.ProductId,
             SenderType = role == UserRole.Customer ? CustomerVendorSenderType.Customer : CustomerVendorSenderType.Vendor,
             MessageText = dto.MessageText,
             IsRead = false,
@@ -86,9 +86,12 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
             }
         }
         
+        conversation.LastMessageAt = DateTime.UtcNow;
         await _customerVendorConversationsRepository.SendNewMessageAsync(conversation, message, mediaLinks, cancellationToken);
+        _cache.Set(cacheKey, conversation, TimeSpan.FromMinutes(30));
+        
         var response = _mapper.Map<CustomerVendorMessageResponseDTO>
-            (await _customerVendorConversationsRepository.GetNewestMessageByConversationIdAsync(conversationId, cancellationToken));
+            (await _customerVendorConversationsRepository.GetNewestMessageByConversationIdAsync(conversation.Id, cancellationToken));
         response.Images = _mapper.Map<List<MediaLinkItemDTO>>
             (await _customerVendorConversationsRepository.GetAllMessageImagesByIdAsync(response.Id, cancellationToken));
         

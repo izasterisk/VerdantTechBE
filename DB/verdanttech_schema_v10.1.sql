@@ -86,6 +86,7 @@ CREATE TABLE vendor_profiles (
     slug VARCHAR(255) UNIQUE NOT NULL,
     business_registration_number VARCHAR(100) UNIQUE,
     notes VARCHAR(255) NULL,
+    subscription_active BOOLEAN DEFAULT FALSE COMMENT 'Trạng thái gói đăng ký/subscription của vendor',
     verified_at TIMESTAMP NULL,
     verified_by BIGINT UNSIGNED NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

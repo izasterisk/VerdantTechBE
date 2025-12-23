@@ -531,7 +531,7 @@ public class AdminDashboardService : IAdminDashboardService
                 TransactionType = tx.TransactionType.ToString(),
                 Amount = tx.Amount,
                 Status = tx.Status.ToString(),
-                CreatedAt = tx.CreatedAt,
+                CreatedAt = tx.CreatedAt.AddHours(7),
                 Description = tx.Note
             });
         }
