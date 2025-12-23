@@ -17,4 +17,5 @@ public interface ICustomerVendorConversationsRepository
         CancellationToken cancellationToken = default);
     Task<(List<CustomerVendorConversation>, int totalCount)> GetAllConversationsByUserIdAsync(ulong userId, int page, int pageSize,
         CancellationToken cancellationToken = default);
+    Task ValidateProductBelongsToVendor(ulong productId, ulong vendorId, CancellationToken cancellationToken = default);
 }

@@ -41,6 +41,8 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
             throw new InvalidOperationException("Người dùng không thể mạo danh người khác trong cuộc trò chuyện này.");
         if ((userId == dto.CustomerId && role != UserRole.Customer) || (userId == dto.VendorId && role != UserRole.Vendor))
             throw new InvalidOperationException("Vai trò không khớp với danh tính người dùng.");
+        if (dto.ProductId != null)
+            await _customerVendorConversationsRepository.ValidateProductBelongsToVendor(dto.ProductId.Value, dto.VendorId, cancellationToken);
         
         var cacheKey = $"conversation:{dto.CustomerId}:{dto.VendorId}";
         if (!_cache.TryGetValue<CustomerVendorConversation>(cacheKey, out var conversation))

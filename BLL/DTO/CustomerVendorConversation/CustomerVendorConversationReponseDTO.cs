@@ -6,6 +6,8 @@ public class CustomerVendorConversationReponseDTO
 {
     public ulong Id { get; set; }
     
+    public UserResponseDTO Customer { get; set; } = null!;
+    
     public UserResponseDTO Vendor { get; set; } = null!;
 
     public DateTime StartedAt { get; set; }

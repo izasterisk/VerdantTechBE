@@ -11,16 +11,20 @@ public class CustomerVendorConversationsRepository : ICustomerVendorConversation
     private readonly IRepository<CustomerVendorMessage> _customerVendorMessageRepository;
     private readonly IRepository<MediaLink> _mediaLinkRepository;
     private readonly VerdantTechDbContext _dbContext;
+    private readonly IRepository<Product> _productRepository;
     
     public CustomerVendorConversationsRepository(
         IRepository<CustomerVendorConversation> customerVendorConversationsRepository,
         IRepository<CustomerVendorMessage> customerVendorMessageRepository,
-        IRepository<MediaLink> mediaLinkRepository, VerdantTechDbContext dbContext)
+        IRepository<MediaLink> mediaLinkRepository,
+        VerdantTechDbContext dbContext,
+        IRepository<Product> productRepository)
     {
         _customerVendorConversationsRepository = customerVendorConversationsRepository;
         _customerVendorMessageRepository = customerVendorMessageRepository;
         _mediaLinkRepository = mediaLinkRepository;
         _dbContext = dbContext;
+        _productRepository = productRepository;
     }
     
     public async Task SendNewMessageAsync(CustomerVendorConversation conversation,
@@ -95,7 +99,8 @@ public class CustomerVendorConversationsRepository : ICustomerVendorConversation
         (ulong conversationId, int page, int pageSize, CancellationToken cancellationToken = default)
     {
         var query = _dbContext.CustomerVendorMessages.AsNoTracking()
-            .Where(m => m.ConversationId == conversationId);
+            .Where(m => m.ConversationId == conversationId)
+            .Include(m => m.Product);
         
         var totalCount = await query.CountAsync(cancellationToken);
         var messages = await query
@@ -122,7 +127,8 @@ public class CustomerVendorConversationsRepository : ICustomerVendorConversation
         var query = _dbContext.CustomerVendorConversations
             .AsNoTracking()
             .Where(c => c.CustomerId == userId || c.VendorId == userId)
-            .Include(c => c.Vendor);
+            .Include(c => c.Vendor)
+            .Include(c => c.Customer);
         
         var totalCount = await query.CountAsync(cancellationToken);
         
@@ -133,5 +139,14 @@ public class CustomerVendorConversationsRepository : ICustomerVendorConversation
             .ToListAsync(cancellationToken);
         
         return (conversations, totalCount);
+    }
+    
+    public async Task ValidateProductBelongsToVendor(ulong productId, ulong vendorId, CancellationToken cancellationToken = default)
+    {
+        var product = await _productRepository.GetAsync(p => p.Id == productId, true, cancellationToken);
+        if (product == null)
+            throw new KeyNotFoundException("Sản phẩm không tồn tại.");
+        if (product.VendorId != vendorId)
+            throw new InvalidOperationException("Sản phẩm không thuộc về nhà cung cấp này.");
     }
 }

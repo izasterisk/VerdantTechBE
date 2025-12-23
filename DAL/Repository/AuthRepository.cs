@@ -9,11 +9,16 @@ public class AuthRepository : IAuthRepository
 {
     private readonly IRepository<User> _userRepository;
     private readonly VerdantTechDbContext _context;
-
-    public AuthRepository(VerdantTechDbContext context)
+    private readonly IRepository<Transaction> _transactionRepository;
+    private readonly IRepository<VendorProfile> _vendorProfileRepository;
+    
+    public AuthRepository(IRepository<User> userRepository, VerdantTechDbContext context,
+        IRepository<Transaction> transactionRepository, IRepository<VendorProfile> vendorProfileRepository)
     {
-        _userRepository = new Repository<User>(context);
+        _userRepository = userRepository;
         _context = context;
+        _transactionRepository = transactionRepository;
+        _vendorProfileRepository = vendorProfileRepository;
     }
     
     public async Task<User?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
@@ -26,7 +31,7 @@ public class AuthRepository : IAuthRepository
     {
         return await _userRepository.GetWithRelationsAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase),true, 
             query => query.Include(u => u.FarmProfiles)
-                .ThenInclude(f => f.Address), 
+                .ThenInclude(f => f.Address),
             cancellationToken: cancellationToken);
     }
 
@@ -56,4 +61,23 @@ public class AuthRepository : IAuthRepository
         await _userRepository.UpdateAsync(user, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
     }
+    
+    public async Task<Transaction?> ValidateVendorSubscriptionAsync(ulong vendorId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Transactions
+            .Where(t => t.UserId == vendorId && t.TransactionType == TransactionType.VendorSubscription
+                        && t.Status == TransactionStatus.Completed)
+            .OrderByDescending(t => t.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+    
+    public async Task UpdateVendorProfileAsync(VendorProfile vendorProfile, CancellationToken cancellationToken = default)
+    {
+        vendorProfile.UpdatedAt = DateTime.UtcNow;
+        await _vendorProfileRepository.UpdateAsync(vendorProfile, cancellationToken);
+    }
+    
+    public async Task<VendorProfile> GetVendorProfileByUserIdAsync(ulong userId, CancellationToken cancellationToken = default) =>
+        await _vendorProfileRepository.GetAsync(vp => vp.UserId == userId, true, cancellationToken)
+        ?? throw new InvalidOperationException("Tài khoản thương nhân không tồn tại.");
 }

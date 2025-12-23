@@ -1,3 +1,6 @@
+using DAL.Data.Models;
+using DAL.IRepository;
+
 namespace BLL.Helpers.Auth;
 
 public static class AuthUtils
@@ -46,5 +49,32 @@ public static class AuthUtils
     public static bool VerifyPassword(string password, string hashedPassword)
     {
         return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+    }
+
+    /// <summary>
+    /// Validate vendor subscription by checking the latest completed subscription transaction
+    /// </summary>
+    /// <param name="authRepository">Auth repository instance</param>
+    /// <param name="vendorId">Vendor user ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The latest subscription transaction</returns>
+    /// <exception cref="ForbiddenException">Thrown when vendor has no active subscription</exception>
+    public static async Task ValidateVendorSubscriptionAsync(IAuthRepository authRepository,
+        VendorProfile vendorProfile, CancellationToken cancellationToken = default)
+    {
+        var subscription = await authRepository.ValidateVendorSubscriptionAsync(vendorProfile.UserId, cancellationToken);
+        bool check = false;
+        if (subscription != null && subscription.ProcessedAt != null)
+        {
+            if(subscription.Note == "12MONTHS" && subscription.ProcessedAt.Value.AddMonths(12) < DateTime.UtcNow)
+                check = true;
+            if(subscription.Note == "6MONTHS" && subscription.ProcessedAt.Value.AddMonths(6) < DateTime.UtcNow)
+                check = true;
+        }
+        if (vendorProfile.SubscriptionActive != check)
+        {
+            vendorProfile.SubscriptionActive = check;
+            await authRepository.UpdateVendorProfileAsync(vendorProfile, cancellationToken);
+        }
     }
 }

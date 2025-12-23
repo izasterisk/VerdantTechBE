@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using BLL.DTO.MediaLink;
+using BLL.DTO.ProductUpdateRequest;
 using DAL.Data;
 
 namespace BLL.DTO.CustomerVendorConversation;
@@ -9,6 +10,8 @@ public class CustomerVendorMessageResponseDTO
     public ulong Id { get; set; }
 
     // public ulong ConversationId { get; set; }
+    
+    public FullyProductResponseDTO? Product { get; set; }
 
     public CustomerVendorSenderType SenderType { get; set; }
 
