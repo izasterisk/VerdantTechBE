@@ -18,10 +18,11 @@ public class PayOSService : IPayOSService
     private readonly INotificationService _notificationService;
     private readonly string _frontEndUrl;
     private readonly IMapper _mapper;
+    private readonly IAuthRepository _authRepository;
     
     public PayOSService(IPayOSApiClient payOSApiClient, IOrderRepository orderRepository, 
         ITransactionRepository transactionRepository, IPaymentRepository paymentRepository, 
-        INotificationService notificationService, IMapper mapper)
+        INotificationService notificationService, IMapper mapper, IAuthRepository authRepository)
     {
         _payOSApiClient = payOSApiClient;
         _orderRepository = orderRepository;
@@ -29,6 +30,7 @@ public class PayOSService : IPayOSService
         _paymentRepository = paymentRepository;
         _notificationService = notificationService;
         _mapper = mapper;
+        _authRepository = authRepository;
         _frontEndUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ??
                        throw new InvalidOperationException("FRONTEND_URL không được cấu hình trong .env file");
     }
@@ -38,6 +40,8 @@ public class PayOSService : IPayOSService
         var cancelUrl = $"{_frontEndUrl}/payos/cancel";
         var returnUrl = $"{_frontEndUrl}/payos/return";
         
+        if(dto.Description == "12MONTHS" || dto.Description == "6MONTHS")
+            throw new ArgumentException("Sử dụng phương thức CreateSubscriptionLinkAsync để tạo liên kết thanh toán đăng ký.");
         var order = await _orderRepository.GetOrderWithRelationsByIdAsync(orderId, cancellationToken);
         if (order == null || order.Status != OrderStatus.Pending || order.OrderPaymentMethod == OrderPaymentMethod.COD)
         {
@@ -109,43 +113,132 @@ public class PayOSService : IPayOSService
         return createdPayment;
     }
     
+    public async Task<CreatePaymentResult> CreateSubscriptionLinkAsync(ulong vendorUserId, string type, int price, CancellationToken cancellationToken = default)
+    {
+        var cancelUrl = $"{_frontEndUrl}/payos/cancel";
+        var returnUrl = $"{_frontEndUrl}/payos/return";
+        
+        var vendorProfile = await _authRepository.GetVendorProfileByUserIdAsync(vendorUserId, cancellationToken);
+        if(vendorProfile.SubscriptionActive)
+            throw new InvalidOperationException("Tài khoản thương nhân đã có gói đăng ký hoạt động.");
+        if(type != "12MONTHS" && type != "6MONTHS")
+            throw new ArgumentException("Loại gói đăng ký không hợp lệ, chỉ chấp nhận 12MONTHS hoặc 6MONTHS.");
+        long orderCode;
+        while (true)
+        {
+            orderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 100 + Random.Shared.Next(0, 99);
+            try
+            {
+                await _payOSApiClient.GetPaymentLinkInformationAsync(orderCode);
+            }
+            catch
+            {
+                break;
+            }
+        }
+        var items = new List<ItemData>();
+        items.Add(new ItemData(
+            name: type,
+            quantity: 1,
+            price: price
+        ));
+        var paymentData = new PaymentData(
+            orderCode: orderCode,
+            amount: price,
+            description: type,
+            items: items,
+            cancelUrl: cancelUrl,
+            returnUrl: returnUrl
+        );
+        var createdPayment = await _payOSApiClient.CreatePaymentLinkAsync(paymentData);
+        var payment = new DAL.Data.Models.Payment
+        {
+            PaymentMethod = PaymentMethod.Payos,
+            PaymentGateway = PaymentGateway.Payos,
+            GatewayResponse = new Dictionary<string, object>
+            {
+                { "bin", createdPayment.bin },
+                { "accountNumber", createdPayment.accountNumber },
+                { "amount", createdPayment.amount },
+                { "description", createdPayment.description },
+                { "orderCode", createdPayment.orderCode },
+                { "currency", createdPayment.currency },
+                { "paymentLinkId", createdPayment.paymentLinkId },
+                { "status", createdPayment.status },
+                { "expiredAt", createdPayment.expiredAt ?? 0 },
+                { "checkoutUrl", createdPayment.checkoutUrl },
+            }
+        };
+        var transaction = new DAL.Data.Models.Transaction
+        {
+            TransactionType = TransactionType.VendorSubscription,
+            Amount = paymentData.amount,
+            Currency = "VND",
+            UserId = vendorUserId,
+            // OrderId = order.Id,
+            // BankAccountId
+            Status = TransactionStatus.Pending,
+            Note = type,
+            GatewayPaymentId = orderCode.ToString(),
+            CreatedBy = vendorUserId
+        };
+        await _paymentRepository.CreatePaymentWithTransactionAsync(payment, transaction, cancellationToken);
+        return createdPayment;
+    }
+    
     public async Task<WebhookData> HandlePayOSWebhookAsync(WebhookType webhookBody, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(webhookBody, $"{nameof(webhookBody)} rỗng.");
         WebhookData webhookData = _payOSApiClient.VerifyWebhookData(webhookBody);
         
-        var transaction = await _transactionRepository.GetTransactionForPaymentByGatewayPaymentIdAsync(webhookData.orderCode.ToString(), cancellationToken);
-        if (transaction.Order == null || transaction.Payment == null)
-            throw new KeyNotFoundException("Giao dịch này không liên kết với đơn hàng nào.");
+        DAL.Data.Models.Transaction transaction;
+        if(webhookData.description is "12MONTHS" or "6MONTHS")
+        {
+            transaction = await _transactionRepository.GetTransactionForSubscriptionByGatewayPaymentIdAsync(webhookData.orderCode.ToString(), cancellationToken);
+            if (transaction.Payment == null)
+                throw new KeyNotFoundException("Giao dịch này không liên kết với Subscription nào.");
+        }
+        else
+        {
+            transaction = await _transactionRepository.GetTransactionForPaymentByGatewayPaymentIdAsync(webhookData.orderCode.ToString(), cancellationToken);
+            if (transaction.Order == null || transaction.Payment == null)
+                throw new KeyNotFoundException("Giao dịch này không liên kết với đơn hàng nào.");
+        }
 
-        string title; string message; string? customerName = null;
+        var title = "";  var message = "";
         if (webhookData.code == "00" || webhookData.desc == "Thành công")
         {
-            transaction.Order.Status = OrderStatus.Paid;
             transaction.Status = TransactionStatus.Completed;
             transaction.ProcessedAt = DateTime.UtcNow;
-            if(webhookData.counterAccountName != null)
-                customerName = webhookData.counterAccountName;
-            
             title = "Thanh toán thành công";
-            message = $"Đơn hàng #{transaction.Order.Id} đã được thanh toán thành công qua PayOS với số tiền {webhookData.amount:N0} VND.";
+            if (transaction.Order != null)
+            {
+                transaction.Order.Status = OrderStatus.Paid;
+                message = $"Đơn hàng #{transaction.Order.Id} đã được thanh toán thành công qua PayOS với số tiền {webhookData.amount:N0} VND.";
+            }
         }
         else
         {
             transaction.Status = TransactionStatus.Failed;
             title = "Thanh toán thất bại";
-            message = $"Đơn hàng #{transaction.Order.Id} thanh toán thất bại.";
+            if (transaction.Order != null)
+            {
+                message = $"Đơn hàng #{transaction.Order.Id} thanh toán thất bại.";
+            }
         }
-        await _paymentRepository.UpdateFullPaymentWithTransactionAsync(transaction.Payment, transaction.Order, transaction, customerName, cancellationToken);
+        await _paymentRepository.UpdateFullPaymentWithTransactionAsync(transaction.Payment, transaction.Order, transaction, cancellationToken);
         
-        await _notificationService.CreateAndSendNotificationAsync(
-            userId: transaction.UserId,
-            title: title,
-            message: message,
-            referenceType: NotificationReferenceType.Payment,
-            referenceId: transaction.Payment.Id,
-            cancellationToken: cancellationToken
-        );
+        if(webhookData.description != "12MONTHS" && webhookData.description != "6MONTHS")
+        {
+            await _notificationService.CreateAndSendNotificationAsync(
+                userId: transaction.UserId,
+                title: title,
+                message: message,
+                referenceType: NotificationReferenceType.Payment,
+                referenceId: transaction.Payment.Id,
+                cancellationToken: cancellationToken
+            );
+        }
         return webhookData;
     }
     

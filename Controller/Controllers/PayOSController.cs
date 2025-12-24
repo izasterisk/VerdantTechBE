@@ -20,12 +20,15 @@ public class PayOSController : BaseController
     }
 
     /// <summary>
-    /// Tạo payment link cho đơn hàng
+    /// Tạo payment link PayOS cho đơn hàng
     /// </summary>
-    /// <param name="orderId">ID của đơn hàng</param>
+    /// <param name="orderId">ID của đơn hàng cần thanh toán</param>
     /// <param name="dto">Thông tin thanh toán</param>
-    /// <returns>Thông tin payment link</returns>
+    /// <returns>Thông tin payment link bao gồm checkoutUrl, orderCode, paymentLinkId</returns>
     [HttpPost("create/{orderId}")]
+    [EndpointDescription("Chỉ dành cho thanh toán đơn hàng thông thường. " +
+                         "Đơn hàng phải ở trạng thái Pending và không phải COD. " +
+                         "Description không được là \"12MONTHS\" hoặc \"6MONTHS\" (dùng CreateSubscriptionLink thay thế).")]
     [Authorize]
     public async Task<ActionResult<APIResponse>> CreatePaymentLink(ulong orderId, [FromBody] CreatePaymentDataDTO dto)
     {
@@ -35,6 +38,31 @@ public class PayOSController : BaseController
         try
         {
             var result = await _payOSService.CreatePaymentLinkAsync(orderId, dto, GetCancellationToken());
+            return SuccessResponse(result, HttpStatusCode.Created);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Tạo payment link PayOS cho gói đăng ký thương nhân (Vendor Subscription)
+    /// </summary>
+    /// <param name="vendorUserId">User ID của vendor cần đăng ký</param>
+    /// <param name="type">Loại gói đăng ký: "12MONTHS" hoặc "6MONTHS"</param>
+    /// <param name="price">Giá gói đăng ký (VND)</param>
+    /// <returns>Thông tin payment link bao gồm checkoutUrl</returns>
+    [HttpPost("create-subscription")]
+    [EndpointDescription("Vendor không được có gói đăng ký đang hoạt động. " +
+                         "Type chỉ chấp nhận: \"12MONTHS\" (12 tháng) hoặc \"6MONTHS\" (6 tháng). " +
+                         "Sau khi thanh toán thành công, hệ thống sẽ tự động kích hoạt subscription cho vendor.")]
+    [Authorize]
+    public async Task<ActionResult<APIResponse>> CreateSubscriptionLink(ulong vendorUserId, string type, int price)
+    {
+        try
+        {
+            var result = await _payOSService.CreateSubscriptionLinkAsync(vendorUserId, type, price, GetCancellationToken());
             return SuccessResponse(result, HttpStatusCode.Created);
         }
         catch (Exception ex)

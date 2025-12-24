@@ -6,7 +6,7 @@ using BLL.Interfaces.Infrastructure;
 using Infrastructure.Payment.PayOS.Models;
 using Net.payOS.Types;
 
-namespace Infrastructure.Payment.PayOS;
+namespace Infrastructure.Transaction.PayOS;
 
 public class PayOSApiClient : IPayOSApiClient
 {

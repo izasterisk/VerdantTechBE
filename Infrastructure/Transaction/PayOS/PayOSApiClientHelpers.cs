@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace Infrastructure.Payment.PayOS;
+namespace Infrastructure.Transaction.PayOS;
 
 public static class PayOSApiClientHelpers
 {

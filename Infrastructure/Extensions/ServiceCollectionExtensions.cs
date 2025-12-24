@@ -5,7 +5,7 @@ using Infrastructure.Email;
 using Infrastructure.Soil;
 using Infrastructure.Weather;
 using Infrastructure.Courier;
-using Infrastructure.Payment.PayOS;
+using Infrastructure.Transaction.PayOS;
 using Infrastructure.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 

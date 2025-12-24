@@ -8,6 +8,7 @@ namespace BLL.Interfaces;
 public interface IPayOSService
 {
     Task<CreatePaymentResult> CreatePaymentLinkAsync(ulong orderId, CreatePaymentDataDTO dto, CancellationToken cancellationToken = default);
+    Task<CreatePaymentResult> CreateSubscriptionLinkAsync(ulong vendorUserId, string type, int price, CancellationToken cancellationToken = default);
     Task<WebhookData> HandlePayOSWebhookAsync(WebhookType webhookBody, CancellationToken cancellationToken = default);
     Task ConfirmWebhookAsync(ConfirmWebhookDTO dto, CancellationToken cancellationToken = default);
     Task<TransactionResponseDTO> GetPaymentLinkInformationAsync(ulong transactionId, CancellationToken cancellationToken = default);
