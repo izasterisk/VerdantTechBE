@@ -98,6 +98,7 @@ public class CashoutRepository : ICashoutRepository
             
             order.UpdatedAt = DateTime.UtcNow;
             // order.Status = OrderStatus.Refunded;
+            order.OrderDetails = null!;
             await _orderRepository.UpdateAsync(order, cancellationToken);
             
             request.UpdatedAt = DateTime.UtcNow;

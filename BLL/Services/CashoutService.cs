@@ -171,7 +171,8 @@ public class CashoutService : ICashoutService
             ProcessedBy = staffId,
             ProcessedAt = DateTime.UtcNow
         };
-        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync(transaction, cashout, bankAccount, orderTuple.Item1, request, serialsToUpdate, exportToUpdate, orderDetailsToUpdate, cancellationToken);
+        var created = await _cashoutRepository.CreateRefundCashoutWithTransactionAsync
+            (transaction, cashout, bankAccount, orderTuple.Item1, request, serialsToUpdate, exportToUpdate, orderDetailsToUpdate, cancellationToken);
         var cashoutRes = await _cashoutRepository.GetCashoutRequestWithRelationsByTransactionIdAsync(created.Id, cancellationToken);
         
         await _notificationService.CreateAndSendNotificationAsync(
