@@ -69,14 +69,12 @@ namespace BLL.Services
                 throw new KeyNotFoundException($"Không tìm thấy sản phẩm có ID {dto.ProductId}");
 
 
-            if (dto.VendorId.HasValue)
-            {
-                var vendorUser = await _userRepo.GetVerifiedAndActiveUserByIdAsync(dto.VendorId.Value, ct);
-
-
-                if (vendorUser.Role != UserRole.Vendor)
-                    throw new ArgumentException($"Người dùng với ID {dto.VendorId.Value} không phải là nhà cung cấp.");
-            }
+            // if (dto.VendorId.HasValue)
+            // {
+            //     var vendorUser = await _userRepo.GetVerifiedAndActiveUserByIdAsync(dto.VendorId.Value, ct);
+            //     if (vendorUser.Role != UserRole.Vendor)
+            //         throw new ArgumentException($"Người dùng với ID {dto.VendorId.Value} không phải là nhà cung cấp.");
+            // }
 
             string sku;
             do
