@@ -21,10 +21,12 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
     private readonly IUserRepository _userRepository;
     private readonly IChatHub _chatHub;
     private readonly IMemoryCache _cache;
+    private readonly IProductUpdateRequestRepository _productUpdateRequestRepository;
     
     public CustomerVendorConversationsService(ICustomerVendorConversationsRepository customerVendorConversationsRepository,
-        ICloudinaryService cloudinaryService, IMapper mapper, IUserRepository userRepository, IChatHub chatHub,
-        IMemoryCache cache)
+        ICloudinaryService cloudinaryService, IMapper mapper,
+        IUserRepository userRepository, IChatHub chatHub,
+        IMemoryCache cache, IProductUpdateRequestRepository productUpdateRequestRepository)
     {
         _customerVendorConversationsRepository = customerVendorConversationsRepository;
         _cloudinaryService = cloudinaryService;
@@ -32,6 +34,7 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
         _userRepository = userRepository;
         _chatHub = chatHub;
         _cache = cache;
+        _productUpdateRequestRepository = productUpdateRequestRepository;
     }
     
     public async Task<CustomerVendorMessageResponseDTO> SendNewMessageAsync(ulong userId, UserRole role, 
@@ -96,6 +99,11 @@ public class CustomerVendorConversationsService : ICustomerVendorConversationsSe
             (await _customerVendorConversationsRepository.GetNewestMessageByConversationIdAsync(conversation.Id, cancellationToken));
         response.Images = _mapper.Map<List<MediaLinkItemDTO>>
             (await _customerVendorConversationsRepository.GetAllMessageImagesByIdAsync(response.Id, cancellationToken));
+        if (dto.ProductId != null && response.Product != null)
+        {
+            response.Product.Images = _mapper.Map<List<MediaLinkItemDTO>>
+                (await _productUpdateRequestRepository.GetAllImagesByProductIdAsync(dto.ProductId.Value, cancellationToken));
+        }
         
         // Gửi tin nhắn realtime qua SignalR
         await _chatHub.SendMessageToConversation(dto.CustomerId, dto.VendorId, response);

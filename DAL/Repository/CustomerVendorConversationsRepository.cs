@@ -90,6 +90,7 @@ public class CustomerVendorConversationsRepository : ICustomerVendorConversation
         return await _dbContext.CustomerVendorMessages
             .AsNoTracking()
             .Where(m => m.ConversationId == conversationId)
+            .Include(m => m.Product)
             .OrderByDescending(m => m.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new KeyNotFoundException("Không tìm thấy tin nhắn nào trong cuộc trò chuyện này.");
