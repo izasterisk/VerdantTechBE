@@ -50,15 +50,4 @@ public class ChatHub : BaseHub
         
         await base.OnDisconnectedAsync(exception);
     }
-    
-
-    /// <summary>
-    /// Test connection - client có thể gọi để kiểm tra kết nối
-    /// </summary>
-    public async Task<string> Ping()
-    {
-        var userId = TryGetCurrentUserId();
-        var role = GetCurrentUserRole();
-        return $"Chat Hub - Pong from User {userId} (Role: {role})";
-    }
 }

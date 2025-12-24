@@ -263,7 +263,7 @@ CREATE TABLE chatbot_messages (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     conversation_id BIGINT UNSIGNED NOT NULL,
     message_type ENUM('user', 'bot', 'system') NOT NULL,
-    message_text TEXT NOT NULL,
+    message_text JSON NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 
     FOREIGN KEY (conversation_id) REFERENCES chatbot_conversations(id) ON DELETE RESTRICT,
@@ -481,7 +481,7 @@ CREATE TABLE product_snapshot (
     weight_kg DECIMAL(10,3) NOT NULL COMMENT 'Trọng lượng sản phẩm (kg) - bắt buộc',
     dimensions_cm JSON COMMENT '{chiều dài, chiều rộng, chiều cao}',
     registration_id BIGINT UNSIGNED NULL COMMENT 'Khóa ngoại đến product_registrations',
-    snapshot_type ENUM('proposed', 'history') NOT NULL COMMENT 'Loại snapshot: proposed (đề xuất chờ duyệt), history (lịch sử đã được duyệt và áp dụng vào product)',
+    snapshot_type ENUM('proposed', 'history', 'subscription_banned') NOT NULL COMMENT 'Loại snapshot: proposed (đề xuất chờ duyệt), history (lịch sử đã được duyệt và áp dụng vào product), subscription_banned (bị cấm do subscription hết hạn)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 

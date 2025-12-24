@@ -33,8 +33,7 @@ public class ChatbotMessageConfiguration : IEntityTypeConfiguration<ChatbotMessa
             .IsRequired();
 
         builder.Property(e => e.MessageText)
-            .HasColumnName("message_text")
-            .HasColumnType("text")
+            .ConfigureAsJson("message_text")
             .IsRequired();
 
         builder.Property(e => e.CreatedAt)

@@ -14,7 +14,7 @@ public partial class ChatbotMessage
     public MessageType MessageType { get; set; }
 
     [Required]
-    public string MessageText { get; set; } = null!;
+    public Dictionary<string, object> MessageText { get; set; } = new Dictionary<string, object>();
 
     public DateTime CreatedAt { get; set; }
 

@@ -9,7 +9,6 @@ namespace DAL.IRepository
 {
     public interface IVendorProfileRepository
     {
- 
         Task<VendorProfile> CreateAsync(VendorProfile vendorProfile, IEnumerable<MediaLink>? addVendorCertificateFiles, CancellationToken ct = default);
         Task<VendorProfile?> GetByIdAsync(ulong id, CancellationToken ct = default);
         Task<VendorProfile?> GetByUserIdAsync(ulong vendorId, CancellationToken ct = default);
@@ -18,11 +17,11 @@ namespace DAL.IRepository
         //Task DeleteAsync(VendorProfile vendorProfile, CancellationToken ct = default); 
         Task HardDeleteVendorAsync(ulong vendorProfileId, CancellationToken ct);
         Task SoftDeleteVendorAsync(ulong vendorProfileId, CancellationToken ct = default);
-
         Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default);
         Task<User?> GetUserByEmailAsync(string email, CancellationToken ct);
         Task<bool> ExistsByBusinessRegistrationNumberAsync(string brn, CancellationToken ct);
         Task<bool> ExistsByTaxCodeAsync(string taxCode, CancellationToken ct);
-
+        Task<List<VendorProfile>> GetAllVerifiedVendorProfilesAsync(CancellationToken cancellationToken = default);
+        Task<List<Transaction>> GetAllVendorTransactionsAsync(CancellationToken cancellationToken = default);
     }
 }

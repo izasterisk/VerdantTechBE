@@ -11,20 +11,24 @@ public class CartService : ICartService
 {
     private readonly IMapper _mapper;
     private readonly ICartRepository _cartRepository;
+    private readonly IOrderRepository _orderRepository;
     
-    public CartService(IMapper mapper, ICartRepository cartRepository)
+    public CartService(IMapper mapper, ICartRepository cartRepository, IOrderRepository orderRepository)
     {
         _mapper = mapper;
         _cartRepository = cartRepository;
+        _orderRepository = orderRepository;
     }
     
     public async Task<CartResponseDTO> AddToCartAsync(ulong userId, CartDTO dto, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(dto, $"{nameof(dto)} is null");
         if(dto.Quantity < 1)
-        {
             throw new ArgumentOutOfRangeException(nameof(dto.Quantity), "Số lượng sản phẩm phải lớn hơn 0.");
-        }
+        var productRaw = await _orderRepository.GetActiveProductByIdAsync(dto.ProductId, cancellationToken);
+        if (productRaw == null)
+            throw new KeyNotFoundException($"Sản phẩm với ID {dto.ProductId} không tồn tại hoặc đã bị ẩn.");
+        
         var cart = await _cartRepository.GetCartByUserIdWithRelationsAsync(userId, cancellationToken);
         if (cart == null)
         {

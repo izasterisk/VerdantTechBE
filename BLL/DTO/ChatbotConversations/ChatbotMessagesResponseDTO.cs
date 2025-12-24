@@ -1,4 +1,5 @@
-﻿using DAL.Data;
+﻿using System.Collections.Generic;
+using DAL.Data;
 
 namespace BLL.DTO.ChatbotConversations;
 
@@ -10,7 +11,7 @@ public class ChatbotMessagesResponseDTO
 
     public MessageType MessageType { get; set; }
 
-    public string MessageText { get; set; } = null!;
+    public Dictionary<string, object> MessageText { get; set; } = new();
 
     public DateTime CreatedAt { get; set; }
 }

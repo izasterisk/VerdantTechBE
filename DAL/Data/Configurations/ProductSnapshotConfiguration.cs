@@ -123,7 +123,7 @@ public class ProductSnapshotConfiguration : IEntityTypeConfiguration<ProductSnap
         );
 
         builder.Property(e => e.SnapshotType)
-            .HasColumnType("enum('proposed','history')")
+            .HasColumnType("enum('proposed','history','subscription_banned')")
             .HasColumnName("snapshot_type")
             .HasConversion(snapshotTypeConverter)
             .IsRequired();

@@ -48,7 +48,8 @@ public enum ProductRegistrationStatus
 public enum ProductSnapshotType
 {
     Proposed,
-    History
+    History,
+    SubscriptionBanned
 }
 
 // =====================================================

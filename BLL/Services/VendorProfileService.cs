@@ -6,11 +6,6 @@ using DAL.IRepository;
 using BLL.Interfaces;
 using DAL.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using BLL.Helpers.Auth;
 using BLL.Helpers;
 
@@ -23,22 +18,20 @@ namespace BLL.Service
         private readonly IVendorCertificateRepository _vendorCertificateRepository;
         private readonly IAddressRepository _addressRepository;
         private readonly IEmailSender _emailSender;
-
-        public VendorProfileService(
-            IVendorProfileRepository vendorProfileRepository,
-            IUserRepository userRepository,
-            IVendorCertificateRepository vendorCertificateRepository,
-            IAddressRepository addressRepository,
-            IEmailSender emailSender)
+        private readonly IProductUpdateRequestRepository _productUpdateRequestRepository;
+        
+        public VendorProfileService(IVendorProfileRepository vendorProfileRepository,
+            IUserRepository userRepository, IVendorCertificateRepository vendorCertificateRepository,
+            IAddressRepository addressRepository, IEmailSender emailSender,
+            IProductUpdateRequestRepository productUpdateRequestRepository)
         {
             _vendorProfileRepository = vendorProfileRepository;
             _userRepository = userRepository;
             _vendorCertificateRepository = vendorCertificateRepository;
             _addressRepository = addressRepository;
             _emailSender = emailSender;
+            _productUpdateRequestRepository = productUpdateRequestRepository;
         }
-
-        
 
         public async Task<VendorProfileResponseDTO> CreateAsync(
             VendorProfileCreateDTO dto,
@@ -88,9 +81,6 @@ namespace BLL.Service
             {
                 vendorProfile = await CreateVendorProfileAsync(user, dto, ct);
             }
-
-
-
 
             // 5. Tạo Address (nếu có)
             await CreateUserAddressIfNeededAsync(user.Id, dto, ct);
@@ -302,7 +292,6 @@ namespace BLL.Service
             if (string.IsNullOrWhiteSpace(email))
                 //throw new ArgumentException("Email không được rỗng.", nameof(email));
                 throw new InvalidOperationException("Email không được để trống.");
-
         }
 
         private static void ValidatePassword(string? password)
@@ -310,7 +299,6 @@ namespace BLL.Service
             if (string.IsNullOrWhiteSpace(password))
                 //throw new ArgumentException("Password không được rỗng.", nameof(password));
                 throw new InvalidOperationException("Mật khẩu không được để trống.");
-
         }
 
         private static (List<string> Codes, List<string> Names, List<MediaLink> MediaList)
@@ -337,11 +325,8 @@ namespace BLL.Service
             return (codes, names, mediaList);
         }
 
-        private static bool HasAddressInfo(
-            string? companyAddress,
-            string? province,
-            string? district,
-            string? commune)
+        private static bool HasAddressInfo(string? companyAddress, string? province,
+            string? district, string? commune)
         {
             return !string.IsNullOrWhiteSpace(companyAddress)
                    || !string.IsNullOrWhiteSpace(province)
@@ -349,13 +334,9 @@ namespace BLL.Service
                    || !string.IsNullOrWhiteSpace(commune);
         }
 
-
-        private async Task<User> CreateVendorUserAsync(
-            VendorProfileCreateDTO dto,
-            CancellationToken ct)
+        private async Task<User> CreateVendorUserAsync(VendorProfileCreateDTO dto, CancellationToken ct)
         {
             var existingUser = await _vendorProfileRepository.GetUserByEmailAsync(dto.Email, ct);
-        
             
             if (existingUser != null)
             {
@@ -364,14 +345,12 @@ namespace BLL.Service
                 (existingUser.Status == UserStatus.Active || existingUser.IsVerified))
                 throw new InvalidOperationException("Email này đã được đăng ký và đang hoạt động.");
 
-                if (await _vendorProfileRepository.ExistsByBusinessRegistrationNumberAsync(
-                    dto.BusinessRegistrationNumber, ct))
-                throw new InvalidOperationException("Mã số đăng ký kinh doanh đã tồn tại.");
+                if (await _vendorProfileRepository.ExistsByBusinessRegistrationNumberAsync(dto.BusinessRegistrationNumber, ct))
+                    throw new InvalidOperationException("Mã số đăng ký kinh doanh đã tồn tại.");
 
                 if (!string.IsNullOrWhiteSpace(dto.TaxCode) &&
                 await _vendorProfileRepository.ExistsByTaxCodeAsync(dto.TaxCode, ct))
                 throw new InvalidOperationException("Mã số thuế đã tồn tại.");
-
             
                 // Nếu user chưa active → CHO PHÉP ghi đè
                 existingUser.FullName = dto.FullName ?? existingUser.FullName;
@@ -418,7 +397,6 @@ namespace BLL.Service
             return newUser;
         }
 
-
         private async Task<VendorProfile> CreateVendorProfileAsync(
             User user,
             VendorProfileCreateDTO dto,
@@ -450,9 +428,7 @@ namespace BLL.Service
             }
         }
 
-        private async Task CreateUserAddressIfNeededAsync(
-            ulong userId,
-            VendorProfileCreateDTO dto,
+        private async Task CreateUserAddressIfNeededAsync(ulong userId, VendorProfileCreateDTO dto,
             CancellationToken ct)
         {
             if (!HasAddressInfo(dto.CompanyAddress, dto.Province, dto.District, dto.Commune))
@@ -514,12 +490,8 @@ namespace BLL.Service
             }
         }
 
-        private async Task CreateVendorCertificatesAsync(
-            ulong vendorId,
-            List<string> codes,
-            List<string> names,
-            List<MediaLink> mediaList,
-            CancellationToken ct)
+        private async Task CreateVendorCertificatesAsync(ulong vendorId, List<string> codes,
+            List<string> names, List<MediaLink> mediaList, CancellationToken ct)
         {
             var now = DateTime.UtcNow;
 
@@ -557,8 +529,6 @@ namespace BLL.Service
             }
         }
 
-      
-
         private async Task<(VendorProfile vp, User user, List<VendorCertificate> certs)>
             GetVendorWithUserAndCertificatesAsync(ulong vendorProfileId, CancellationToken ct)
         {
@@ -575,8 +545,7 @@ namespace BLL.Service
             return (vp, user, certs);
         }
 
-        private async Task<VendorProfileResponseDTO> MapToResponseWithAddressAsync(
-            VendorProfile vp,
+        private async Task<VendorProfileResponseDTO> MapToResponseWithAddressAsync(VendorProfile vp,
             CancellationToken ct)
         {
             // 1. Lấy User + Address
@@ -660,6 +629,38 @@ namespace BLL.Service
             }
 
             return slug;
+        }
+
+        public async Task HideProductsBelongToUnsubscribedVendors(CancellationToken cancellationToken = default)
+        {
+            var vendorList = await _vendorProfileRepository.GetAllVerifiedVendorProfilesAsync(cancellationToken);
+            var transactionList = await _vendorProfileRepository.GetAllVendorTransactionsAsync(cancellationToken);
+            
+            var vendors = vendorList.ToDictionary(v => v.UserId, v => v);
+            var vendorToBan = new List<VendorProfile>();
+            var vendorToUnBan = new List<VendorProfile>();
+            foreach (var transaction in transactionList)
+            {
+                if (vendors.TryGetValue(transaction.UserId, out var vendor))
+                {
+                    var check = false;
+                    if (transaction.Note == "6MONTHS" && transaction.CreatedAt.AddMonths(6) > DateTime.UtcNow)
+                        check = true;
+                    if (transaction.Note == "12MONTHS" && transaction.CreatedAt.AddMonths(12) > DateTime.UtcNow)
+                        check = true;
+
+                    if (check && !vendor.SubscriptionActive)
+                    {
+                        vendor.SubscriptionActive = check;
+                        vendorToUnBan.Add(vendor);
+                    }
+                    if (!check && vendor.SubscriptionActive)
+                    {
+                        vendor.SubscriptionActive = check;
+                        vendorToBan.Add(vendor);
+                    }
+                }
+            }
         }
     }
 }

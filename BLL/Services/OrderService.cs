@@ -67,7 +67,7 @@ public class OrderService : IOrderService
                 throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} bị lặp lại trong đơn hàng.");
             var productRaw = await _orderRepository.GetActiveProductByIdAsync(orderDetail.ProductId, cancellationToken);
             if (productRaw == null)
-                throw new KeyNotFoundException($"Sản phẩm với ID {orderDetail.ProductId} không tồn tại hoặc đã bị xóa.");
+                throw new KeyNotFoundException($"Sản phẩm với ID {orderDetail.ProductId} không tồn tại hoặc đã bị ẩn.");
             if (orderDetail.Quantity > productRaw.StockQuantity || productRaw.StockQuantity == 0)
                 throw new InvalidOperationException($"Sản phẩm với ID {orderDetail.ProductId} không còn đủ hàng so với yêu cầu trong đơn hàng của bạn.");
             var product = _mapper.Map<ProductResponseDTO>(productRaw);

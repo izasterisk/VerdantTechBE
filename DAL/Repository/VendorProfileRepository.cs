@@ -8,10 +8,15 @@ namespace DAL.Repository
     public class VendorProfileRepository : IVendorProfileRepository
     {
         private readonly VerdantTechDbContext _context;
-
-        public VendorProfileRepository(VerdantTechDbContext context)
+        private readonly IRepository<VendorProfile> _vendorProfileRepository; 
+        private readonly IRepository<Transaction> _transactionRepository;
+        
+        public VendorProfileRepository(VerdantTechDbContext context, IRepository<VendorProfile> vendorProfileRepository,
+            IRepository<Transaction> transactionRepository)
         {
             _context = context;
+            _vendorProfileRepository = vendorProfileRepository;
+            _transactionRepository = transactionRepository;
         }
 
         private async Task<List<MediaLink>> LoadFilesAsync(ulong ownerId, CancellationToken ct)
@@ -291,6 +296,21 @@ namespace DAL.Repository
                 .AnyAsync(x => x.TaxCode == taxCode, ct);
         }
 
-
+        public async Task<List<VendorProfile>> GetAllVerifiedVendorProfilesAsync(CancellationToken cancellationToken = default)
+        {
+            return await _vendorProfileRepository.GetAllByFilterAsync
+                (v => v.VerifiedAt != null && v.VerifiedBy != null, true, cancellationToken);
+        }
+        
+        public async Task<List<Transaction>> GetAllVendorTransactionsAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.Transactions
+                .Where(t => t.TransactionType == TransactionType.VendorSubscription
+                         && t.Status == TransactionStatus.Completed)
+                .GroupBy(t => t.UserId)
+                .Select(g => g.OrderByDescending(t => t.CreatedAt).First())
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
     }
 }
