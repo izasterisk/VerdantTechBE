@@ -396,7 +396,8 @@ public class ProductRegistrationsController : BaseController
             "File Excel phải có các cột: CategoryId, ProposedProductCode, ProposedProductName, " +
             "UnitPrice, WeightKg, LengthCm, WidthCm, HeightCm và các trường tùy chọn khác. " +
             "VendorId sẽ được tự động lấy từ user đăng nhập. " +
-            "Files (images, certificates, manual) có thể được upload sau khi import thành công.")]
+            "Sau khi import, dùng endpoint POST /{id}/certificates để upload chứng chỉ (bắt buộc). " +
+            "Có thể upload hình ảnh và manual file qua endpoint tương ứng.")]
         public async Task<ActionResult<ProductRegistrationImportResponseDTO>> ImportFromExcel(
             [FromForm] ImportExcelForm form,
             CancellationToken ct = default)
@@ -700,8 +701,6 @@ public class ProductRegistrationsController : BaseController
                 worksheet.Cells[1, 10].Value = "WidthCm";
                 worksheet.Cells[1, 11].Value = "HeightCm";
                 worksheet.Cells[1, 12].Value = "Specifications";
-                worksheet.Cells[1, 13].Value = "CertificationCode";
-                worksheet.Cells[1, 14].Value = "CertificationName";
 
                 // Example row
                 worksheet.Cells[2, 1].Value = 1;
@@ -716,8 +715,6 @@ public class ProductRegistrationsController : BaseController
                 worksheet.Cells[2, 10].Value = 20;
                 worksheet.Cells[2, 11].Value = 30;
                 worksheet.Cells[2, 12].Value = "{\"key1\":\"value1\"}";
-                worksheet.Cells[2, 13].Value = "CERT001";
-                worksheet.Cells[2, 14].Value = "Chứng chỉ mẫu";
 
                 // Auto-fit columns
                 worksheet.Cells.AutoFitColumns();
