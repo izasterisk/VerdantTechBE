@@ -9,7 +9,7 @@ public class CustomerVendorMessageResponseDTO
 {
     public ulong Id { get; set; }
 
-    // public ulong ConversationId { get; set; }
+    public ulong ConversationId { get; set; }
     
     public FullyProductResponseDTO? Product { get; set; }
 
