@@ -28,6 +28,7 @@ namespace BLL.DTO.Product
         
         public decimal WeightKg { get; set; }
 
+        public bool IsActive { get; set; }
         // Ảnh (MediaLink)
         public List<MediaLinkItemDTO> Images { get; set; } = new();
 
