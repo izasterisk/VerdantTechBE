@@ -14,9 +14,4 @@ public interface IChatHub
     /// Gửi tin nhắn cho cả customer và vendor trong conversation
     /// </summary>
     Task SendMessageToConversation(ulong customerId, ulong vendorId, object message);
-    
-    /// <summary>
-    /// Gửi typing indicator cho conversation
-    /// </summary>
-    Task SendTypingIndicator(ulong conversationId, ulong senderId, string senderName);
 }

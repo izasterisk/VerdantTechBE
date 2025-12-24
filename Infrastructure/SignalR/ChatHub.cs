@@ -51,22 +51,6 @@ public class ChatHub : BaseHub
         await base.OnDisconnectedAsync(exception);
     }
     
-    /// <summary>
-    /// Client gọi để gửi typing indicator
-    /// </summary>
-    public async Task SendTypingIndicator(ulong conversationId, string recipientUserId)
-    {
-        var userId = GetCurrentUserId();
-        var userName = Context.User?.FindFirst("FullName")?.Value ?? "User";
-        
-        await Clients.Group($"User_{recipientUserId}")
-            .SendCoreAsync("ReceiveTypingIndicator", new object[] 
-            { 
-                conversationId, 
-                userId, 
-                userName 
-            });
-    }
 
     /// <summary>
     /// Test connection - client có thể gọi để kiểm tra kết nối

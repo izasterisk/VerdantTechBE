@@ -45,12 +45,6 @@ export interface ChatMessage {
   }>;
 }
 
-export interface TypingIndicator {
-  conversationId: number;
-  senderId: number;
-  senderName: string;
-}
-
 export interface Conversation {
   id: number;
   vendor: {
@@ -58,6 +52,11 @@ export interface Conversation {
     fullName: string;
     email: string;
     avatarUrl?: string;
+  };
+  customer: {
+    id: number;
+    fullName: string;
+    email: string;
   };
   startedAt: string;
   lastMessageAt?: string;
@@ -70,12 +69,11 @@ export interface Conversation {
 
 ```typescript
 import * as signalR from '@microsoft/signalr';
-import { ChatMessage, TypingIndicator } from '@/types/chat';
+import { ChatMessage } from '@/types/chat';
 
 class ChatHubService {
   private connection: signalR.HubConnection | null = null;
   private messageHandlers: Array<(message: ChatMessage) => void> = [];
-  private typingHandlers: Array<(indicator: TypingIndicator) => void> = [];
 
   /**
    * Khởi tạo kết nối đến ChatHub
@@ -110,12 +108,6 @@ class ChatHubService {
     this.connection.on('ReceiveMessage', (message: ChatMessage) => {
       console.log('📨 Received message:', message);
       this.messageHandlers.forEach((handler) => handler(message));
-    });
-
-    // Event: Nhận typing indicator
-    this.connection.on('ReceiveTypingIndicator', (indicator: TypingIndicator) => {
-      console.log('⌨️ Typing indicator:', indicator);
-      this.typingHandlers.forEach((handler) => handler(indicator));
     });
 
     // Event: Kết nối lại thành công
@@ -154,7 +146,6 @@ class ChatHubService {
       await this.connection.stop();
       this.connection = null;
       this.messageHandlers = [];
-      this.typingHandlers = [];
       console.log('🔌 ChatHub disconnected');
     }
   }
@@ -171,32 +162,7 @@ class ChatHubService {
     };
   }
 
-  /**
-   * Đăng ký handler nhận typing indicator
-   */
-  onTypingIndicator(handler: (indicator: TypingIndicator) => void): () => void {
-    this.typingHandlers.push(handler);
-    
-    return () => {
-      this.typingHandlers = this.typingHandlers.filter((h) => h !== handler);
-    };
-  }
 
-  /**
-   * Gửi typing indicator
-   */
-  async sendTypingIndicator(conversationId: number, recipientUserId: string): Promise<void> {
-    if (this.connection?.state !== signalR.HubConnectionState.Connected) {
-      console.warn('ChatHub not connected');
-      return;
-    }
-
-    try {
-      await this.connection.invoke('SendTypingIndicator', conversationId, recipientUserId);
-    } catch (error) {
-      console.error('Error sending typing indicator:', error);
-    }
-  }
 
   /**
    * Kiểm tra trạng thái kết nối
@@ -242,8 +208,6 @@ export function useChatHub(token?: string) {
   return {
     isConnected: chatHubService.isConnected(),
     onMessageReceived: chatHubService.onMessageReceived.bind(chatHubService),
-    onTypingIndicator: chatHubService.onTypingIndicator.bind(chatHubService),
-    sendTypingIndicator: chatHubService.sendTypingIndicator.bind(chatHubService),
   };
 }
 ```
@@ -312,12 +276,11 @@ export default function ChatConversation({
 }: ChatConversationProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const user = useAppSelector(state => state.auth.user);
-  const { onMessageReceived, onTypingIndicator } = useChatHub();
+  const { onMessageReceived } = useChatHub();
 
   // Load messages history
   useEffect(() => {
@@ -373,20 +336,6 @@ export default function ChatConversation({
     return unsubscribe;
   }, [onMessageReceived]);
 
-  // Xử lý typing indicator
-  useEffect(() => {
-    const unsubscribe = onTypingIndicator((indicator) => {
-      if (indicator.conversationId === conversationId) {
-        setIsTyping(true);
-        
-        // Clear typing indicator sau 3s
-        setTimeout(() => setIsTyping(false), 3000);
-      }
-    });
-
-    return unsubscribe;
-  }, [onTypingIndicator, conversationId]);
-
   // Auto scroll to bottom khi có tin nhắn mới
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -425,10 +374,12 @@ export default function ChatConversation({
       const token = localStorage.getItem('accessToken');
       
       const formData = new FormData();
+      formData.append('customerId', user?.id?.toString() || '');
+      formData.append('vendorId', vendorId.toString());
       formData.append('messageText', newMessage);
       
       const response = await fetch(
-        `${apiUrl}/api/CustomerVendorConversation/${conversationId}/messages`,
+        `${apiUrl}/api/CustomerVendorConversation/send-message`,
         {
           method: 'POST',
           headers: {
@@ -507,14 +458,6 @@ export default function ChatConversation({
             })}
             <div ref={messagesEndRef} />
           </>
-        )}
-        
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="bg-gray-200 rounded-lg px-4 py-2 text-sm text-gray-600">
-              <span className="animate-pulse">Đang nhập...</span>
-            </div>
-          </div>
         )}
       </div>
 

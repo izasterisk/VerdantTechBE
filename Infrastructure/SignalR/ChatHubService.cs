@@ -37,18 +37,5 @@ public class ChatHubService : IChatHub
             .SendCoreAsync("ReceiveMessage", new object[] { message });
     }
 
-    /// <summary>
-    /// Gửi typing indicator
-    /// </summary>
-    public async Task SendTypingIndicator(ulong conversationId, ulong senderId, string senderName)
-    {
-        await _hubContext.Clients
-            .Group($"Conversation_{conversationId}")
-            .SendCoreAsync("ReceiveTypingIndicator", new object[] 
-            { 
-                conversationId, 
-                senderId, 
-                senderName 
-            });
-    }
+
 }
