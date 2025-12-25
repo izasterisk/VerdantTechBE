@@ -21,4 +21,6 @@ public interface IProductUpdateRequestRepository
     Task<List<ProductUpdateRequest>> GetAllProductUpdateRequestsByVendorUserIdAsync(ulong userId, CancellationToken cancellationToken);
     Task<(List<ProductUpdateRequest>, int totalCount)> GetAllProductUpdateRequestsAsync(int page, int pageSize, ProductRegistrationStatus? status, ulong? vendorId, CancellationToken cancellationToken);
     Task<(List<ProductSnapshot>, int totalCount)> GetAllProductHistoriesAsync(ulong productId, int page, int pageSize, CancellationToken cancellationToken);
+    Task HideAndUnhideVendorProducts(List<VendorProfile> vendorToBan, List<VendorProfile> vendorToUnBan, 
+        List<Product> productsToBan, List<ProductSnapshot> productsToBanSnapshot, List<ProductSnapshot> productsToUnBan, CancellationToken cancellationToken = default);
 }

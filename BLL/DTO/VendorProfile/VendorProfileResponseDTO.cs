@@ -21,6 +21,8 @@ namespace BLL.DTO.VendorProfile
         public string? TaxCode { get; set; }
         public string? AvatarUrl { get; set; }
         public UserStatus Status { get; set; }
+        
+        public bool SubscriptionActive { get; set; }
 
         public string CompanyName { get; set; } = null!;
         public string? Slug { get; set; } = null!;

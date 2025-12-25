@@ -312,5 +312,21 @@ namespace DAL.Repository
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<List<Product>> GetAllProductsToBanAsync(List<ulong> vendorIds, CancellationToken cancellationToken = default)
+        {
+            return await _context.Products
+                .Where(p => vendorIds.Contains(p.VendorId))
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+        
+        public async Task<List<ProductSnapshot>> GetAllProductsToUnBanAsync(List<ulong> vendorIds, CancellationToken cancellationToken = default)
+        {
+            return await _context.ProductSnapshots
+                .Where(ps => vendorIds.Contains(ps.VendorId) && ps.SnapshotType == ProductSnapshotType.SubscriptionBanned)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
     }
 }

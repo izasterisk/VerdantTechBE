@@ -23,5 +23,7 @@ namespace DAL.IRepository
         Task<bool> ExistsByTaxCodeAsync(string taxCode, CancellationToken ct);
         Task<List<VendorProfile>> GetAllVerifiedVendorProfilesAsync(CancellationToken cancellationToken = default);
         Task<List<Transaction>> GetAllVendorTransactionsAsync(CancellationToken cancellationToken = default);
+        Task<List<Product>> GetAllProductsToBanAsync(List<ulong> vendorIds, CancellationToken cancellationToken = default);
+        Task<List<ProductSnapshot>> GetAllProductsToUnBanAsync(List<ulong> vendorIds, CancellationToken cancellationToken = default);
     }
 }

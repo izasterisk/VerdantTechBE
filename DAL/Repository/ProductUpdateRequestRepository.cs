@@ -8,26 +8,26 @@ namespace DAL.Repository;
 
 public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
 {
-    private readonly IRepository<ProductCategory> _productCategoryRepository;
     private readonly IRepository<Product> _productRepository;
     private readonly IRepository<ProductSnapshot> _productSnapshotRepository;
     private readonly IRepository<ProductUpdateRequest> _productUpdateRequestRepository;
     private readonly IRepository<User> _userRepository;
     private readonly IRepository<MediaLink> _mediaLinkRepository;
     private readonly VerdantTechDbContext _dbContext;
+    private readonly IRepository<VendorProfile> _vendorProfileRepository;
     
-    public ProductUpdateRequestRepository(IRepository<ProductCategory> productCategoryRepository, IRepository<Product> productRepository,
-        IRepository<ProductSnapshot> productSnapshotRepository, IRepository<ProductUpdateRequest> productUpdateRequestRepository,
-        IRepository<User> userRepository, IRepository<MediaLink> mediaLinkRepository,
-        VerdantTechDbContext dbContext)
+    public ProductUpdateRequestRepository(IRepository<Product> productRepository, IRepository<ProductSnapshot> productSnapshotRepository,
+        IRepository<ProductUpdateRequest> productUpdateRequestRepository, IRepository<User> userRepository,
+        IRepository<MediaLink> mediaLinkRepository, VerdantTechDbContext dbContext,
+        IRepository<VendorProfile> vendorProfileRepository)
     {
-        _productCategoryRepository = productCategoryRepository;
         _productRepository = productRepository;
         _productSnapshotRepository = productSnapshotRepository;
         _productUpdateRequestRepository = productUpdateRequestRepository;
         _userRepository = userRepository;
         _mediaLinkRepository = mediaLinkRepository;
         _dbContext = dbContext;
+        _vendorProfileRepository = vendorProfileRepository;
     }
 
     public async Task<(ProductSnapshot, ulong requestId)> CreateProductUpdateRequestWithTransactionAsync
@@ -245,5 +245,56 @@ public class ProductUpdateRequestRepository : IProductUpdateRequestRepository
             orderBy: query => query.OrderByDescending(ps => ps.CreatedAt),
             cancellationToken
         );
+    }
+
+    public async Task HideAndUnhideVendorProducts(List<VendorProfile> vendorToBan, List<VendorProfile> vendorToUnBan, 
+        List<Product> productsToBan, List<ProductSnapshot> productsToBanSnapshot, List<ProductSnapshot> productsToUnBan, CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            if (vendorToBan.Count > 0)
+            {
+                await _vendorProfileRepository.BulkUpdateAsync(vendorToBan, cancellationToken);
+
+                if (productsToBan.Count > 0)
+                {
+                    foreach (var product in productsToBan)
+                    {
+                        product.IsActive = false;
+                    }
+                    await _productRepository.BulkUpdateAsync(productsToBan, cancellationToken);
+                }
+
+                await _productSnapshotRepository.CreateBulkAsync(productsToBanSnapshot, cancellationToken);
+            }
+            
+            if (vendorToUnBan.Count > 0)
+            {
+                await _vendorProfileRepository.BulkUpdateAsync(vendorToUnBan, cancellationToken);
+
+                if (productsToUnBan.Count > 0)
+                {
+                    var productIdsToActivate = productsToUnBan.Select(ps => ps.ProductId).ToList();
+                    var productsToActivate = await _dbContext.Products
+                        .Where(p => productIdsToActivate.Contains(p.Id))
+                        .ToListAsync(cancellationToken);
+
+                    foreach (var product in productsToActivate)
+                    {
+                        product.IsActive = true;
+                    }
+                    await _productRepository.BulkUpdateAsync(productsToActivate, cancellationToken);
+                    await _productSnapshotRepository.DeleteBulkAsync(productsToUnBan, cancellationToken);
+                }
+            }
+            
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }

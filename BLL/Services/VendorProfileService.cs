@@ -1,4 +1,5 @@
-﻿using BLL.DTO.MediaLink;
+﻿using AutoMapper;
+using BLL.DTO.MediaLink;
 using BLL.DTO.VendorProfile;
 using BLL.Interfaces.Infrastructure;
 using DAL.Data.Models;
@@ -19,11 +20,12 @@ namespace BLL.Service
         private readonly IAddressRepository _addressRepository;
         private readonly IEmailSender _emailSender;
         private readonly IProductUpdateRequestRepository _productUpdateRequestRepository;
+        private readonly IMapper _mapper;
         
-        public VendorProfileService(IVendorProfileRepository vendorProfileRepository,
-            IUserRepository userRepository, IVendorCertificateRepository vendorCertificateRepository,
-            IAddressRepository addressRepository, IEmailSender emailSender,
-            IProductUpdateRequestRepository productUpdateRequestRepository)
+        public VendorProfileService(IVendorProfileRepository vendorProfileRepository, 
+            IUserRepository userRepository, IVendorCertificateRepository vendorCertificateRepository, 
+            IAddressRepository addressRepository, IEmailSender emailSender, 
+            IProductUpdateRequestRepository productUpdateRequestRepository, IMapper mapper)
         {
             _vendorProfileRepository = vendorProfileRepository;
             _userRepository = userRepository;
@@ -31,6 +33,7 @@ namespace BLL.Service
             _addressRepository = addressRepository;
             _emailSender = emailSender;
             _productUpdateRequestRepository = productUpdateRequestRepository;
+            _mapper = mapper;
         }
 
         public async Task<VendorProfileResponseDTO> CreateAsync(
@@ -585,6 +588,7 @@ namespace BLL.Service
                 TaxCode = user?.TaxCode,
                 AvatarUrl = user?.AvatarUrl,
                 Status = user?.Status ?? UserStatus.Inactive,
+                SubscriptionActive = vp.SubscriptionActive,
 
                 CompanyName = vp.CompanyName,
                 Slug = vp.Slug,
@@ -661,6 +665,17 @@ namespace BLL.Service
                     }
                 }
             }
+            var productsToBan = await _vendorProfileRepository.GetAllProductsToBanAsync(vendorToBan.Select(v => v.UserId).ToList(), cancellationToken);
+            var productsToBanSnapshot = _mapper.Map<List<ProductSnapshot>>(productsToBan);
+            foreach (var snapshot in productsToBanSnapshot)
+            {
+                snapshot.SnapshotType = ProductSnapshotType.SubscriptionBanned;
+                snapshot.CreatedAt = DateTime.UtcNow;
+                snapshot.UpdatedAt = DateTime.UtcNow;
+            }
+            var productsToUnBan = await _vendorProfileRepository.GetAllProductsToUnBanAsync(vendorToUnBan.Select(v => v.UserId).ToList(), cancellationToken);
+            await _productUpdateRequestRepository.HideAndUnhideVendorProducts
+                (vendorToBan, vendorToUnBan, productsToBan, productsToBanSnapshot, productsToUnBan, cancellationToken);
         }
     }
 }
