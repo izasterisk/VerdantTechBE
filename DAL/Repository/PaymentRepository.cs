@@ -12,16 +12,21 @@ public class PaymentRepository : IPaymentRepository
     private readonly VerdantTechDbContext _dbContext;
     private readonly IRepository<Transaction> _transactionRepository;
     private readonly IRepository<VendorProfile> _vendorProfileRepository;
+    private readonly IRepository<Product> _productRepository;
+    private readonly IRepository<ProductSnapshot> _productSnapshotRepository;
     
     public PaymentRepository(IRepository<Payment> paymentRepository, IRepository<Order> orderRepository,
         VerdantTechDbContext dbContext, IRepository<Transaction> transactionRepository,
-        IRepository<VendorProfile> vendorProfileRepository)
+        IRepository<VendorProfile> vendorProfileRepository, IRepository<Product> productRepository,
+        IRepository<ProductSnapshot> productSnapshotRepository)
     {
         _paymentRepository = paymentRepository;
         _orderRepository = orderRepository;
         _dbContext = dbContext;
         _transactionRepository = transactionRepository;
         _vendorProfileRepository = vendorProfileRepository;
+        _productRepository = productRepository;
+        _productSnapshotRepository = productSnapshotRepository;
     }
     
     public async Task<Payment> CreatePaymentWithTransactionAsync(Payment payment, Transaction tr, CancellationToken cancellationToken = default)
@@ -66,6 +71,25 @@ public class PaymentRepository : IPaymentRepository
                 {
                     v.SubscriptionActive = true;
                     await _vendorProfileRepository.UpdateAsync(v, cancellationToken);
+                    
+                    var productsToUnBan = await _productSnapshotRepository.GetAllByFilterAsync
+                        (p => p.VendorId == v.UserId && p.SnapshotType == ProductSnapshotType.SubscriptionBanned, true, cancellationToken);
+                    
+                    if (productsToUnBan.Count > 0)
+                    {
+                        var productIds = productsToUnBan.Select(ps => ps.ProductId).ToList();
+                        var products = await _dbContext.Products
+                            .Where(p => productIds.Contains(p.Id))
+                            .ToListAsync(cancellationToken);
+                        
+                        foreach (var product in products)
+                        {
+                            product.IsActive = true;
+                            product.UpdatedAt = DateTime.UtcNow;
+                        }
+                        await _productRepository.BulkUpdateAsync(products, cancellationToken);
+                        await _productSnapshotRepository.DeleteBulkAsync(productsToUnBan, cancellationToken);
+                    }
                 }
             }
             
