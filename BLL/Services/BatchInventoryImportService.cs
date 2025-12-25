@@ -111,6 +111,13 @@ public class BatchInventoryImportService
                         $"Dòng {rowNumber} - Sản phẩm số {productIndex}: " +
                         $"Sản phẩm với ID {dto.ProductId} không tồn tại trong hệ thống.");
                 }
+                if (!Product.IsActive)
+                {
+                    throw new InvalidOperationException(
+                        $"Dòng {rowNumber} - Sản phẩm số {productIndex}: " +
+                        $"Sản phẩm '{Product.ProductName}' (ID: {dto.ProductId}) đang bị vô hiệu hóa . " +
+                        $"Không thể nhập kho.");
+                }
                 var vendorId = Product.VendorId;
                 // Set VendorId từ user đăng nhập (không lấy từ Excel)
                 dto.VendorId = vendorId;
