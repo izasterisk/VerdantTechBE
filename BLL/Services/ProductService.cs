@@ -21,16 +21,22 @@ namespace BLL.Services
         private readonly IProductRepository _repo;
         private readonly IMapper _mapper;
         private readonly VerdantTechDbContext _db;
-
-        public ProductService(IProductRepository repo, IMapper mapper, VerdantTechDbContext db)
+        private readonly IVendorProfileService _vendorProfileService;
+        
+        public ProductService(IProductRepository repo, IMapper mapper, VerdantTechDbContext db,
+            IVendorProfileService vendorProfileService)
         {
             _repo = repo;
             _mapper = mapper;
             _db = db;
+            _vendorProfileService = vendorProfileService;
         }
 
         public async Task<PagedResponse<ProductListItemDTO>> GetAllAsync(int page, int pageSize, CancellationToken ct = default)
         {
+            // Ẩn sản phẩm của các vendor đã hủy đăng ký
+            await _vendorProfileService.HideProductsBelongToUnsubscribedVendors(ct);
+            
             var (items, total) = await _repo.GetAllProductAsync(page, pageSize, ct);
             var list = _mapper.Map<List<ProductListItemDTO>>(items);
 

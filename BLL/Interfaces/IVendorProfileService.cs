@@ -20,5 +20,6 @@ namespace BLL.Interfaces
         Task SoftDeleteAccountAsync(ulong vendorProfileId, CancellationToken ct = default);
        Task ApproveAsync(VendorProfileApproveDTO dto, CancellationToken ct = default);
        Task RejectAsync(VendorProfileRejectDTO dto, CancellationToken ct = default);
+       Task HideProductsBelongToUnsubscribedVendors(CancellationToken cancellationToken = default);
     }
 }
