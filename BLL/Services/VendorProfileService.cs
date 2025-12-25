@@ -674,12 +674,16 @@ namespace BLL.Service
                 }
             }
             var productsToBan = await _vendorProfileRepository.GetAllProductsToBanAsync(vendorToBan.Select(v => v.UserId).ToList(), cancellationToken);
-            var productsToBanSnapshot = _mapper.Map<List<ProductSnapshot>>(productsToBan);
-            foreach (var snapshot in productsToBanSnapshot)
+            var productsToBanSnapshot = new List<ProductSnapshot>();
+            foreach (var product in productsToBan)
             {
+                var snapshot = _mapper.Map<ProductSnapshot>(product);
+                snapshot.Id = 0;
+                snapshot.ProductId = product.Id;
                 snapshot.SnapshotType = ProductSnapshotType.SubscriptionBanned;
                 snapshot.CreatedAt = DateTime.UtcNow;
                 snapshot.UpdatedAt = DateTime.UtcNow;
+                productsToBanSnapshot.Add(snapshot);
             }
             var productsToUnBan = await _vendorProfileRepository.GetAllProductsToUnBanAsync(vendorToUnBan.Select(v => v.UserId).ToList(), cancellationToken);
             await _productUpdateRequestRepository.HideAndUnhideVendorProducts
