@@ -316,7 +316,7 @@ namespace DAL.Repository
         public async Task<List<Product>> GetAllProductsToBanAsync(List<ulong> vendorIds, CancellationToken cancellationToken = default)
         {
             return await _context.Products
-                .Where(p => vendorIds.Contains(p.VendorId))
+                .Where(p => vendorIds.Contains(p.VendorId) && p.IsActive)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }

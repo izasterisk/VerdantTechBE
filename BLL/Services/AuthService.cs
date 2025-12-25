@@ -16,11 +16,12 @@ public class AuthService : IAuthService
     private readonly IUserRepository _userRepository;
     private readonly IEmailSender _emailSender;
     private readonly IEnvCacheService _envCacheService;
+    private readonly IVendorProfileService _vendorProfileService;
     
     // Cache JWT expire hours to avoid repeated environment variable lookups
     private readonly int _jwtExpireHours;
     
-    public AuthService(IAuthRepository authRepository, IConfiguration configuration, 
+    public AuthService(IAuthRepository authRepository, IConfiguration configuration, IVendorProfileService vendorProfileService,
         IUserRepository userRepository, IEmailSender emailSender, IEnvCacheService envCacheService)
     {
         _authRepository = authRepository;
@@ -29,6 +30,7 @@ public class AuthService : IAuthService
         _emailSender = emailSender;
         _envCacheService = envCacheService;
         _jwtExpireHours = TokenHelper.GetJwtExpireHours();
+        _vendorProfileService = vendorProfileService;
     }
 
     public async Task<LoginResponseDTO> LoginAsync(LoginDTO loginDto, CancellationToken cancellationToken = default)
@@ -43,6 +45,9 @@ public class AuthService : IAuthService
             var v = await _authRepository.GetVendorProfileByUserIdAsync(user.Id, cancellationToken);
             await AuthUtils.ValidateVendorSubscriptionAsync(_authRepository, v, cancellationToken);
         }
+        
+        // Ẩn sản phẩm của các vendor đã hủy đăng ký
+        await _vendorProfileService.HideProductsBelongToUnsubscribedVendors(cancellationToken);
         
         AuthValidationHelper.ValidateUserStatus(user);
         AuthValidationHelper.ValidateLoginCredentials(user, loginDto.Password);

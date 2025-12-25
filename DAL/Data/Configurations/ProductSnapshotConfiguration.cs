@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using DAL.Data.Models;
 
 namespace DAL.Data.Configurations;
@@ -117,15 +116,14 @@ public class ProductSnapshotConfiguration : IEntityTypeConfiguration<ProductSnap
             .ConfigureAsJson("dimensions_cm");
 
         // Enum
-        var snapshotTypeConverter = new ValueConverter<ProductSnapshotType, string>(
-            v => v.ToString().ToLowerInvariant(),
-            v => Enum.Parse<ProductSnapshotType>(v, true)
-        );
-
         builder.Property(e => e.SnapshotType)
+            .HasConversion(
+                v => v.ToString().ToLowerInvariant()
+                    .Replace("subscriptionbanned", "subscription_banned"),
+                v => Enum.Parse<ProductSnapshotType>(v
+                    .Replace("subscription_banned", "SubscriptionBanned"), true))
             .HasColumnType("enum('proposed','history','subscription_banned')")
             .HasColumnName("snapshot_type")
-            .HasConversion(snapshotTypeConverter)
             .IsRequired();
 
         // Timestamps

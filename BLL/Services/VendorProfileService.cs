@@ -634,18 +634,18 @@ namespace BLL.Service
 
             return slug;
         }
-
+        
         public async Task HideProductsBelongToUnsubscribedVendors(CancellationToken cancellationToken = default)
         {
             var vendorList = await _vendorProfileRepository.GetAllVerifiedVendorProfilesAsync(cancellationToken);
             var transactionList = await _vendorProfileRepository.GetAllVendorTransactionsAsync(cancellationToken);
             
-            var vendors = vendorList.ToDictionary(v => v.UserId, v => v);
+            var transactions = transactionList.ToDictionary(v => v.UserId, v => v);
             var vendorToBan = new List<VendorProfile>();
             var vendorToUnBan = new List<VendorProfile>();
-            foreach (var transaction in transactionList)
+            foreach (var vendor in vendorList)
             {
-                if (vendors.TryGetValue(transaction.UserId, out var vendor))
+                if (transactions.TryGetValue(vendor.UserId, out var transaction))
                 {
                     var check = false;
                     if (transaction.Note == "6MONTHS" && transaction.CreatedAt.AddMonths(6) > DateTime.UtcNow)
@@ -661,6 +661,14 @@ namespace BLL.Service
                     if (!check && vendor.SubscriptionActive)
                     {
                         vendor.SubscriptionActive = check;
+                        vendorToBan.Add(vendor);
+                    }
+                }
+                else
+                {
+                    if (vendor.SubscriptionActive)
+                    {
+                        vendor.SubscriptionActive = false;
                         vendorToBan.Add(vendor);
                     }
                 }
