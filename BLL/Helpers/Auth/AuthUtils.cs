@@ -64,11 +64,11 @@ public static class AuthUtils
     {
         var subscription = await authRepository.ValidateVendorSubscriptionAsync(vendorProfile.UserId, cancellationToken);
         bool check = false;
-        if (subscription != null && subscription.ProcessedAt != null)
+        if (subscription != null)
         {
-            if(subscription.Note == "12MONTHS" && subscription.ProcessedAt.Value.AddMonths(12) < DateTime.UtcNow)
+            if(subscription.Note == "12MONTHS" && subscription.CreatedAt.AddMonths(12) > DateTime.UtcNow)
                 check = true;
-            if(subscription.Note == "6MONTHS" && subscription.ProcessedAt.Value.AddMonths(6) < DateTime.UtcNow)
+            if(subscription.Note == "6MONTHS" && subscription.CreatedAt.AddMonths(6) > DateTime.UtcNow)
                 check = true;
         }
         if (vendorProfile.SubscriptionActive != check)

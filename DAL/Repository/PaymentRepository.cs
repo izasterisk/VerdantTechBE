@@ -61,9 +61,12 @@ public class PaymentRepository : IPaymentRepository
             if (transactions.Note is "12MONTHS" or "6MONTHS")
             {
                 var v = await _vendorProfileRepository.GetAsync
-                    (p => p.Id == transactions.UserId, true, cancellationToken);
-                v!.SubscriptionActive = true;
-                await _vendorProfileRepository.UpdateAsync(v!, cancellationToken);
+                    (p => p.UserId == transactions.UserId, true, cancellationToken);
+                if (v != null)
+                {
+                    v.SubscriptionActive = true;
+                    await _vendorProfileRepository.UpdateAsync(v, cancellationToken);
+                }
             }
             
             transactions.UpdatedAt = DateTime.UtcNow;
