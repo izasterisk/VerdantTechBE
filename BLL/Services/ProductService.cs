@@ -8,6 +8,7 @@ using AutoMapper;
 using BLL.DTO;
 using BLL.DTO.MediaLink;
 using BLL.DTO.Product;
+using BLL.DTO.ProductCertificate;
 using BLL.Interfaces;
 using DAL.Data;
 using DAL.Data.Models;
@@ -86,6 +87,7 @@ namespace BLL.Services
             dto.EnergyEfficiencyRating = entity.EnergyEfficiencyRating?.ToString();
 
             dto.Images = await LoadImagesAsDtoAsync(id, ct);
+            await LoadCertificatesAsync(dto, ct);
             return dto;
         }
 
@@ -265,6 +267,66 @@ namespace BLL.Services
                 SortOrder = img.SortOrder
             }
         };
+            }
+        }
+
+        private async Task LoadCertificatesAsync(ProductResponseDTO dto, CancellationToken ct)
+        {
+            // Load ProductCertificates theo ProductId
+            var certEntities = await _db.ProductCertificates.AsNoTracking()
+                .Where(c => c.ProductId == dto.Id)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.ProductId,
+                    c.RegistrationId,
+                    c.CertificationCode,
+                    c.CertificationName,
+                    c.Status,
+                    c.RejectionReason,
+                    c.UploadedAt,
+                    c.VerifiedAt,
+                    c.VerifiedBy,
+                    c.CreatedAt,
+                    c.UpdatedAt
+                })
+                .ToListAsync(ct);
+
+            if (certEntities.Count == 0) return;
+
+            // Load files (MediaLinks) cho mỗi certificate
+            foreach (var cert in certEntities)
+            {
+                var files = await _db.MediaLinks.AsNoTracking()
+                    .Where(m => m.OwnerType == MediaOwnerType.ProductCertificates &&
+                                m.OwnerId == cert.Id)
+                    .OrderBy(m => m.SortOrder)
+                    .Select(f => new MediaLinkItemDTO
+                    {
+                        Id = f.Id,
+                        ImagePublicId = f.ImagePublicId,
+                        ImageUrl = f.ImageUrl,
+                        Purpose = f.Purpose.ToString(),
+                        SortOrder = f.SortOrder
+                    })
+                    .ToListAsync(ct);
+
+                dto.Certificates.Add(new ProductCertificateResponseDTO
+                {
+                    Id = cert.Id,
+                    ProductId = cert.ProductId,
+                    RegistrationId = cert.RegistrationId,
+                    CertificationName = cert.CertificationName,
+                    CertificationCode = cert.CertificationCode,
+                    Status = cert.Status,
+                    RejectionReason = cert.RejectionReason,
+                    UploadedAt = cert.UploadedAt,
+                    VerifiedAt = cert.VerifiedAt,
+                    VerifiedBy = cert.VerifiedBy,
+                    CreatedAt = cert.CreatedAt,
+                    UpdatedAt = cert.UpdatedAt,
+                    Files = files
+                });
             }
         }
     

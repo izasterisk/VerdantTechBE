@@ -393,7 +393,7 @@ public class ProductRegistrationsController : BaseController
         [Consumes("multipart/form-data")]
         [EndpointSummary("Import ProductRegistrations từ file Excel")]
         [EndpointDescription("Import nhiều ProductRegistration từ file Excel. " +
-            "File Excel phải có các cột: CategoryName, ProposedProductCode, ProposedProductName, " +
+            "File Excel phải có các cột: CategoryId, ProposedProductCode, ProposedProductName, " +
             "UnitPrice, WeightKg, LengthCm, WidthCm, HeightCm và các trường tùy chọn khác. " +
             "VendorId sẽ được tự động lấy từ user đăng nhập. " +
             "Sau khi import, dùng endpoint POST /{id}/certificates để upload chứng chỉ (bắt buộc). " +
@@ -703,7 +703,7 @@ public class ProductRegistrationsController : BaseController
                 worksheet.Cells[1, 12].Value = "Specifications";
 
                 // Example row
-                worksheet.Cells[2, 1].Value = "Phân bón hữu cơ";
+                worksheet.Cells[2, 1].Value = 1;
                 worksheet.Cells[2, 2].Value = "PROD001";
                 worksheet.Cells[2, 3].Value = "Sản phẩm mẫu";
                 worksheet.Cells[2, 4].Value = "Mô tả sản phẩm";
