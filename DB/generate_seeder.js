@@ -16,7 +16,7 @@ const path = require('path');
 const MAX_WEIGHT_KG = 15.0; // Maximum weight limit
 const STOCK_QUANTITY = 10; // Stock quantity for all products
 const BATCH_QUANTITY = 10; // Batch inventory quantity
-const HIGH_VOLUME_BATCH_QUANTITY = 500; // High volume for target vendors
+const HIGH_VOLUME_BATCH_QUANTITY = 1000; // High volume for target vendors
 const SERIALS_PER_PRODUCT = 10;
 const SERIALS_PER_PRODUCT_HIGH = 100; // High volume serials
 
@@ -1046,7 +1046,10 @@ function generateOrders(products) {
     if (productSoldQuantities.size > 0) {
         sql += `-- Update product stock_quantity and sold_count after orders\n`;
         productSoldQuantities.forEach((quantitySold, productId) => {
-            const newStock = STOCK_QUANTITY - quantitySold;
+            // Find the product to get its initialStock value
+            const product = targetProducts.find(p => p.dbId === productId);
+            const initialStock = product ? product.initialStock : STOCK_QUANTITY;
+            const newStock = Math.max(0, initialStock - quantitySold); // Ensure non-negative
             sql += `UPDATE products SET stock_quantity = ${newStock}, sold_count = ${quantitySold}, updated_at = NOW() WHERE id = ${productId};\n`;
         });
         sql += '\n';
@@ -1055,7 +1058,10 @@ function generateOrders(products) {
     // Also update batch_inventory quantity
     sql += `-- Update batch_inventory quantity after export\n`;
     productSoldQuantities.forEach((quantitySold, productId) => {
-        const newBatchQty = BATCH_QUANTITY - quantitySold;
+        // Find the product to get its initialStock value
+        const product = targetProducts.find(p => p.dbId === productId);
+        const initialStock = product ? product.initialStock : BATCH_QUANTITY;
+        const newBatchQty = Math.max(0, initialStock - quantitySold); // Ensure non-negative
         sql += `UPDATE batch_inventory SET quantity = ${newBatchQty}, updated_at = NOW() WHERE product_id = ${productId};\n`;
     });
     sql += '\n';

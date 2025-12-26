@@ -60,6 +60,7 @@ public class WalletService : IWalletService
                 }
                 order.IsWalletCredited = true;
                 order.UpdatedAt = DateTime.UtcNow;
+                order.OrderDetails = null!;
             }
             foreach (var money in moneyToCredit)
             {
