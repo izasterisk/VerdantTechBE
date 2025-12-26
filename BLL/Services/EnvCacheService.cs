@@ -106,7 +106,7 @@ public class EnvCacheService : IEnvCacheService
     
     private async Task PreloadCurrentWeatherWithRetryAsync(ulong farmId, decimal lat, decimal lon)
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 3; i++)
         {
             try
             {
@@ -121,7 +121,7 @@ public class EnvCacheService : IEnvCacheService
             }
             catch
             {
-                if (i < 9)
+                if (i < 2)
                     await Task.Delay(1000);
             }
         }
@@ -129,7 +129,7 @@ public class EnvCacheService : IEnvCacheService
     
     private async Task PreloadDailyWeatherWithRetryAsync(ulong farmId, decimal lat, decimal lon)
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 3; i++)
         {
             try
             {
@@ -144,7 +144,7 @@ public class EnvCacheService : IEnvCacheService
             }
             catch
             {
-                if (i < 9)
+                if (i < 2)
                     await Task.Delay(1000);
             }
         }
@@ -152,7 +152,7 @@ public class EnvCacheService : IEnvCacheService
     
     private async Task PreloadHourlyWeatherWithRetryAsync(ulong farmId, decimal lat, decimal lon)
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 3; i++)
         {
             try
             {
@@ -167,7 +167,7 @@ public class EnvCacheService : IEnvCacheService
             }
             catch
             {
-                if (i < 9)
+                if (i < 2)
                     await Task.Delay(1000);
             }
         }
@@ -175,7 +175,7 @@ public class EnvCacheService : IEnvCacheService
     
     private async Task PreloadHistoricalWeatherWithRetryAsync(ulong farmId, decimal lat, decimal lon)
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 3; i++)
         {
             try
             {
@@ -193,7 +193,7 @@ public class EnvCacheService : IEnvCacheService
             }
             catch
             {
-                if (i < 9)
+                if (i < 2)
                     await Task.Delay(1000);
             }
         }
@@ -201,7 +201,7 @@ public class EnvCacheService : IEnvCacheService
     
     private async Task PreloadSoilWithRetryAsync(ulong farmId, decimal lat, decimal lon)
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 3; i++)
         {
             try
             {
@@ -216,7 +216,7 @@ public class EnvCacheService : IEnvCacheService
             }
             catch
             {
-                if (i < 9)
+                if (i < 2)
                     await Task.Delay(1000);
             }
         }

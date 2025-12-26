@@ -149,4 +149,45 @@ public static class WeatherHelper
                $"current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,wind_gusts_10m,uv_index,soil_moisture_0_to_1cm,soil_moisture_3_to_9cm,soil_temperature_0cm&" +
                $"timezone={timezone}";
     }
+
+    /// <summary>
+    /// Thực thi một async operation với retry logic (tối đa 3 lần thử)
+    /// </summary>
+    /// <typeparam name="T">Kiểu dữ liệu trả về</typeparam>
+    /// <param name="operation">Operation cần thực thi</param>
+    /// <param name="maxAttempts">Số lần thử tối đa (mặc định là 3)</param>
+    /// <param name="delayMilliseconds">Thời gian chờ giữa các lần thử (mặc định là 500ms)</param>
+    /// <returns>Kết quả của operation</returns>
+    /// <exception cref="Exception">Ném exception của lần thử cuối cùng nếu tất cả đều thất bại</exception>
+    public static async Task<T> ExecuteWithRetryAsync<T>(
+        Func<Task<T>> operation, 
+        int maxAttempts = 3, 
+        int delayMilliseconds = 500)
+    {
+        Exception? lastException = null;
+        
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                return await operation();
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                
+                // Nếu đây là lần thử cuối cùng, throw exception
+                if (attempt == maxAttempts)
+                {
+                    throw;
+                }
+                
+                // Chờ trước khi thử lại
+                await Task.Delay(delayMilliseconds);
+            }
+        }
+        
+        // Trường hợp này không bao giờ xảy ra do logic ở trên, nhưng cần để compiler hài lòng
+        throw lastException ?? new InvalidOperationException("Retry operation failed without exception");
+    }
 }
