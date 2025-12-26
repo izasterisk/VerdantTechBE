@@ -66,7 +66,7 @@ public class ProductRegistrationImportService
 
         // Validate all rows first (fail-fast approach)
         var validationErrors = new List<(int rowIndex, string error)>();
-        var validDtos = new List<(int rowIndex, ProductRegistrationCreateDTO dto)>();
+        var validDtos = new List<(int rowIndex, ProductRegistrationCreateDTO dto, string categoryName)>();
 
         for (int i = 0; i < rows.Count; i++)
         {
@@ -75,10 +75,12 @@ public class ProductRegistrationImportService
 
             try
             {
-                var dto = ParseRowToDto(row, rowNumber);
+                var parsed = ParseRowToDto(row, rowNumber);
+                var dto = parsed.dto;
+                var categoryName = parsed.categoryName;
                 dto.VendorId = vendorId; // Set VendorId từ user đăng nhập
                 
-                validDtos.Add((i, dto));
+                validDtos.Add((i, dto, categoryName));
             }
             catch (Exception ex)
             {
@@ -102,23 +104,52 @@ public class ProductRegistrationImportService
             return response;
         }
 
-        // Cache categories để tránh query nhiều lần (tối ưu performance)
-        var categoryIds = validDtos.Select(d => d.dto.CategoryId).Distinct().ToList();
-        var categoryCache = await _db.ProductCategories
-            .Where(c => categoryIds.Contains(c.Id))
-            .ToDictionaryAsync(c => c.Id, ct);
+        // Tra cứu Category theo tên để tránh nhập ID
+        var distinctCategoryNames = validDtos
+            .Select(d => d.categoryName.Trim())
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
-        // Validate categories từ cache
-        foreach (var (rowIndex, dto) in validDtos)
+        var categories = await _db.ProductCategories
+            .Where(c => distinctCategoryNames.Contains(c.Name))
+            .Select(c => new { c.Id, c.Name, c.ParentId })
+            .ToListAsync(ct);
+
+        var categoryLookup = categories
+            .GroupBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+
+        // Validate category theo tên và gán CategoryId vào DTO
+        foreach (var (rowIndex, dto, categoryName) in validDtos)
         {
-            if (!categoryCache.TryGetValue(dto.CategoryId, out var category))
+            var name = categoryName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(name))
             {
-                validationErrors.Add((rowIndex, $"Category với ID {dto.CategoryId} không tồn tại."));
+                validationErrors.Add((rowIndex, $"Dòng {rowIndex + 2}: CategoryName là bắt buộc."));
+                continue;
             }
-            else if (category.ParentId == null)
+
+            if (!categoryLookup.TryGetValue(name, out var matches) || matches.Count == 0)
             {
-                validationErrors.Add((rowIndex, $"Category với ID {dto.CategoryId} là parent category, không thể sử dụng."));
+                validationErrors.Add((rowIndex, $"Dòng {rowIndex + 2}: Không tìm thấy category với tên '{name}'."));
+                continue;
             }
+
+            if (matches.Count > 1)
+            {
+                validationErrors.Add((rowIndex, $"Dòng {rowIndex + 2}: Tìm thấy nhiều category trùng tên '{name}'. Vui lòng dùng tên duy nhất."));
+                continue;
+            }
+
+            var category = matches[0];
+            if (category.ParentId == null)
+            {
+                validationErrors.Add((rowIndex, $"Dòng {rowIndex + 2}: Category '{name}' là parent category, không thể sử dụng."));
+                continue;
+            }
+
+            dto.CategoryId = category.Id;
         }
 
         // Nếu có lỗi validation category, return
@@ -150,7 +181,7 @@ public class ProductRegistrationImportService
             await using var transaction = await _db.Database.BeginTransactionAsync(ct);
             try
             {
-                foreach (var (rowIndex, dto) in batch)
+                foreach (var (rowIndex, dto, _) in batch)
                 {
                     var rowNumber = rowIndex + 2;
                     var result = new ProductRegistrationImportRowResultDTO
@@ -187,7 +218,7 @@ public class ProductRegistrationImportService
             {
                 await transaction.RollbackAsync(ct);
                 // Đánh dấu tất cả rows trong batch này là failed nếu chưa có result
-                foreach (var (rowIndex, _) in batch)
+                foreach (var (rowIndex, _, _) in batch)
                 {
                     var existingResult = response.Results.FirstOrDefault(r => r.RowNumber == rowIndex + 2);
                     if (existingResult != null && existingResult.IsSuccess)
@@ -208,7 +239,7 @@ public class ProductRegistrationImportService
         return response;
     }
 
-    private ProductRegistrationCreateDTO ParseRowToDto(Dictionary<string, string> row, int rowNumber)
+    private (ProductRegistrationCreateDTO dto, string categoryName) ParseRowToDto(Dictionary<string, string> row, int rowNumber)
     {
         // Parse dimensions first since it's required
         if (!row.TryGetValue("LengthCm", out var lengthStr) || string.IsNullOrWhiteSpace(lengthStr))
@@ -244,14 +275,8 @@ public class ProductRegistrationImportService
 
         // Required fields
         // VendorId sẽ được tự động lấy từ user đăng nhập, không cần nhập trong Excel
-
-        if (!row.TryGetValue("CategoryId", out var categoryIdStr) || string.IsNullOrWhiteSpace(categoryIdStr))
-            throw new InvalidOperationException($"Dòng {rowNumber}: CategoryId là bắt buộc.");
-
-        if (!ExcelHelper.ParseValue<ulong>(categoryIdStr).HasValue)
-            throw new InvalidOperationException($"Dòng {rowNumber}: CategoryId không hợp lệ.");
-
-        dto.CategoryId = ExcelHelper.ParseValue<ulong>(categoryIdStr)!.Value;
+        if (!row.TryGetValue("CategoryName", out var categoryNameStr) || string.IsNullOrWhiteSpace(categoryNameStr))
+            throw new InvalidOperationException($"Dòng {rowNumber}: CategoryName là bắt buộc.");
 
         if (!row.TryGetValue("ProposedProductCode", out var code) || string.IsNullOrWhiteSpace(code))
             throw new InvalidOperationException($"Dòng {rowNumber}: ProposedProductCode là bắt buộc.");
@@ -336,7 +361,7 @@ public class ProductRegistrationImportService
         if (dto.CertificationCode.Count != dto.CertificationName.Count)
             throw new InvalidOperationException($"Dòng {rowNumber}: Số lượng CertificationCode và CertificationName phải bằng nhau.");
 
-        return dto;
+        return (dto, categoryNameStr.Trim());
     }
 }
 
