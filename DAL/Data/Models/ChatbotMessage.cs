@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 namespace DAL.Data.Models;
 
@@ -14,7 +15,8 @@ public partial class ChatbotMessage
     public MessageType MessageType { get; set; }
 
     [Required]
-    public Dictionary<string, object> MessageText { get; set; } = new Dictionary<string, object>();
+    //public Dictionary<string, object> MessageText { get; set; } = new Dictionary<string, object>();
+    public string MessageText { get; set; } = "{}";
 
     public DateTime CreatedAt { get; set; }
 

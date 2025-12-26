@@ -339,8 +339,8 @@ namespace BLL.Helpers
                 .ForMember(d => d.ImagePublicId, o => o.MapFrom(s => s.ImagePublicId));
             
             // ===================== CHATBOT =====================
-            CreateMap<ChatbotConversation, ChatbotConversationsResponseDTO>().ReverseMap();
-            CreateMap<ChatbotMessage, ChatbotMessagesResponseDTO>().ReverseMap();
+            CreateMap<ChatbotConversation, ChatbotConversationsResponseDTO>();
+            CreateMap<ChatbotMessage, ChatbotMessagesResponseDTO>();
             
             // ===================== CUSTOMER VENDOR CONVERSATIONS =====================
             CreateMap<CustomerVendorConversation, CustomerVendorConversationReponseDTO>().ReverseMap();
