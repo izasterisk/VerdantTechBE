@@ -377,7 +377,7 @@ function generateVendorData() {
 
     const walletRows = [];
     for (let i = 1; i <= 20; i++) {
-        walletRows.push(`(${i}, ${16 + i}, 10000000.00, 1, NOW(), NOW())`);
+        walletRows.push(`(${i}, ${16 + i}, 0.00, 1, NOW(), NOW())`);
     }
     sql += walletRows.join(',\n') + ';\n\n';
 
@@ -781,6 +781,8 @@ function generateOrders(products) {
     // Track serial usage per product
     const serialUsage = new Map(); // productId -> next available serial index
 
+
+
     // Track remaining stock per product (start with logic based assigned stock)
     const remainingStock = new Map(); // productId -> remaining quantity
     targetProducts.forEach(p => remainingStock.set(p.dbId, p.initialStock || BATCH_QUANTITY));
@@ -890,7 +892,7 @@ function generateOrders(products) {
                 height: 20,
                 length: 40,
                 weight: 1000,
-                isWalletCredited: 1,
+                isWalletCredited: 0,
                 createdAt: formatDateTime(orderDate),
                 confirmedAt: formatDateTime(confirmedAt),
                 shippedAt: formatDateTime(shippedAt),
@@ -949,8 +951,10 @@ function generateOrders(products) {
                 }
             });
 
-            // Create transaction (PayOS - banking)
+            // Create transaction (PayOS - banking) - Payment IN from customer
             const gatewayPaymentId = Date.now() + orderId;
+            const processedDateStr = formatDateTime(confirmedAt);
+
             transactions.push({
                 id: transactionId,
                 transactionType: 'payment_in',
@@ -963,7 +967,7 @@ function generateOrders(products) {
                 gatewayPaymentId: gatewayPaymentId.toString(),
                 createdBy: customerId,
                 processedBy: 2,
-                processedAt: formatDateTime(confirmedAt)
+                processedAt: processedDateStr
             });
 
             // Create payment
@@ -998,12 +1002,13 @@ function generateOrders(products) {
     sql += detailRows.join(',\n') + ';\n\n';
 
     // Generate SQL for transactions
-    sql += `-- Insert Transactions (PayOS payments)\n`;
+    sql += `-- Insert Transactions (PayOS payments & Wallet Topups)\n`;
     sql += `INSERT INTO transactions (id, transaction_type, amount, currency, user_id, order_id, status, note, gateway_payment_id, created_by, processed_by, processed_at, created_at, updated_at) VALUES\n`;
 
-    const transRows = transactions.map(t =>
-        `(${t.id}, '${t.transactionType}', ${t.amount}, '${t.currency}', ${t.userId}, ${t.orderId}, '${t.status}', '${escapeSQL(t.note)}', '${t.gatewayPaymentId}', ${t.createdBy}, ${t.processedBy}, '${t.processedAt}', '${t.processedAt}', '${t.processedAt}')`
-    );
+    const transRows = transactions.map(t => {
+        const gwParam = t.gatewayPaymentId === 'NULL' ? 'NULL' : `'${t.gatewayPaymentId}'`;
+        return `(${t.id}, '${t.transactionType}', ${t.amount}, '${t.currency}', ${t.userId}, ${t.orderId}, '${t.status}', '${escapeSQL(t.note)}', ${gwParam}, ${t.createdBy}, ${t.processedBy}, '${t.processedAt}', '${t.processedAt}', '${t.processedAt}')`;
+    });
     sql += transRows.join(',\n') + ';\n\n';
 
     // Generate SQL for payments
@@ -1054,6 +1059,8 @@ function generateOrders(products) {
         sql += `UPDATE batch_inventory SET quantity = ${newBatchQty}, updated_at = NOW() WHERE product_id = ${productId};\n`;
     });
     sql += '\n';
+
+
 
     console.log(`✅ Generated ${orders.length} orders, ${orderDetails.length} order details, ${transactions.length} transactions, ${exportInventories.length} export records`);
     console.log(`   Updated stock for ${productSoldQuantities.size} products`);
@@ -1331,7 +1338,7 @@ const oldDataSQL = getOldSEEDERParts();
 
 // Read base SEEDER (with farms, users, etc.)
 const backupPath = path.join(__dirname, 'SEEDER_BACKUP.sql');
-const baseSEEDER = fs.readFileSync(backupPath, { encoding: 'utf8' });
+const baseSEEDER = fs.readFileSync(backupPath, { encoding: 'utf8' }).replace(/^\uFEFF/, '');
 
 // Combine all SQL in correct order
 let finalSQL = baseSEEDER;
@@ -1346,6 +1353,9 @@ finalSQL += ordersSQL;              // Orders, Order Details, Transactions, Paym
 finalSQL += vendorTransSQL;         // Vendor Maintenance Transactions
 finalSQL += reviewsSQL;             // Product Reviews
 finalSQL += oldDataSQL;             // Forum + Chatbot
+
+// Add Safe Update Mode toggle
+finalSQL = 'SET SQL_SAFE_UPDATES = 0;\n\n' + finalSQL + '\nSET SQL_SAFE_UPDATES = 1;\n';
 
 // Write to file
 const outputPath = path.join(__dirname, 'SEEDER.sql');
