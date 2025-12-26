@@ -1,4 +1,5 @@
 ﻿using BLL.DTO.MediaLink;
+using BLL.DTO.ProductCertificate;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -39,6 +40,8 @@ namespace BLL.DTO.Product
         public string? PublicUrl { get; set; }
 
         public List<MediaLinkItemDTO> Images { get; set; } = new();
+
+        public List<ProductCertificateResponseDTO> Certificates { get; set; } = new();
 
         public int WarrantyMonths { get; set; } = 12;
 
