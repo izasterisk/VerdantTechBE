@@ -16,9 +16,11 @@ const path = require('path');
 const MAX_WEIGHT_KG = 15.0; // Maximum weight limit
 const STOCK_QUANTITY = 10; // Stock quantity for all products
 const BATCH_QUANTITY = 10; // Batch inventory quantity
-const SERIALS_PER_PRODUCT = 10; // Number of serials per product (for serial-required categories)
+const HIGH_VOLUME_BATCH_QUANTITY = 500; // High volume for target vendors
+const SERIALS_PER_PRODUCT = 10;
+const SERIALS_PER_PRODUCT_HIGH = 100; // High volume serials
 
-// Customer IDs that can place orders (verified and active customers)
+// Customer IDs 
 const CUSTOMER_IDS = [7, 8, 9, 10, 13, 14, 15, 16];
 
 // Address IDs that customers can use for shipping
@@ -33,9 +35,9 @@ const CUSTOMER_ADDRESS_MAP = {
     16: 29  // farmer6 -> address 29
 };
 
-// Date range for orders: Nov 1, 2025 to Dec 11, 2025
-const ORDER_START_DATE = new Date('2025-11-01');
-const ORDER_END_DATE = new Date('2025-12-11');
+// Date range for orders: Jan 1, 2025 to Dec 26, 2025
+const ORDER_START_DATE = new Date('2025-01-01');
+const ORDER_END_DATE = new Date('2025-12-26');
 
 // =====================================================
 // HELPER FUNCTIONS
@@ -272,7 +274,8 @@ function getEnergyEfficiencyRating(productName) {
 
 function parseCSV() {
     console.log('📖 Reading CSV file...');
-    const csvContent = fs.readFileSync('Products_v2.csv', 'utf8');
+    const csvPath = path.join(__dirname, 'Products_v2.csv');
+    const csvContent = fs.readFileSync(csvPath, 'utf8');
     const lines = csvContent.split('\n');
     const products = [];
 
@@ -478,7 +481,7 @@ function generateCategories(products) {
 function generateProducts(products, categoryMap) {
     console.log('📦 Generating products...');
 
-    let sql = `-- Insert Products (${products.length} products, price=5000, commission_rate=10%, stock=${STOCK_QUANTITY})\n`;
+    let sql = `-- Insert Products (${products.length} products, price=random(5k-50k), commission_rate=10%, stock=${STOCK_QUANTITY})\n`;
     sql += `INSERT INTO products (id, category_id, vendor_id, product_code, product_name, slug, description, unit_price, commission_rate, discount_percentage, energy_efficiency_rating, specifications, manual_urls, public_url, warranty_months, stock_quantity, weight_kg, dimensions_cm, is_active, view_count, sold_count, rating_average, registration_id, created_at, updated_at) VALUES\n`;
 
     const rows = [];
@@ -522,7 +525,11 @@ function generateProducts(products, categoryMap) {
             vendorId++;
         }
 
-        rows.push(`(${productId}, ${categoryDbId}, ${vendorId}, '${productCode}', '${escapeSQL(p.productName)}', '${slug}', 'Sản phẩm ${escapeSQL(p.productName)} chất lượng cao', 5000.00, 10.00, 0.00, ${energyRating}, "${specs}", NULL, NULL, ${warranty}, ${STOCK_QUANTITY}, ${weight}, "${dimensions}", 1, 0, 0, 0.00, NULL, NOW(), NOW())`);
+        // Random price between 5000 and 50000, rounded to hundreds
+        const price = Math.floor(Math.random() * (50000 - 5000 + 1) + 5000);
+        const roundedPrice = Math.round(price / 100) * 100;
+
+        rows.push(`(${productId}, ${categoryDbId}, ${vendorId}, '${productCode}', '${escapeSQL(p.productName)}', '${slug}', 'Sản phẩm ${escapeSQL(p.productName)} chất lượng cao', ${roundedPrice}.00, 10.00, 0.00, ${energyRating}, "${specs}", NULL, NULL, ${warranty}, ${STOCK_QUANTITY}, ${weight}, "${dimensions}", 1, 0, 0, 0.00, NULL, NOW(), NOW())`);
 
         p.dbId = productId;
         p.vendorId = vendorId;
@@ -530,7 +537,7 @@ function generateProducts(products, categoryMap) {
         p.categoryName = categoryName; // Store category name for serial checking
         p.productId = productId; // Store product ID as well
         p.weight = parseFloat(weight);
-        p.unitPrice = 5000.00;
+        p.unitPrice = roundedPrice;
         productId++;
     });
 
@@ -666,7 +673,14 @@ function generateBatchInventory(products) {
         const sku = `SKU-${p.dbId.toString().padStart(4, '0')}`;
         const batchNum = `BATCH${(index + 1).toString().padStart(4, '0')}`;
         const lotNum = `LOT${(index + 1).toString().padStart(4, '0')}`;
-        const unitCost = '900.00'; // Cost = 900, selling price = 5000
+        const unitCost = (p.unitPrice * 0.6).toFixed(2); // Cost = 60% of selling price
+
+        // Determine quantity based on vendor
+        // Vendor 1 (17) and Vendor 2 (18) get high volume
+        let quantity = BATCH_QUANTITY;
+        if (p.vendorId === 17 || p.vendorId === 18) {
+            quantity = HIGH_VOLUME_BATCH_QUANTITY;
+        }
 
         // Expiry date only for fertilizers, seeds, chemicals
         let expiryDate = 'NULL';
@@ -677,10 +691,17 @@ function generateBatchInventory(products) {
         // Store lot number for order generation
         p.lotNumber = lotNum;
 
-        rows.push(`(${batchId}, ${p.dbId}, '${sku}', ${p.vendorId}, '${batchNum}', '${lotNum}', ${BATCH_QUANTITY}, ${unitCost}, ${expiryDate}, '2025-01-01', 'Nhập kho đợt đầu', NOW(), NOW())`);
+        // Set initial stock in memory for order generation
+        p.initialStock = quantity;
+
+        rows.push(`(${batchId}, ${p.dbId}, '${sku}', ${p.vendorId}, '${batchNum}', '${lotNum}', ${quantity}, ${unitCost}, ${expiryDate}, '2025-01-01', 'Nhập kho đợt đầu', NOW(), NOW())`);
     });
 
     sql += rows.join(',\n') + ';\n\n';
+
+    // Update products stock_quantity to match initial batch inventory
+    sql += `-- Update products stock_quantity to match batch inventory\n`;
+    sql += `UPDATE products p JOIN batch_inventory b ON p.id = b.product_id SET p.stock_quantity = b.quantity;\n\n`;
 
     // Product serials for categories that require serial numbers
     const serialRequiredProducts = products.filter(p => {
@@ -702,8 +723,14 @@ function generateBatchInventory(products) {
             // Store serials for order generation
             p.serials = [];
 
+            // Determine serial count based on vendor
+            let serialCount = SERIALS_PER_PRODUCT;
+            if (p.vendorId === 17 || p.vendorId === 18) {
+                serialCount = SERIALS_PER_PRODUCT_HIGH;
+            }
+
             // Generate serials per product (all status = 'stock')
-            for (let i = 1; i <= SERIALS_PER_PRODUCT; i++) {
+            for (let i = 1; i <= serialCount; i++) {
                 const serialNum = `SN-${p.dbId.toString().padStart(4, '0')}-${i.toString().padStart(3, '0')}`;
                 p.serials.push({ id: serialId, serialNumber: serialNum });
                 serialRows.push(`(${serialId}, ${p.dbId}, ${p.dbId}, '${serialNum}', 'stock', NOW(), NOW())`);
@@ -754,181 +781,202 @@ function generateOrders(products) {
     // Track serial usage per product
     const serialUsage = new Map(); // productId -> next available serial index
 
-    // Track remaining stock per product (start with STOCK_QUANTITY)
+    // Track remaining stock per product (start with logic based assigned stock)
     const remainingStock = new Map(); // productId -> remaining quantity
-    targetProducts.forEach(p => remainingStock.set(p.dbId, STOCK_QUANTITY));
+    targetProducts.forEach(p => remainingStock.set(p.dbId, p.initialStock || BATCH_QUANTITY));
 
-    // Generate 60 orders
-    for (let i = 0; i < 60; i++) {
-        const customerId = getRandomElement(CUSTOMER_IDS);
-        const addressId = CUSTOMER_ADDRESS_MAP[customerId];
-        const orderDate = getRandomDate(ORDER_START_DATE, ORDER_END_DATE);
+    // Generate orders for each month of 2025
+    const startDate = new Date(ORDER_START_DATE);
+    const endDate = new Date(ORDER_END_DATE);
 
-        // Random number of products per order (1-3)
-        const numProducts = Math.floor(Math.random() * 3) + 1;
-        const selectedProducts = [];
-        const usedProductIds = new Set();
+    // Loop through each month from Jan to Dec 2025
+    for (let month = 0; month < 12; month++) {
+        // Calculate month range
+        const monthStart = new Date(2025, month, 1);
+        const monthEnd = new Date(2025, month + 1, 0); // Last day of month
 
-        // Get products that still have stock
-        const availableProducts = targetProducts.filter(p => remainingStock.get(p.dbId) > 0);
+        // Ensure we don't exceed global end date
+        if (monthStart > endDate) break;
+        const effectiveEnd = monthEnd > endDate ? endDate : monthEnd;
 
-        if (availableProducts.length === 0) {
-            console.log(`   Order ${i + 1}: No products available in stock, skipping...`);
-            continue;
-        }
+        // Generate at least 30 orders per month
+        const ordersInMonth = 30 + Math.floor(Math.random() * 10); // 30-40 orders
 
-        for (let j = 0; j < numProducts && j < availableProducts.length; j++) {
-            let product;
-            let attempts = 0;
-            do {
-                product = getRandomElement(availableProducts);
-                attempts++;
-            } while ((usedProductIds.has(product.dbId) || remainingStock.get(product.dbId) <= 0) && attempts < 20);
+        console.log(`   Generating ${ordersInMonth} orders for Month ${month + 1}/2025...`);
 
-            if (!usedProductIds.has(product.dbId) && remainingStock.get(product.dbId) > 0) {
-                usedProductIds.add(product.dbId);
-                selectedProducts.push(product);
-                // Decrease remaining stock
-                remainingStock.set(product.dbId, remainingStock.get(product.dbId) - 1);
+        for (let i = 0; i < ordersInMonth; i++) {
+            const customerId = getRandomElement(CUSTOMER_IDS);
+            const addressId = CUSTOMER_ADDRESS_MAP[customerId];
+            const orderDate = getRandomDate(monthStart, effectiveEnd);
+
+            // Random number of products per order (1-5)
+            const numProducts = Math.floor(Math.random() * 5) + 1;
+            const selectedProducts = [];
+            const usedProductIds = new Set();
+
+            // Get products that still have stock
+            const availableProducts = targetProducts.filter(p => remainingStock.get(p.dbId) > 0);
+
+            if (availableProducts.length === 0) {
+                console.log(`   Month ${month + 1}: No products available in stock, skipping order...`);
+                break; // Stop generating for this month if no stock
             }
-        }
 
-        if (selectedProducts.length === 0) continue;
+            for (let j = 0; j < numProducts; j++) {
+                if (availableProducts.length === 0) break;
 
-        // Calculate order totals
-        let subtotal = 0;
-        const orderDetailItems = [];
+                let product;
+                let attempts = 0;
+                do {
+                    product = getRandomElement(availableProducts);
+                    attempts++;
+                } while ((usedProductIds.has(product.dbId) || remainingStock.get(product.dbId) <= 0) && attempts < 20);
 
-        selectedProducts.forEach(product => {
-            const quantity = 1; // Each order has quantity 1 per product
-            const unitPrice = product.unitPrice || 5000.00;
-            const lineSubtotal = unitPrice * quantity;
-            subtotal += lineSubtotal;
+                if (!usedProductIds.has(product.dbId) && remainingStock.get(product.dbId) > 0) {
+                    usedProductIds.add(product.dbId);
+                    selectedProducts.push(product);
+                    // Decrease remaining stock
+                    remainingStock.set(product.dbId, remainingStock.get(product.dbId) - 1);
+                }
+            }
 
-            orderDetailItems.push({
-                orderDetailId: orderDetailId,
-                productId: product.dbId,
-                quantity: quantity,
-                unitPrice: unitPrice,
-                subtotal: lineSubtotal,
-                product: product
+            if (selectedProducts.length === 0) continue;
+
+            // Calculate order totals
+            let subtotal = 0;
+            const orderDetailItems = [];
+
+            selectedProducts.forEach(product => {
+                const quantity = 1; // Each order has quantity 1 per product
+                const unitPrice = product.unitPrice || 5000.00;
+                const lineSubtotal = unitPrice * quantity;
+                subtotal += lineSubtotal;
+
+                orderDetailItems.push({
+                    orderDetailId: orderDetailId,
+                    productId: product.dbId,
+                    quantity: quantity,
+                    unitPrice: unitPrice,
+                    subtotal: lineSubtotal,
+                    product: product
+                });
+                orderDetailId++;
             });
-            orderDetailId++;
-        });
 
-        const shippingFee = 30000; // Fixed shipping fee
-        const totalAmount = subtotal + shippingFee;
+            const shippingFee = 30000; // Fixed shipping fee
+            const totalAmount = subtotal + shippingFee;
 
-        // Calculate dates
-        const confirmedAt = new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000); // +1 day
-        const shippedAt = new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
-        const deliveredAt = new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000); // +5 days
+            // Calculate dates
+            const confirmedAt = new Date(orderDate.getTime() + 1 * 24 * 60 * 60 * 1000); // +1 day
+            const shippedAt = new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
+            const deliveredAt = new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000); // +5 days
 
-        // Create order
-        orders.push({
-            id: orderId,
-            customerId: customerId,
-            status: 'delivered',
-            subtotal: subtotal.toFixed(2),
-            taxAmount: '0.00',
-            shippingFee: shippingFee.toFixed(2),
-            discountAmount: '0.00',
-            totalAmount: totalAmount.toFixed(2),
-            addressId: addressId,
-            orderPaymentMethod: 'banking',
-            shippingMethod: 'GHTK Express',
-            trackingNumber: `VT${orderId.toString().padStart(10, '0')}`,
-            courierId: 1,
-            width: 30,
-            height: 20,
-            length: 40,
-            weight: 1000,
-            isWalletCredited: 1,
-            createdAt: formatDateTime(orderDate),
-            confirmedAt: formatDateTime(confirmedAt),
-            shippedAt: formatDateTime(shippedAt),
-            deliveredAt: formatDateTime(deliveredAt)
-        });
-
-        // Create order details
-        orderDetailItems.forEach(item => {
-            orderDetails.push({
-                id: item.orderDetailId,
-                orderId: orderId,
-                productId: item.productId,
-                quantity: item.quantity,
-                unitPrice: item.unitPrice.toFixed(2),
+            // Create order
+            orders.push({
+                id: orderId,
+                customerId: customerId,
+                status: 'delivered',
+                subtotal: subtotal.toFixed(2),
+                taxAmount: '0.00',
+                shippingFee: shippingFee.toFixed(2),
                 discountAmount: '0.00',
-                subtotal: item.subtotal.toFixed(2),
-                isRefunded: 0
+                totalAmount: totalAmount.toFixed(2),
+                addressId: addressId,
+                orderPaymentMethod: 'banking',
+                shippingMethod: 'GHTK Express',
+                trackingNumber: `VT${orderId.toString().padStart(10, '0')}`,
+                courierId: 1,
+                width: 30,
+                height: 20,
+                length: 40,
+                weight: 1000,
+                isWalletCredited: 1,
+                createdAt: formatDateTime(orderDate),
+                confirmedAt: formatDateTime(confirmedAt),
+                shippedAt: formatDateTime(shippedAt),
+                deliveredAt: formatDateTime(deliveredAt)
             });
 
-            // Create export inventory
-            const product = item.product;
-            const isSerialRequired = product.categoryName && requiresSerial(product.categoryName);
+            // Create order details
+            orderDetailItems.forEach(item => {
+                orderDetails.push({
+                    id: item.orderDetailId,
+                    orderId: orderId,
+                    productId: item.productId,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice.toFixed(2),
+                    discountAmount: '0.00',
+                    subtotal: item.subtotal.toFixed(2),
+                    isRefunded: 0
+                });
 
-            if (isSerialRequired && product.serials && product.serials.length > 0) {
-                // Get next available serial
-                let serialIdx = serialUsage.get(product.dbId) || 0;
-                if (serialIdx < product.serials.length) {
-                    const serial = product.serials[serialIdx];
-                    serialUsage.set(product.dbId, serialIdx + 1);
+                // Create export inventory
+                const product = item.product;
+                const isSerialRequired = product.categoryName && requiresSerial(product.categoryName);
 
+                if (isSerialRequired && product.serials && product.serials.length > 0) {
+                    // Get next available serial
+                    let serialIdx = serialUsage.get(product.dbId) || 0;
+                    if (serialIdx < product.serials.length) {
+                        const serial = product.serials[serialIdx];
+                        serialUsage.set(product.dbId, serialIdx + 1);
+
+                        exportInventories.push({
+                            id: exportId,
+                            productId: product.dbId,
+                            productSerialId: serial.id,
+                            lotNumber: product.lotNumber,
+                            orderDetailId: item.orderDetailId,
+                            quantity: 1,
+                            movementType: 'sale',
+                            createdBy: 2 // staff1
+                        });
+                        exportId++;
+                    }
+                } else {
+                    // No serial required
                     exportInventories.push({
                         id: exportId,
                         productId: product.dbId,
-                        productSerialId: serial.id,
+                        productSerialId: 'NULL',
                         lotNumber: product.lotNumber,
                         orderDetailId: item.orderDetailId,
-                        quantity: 1,
+                        quantity: item.quantity,
                         movementType: 'sale',
                         createdBy: 2 // staff1
                     });
                     exportId++;
                 }
-            } else {
-                // No serial required
-                exportInventories.push({
-                    id: exportId,
-                    productId: product.dbId,
-                    productSerialId: 'NULL',
-                    lotNumber: product.lotNumber,
-                    orderDetailId: item.orderDetailId,
-                    quantity: item.quantity,
-                    movementType: 'sale',
-                    createdBy: 2 // staff1
-                });
-                exportId++;
-            }
-        });
+            });
 
-        // Create transaction (PayOS - banking)
-        const gatewayPaymentId = Date.now() + orderId;
-        transactions.push({
-            id: transactionId,
-            transactionType: 'payment_in',
-            amount: totalAmount.toFixed(2),
-            currency: 'VND',
-            userId: customerId,
-            orderId: orderId,
-            status: 'completed',
-            note: `Thanh toán đơn hàng #${orderId} qua PayOS`,
-            gatewayPaymentId: gatewayPaymentId.toString(),
-            createdBy: customerId,
-            processedBy: 2,
-            processedAt: formatDateTime(confirmedAt)
-        });
+            // Create transaction (PayOS - banking)
+            const gatewayPaymentId = Date.now() + orderId;
+            transactions.push({
+                id: transactionId,
+                transactionType: 'payment_in',
+                amount: totalAmount.toFixed(2),
+                currency: 'VND',
+                userId: customerId,
+                orderId: orderId,
+                status: 'completed',
+                note: `Thanh toán đơn hàng #${orderId} qua PayOS`,
+                gatewayPaymentId: gatewayPaymentId.toString(),
+                createdBy: customerId,
+                processedBy: 2,
+                processedAt: formatDateTime(confirmedAt)
+            });
 
-        // Create payment
-        payments.push({
-            id: transactionId,
-            transactionId: transactionId,
-            paymentMethod: 'payos',
-            paymentGateway: 'payos'
-        });
+            // Create payment
+            payments.push({
+                id: transactionId,
+                transactionId: transactionId,
+                paymentMethod: 'payos',
+                paymentGateway: 'payos'
+            });
 
-        transactionId++;
-        orderId++;
+            transactionId++;
+            orderId++;
+        }
     }
 
     // Generate SQL for orders
@@ -1160,6 +1208,51 @@ function generateProductReviews(orderDetails, orders) {
     return sql;
 }
 
+
+
+function generateVendorTransactions() {
+    console.log('💰 Generating vendor maintenance fee transactions...');
+
+    let sql = `-- =====================================================\n`;
+    sql += `-- 8. VENDOR TRANSACTIONS (Maintenance Fee)\n`;
+    sql += `-- =====================================================\n\n`;
+
+    sql += `-- Insert Vendor Maintenance Transactions (20 vendors, 1/12/2025)\n`;
+
+    // Check if we need to insert generic transactions
+    // Assuming 'transactions' table is shared, just insert directly with transaction_type='vendor_subscription'
+    sql += `INSERT INTO transactions (id, transaction_type, amount, currency, user_id, order_id, status, note, gateway_payment_id, created_by, processed_by, processed_at, created_at, updated_at) VALUES\n`;
+
+    const transactionRows = [];
+    const paymentRows = [];
+
+    // Start IDs after existing transactions. 
+    // Assuming safe start for vendor transactions is 5000.
+
+    let transactionId = 5000;
+    const processDate = '2025-12-01 00:00:00';
+
+    for (let i = 1; i <= 20; i++) {
+        const vendorUserId = 16 + i; // Vendor users 17-36
+        const gatewayPaymentId = `SUB-${vendorUserId}-20251201`;
+
+        transactionRows.push(`(${transactionId}, 'vendor_subscription', 5000.00, 'VND', ${vendorUserId}, NULL, 'completed', '6MONTHS', '${gatewayPaymentId}', ${vendorUserId}, 1, '${processDate}', '${processDate}', '${processDate}')`);
+
+        paymentRows.push(`(${transactionId}, ${transactionId}, 'payos', 'payos', '{}', '${processDate}', '${processDate}')`);
+
+        transactionId++;
+    }
+
+    sql += transactionRows.join(',\n') + ';\n\n';
+
+    sql += `-- Insert Payments for Vendor Subscriptions\n`;
+    sql += `INSERT INTO payments (id, transaction_id, payment_method, payment_gateway, gateway_response, created_at, updated_at) VALUES\n`;
+    sql += paymentRows.join(',\n') + ';\n\n';
+
+    console.log(`✅ Generated 20 vendor maintenance transactions`);
+    return sql;
+}
+
 function getOldSEEDERParts() {
     console.log('📋 Preserving old SEEDER parts (forum, chatbot, etc.)...');
 
@@ -1232,11 +1325,13 @@ const { sql: productMediaSQL, lastMediaId } = generateProductMediaLinks(products
 const productCertsSQL = generateProductCertificates(products, lastMediaId);
 const batchInventorySQL = generateBatchInventory(products);
 const { sql: ordersSQL, orderDetails, orders } = generateOrders(products);
+const vendorTransSQL = generateVendorTransactions();
 const reviewsSQL = generateProductReviews(orderDetails, orders);
 const oldDataSQL = getOldSEEDERParts();
 
 // Read base SEEDER (with farms, users, etc.)
-const baseSEEDER = fs.readFileSync('SEEDER_BACKUP.sql', { encoding: 'utf8' });
+const backupPath = path.join(__dirname, 'SEEDER_BACKUP.sql');
+const baseSEEDER = fs.readFileSync(backupPath, { encoding: 'utf8' });
 
 // Combine all SQL in correct order
 let finalSQL = baseSEEDER;
@@ -1248,12 +1343,15 @@ finalSQL += productMediaSQL;        // Product Media Links
 finalSQL += productCertsSQL;        // Product Certificates + Media
 finalSQL += batchInventorySQL;      // Batch Inventory + Serials
 finalSQL += ordersSQL;              // Orders, Order Details, Transactions, Payments, Export Inventory
+finalSQL += vendorTransSQL;         // Vendor Maintenance Transactions
 finalSQL += reviewsSQL;             // Product Reviews
 finalSQL += oldDataSQL;             // Forum + Chatbot
 
 // Write to file
-fs.writeFileSync('SEEDER.sql', finalSQL, 'utf8');
+const outputPath = path.join(__dirname, 'SEEDER.sql');
+fs.writeFileSync(outputPath, finalSQL, 'utf8');
 
 console.log('\n✅ SEEDER.sql generated successfully!');
+console.log(`📂 Output file: ${outputPath}`);
 console.log(`📊 Total lines: ${finalSQL.split('\n').length}`);
 console.log(`📦 Total products: ${products.length}`);
