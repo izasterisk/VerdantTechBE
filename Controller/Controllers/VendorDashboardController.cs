@@ -211,5 +211,25 @@ public class VendorDashboardController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Xuất lịch sử giao dịch ra Excel
+    /// </summary>
+    [HttpGet("transactions/export")]
+    [EndpointSummary("Export Transaction History")]
+    [EndpointDescription("Xuất lịch sử giao dịch của vendor trong khoảng thời gian ra file Excel.")]
+    public async Task<ActionResult> ExportTransactionHistory([FromQuery] DateOnly from, [FromQuery] DateOnly to)
+    {
+        try
+        {
+            var excelBytes = await _dashboardService.ExportTransactionHistoryAsync(GetCurrentUserId(), from, to, GetCancellationToken());
+            var fileName = $"LichSuGiaoDich_{from:yyyyMMdd}_{to:yyyyMMdd}.xlsx";
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
 }
 

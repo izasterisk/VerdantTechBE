@@ -44,6 +44,7 @@ public interface IAdminDashboardRepository
     
     // Transactions
     Task<List<Transaction>> GetAllTransactionsInTimeRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
+    Task<(List<Transaction> transactions, int totalCount)> GetTransactionsWithPagingAsync(DateOnly from, DateOnly to, int page, int pageSize, CancellationToken cancellationToken = default);
     Task<(decimal totalInflow, decimal totalOutflow)> GetTransactionFlowAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
     Task<(int count, decimal completedAmount, decimal pendingAmount, int failedCount)> GetPaymentInStatisticsAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
     Task<(int count, decimal completedAmount)> GetWalletTopupStatisticsAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default);

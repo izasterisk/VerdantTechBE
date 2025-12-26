@@ -547,8 +547,32 @@ public class AdminDashboardRepository : IAdminDashboardRepository
         return await _dbContext.Transactions
             .AsNoTracking()
             .Where(t => t.CreatedAt >= fromDateTime && t.CreatedAt < toDateTime)
+            .Include(t => t.User)
+            .Include(t => t.ProcessedByNavigation)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<(List<Transaction> transactions, int totalCount)> GetTransactionsWithPagingAsync(DateOnly from, DateOnly to, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+        var toDateTime = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+        var query = _dbContext.Transactions
+            .AsNoTracking()
+            .Where(t => t.CreatedAt >= fromDateTime && t.CreatedAt < toDateTime);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var transactions = await query
+            .Include(t => t.User)
+            .Include(t => t.ProcessedByNavigation)
+            .OrderByDescending(t => t.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (transactions, totalCount);
     }
 
     public async Task<(decimal totalInflow, decimal totalOutflow)> GetTransactionFlowAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)

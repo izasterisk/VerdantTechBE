@@ -38,5 +38,8 @@ public interface IVendorDashboardRepository
     Task<List<VendorCertificate>> GetPendingVendorCertificatesAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<List<(ProductCertificate cert, ulong productId)>> GetPendingProductCertificatesAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<List<Transaction>> GetPendingCashoutRequestsAsync(ulong vendorId, CancellationToken cancellationToken = default);
+    
+    // Transaction Export
+    Task<List<Transaction>> GetAllTransactionsInTimeRangeAsync(ulong vendorId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
 }
 

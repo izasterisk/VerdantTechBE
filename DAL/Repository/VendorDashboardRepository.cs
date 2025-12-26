@@ -476,6 +476,25 @@ public class VendorDashboardRepository : IVendorDashboardRepository
 
     #endregion
 
+    #region Transaction Export
+
+    public async Task<List<Transaction>> GetAllTransactionsInTimeRangeAsync(ulong vendorId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
+    {
+        var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+        var toDateTime = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+        return await _dbContext.Transactions
+            .AsNoTracking()
+            .Where(t => t.UserId == vendorId)
+            .Where(t => t.CreatedAt >= fromDateTime && t.CreatedAt < toDateTime)
+            .Include(t => t.User)
+            .Include(t => t.ProcessedByNavigation)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    #endregion
+
     #region Private Helpers
 
     private async Task<decimal> GetVendorGrossRevenueAsync(ulong vendorId, DateTime from, DateTime to, CancellationToken cancellationToken)

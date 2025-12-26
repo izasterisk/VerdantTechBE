@@ -254,6 +254,29 @@ public class AdminDashboardController : BaseController
             return HandleException(ex);
         }
     }
+
+    /// <summary>
+    /// Lấy danh sách giao dịch với phân trang
+    /// </summary>
+    [HttpGet("transactions")]
+    [EndpointSummary("Get Transactions with Paging")]
+    [EndpointDescription("Lấy danh sách giao dịch trong khoảng thời gian với phân trang, bao gồm thông tin người thực hiện và người xử lý.")]
+    public async Task<ActionResult<APIResponse>> GetTransactions(
+        [FromQuery] DateOnly from, 
+        [FromQuery] DateOnly to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        try
+        {
+            var result = await _dashboardService.GetTransactionsAsync(from, to, page, pageSize, GetCancellationToken());
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
     
     [HttpGet("export-transactions")]
     public async Task<IActionResult> ExportTransactions(

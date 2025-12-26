@@ -14,5 +14,6 @@ public interface IVendorDashboardService
     Task<VendorProductRatingsDTO> GetProductRatingsAsync(ulong vendorId, CancellationToken cancellationToken = default);
     Task<VendorWalletStatisticsDTO> GetWalletStatisticsAsync(ulong vendorId, DateOnly? from, DateOnly? to, CancellationToken cancellationToken = default);
     Task<VendorPendingItemsDTO> GetPendingItemsAsync(ulong vendorId, CancellationToken cancellationToken = default);
+    Task<byte[]> ExportTransactionHistoryAsync(ulong vendorId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
 }
 

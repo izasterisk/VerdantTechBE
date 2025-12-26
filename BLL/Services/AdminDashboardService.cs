@@ -1,5 +1,6 @@
 using BLL.DTO.Dashboard;
 using BLL.DTO.Dashboard.Dashboard;
+using BLL.DTO;
 using BLL.Interfaces;
 using DAL.IRepository;
 using OfficeOpenXml;
@@ -518,6 +519,47 @@ public class AdminDashboardService : IAdminDashboardService
         };
     }
 
+    public async Task<PagedResponse<TransactionExportDTO>> GetTransactionsAsync(DateOnly from, DateOnly to, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        ValidateDateRange(from, to);
+        
+        // Validate pagination parameters
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        if (pageSize > 100) pageSize = 100;
+
+        var (transactions, totalCount) = await _repository.GetTransactionsWithPagingAsync(from, to, page, pageSize, cancellationToken);
+        
+        var dtos = new List<TransactionExportDTO>();
+        foreach (var tx in transactions)
+        {
+            dtos.Add(new TransactionExportDTO
+            {
+                TransactionId = tx.Id,
+                TransactionType = tx.TransactionType.ToString(),
+                Amount = tx.Amount,
+                Status = tx.Status.ToString(),
+                CreatedAt = tx.CreatedAt.AddHours(7),
+                Description = tx.Note,
+                Performer = tx.User?.FullName ?? tx.User?.Email ?? "N/A",
+                Processor = tx.ProcessedByNavigation?.FullName ?? tx.ProcessedByNavigation?.Email ?? "N/A"
+            });
+        }
+
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        
+        return new PagedResponse<TransactionExportDTO>
+        {
+            Data = dtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
+        };
+    }
+
     public async Task<byte[]> ExportTransactionHistoryAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default)
     {
         ValidateDateRange(from, to);
@@ -532,14 +574,16 @@ public class AdminDashboardService : IAdminDashboardService
                 Amount = tx.Amount,
                 Status = tx.Status.ToString(),
                 CreatedAt = tx.CreatedAt.AddHours(7),
-                Description = tx.Note
+                Description = tx.Note,
+                Performer = tx.User?.FullName ?? tx.User?.Email ?? "N/A",
+                Processor = tx.ProcessedByNavigation?.FullName ?? tx.ProcessedByNavigation?.Email ?? "N/A"
             });
         }
         
         ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         using var package = new ExcelPackage();
         var worksheet = package.Workbook.Worksheets.Add("Lịch sử giao dịch");
-        var headers = new[] { "ID Giao Dịch", "Ngày tạo", "Loại giao dịch", "Số tiền (VNĐ)", "Trạng thái", "Mã tham chiếu", "Mô tả" };
+        var headers = new[] { "ID Giao Dịch", "Ngày tạo", "Loại giao dịch", "Số tiền (VNĐ)", "Trạng thái", "Người thực hiện", "Người xử lý", "Mô tả" };
         for (int i = 0; i < headers.Length; i++)
         {
             worksheet.Cells[1, i + 1].Value = headers[i];
@@ -572,8 +616,9 @@ public class AdminDashboardService : IAdminDashboardService
             else if (trans.Status == "Failed" || trans.Status == "Cancelled") 
                 worksheet.Cells[row, 5].Style.Font.Color.SetColor(System.Drawing.Color.Red);
 
-            worksheet.Cells[row, 6].Value = trans.ReferenceCode;
-            worksheet.Cells[row, 7].Value = trans.Description;
+            worksheet.Cells[row, 6].Value = trans.Performer;
+            worksheet.Cells[row, 7].Value = trans.Processor;
+            worksheet.Cells[row, 8].Value = trans.Description;
 
             row++;
         }

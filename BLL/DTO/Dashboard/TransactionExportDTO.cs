@@ -8,5 +8,6 @@ public class TransactionExportDTO
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public string? Description { get; set; }
-    public string? ReferenceCode { get; set; }
+    public string? Performer { get; set; }
+    public string? Processor { get; set; }
 }
