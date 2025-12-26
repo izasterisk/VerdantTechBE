@@ -218,7 +218,7 @@ public class VendorDashboardController : BaseController
     [HttpGet("transactions/export")]
     [EndpointSummary("Export Transaction History")]
     [EndpointDescription("Xuất lịch sử giao dịch của vendor trong khoảng thời gian ra file Excel.")]
-    public async Task<ActionResult> ExportTransactionHistory([FromQuery] DateOnly from, [FromQuery] DateOnly to)
+    public async Task<IActionResult> ExportTransactionHistory([FromQuery] DateOnly from, [FromQuery] DateOnly to)
     {
         try
         {
@@ -226,9 +226,9 @@ public class VendorDashboardController : BaseController
             var fileName = $"LichSuGiaoDich_{from:yyyyMMdd}_{to:yyyyMMdd}.xlsx";
             return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
-        catch (Exception ex)
+        catch (ArgumentException ex)
         {
-            return HandleException(ex);
+            return BadRequest(ex.Message);
         }
     }
 }
