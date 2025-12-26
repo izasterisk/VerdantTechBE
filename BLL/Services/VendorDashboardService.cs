@@ -1,5 +1,6 @@
 using BLL.DTO.Dashboard.VendorDashboard;
 using BLL.DTO.Dashboard;
+using BLL.DTO;
 using BLL.Interfaces;
 using DAL.Data;
 using DAL.IRepository;
@@ -378,6 +379,48 @@ public class VendorDashboardService : IVendorDashboardService
                     CreatedAt = c.CreatedAt
                 }).ToList()
             }
+        };
+    }
+
+    public async Task<PagedResponse<TransactionExportDTO>> GetTransactionsAsync(ulong vendorId, DateOnly from, DateOnly to, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        await ValidateVendorAsync(vendorId, cancellationToken);
+        ValidateDateRange(from, to);
+        
+        // Validate pagination parameters
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
+        if (pageSize > 100) pageSize = 100;
+
+        var (transactions, totalCount) = await _repository.GetTransactionsWithPagingAsync(vendorId, from, to, page, pageSize, cancellationToken);
+        
+        var dtos = new List<TransactionExportDTO>();
+        foreach (var tx in transactions)
+        {
+            dtos.Add(new TransactionExportDTO
+            {
+                TransactionId = tx.Id,
+                TransactionType = tx.TransactionType.ToString(),
+                Amount = tx.Amount,
+                Status = tx.Status.ToString(),
+                CreatedAt = tx.CreatedAt.AddHours(7),
+                Description = tx.Note,
+                Performer = tx.User?.FullName ?? tx.User?.Email ?? "N/A",
+                Processor = tx.ProcessedByNavigation?.FullName ?? tx.ProcessedByNavigation?.Email ?? "N/A"
+            });
+        }
+
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        
+        return new PagedResponse<TransactionExportDTO>
+        {
+            Data = dtos,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            TotalRecords = totalCount,
+            HasNextPage = page < totalPages,
+            HasPreviousPage = page > 1
         };
     }
 

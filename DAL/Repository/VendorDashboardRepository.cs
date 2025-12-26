@@ -493,6 +493,29 @@ public class VendorDashboardRepository : IVendorDashboardRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<(List<Transaction> transactions, int totalCount)> GetTransactionsWithPagingAsync(ulong vendorId, DateOnly from, DateOnly to, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var fromDateTime = from.ToDateTime(TimeOnly.MinValue);
+        var toDateTime = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+        var query = _dbContext.Transactions
+            .AsNoTracking()
+            .Where(t => t.UserId == vendorId)
+            .Where(t => t.CreatedAt >= fromDateTime && t.CreatedAt < toDateTime);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var transactions = await query
+            .Include(t => t.User)
+            .Include(t => t.ProcessedByNavigation)
+            .OrderByDescending(t => t.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (transactions, totalCount);
+    }
+
     #endregion
 
     #region Private Helpers

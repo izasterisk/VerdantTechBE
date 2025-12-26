@@ -213,6 +213,29 @@ public class VendorDashboardController : BaseController
     }
 
     /// <summary>
+    /// Lấy danh sách giao dịch với phân trang
+    /// </summary>
+    [HttpGet("transactions")]
+    [EndpointSummary("Get Transactions with Paging")]
+    [EndpointDescription("Lấy danh sách giao dịch của vendor trong khoảng thời gian với phân trang, bao gồm thông tin người thực hiện và người xử lý.")]
+    public async Task<ActionResult<APIResponse>> GetTransactions(
+        [FromQuery] DateOnly from, 
+        [FromQuery] DateOnly to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        try
+        {
+            var result = await _dashboardService.GetTransactionsAsync(GetCurrentUserId(), from, to, page, pageSize, GetCancellationToken());
+            return SuccessResponse(result);
+        }
+        catch (Exception ex)
+        {
+            return HandleException(ex);
+        }
+    }
+
+    /// <summary>
     /// Xuất lịch sử giao dịch ra Excel
     /// </summary>
     [HttpGet("transactions/export")]

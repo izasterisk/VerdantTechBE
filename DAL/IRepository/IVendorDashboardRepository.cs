@@ -41,5 +41,6 @@ public interface IVendorDashboardRepository
     
     // Transaction Export
     Task<List<Transaction>> GetAllTransactionsInTimeRangeAsync(ulong vendorId, DateOnly from, DateOnly to, CancellationToken cancellationToken = default);
+    Task<(List<Transaction> transactions, int totalCount)> GetTransactionsWithPagingAsync(ulong vendorId, DateOnly from, DateOnly to, int page, int pageSize, CancellationToken cancellationToken = default);
 }
 
